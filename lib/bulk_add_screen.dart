@@ -57,6 +57,10 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
   String _charType = 'numbers';
   String _cardType = 'username_only';
   bool _linkPasswordToFirstUser = false;
+  
+  // القوالب والقالب المختار
+  List<PdfTemplate> _templates = [];
+  PdfTemplate? _selectedTemplate;
 
   late MqttService _mqttService;
   StreamSubscription? _mqttSubscription;
@@ -70,6 +74,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
   void initState() {
     super.initState();
     _checkLinkStatus();
+    _loadTemplates();
   }
 
   @override
@@ -77,6 +82,18 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
     super.didChangeDependencies();
     _mqttService = Provider.of<MqttService>(context, listen: false);
     _setupMqttListener();
+  }
+
+  Future<void> _loadTemplates() async {
+    final prefs = await SharedPreferences.getInstance();
+    final templatesJson = prefs.getStringList('pdf_templates') ?? [];
+    if (mounted) {
+      setState(() {
+        _templates = templatesJson
+            .map((jsonString) => PdfTemplate.fromJson(jsonDecode(jsonString)))
+            .toList();
+      });
+    }
   }
 
   Future<void> _checkLinkStatus() async {
@@ -242,15 +259,18 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
       existingFiles.add(jsonEncode(savedFile.toJson()));
       await prefs.setStringList('saved_files', existingFiles);
 
-      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-      PdfTemplate? relevantTemplate;
-      try {
-        final templateJson = templatesJson.firstWhere(
-          (json) => PdfTemplate.fromJson(jsonDecode(json)).profileName == _selectedProfile,
-        );
-        relevantTemplate = PdfTemplate.fromJson(jsonDecode(templateJson));
-      } catch (e) {
-        // No template found
+      // استخدام القالب المختار من المستخدم، أو البحث عن قالب مطابق للـ profile
+      PdfTemplate? relevantTemplate = _selectedTemplate;
+      if (relevantTemplate == null) {
+        final templatesJson = prefs.getStringList('pdf_templates') ?? [];
+        try {
+          final templateJson = templatesJson.firstWhere(
+            (json) => PdfTemplate.fromJson(jsonDecode(json)).profileName == _selectedProfile,
+          );
+          relevantTemplate = PdfTemplate.fromJson(jsonDecode(templateJson));
+        } catch (e) {
+          // No template found
+        }
       }
 
       if (!mounted) return;
@@ -552,6 +572,27 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                       child: Text('اسم مستخدم وكلمة مرور مختلفة')) ,
                 ],
                 onChanged: (v) => setState(() => _cardType = v!),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedTemplate?.profileName,
+                decoration: const InputDecoration(
+                    labelText: 'نوع القالب (اختياري)',
+                    border: OutlineInputBorder()),
+                hint: const Text('اختر قالب للتصدير إلى PDF'),
+                items: _templates
+                    .map((template) => DropdownMenuItem(
+                        value: template.profileName,
+                        child: Text(template.profileName)))
+                    .toList(),
+                onChanged: (v) {
+                  setState(() {
+                    _selectedTemplate = _templates.firstWhere(
+                      (t) => t.profileName == v,
+                      orElse: () => _templates.first,
+                    );
+                  });
+                },
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
