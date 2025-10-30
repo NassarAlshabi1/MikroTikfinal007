@@ -56,3 +56,4 @@ flutter_app_name:
 # --- ✨ تم إضافة هذا القسم لحل مشكلة التعارض ---
 dependency_overrides:
   xml: ^6.3.0
+  graphview: 1.2.0
