@@ -106,7 +106,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
               _isJobAcknowledged = true;
             });
             Navigator.of(context, rootNavigator: true).pop();
-            _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى القحطاني...");
+            _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
           }
           break;
         
@@ -148,7 +148,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
   void _showAddCardsToQahtaniDialog(List<String> cards) {
     if (!_isNetworkLinked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الشبكة غير مرتبطة بحساب القحطاني')),
+        const SnackBar(content: Text('الشبكة غير مرتبطة بحساب م/نصار الشعبي')),
       );
       return;
     }
@@ -160,7 +160,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('اختر فئة القحطاني'),
+          title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
             hint: const Text('اختر الفئة'),
             items: units.map((unit) {

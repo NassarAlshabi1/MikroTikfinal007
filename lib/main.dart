@@ -418,28 +418,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
               Column(
                 children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.phone, color: Colors.green, size: 18),
-                      SizedBox(width: 8),
-                      Text('777042661', style: TextStyle(color: Color(0xFFB0A8C1), fontSize: 14)),
-                    ],
-                  ),
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: _launchUrl,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('تحميل تطبيق القحطاني تيليكوم', style: TextStyle(color: Colors.cyanAccent.withOpacity(0.8), fontSize: 14)),
+                        Text('تحميل تطبيق م/نصار الشعبي', style: TextStyle(color: Colors.cyanAccent.withOpacity(0.8), fontSize: 14)),
                         const SizedBox(width: 8),
                         Icon(Icons.shop, color: Colors.cyanAccent.withOpacity(0.8), size: 24),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('جميع الحقوق محفوظة © القحطاني تيليكوم', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF5A5278), fontSize: 12)),
+                  const Text('جميع الحقوق محفوظة © م/نصار الشعبي', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF5A5278), fontSize: 12)),
                 ],
               )
             ],
