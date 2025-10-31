@@ -2,9 +2,9 @@ name: Multi-Platform Build
 
 on:
   push:
-    branches: [ main, develop, 'feature/**' ]
+    branches: [ main, develop, 'feature/**', 'capy/**' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ '**' ]
 
 permissions:
   contents: read
