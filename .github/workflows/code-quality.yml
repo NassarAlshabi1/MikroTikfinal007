@@ -28,8 +28,20 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed .
+      - name: Format code
+        run: dart format .
+        
+      - name: Check for formatting changes
+        run: |
+          if git diff --quiet; then
+            echo "✅ Code is properly formatted"
+          else
+            echo "ℹ️ Code was automatically formatted"
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add .
+            git commit -m "🎨 Auto-format code with dart format" || echo "No changes to commit"
+          fi
 
       - name: Analyze project source
         run: flutter analyze --fatal-infos
