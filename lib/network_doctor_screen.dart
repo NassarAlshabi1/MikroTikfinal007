@@ -250,11 +250,21 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Future<void> _checkSpeedTest(_NetworkDiagnostic test) async {
     const downloadTestUrl = 'https://speed.cloudflare.com/__down?bytes=25000000';
     const uploadTestUrl = 'https://speed.cloudflare.com/__up';
+    
+    // إنشاء Dio instance منفصل مع timeout أطول لاختبار السرعة
+    final speedTestDio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
+        sendTimeout: const Duration(seconds: 60),
+      ),
+    );
+    
     try {
       final downloadStopwatch = Stopwatch()..start();
-      final downloadResponse = await _dio.get(
+      final downloadResponse = await speedTestDio.get(
         downloadTestUrl,
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: const Duration(seconds: 30), sendTimeout: const Duration(seconds: 30)),
+        options: Options(responseType: ResponseType.bytes),
       );
       downloadStopwatch.stop();
 
@@ -264,13 +274,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
 
       final uploadData = List<int>.filled(5000000, 0);
       final uploadStopwatch = Stopwatch()..start();
-      await _dio.post(
+      await speedTestDio.post(
         uploadTestUrl,
         data: uploadData,
         options: Options(
           headers: {'Content-Type': 'application/octet-stream'},
-          receiveTimeout: const Duration(seconds: 30),
-          sendTimeout: const Duration(seconds: 30),
         ),
       );
       uploadStopwatch.stop();
@@ -285,6 +293,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       _updateTestWithSpeed(test.id, status, message, downloadSpeed: downloadSpeedMbps, uploadSpeed: uploadSpeedMbps);
     } catch (e) {
       throw Exception('فشل اختبار السرعة: ${e.toString()}');
+    } finally {
+      speedTestDio.close();
     }
   }
 
