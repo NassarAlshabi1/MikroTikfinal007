@@ -62,6 +62,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   final List<FlSpot> _memoryHistory = [];
   int _dataPointIndex = 0;
 
+  // Alert System
+  bool _cpuAlert = false;
+  bool _memoryAlert = false;
+  bool _temperatureAlert = false;
+  final double _cpuThreshold = 80.0;
+  final double _memoryThreshold = 90.0;
+  final double _temperatureThreshold = 70.0;
+  
+  // Track last alert times to avoid spam
+  DateTime? _lastCpuAlertTime;
+  DateTime? _lastMemoryAlertTime;
+  DateTime? _lastTempAlertTime;
+
   @override
   bool get wantKeepAlive => true;
 
@@ -115,6 +128,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
       // Update history for charts
       _updateChartHistory();
+
+      // Check for alerts
+      _checkAlerts();
 
       if (mounted) {
         setState(() {
@@ -358,6 +374,107 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     _dataPointIndex++;
   }
 
+  void _checkAlerts() {
+    final now = DateTime.now();
+    
+    // Check CPU Alert
+    if (_cpuLoad >= _cpuThreshold) {
+      _cpuAlert = true;
+      if (_lastCpuAlertTime == null || 
+          now.difference(_lastCpuAlertTime!).inMinutes >= 5) {
+        _showAlert(
+          'تحذير: استخدام المعالج مرتفع!',
+          'استخدام المعالج وصل إلى $_cpuLoad% (الحد: ${_cpuThreshold.toInt()}%)',
+          Icons.warning_amber_rounded,
+          Colors.orange,
+        );
+        _lastCpuAlertTime = now;
+      }
+    } else {
+      _cpuAlert = false;
+    }
+
+    // Check Memory Alert
+    final memoryUsedPercentage = _totalMemory > 0
+        ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
+        : 0.0;
+    
+    if (memoryUsedPercentage >= _memoryThreshold) {
+      _memoryAlert = true;
+      if (_lastMemoryAlertTime == null || 
+          now.difference(_lastMemoryAlertTime!).inMinutes >= 5) {
+        _showAlert(
+          'تحذير: الذاكرة ممتلئة!',
+          'استخدام الذاكرة وصل إلى ${memoryUsedPercentage.toStringAsFixed(1)}% (الحد: ${_memoryThreshold.toInt()}%)',
+          Icons.memory,
+          Colors.red,
+        );
+        _lastMemoryAlertTime = now;
+      }
+    } else {
+      _memoryAlert = false;
+    }
+
+    // Check Temperature Alert (if available)
+    if (_temperature != 'غير متاح') {
+      final temp = double.tryParse(_temperature);
+      if (temp != null && temp >= _temperatureThreshold) {
+        _temperatureAlert = true;
+        if (_lastTempAlertTime == null || 
+            now.difference(_lastTempAlertTime!).inMinutes >= 5) {
+          _showAlert(
+            'تحذير: حرارة الجهاز مرتفعة!',
+            'درجة الحرارة وصلت إلى $temp°C (الحد: ${_temperatureThreshold.toInt()}°C)',
+            Icons.thermostat,
+            Colors.red,
+          );
+          _lastTempAlertTime = now;
+        }
+      } else {
+        _temperatureAlert = false;
+      }
+    }
+  }
+
+  void _showAlert(String title, String message, IconData icon, Color color) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(message),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: color,
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -416,6 +533,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Alert Banner
+              if (_cpuAlert || _memoryAlert || _temperatureAlert)
+                _buildAlertBanner(),
+              if (_cpuAlert || _memoryAlert || _temperatureAlert)
+                const SizedBox(height: 16),
+              
               // بطاقة معلومات النظام الرئيسية
               _buildMainSystemCard(theme),
               const SizedBox(height: 16),
@@ -425,15 +548,17 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildChartCard(
                   title: 'استخدام المعالج (CPU)',
                   data: _cpuHistory,
-                  color: Colors.purple,
+                  color: _cpuAlert ? Colors.red : Colors.purple,
                   unit: '%',
+                  isAlert: _cpuAlert,
                 ),
                 const SizedBox(height: 16),
                 _buildChartCard(
                   title: 'استخدام الذاكرة (RAM)',
                   data: _memoryHistory,
-                  color: Colors.blue,
+                  color: _memoryAlert ? Colors.red : Colors.blue,
                   unit: '%',
+                  isAlert: _memoryAlert,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -608,20 +733,23 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _voltage,
                 Icons.bolt,
                 Colors.yellow,
+                false,
               ),
               Container(width: 1, height: 40, color: Colors.white30),
               _buildMiniInfoCard(
                 'الحرارة',
                 _temperature == 'غير متاح' ? _temperature : '$_temperature°',
                 Icons.thermostat,
-                Colors.orange,
+                _temperatureAlert ? Colors.red : Colors.orange,
+                _temperatureAlert,
               ),
               Container(width: 1, height: 40, color: Colors.white30),
               _buildMiniInfoCard(
                 'المعالج',
                 '$_cpuLoad%',
                 Icons.memory,
-                Colors.purple,
+                _cpuAlert ? Colors.red : Colors.purple,
+                _cpuAlert,
               ),
             ],
           ),
@@ -630,11 +758,29 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildMiniInfoCard(String label, String value, IconData icon, Color color) {
+  Widget _buildMiniInfoCard(String label, String value, IconData icon, Color color, bool isAlert) {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 32, color: color),
+          Stack(
+            alignment: Alignment.topRight,
+            children: [
+              Icon(icon, size: 32, color: color),
+              if (isAlert)
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           Text(
             label,
@@ -647,8 +793,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFB39DDB),
+              color: isAlert ? Colors.red.withOpacity(0.9) : const Color(0xFFB39DDB),
               borderRadius: BorderRadius.circular(8),
+              boxShadow: isAlert ? [
+                BoxShadow(
+                  color: Colors.red.withOpacity(0.5),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                ),
+              ] : null,
             ),
             child: Text(
               value,
@@ -781,6 +934,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     required List<FlSpot> data,
     required Color color,
     required String unit,
+    bool isAlert = false,
   }) {
     if (data.isEmpty) return const SizedBox.shrink();
 
@@ -794,14 +948,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1.5,
+          color: color.withOpacity(isAlert ? 0.8 : 0.3),
+          width: isAlert ? 2.5 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
+            color: color.withOpacity(isAlert ? 0.3 : 0.1),
+            blurRadius: isAlert ? 15 : 10,
             offset: const Offset(0, 4),
+            spreadRadius: isAlert ? 2 : 0,
           ),
         ],
       ),
@@ -811,23 +966,35 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  if (isAlert) ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.warning_rounded,
+                      color: color,
+                      size: 24,
+                    ),
+                  ],
+                ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB39DDB),
+                  color: isAlert ? color.withOpacity(0.9) : const Color(0xFFB39DDB),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
+                      color: (isAlert ? color : Colors.black).withOpacity(0.3),
+                      blurRadius: isAlert ? 6 : 4,
                       offset: const Offset(0, 2),
                     ),
                   ],
@@ -996,6 +1163,157 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAlertBanner() {
+    final alerts = <Map<String, dynamic>>[];
+    
+    if (_cpuAlert) {
+      alerts.add({
+        'title': 'استخدام المعالج مرتفع',
+        'value': '$_cpuLoad%',
+        'icon': Icons.memory,
+        'color': Colors.orange,
+      });
+    }
+    
+    if (_memoryAlert) {
+      final memoryUsedPercentage = _totalMemory > 0
+          ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
+          : 0.0;
+      alerts.add({
+        'title': 'الذاكرة ممتلئة',
+        'value': '${memoryUsedPercentage.toStringAsFixed(1)}%',
+        'icon': Icons.storage,
+        'color': Colors.red,
+      });
+    }
+    
+    if (_temperatureAlert) {
+      alerts.add({
+        'title': 'الحرارة مرتفعة',
+        'value': '$_temperature°C',
+        'icon': Icons.thermostat,
+        'color': Colors.red,
+      });
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.red.shade700,
+            Colors.orange.shade600,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'تنبيه أداء النظام',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'تم الكشف عن مشكلات في الأداء',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...alerts.map((alert) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    alert['icon'] as IconData,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      alert['title'] as String,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      alert['value'] as String,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )),
+        ],
+      ),
     );
   }
 }
