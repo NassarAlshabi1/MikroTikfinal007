@@ -804,7 +804,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   ),
                 ),
               ),
-              if (t.id == 'speed_test') ..[
+              if (t.id == 'speed_test') ...[
                 const SizedBox(width: 10),
                 Container(
                   height: 48,
