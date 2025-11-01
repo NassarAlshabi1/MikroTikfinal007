@@ -82,7 +82,7 @@ class _CardListScreenState extends State<CardListScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message['message'] ?? 'تمت العملية بنجاح.'),
-              backgroundColor: Colors.green,
+              backgroundColor: Theme.of(context).primaryColor,
             ),
           );
           break;
@@ -118,6 +118,8 @@ class _CardListScreenState extends State<CardListScreen> {
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
             hint: const Text('اختر الفئة'),
+            style: const TextStyle(color: Colors.black87),
+            dropdownColor: Colors.white,
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
@@ -213,7 +215,7 @@ class _CardListScreenState extends State<CardListScreen> {
           },
           icon: const Icon(Icons.copy_all),
           label: const Text('نسخ الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
         ),
       ),
       const SizedBox(width: 8),
@@ -222,7 +224,7 @@ class _CardListScreenState extends State<CardListScreen> {
           onPressed: _shareCardsAsTextFile,
           icon: const Icon(Icons.share),
           label: const Text('مشاركة الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
         ),
       ),
     ];
@@ -235,7 +237,7 @@ class _CardListScreenState extends State<CardListScreen> {
             onPressed: _showAddCardsToQahtaniDialog,
             icon: const Icon(Icons.add_to_queue),
             label: const Text('إضافة للقحطاني'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
           ),
         ),
       );
