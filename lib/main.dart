@@ -23,6 +23,7 @@ import 'check_user_screen.dart';
 import 'network_map_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
+import 'cards_statistics_screen.dart';
 import 'mikrotik_connector.dart';
 // -----------------------------------------
 
@@ -646,6 +647,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (context) => const CheckUserScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'إحصائيات الكروت',
+        icon: Icons.bar_chart,
+        color: const Color(0xFF9C27B0), // Purple
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const CardsStatisticsScreen()));
         },
       ),
       ServiceItem(
