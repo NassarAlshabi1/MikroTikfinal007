@@ -67,8 +67,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
   bool _isNetworkLinked = false;
   Map<String, dynamic> _linkedData = {};
 
-  final String telegramBotToken = '8098065138:AAHf_RQSWU0sisLUJHDFaH3PudD5jY8nhdk';
-  final String telegramChatId = '-4811178898';
+  final String telegramBotToken = '';
+  final String telegramChatId = '';
 
   @override
   void initState() {
