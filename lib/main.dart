@@ -9,7 +9,6 @@ import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
-import 'package:marquee_widget/marquee_widget.dart';
 
 // --- افترض أن هذه الملفات موجودة في مشروعك ---
 import 'add_user_screen.dart';
@@ -101,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String _errorMessage = '';
   bool _rememberMe = true;
-  String _adText = 'يوجد لدينا تاجير خطوط فيبر سرعه الخط 100 ميجا';
   bool _isPasswordObscured = true;
   bool _isScanning = false;
 
@@ -116,46 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
       await dio.post(url, data: {'chat_id': telegramChatId, 'text': message});
     } catch (e) {
       // Failed to send Telegram message
-    }
-  }
-
-  Future<void> _fetchAdFromTelegram() async {
-    final prefs = await SharedPreferences.getInstance();
-    final dio = Dio();
-    final url = 'https://api.telegram.org/bot$telegramBotToken/getUpdates';
-    try {
-      final response = await dio.get(url, queryParameters: {'chat_id': telegramChatId});
-      if (response.statusCode == 200 && response.data != null) {
-        final updates = response.data['result'] as List;
-        if (updates.isNotEmpty) {
-          for (var update in updates.reversed) {
-            final messageText = update['message']['text'] as String?;
-            if (messageText != null && messageText.startsWith('اعلان')) {
-              final newAd = messageText.substring('اعلان'.length).trim();
-              if (newAd.isNotEmpty) {
-                if (_adText != newAd) {
-                  setState(() => _adText = newAd);
-                  await prefs.setString('ad_text', newAd);
-                }
-                break;
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      print('Failed to fetch ad from Telegram: $e');
-    }
-  }
-
-  Future<void> _launchUrl() async {
-    final Uri url = Uri.parse('https://play.google.com/store/apps/details?id=alkahtani.yemoney');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح الرابط. يرجى التحقق من وجود المتجر.'), backgroundColor: Colors.red),
-        );
-      }
     }
   }
 
@@ -179,8 +137,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _init() async {
     try {
       await _loadSavedCredentials();
-      await _loadAdText();
-      await _fetchAdFromTelegram();
       await _discoverGateway();
     } catch (e, s) {
       print('Error in initState: $e\n$s');
@@ -228,14 +184,6 @@ class _LoginScreenState extends State<LoginScreen> {
         _portController.text = prefs.getString('port') ?? '8728';
         _rememberMe = true;
       });
-    }
-  }
-
-  Future<void> _loadAdText() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedAd = prefs.getString('ad_text');
-    if (savedAd != null) {
-      setState(() => _adText = savedAd);
     }
   }
 
@@ -300,10 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const adTextStyle = TextStyle(color: Color(0xFFB0A8C1), fontSize: 14);
-
-    Widget adWidget = Marquee(child: Text(_adText, style: adTextStyle, textDirection: TextDirection.rtl));
-
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -421,27 +365,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
 
               const SizedBox(height: 24),
-              adWidget,
-              const SizedBox(height: 16),
-
-              Column(
-                children: [
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: _launchUrl,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('تحميل تطبيق م/نصار الشعبي', style: TextStyle(color: Colors.cyanAccent.withOpacity(0.8), fontSize: 14)),
-                        const SizedBox(width: 8),
-                        Icon(Icons.shop, color: Colors.cyanAccent.withOpacity(0.8), size: 24),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('جميع الحقوق محفوظة © م/نصار الشعبي', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF5A5278), fontSize: 12)),
-                ],
-              )
+              const Text(
+                'جميع الحقوق محفوظة © م/نصار الشعبي',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
+              ),
             ],
           ),
         ),
