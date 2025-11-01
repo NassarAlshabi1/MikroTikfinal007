@@ -23,6 +23,7 @@ import 'network_map_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
 import 'mikrotik_connector.dart';
+import 'backup_system_screen.dart';
 // -----------------------------------------
 
 void main() {
@@ -575,6 +576,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'النسخ الاحتياطي',
+        icon: Icons.backup,
+        color: const Color(0xFF2196F3), // Blue
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const BackupSystemScreen()));
         },
       ),
     ];
