@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'mikrotik_connector.dart';
 
 class SystemDashboardScreen extends StatefulWidget {
@@ -56,6 +57,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _date = '';
   String _timeZoneName = '';
 
+  // History for Charts (last 20 data points)
+  final List<FlSpot> _cpuHistory = [];
+  final List<FlSpot> _memoryHistory = [];
+  int _dataPointIndex = 0;
+
   @override
   bool get wantKeepAlive => true;
 
@@ -106,6 +112,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
       // جلب وقت الشبكة
       await _fetchSystemClock(client);
+
+      // Update history for charts
+      _updateChartHistory();
 
       if (mounted) {
         setState(() {
@@ -329,6 +338,26 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     return ((total - used) / total) * 100;
   }
 
+  void _updateChartHistory() {
+    final cpuValue = _cpuLoad.toDouble();
+    final memoryUsedPercentage = _totalMemory > 0
+        ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
+        : 0.0;
+
+    _cpuHistory.add(FlSpot(_dataPointIndex.toDouble(), cpuValue));
+    _memoryHistory.add(FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage));
+
+    // Keep only last 20 data points
+    if (_cpuHistory.length > 20) {
+      _cpuHistory.removeAt(0);
+    }
+    if (_memoryHistory.length > 20) {
+      _memoryHistory.removeAt(0);
+    }
+
+    _dataPointIndex++;
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -390,6 +419,24 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               // بطاقة معلومات النظام الرئيسية
               _buildMainSystemCard(theme),
               const SizedBox(height: 16),
+
+              // Charts Section
+              if (_cpuHistory.length > 1) ..[
+                _buildChartCard(
+                  title: 'استخدام المعالج (CPU)',
+                  data: _cpuHistory,
+                  color: Colors.purple,
+                  unit: '%',
+                ),
+                const SizedBox(height: 16),
+                _buildChartCard(
+                  title: 'استخدام الذاكرة (RAM)',
+                  data: _memoryHistory,
+                  color: Colors.blue,
+                  unit: '%',
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // GridView للبطاقات الفرعية
               GridView.count(
@@ -726,6 +773,229 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildChartCard({
+    required String title,
+    required List<FlSpot> data,
+    required Color color,
+    required String unit,
+  }) {
+    if (data.isEmpty) return const SizedBox.shrink();
+
+    final maxY = data.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
+    final minY = data.map((spot) => spot.y).reduce((a, b) => a < b ? a : b);
+    final currentValue = data.isNotEmpty ? data.last.y : 0.0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFB39DDB),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '${currentValue.toStringAsFixed(1)}$unit',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 200,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 25,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.white.withOpacity(0.1),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 25,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          '${value.toInt()}$unit',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                      reservedSize: 45,
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border.all(
+                    color: color.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                minX: data.first.x,
+                maxX: data.last.x,
+                minY: 0,
+                maxY: 100,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: data,
+                    isCurved: true,
+                    color: color,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 3,
+                          color: color,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          color.withOpacity(0.3),
+                          color.withOpacity(0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                      return touchedBarSpots.map((barSpot) {
+                        return LineTooltipItem(
+                          '${barSpot.y.toStringAsFixed(1)}$unit',
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildChartStat('الحد الأدنى', minY, unit, Colors.green),
+              _buildChartStat('الحد الأقصى', maxY, unit, Colors.red),
+              _buildChartStat('المتوسط', 
+                data.map((e) => e.y).reduce((a, b) => a + b) / data.length, 
+                unit, Colors.orange),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartStat(String label, double value, String unit, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.6),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: color.withOpacity(0.4),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            '${value.toStringAsFixed(1)}$unit',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
