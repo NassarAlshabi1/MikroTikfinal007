@@ -80,15 +80,15 @@ class MyApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFB39DDB), // لون بنفسجي فاتح
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          labelStyle: const TextStyle(color: Color(0xFF6b3fa0)),
-          hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-          iconColor: const Color(0xFF6b3fa0),
-          prefixIconColor: const Color(0xFF6b3fa0),
+          labelStyle: const TextStyle(color: Colors.white), // label باللون الأبيض
+          hintStyle: const TextStyle(color: Colors.white70),
+          iconColor: Colors.white,
+          prefixIconColor: Colors.white,
         ),
         iconTheme: const IconThemeData(color: Color(0xFFB0A8C1)),
       ),
