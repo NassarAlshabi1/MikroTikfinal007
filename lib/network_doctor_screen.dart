@@ -254,7 +254,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       final downloadStopwatch = Stopwatch()..start();
       final downloadResponse = await _dio.get(
         downloadTestUrl,
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: const Duration(seconds: 30), sendTimeout: const Duration(seconds: 30), connectTimeout: const Duration(seconds: 30)),
+        options: Options(responseType: ResponseType.bytes, receiveTimeout: const Duration(seconds: 30), sendTimeout: const Duration(seconds: 30)),
       );
       downloadStopwatch.stop();
 
@@ -271,7 +271,6 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           headers: {'Content-Type': 'application/octet-stream'},
           receiveTimeout: const Duration(seconds: 30),
           sendTimeout: const Duration(seconds: 30),
-          connectTimeout: const Duration(seconds: 30),
         ),
       );
       uploadStopwatch.stop();
