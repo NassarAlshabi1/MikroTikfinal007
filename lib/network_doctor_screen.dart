@@ -250,11 +250,21 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Future<void> _checkSpeedTest(_NetworkDiagnostic test) async {
     const downloadTestUrl = 'https://speed.cloudflare.com/__down?bytes=25000000';
     const uploadTestUrl = 'https://speed.cloudflare.com/__up';
+    
+    // إنشاء Dio instance منفصل مع timeout أطول لاختبار السرعة
+    final speedTestDio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
+        sendTimeout: const Duration(seconds: 60),
+      ),
+    );
+    
     try {
       final downloadStopwatch = Stopwatch()..start();
-      final downloadResponse = await _dio.get(
+      final downloadResponse = await speedTestDio.get(
         downloadTestUrl,
-        options: Options(responseType: ResponseType.bytes, receiveTimeout: const Duration(seconds: 30), sendTimeout: const Duration(seconds: 30)),
+        options: Options(responseType: ResponseType.bytes),
       );
       downloadStopwatch.stop();
 
@@ -264,13 +274,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
 
       final uploadData = List<int>.filled(5000000, 0);
       final uploadStopwatch = Stopwatch()..start();
-      await _dio.post(
+      await speedTestDio.post(
         uploadTestUrl,
         data: uploadData,
         options: Options(
           headers: {'Content-Type': 'application/octet-stream'},
-          receiveTimeout: const Duration(seconds: 30),
-          sendTimeout: const Duration(seconds: 30),
         ),
       );
       uploadStopwatch.stop();
@@ -285,6 +293,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       _updateTestWithSpeed(test.id, status, message, downloadSpeed: downloadSpeedMbps, uploadSpeed: uploadSpeedMbps);
     } catch (e) {
       throw Exception('فشل اختبار السرعة: ${e.toString()}');
+    } finally {
+      speedTestDio.close();
     }
   }
 
@@ -451,83 +461,130 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('طبيب الشبكة'),
-          centerTitle: true,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          elevation: 0,
-          actions: [
-            IconButton(
-              onPressed: _isRunningAll ? null : _runAll,
-              icon: const Icon(Icons.play_circle_fill),
-              tooltip: 'تشغيل جميع الفحوصات',
-              color: Theme.of(context).primaryColor,
-            )
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('طبيب الشبكة', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _isRunningAll ? null : _runAll,
+            icon: const Icon(Icons.play_circle_fill),
+            tooltip: 'تشغيل جميع الفحوصات',
+            color: theme.primaryColor,
+          )
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildSummaryCard(),
+            const SizedBox(height: 12),
+            _buildStatsRow(),
+            const SizedBox(height: 16),
+            _buildTestsSection(),
+            const SizedBox(height: 16),
+            _buildRecommendationsSection(),
+            const SizedBox(height: 16),
+            _buildAdvancedTools(),
           ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildSummaryCard(),
-              const SizedBox(height: 12),
-              _buildStatsRow(),
-              const SizedBox(height: 16),
-              _buildTestsSection(),
-              const SizedBox(height: 16),
-              _buildRecommendationsSection(),
-              const SizedBox(height: 16),
-              _buildAdvancedTools(),
-            ],
-          ),
         ),
       ),
     );
   }
 
   Widget _buildSummaryCard() {
-    final primary = Theme.of(context).primaryColor;
-    return Card(
-      color: Theme.of(context).cardColor,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: primary.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.health_and_safety, color: primary, size: 32),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('ملخص الفحوصات', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text(
-                    'ناجحة: $_countSuccess • تحذيرات: $_countWarning • فاشلة: $_countError • بالانتظار: $_countPending',
-                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 44,
-              child: ElevatedButton.icon(
-                onPressed: _isRunningAll ? null : _runAll,
-                icon: _isRunningAll ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.play_arrow),
-                label: const Text('تشغيل الكل'),
-              ),
-            )
-          ],
+    final theme = Theme.of(context);
+    final primary = theme.primaryColor;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primary.withOpacity(0.6), primary.withOpacity(0.3)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
         ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.health_and_safety, color: Colors.white, size: 36),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ملخص الفحوصات',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'تشخيص شامل لحالة الشبكة',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isRunningAll ? null : _runAll,
+              icon: _isRunningAll
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.play_arrow),
+              label: Text(
+                _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withOpacity(0.2),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -535,30 +592,46 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Widget _buildStatsRow() {
     return Row(
       children: [
-        Expanded(child: _buildChip('ناجحة', _countSuccess.toString(), Colors.green)),
-        const SizedBox(width: 8),
-        Expanded(child: _buildChip('تحذير', _countWarning.toString(), Colors.orange)),
-        const SizedBox(width: 8),
-        Expanded(child: _buildChip('فشل', _countError.toString(), Colors.redAccent)),
+        Expanded(child: _buildChip('ناجحة', _countSuccess.toString(), Colors.greenAccent, Icons.check_circle)),
+        const SizedBox(width: 10),
+        Expanded(child: _buildChip('تحذير', _countWarning.toString(), Colors.orange, Icons.warning)),
+        const SizedBox(width: 10),
+        Expanded(child: _buildChip('فشل', _countError.toString(), Colors.redAccent, Icons.error)),
       ],
     );
   }
 
-  Widget _buildChip(String title, String value, Color color) {
+  Widget _buildChip(String title, String value, Color color, IconData icon) {
+    final theme = Theme.of(context);
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
         children: [
-          Icon(Icons.brightness_1, size: 10, color: color),
-          const SizedBox(width: 8),
-          Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w600)),
-          const Spacer(),
-          Text(value, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -568,88 +641,199 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('الفحوصات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'الفحوصات',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
         const SizedBox(height: 8),
-        ..._tests.map((t) => _buildTestCard(t)).toList(),
+        ..._tests.map((t) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildTestCard(t),
+        )).toList(),
       ],
     );
   }
 
   Widget _buildTestCard(_NetworkDiagnostic t) {
+    final theme = Theme.of(context);
     final color = _statusColor(t.status);
-    return Card(
-      color: Theme.of(context).cardColor,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(Icons.network_check, color: color),
+    
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: Icon(Icons.network_check, color: color, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      t.description,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: color.withOpacity(0.5), width: 1),
+                ),
+                child: Text(
+                  _statusLabel(t.status),
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (t.id == 'latency' && t.latencyMs != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.timer, color: Colors.white70, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'المتوسط: ${t.latencyMs!.toStringAsFixed(0)} مللي ثانية',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          if (t.id == 'speed_test' && (t.downloadSpeedMbps != null || t.uploadSpeedMbps != null))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.speed, color: Colors.white70, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'التحميل: ${t.downloadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps • الرفع: ${t.uploadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps',
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            width: double.infinity,
+            child: Text(
+              t.message,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: t.status == DiagnosticStatus.running
+                      ? null
+                      : () async {
+                          if (t.id == 'speed_test') {
+                            final proceed = await _confirmSpeedTest();
+                            if (proceed != true) return;
+                          }
+                          await _executeTest(t);
+                        },
+                  icon: t.status == DiagnosticStatus.running
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.play_arrow, size: 20),
+                  label: const Text('تشغيل'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              if (t.id == 'speed_test') ..[
+                const SizedBox(width: 10),
+                Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Row(
                     children: [
-                      Text(t.title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text(t.description, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                      Icon(Icons.warning_amber, color: Colors.orange, size: 18),
+                      SizedBox(width: 6),
+                      Text(
+                        '~30MB',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-                  child: Text(_statusLabel(t.status), style: TextStyle(color: color, fontWeight: FontWeight.bold)),
-                )
               ],
-            ),
-            const SizedBox(height: 12),
-            if (t.id == 'latency' && t.latencyMs != null)
-              Text('المتوسط: ${t.latencyMs!.toStringAsFixed(0)} مللي ثانية', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)),
-            if (t.id == 'speed_test' && (t.downloadSpeedMbps != null || t.uploadSpeedMbps != null))
-              Text('التحميل: ${t.downloadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps • الرفع: ${t.uploadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)),
-            Text(t.message, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: t.status == DiagnosticStatus.running
-                        ? null
-                        : () async {
-                            if (t.id == 'speed_test') {
-                              final proceed = await _confirmSpeedTest();
-                              if (proceed != true) return;
-                            }
-                            await _executeTest(t);
-                          },
-                    icon: t.status == DiagnosticStatus.running
-                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.play_arrow),
-                    label: const Text('تشغيل'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (t.id == 'speed_test')
-                  Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(color: Colors.orange.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                    alignment: Alignment.center,
-                    child: const Text('قد يستهلك ~30MB', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w600)),
-                  )
-              ],
-            )
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -658,126 +842,256 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('التوصيات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'التوصيات',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
         const SizedBox(height: 8),
         if (_recommendations.isEmpty)
-          Card(
-            color: Theme.of(context).cardColor,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text('لا توجد توصيات حالياً', style: TextStyle(color: Colors.white70)),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle, color: Colors.greenAccent, size: 24),
+                SizedBox(width: 12),
+                Text(
+                  'لا توجد توصيات - الشبكة في حالة جيدة!',
+                  style: TextStyle(color: Colors.white, fontSize: 15),
+                ),
+              ],
             ),
           ),
-        ..._recommendations.map(_buildRecommendationCard).toList(),
+        ..._recommendations.map((r) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildRecommendationCard(r),
+        )).toList(),
       ],
     );
   }
 
   Widget _buildRecommendationCard(NetworkRecommendation r) {
+    final theme = Theme.of(context);
     Color sevColor;
+    String severityLabel;
+    
     switch (r.severity) {
       case SeverityLevel.high:
         sevColor = Colors.redAccent;
+        severityLabel = 'عاجل';
         break;
       case SeverityLevel.medium:
         sevColor = Colors.orange;
+        severityLabel = 'متوسط';
         break;
       case SeverityLevel.low:
         sevColor = Colors.amber;
+        severityLabel = 'منخفض';
         break;
       case SeverityLevel.info:
-        sevColor = Theme.of(context).primaryColor;
+        sevColor = Colors.blueAccent;
+        severityLabel = 'معلومة';
         break;
     }
-    return Card(
-      color: Theme.of(context).cardColor,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: sevColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(r.icon, color: sevColor),
+    
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: sevColor.withOpacity(0.4),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: sevColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(r.title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text(r.description, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() => r.expanded = !r.expanded);
-                  },
-                  icon: Icon(r.expanded ? Icons.expand_less : Icons.expand_more, color: Theme.of(context).textTheme.bodyMedium?.color),
-                )
-              ],
-            ),
-            if (r.expanded) ...[
-              const SizedBox(height: 12),
-              ...r.steps.map((s) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: Icon(r.icon, color: sevColor, size: 26),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        const Icon(Icons.check_circle, size: 18, color: Colors.white70),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(s, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color))),
+                        Expanded(
+                          child: Text(
+                            r.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: sevColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            severityLabel,
+                            style: TextStyle(
+                              color: sevColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ))
-            ]
+                    const SizedBox(height: 6),
+                    Text(
+                      r.description,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() => r.expanded = !r.expanded);
+                },
+                icon: Icon(
+                  r.expanded ? Icons.expand_less : Icons.expand_more,
+                  color: Colors.white60,
+                ),
+              ),
+            ],
+          ),
+          if (r.expanded) ...[
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white12),
+            const SizedBox(height: 12),
+            const Text(
+              'خطوات الحل:',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...r.steps.asMap().entries.map((entry) {
+              final index = entry.key + 1;
+              final step = entry.value;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: sevColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '$index',
+                        style: TextStyle(
+                          color: sevColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        step,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildAdvancedTools() {
-    final primary = Theme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final primary = theme.primaryColor;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('أدوات متقدمة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'أدوات متقدمة',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: InkWell(
                 onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const NetworkMapScreen()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const NetworkMapScreen()),
+                  );
                 },
-                borderRadius: BorderRadius.circular(16),
-                child: Card(
-                  color: primary.withOpacity(0.1),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: primary.withOpacity(0.25), borderRadius: BorderRadius.circular(12)),
-                          child: Icon(Icons.hub_outlined, size: 28, color: primary),
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: primary.withOpacity(0.3), width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: primary.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        const SizedBox(height: 8),
-                        const Text('خريطة الشبكة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
+                        child: Icon(Icons.hub_outlined, size: 32, color: primary),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'خريطة الشبكة',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -786,29 +1100,45 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
             Expanded(
               child: InkWell(
                 onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RogueDhcpDetectorScreen()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const RogueDhcpDetectorScreen()),
+                  );
                 },
-                borderRadius: BorderRadius.circular(16),
-                child: Card(
-                  color: Colors.red.withOpacity(0.1),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        SizedBox(height: 4),
-                        Icon(Icons.dvr, size: 28, color: Colors.redAccent),
-                        SizedBox(height: 8),
-                        Text('كاشف DHCP الدخيل', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.redAccent.withOpacity(0.3), width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'كاشف DHCP الدخيل',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ],
-        )
+        ),
       ],
     );
   }

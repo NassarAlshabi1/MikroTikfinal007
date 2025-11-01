@@ -229,7 +229,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                             decoration: const InputDecoration(
                                 labelText: 'اختر الفئة (البروفايل)',
                                 prefixIcon: Icon(Icons.category_outlined)),
-                            style: const TextStyle(color: Colors.black87),
+                            style: const TextStyle(color: Colors.white),
                             dropdownColor: Colors.white,
                             items: widget.profiles
                                 .map((p) => DropdownMenuItem(
@@ -248,7 +248,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                             decoration: const InputDecoration(
                                 labelText: 'عدد الكروت في كل صفحة',
                                 prefixIcon: Icon(Icons.view_module_outlined)),
-                            style: const TextStyle(color: Colors.black87),
+                            style: const TextStyle(color: Colors.white),
                             keyboardType: TextInputType.number,
                             validator: (v) {
                               if (v == null || v.isEmpty) return 'الحقل مطلوب';
