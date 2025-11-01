@@ -1,8 +1,8 @@
-// lib/cards_statistics_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
+
+enum TimeRange { all, today, week, month }
 
 class CardsStatisticsScreen extends StatefulWidget {
   const CardsStatisticsScreen({super.key});
@@ -14,18 +14,20 @@ class CardsStatisticsScreen extends StatefulWidget {
 class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
   bool _isLoading = true;
   String? _errorMessage;
-  
-  // الإحصائيات
+
   int _totalCards = 0;
-  int _activeCards = 0;        // الكروت المفعلة (disabled=false)
-  int _disabledCards = 0;      // الكروت المعطلة (disabled=true)
-  int _cardsWithSessions = 0;  // الكروت النشطة حالياً (لها جلسات)
-  int _totalSessions = 0;      // إجمالي الجلسات النشطة
-  
-  // إحصائيات إضافية
+  int _activeCards = 0;
+  int _disabledCards = 0;
+  int _cardsWithSessions = 0;
+  int _totalSessions = 0;
+
   double _totalUploadGB = 0.0;
   double _totalDownloadGB = 0.0;
-  Map<String, int> _cardsByProfile = {};  // عدد الكروت لكل Profile
+  Map<String, int> _cardsByProfile = {};
+
+  TimeRange _selectedRange = TimeRange.all;
+  List<Map<String, dynamic>> _usersRaw = [];
+  List<Map<String, dynamic>> _sessionsRaw = [];
 
   @override
   void initState() {
@@ -42,56 +44,45 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      
-      // جلب جميع المستخدمين (الكروت)
+
       final usersResponse = await client.talk([
         '/tool/user-manager/user/print',
       ]);
-      
-      _totalCards = usersResponse.length;
+
+      final sessionsResponse = await client.talk([
+        '/tool/user-manager/session/print',
+      ]);
+
+      _usersRaw = usersResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+      _sessionsRaw = sessionsResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+
+      _totalCards = _usersRaw.length;
       _activeCards = 0;
       _disabledCards = 0;
-      _totalUploadGB = 0.0;
-      _totalDownloadGB = 0.0;
       _cardsByProfile.clear();
-      
-      // تحليل بيانات المستخدمين
-      for (final user in usersResponse) {
+
+      double allTimeUploadBytes = 0.0;
+      double allTimeDownloadBytes = 0.0;
+
+      for (final user in _usersRaw) {
         final disabled = user['disabled'] == 'true';
         if (disabled) {
           _disabledCards++;
         } else {
           _activeCards++;
         }
-        
-        // حساب الاستخدام الكلي
-        final uploadUsed = int.tryParse(user['upload-used'] ?? '0') ?? 0;
-        final downloadUsed = int.tryParse(user['download-used'] ?? '0') ?? 0;
-        _totalUploadGB += uploadUsed / (1024 * 1024 * 1024);
-        _totalDownloadGB += downloadUsed / (1024 * 1024 * 1024);
-        
-        // تصنيف حسب البروفايل
+
+        final uploadUsed = double.tryParse(user['upload-used'] ?? '0') ?? 0.0;
+        final downloadUsed = double.tryParse(user['download-used'] ?? '0') ?? 0.0;
+        allTimeUploadBytes += uploadUsed;
+        allTimeDownloadBytes += downloadUsed;
+
         final profile = user['actual-profile'] ?? 'غير محدد';
         _cardsByProfile[profile] = (_cardsByProfile[profile] ?? 0) + 1;
       }
-      
-      // جلب الجلسات النشطة
-      final sessionsResponse = await client.talk([
-        '/tool/user-manager/session/print',
-      ]);
-      
-      _totalSessions = sessionsResponse.length;
-      
-      // حساب عدد الكروت التي لها جلسات نشطة
-      final Set<String> usersWithSessions = {};
-      for (final session in sessionsResponse) {
-        final username = session['user'];
-        if (username != null) {
-          usersWithSessions.add(username);
-        }
-      }
-      _cardsWithSessions = usersWithSessions.length;
-      
+
+      _recalculateForRange(allTimeUploadBytes, allTimeDownloadBytes);
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -109,10 +100,111 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
     }
   }
 
+  void _recalculateForRange(double allTimeUploadBytes, double allTimeDownloadBytes) {
+    final DateTime now = DateTime.now();
+    DateTime? start;
+    switch (_selectedRange) {
+      case TimeRange.today:
+        start = DateTime(now.year, now.month, now.day);
+        break;
+      case TimeRange.week:
+        start = now.subtract(const Duration(days: 7));
+        break;
+      case TimeRange.month:
+        start = now.subtract(const Duration(days: 30));
+        break;
+      case TimeRange.all:
+        start = null;
+        break;
+    }
+
+    List<Map<String, dynamic>> filteredSessions;
+    if (start == null) {
+      filteredSessions = _sessionsRaw;
+    } else {
+      filteredSessions = _sessionsRaw.where((s) {
+        final DateTime? st = _inferSessionStartTime(s);
+        if (st == null) return false;
+        return st.isAfter(start!);
+      }).toList();
+    }
+
+    final Set<String> usersWithSessions = {};
+    double periodUploadBytes = 0.0;
+    double periodDownloadBytes = 0.0;
+
+    for (final s in filteredSessions) {
+      final u = s['user'];
+      if (u != null) usersWithSessions.add(u);
+      final su = double.tryParse(s['upload'] ?? '0') ?? 0.0;
+      final sd = double.tryParse(s['download'] ?? '0') ?? 0.0;
+      periodUploadBytes += su;
+      periodDownloadBytes += sd;
+    }
+
+    _cardsWithSessions = usersWithSessions.length;
+    _totalSessions = filteredSessions.length;
+
+    if (_selectedRange == TimeRange.all) {
+      _totalUploadGB = allTimeUploadBytes / (1024 * 1024 * 1024);
+      _totalDownloadGB = allTimeDownloadBytes / (1024 * 1024 * 1024);
+    } else {
+      _totalUploadGB = periodUploadBytes / (1024 * 1024 * 1024);
+      _totalDownloadGB = periodDownloadBytes / (1024 * 1024 * 1024);
+    }
+  }
+
+  DateTime? _inferSessionStartTime(Map<String, dynamic> session) {
+    final uptimeStr = session['uptime'];
+    if (uptimeStr is String && uptimeStr.isNotEmpty) {
+      final d = _parseRosDuration(uptimeStr);
+      return DateTime.now().subtract(d);
+    }
+    final st = session['start-time'];
+    if (st is String && st.isNotEmpty) {
+      try {
+        return DateTime.parse(st);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  Duration _parseRosDuration(String s) {
+    int weeks = 0, days = 0, hours = 0, minutes = 0, seconds = 0;
+    String num = '';
+    for (int i = 0; i < s.length; i++) {
+      final ch = s[i];
+      if (RegExp(r'\d').hasMatch(ch)) {
+        num += ch;
+      } else {
+        final v = int.tryParse(num) ?? 0;
+        switch (ch) {
+          case 'w':
+            weeks = v;
+            break;
+          case 'd':
+            days = v;
+            break;
+          case 'h':
+            hours = v;
+            break;
+          case 'm':
+            minutes = v;
+            break;
+          case 's':
+            seconds = v;
+            break;
+        }
+        num = '';
+      }
+    }
+    return Duration(weeks: weeks, days: days, hours: hours, minutes: minutes, seconds: seconds);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('إحصائيات الكروت'),
@@ -161,6 +253,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        _buildRangeSelector(theme),
+                        const SizedBox(height: 12),
                         _buildSummaryCard(theme),
                         const SizedBox(height: 16),
                         _buildStatusGrid(theme),
@@ -172,6 +266,51 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
                     ),
                   ),
                 ),
+    );
+  }
+
+  Widget _buildRangeSelector(ThemeData theme) {
+    String label(TimeRange r) {
+      switch (r) {
+        case TimeRange.today:
+          return 'اليوم';
+        case TimeRange.week:
+          return 'الأسبوع';
+        case TimeRange.month:
+          return 'الشهر';
+        case TimeRange.all:
+          return 'الكل';
+      }
+    }
+
+    final items = TimeRange.values;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: items.map((r) {
+        final selected = _selectedRange == r;
+        return ChoiceChip(
+          label: Text(label(r)),
+          selected: selected,
+          onSelected: (v) {
+            if (!v || r == _selectedRange) return;
+            setState(() {
+              _selectedRange = r;
+              double up = 0.0, down = 0.0;
+              for (final u in _usersRaw) {
+                up += double.tryParse(u['upload-used'] ?? '0') ?? 0.0;
+                down += double.tryParse(u['download-used'] ?? '0') ?? 0.0;
+              }
+              _recalculateForRange(up, down);
+            });
+          },
+          backgroundColor: theme.cardColor,
+          selectedColor: theme.primaryColor.withOpacity(0.25),
+          labelStyle: TextStyle(color: selected ? Colors.white : theme.textTheme.bodyMedium?.color),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        );
+      }).toList(),
     );
   }
 
@@ -287,6 +426,22 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
   }
 
   Widget _buildUsageCard(ThemeData theme) {
+    String suffix;
+    switch (_selectedRange) {
+      case TimeRange.today:
+        suffix = ' (اليوم)';
+        break;
+      case TimeRange.week:
+        suffix = ' (آخر 7 أيام)';
+        break;
+      case TimeRange.month:
+        suffix = ' (آخر 30 يوم)';
+        break;
+      case TimeRange.all:
+        suffix = '';
+        break;
+    }
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -299,9 +454,9 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
               children: [
                 Icon(Icons.data_usage, color: theme.primaryColor),
                 const SizedBox(width: 8),
-                const Text(
-                  'الاستخدام الكلي',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  'الاستخدام الكلي$suffix',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -387,8 +542,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
             ),
             const SizedBox(height: 16),
             ..._cardsByProfile.entries.map((entry) {
-              final percentage = (_totalCards > 0 
-                  ? (entry.value / _totalCards * 100) 
+              final percentage = (_totalCards > 0
+                  ? (entry.value / _totalCards * 100)
                   : 0.0).toStringAsFixed(1);
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
