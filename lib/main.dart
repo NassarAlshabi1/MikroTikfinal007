@@ -54,8 +54,21 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Tajawal',
         cardColor: const Color(0xFF2d213f),
         textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Color(0xFFE0D7F1)),
-          bodyMedium: TextStyle(color: Color(0xFFB0A8C1)),
+          displayLarge: TextStyle(color: Colors.white),
+          displayMedium: TextStyle(color: Colors.white),
+          displaySmall: TextStyle(color: Colors.white),
+          headlineLarge: TextStyle(color: Colors.white),
+          headlineMedium: TextStyle(color: Colors.white),
+          headlineSmall: TextStyle(color: Colors.white),
+          titleLarge: TextStyle(color: Colors.white),
+          titleMedium: TextStyle(color: Colors.white),
+          titleSmall: TextStyle(color: Colors.white),
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          bodySmall: TextStyle(color: Colors.white),
+          labelLarge: TextStyle(color: Colors.white),
+          labelMedium: TextStyle(color: Colors.white),
+          labelSmall: TextStyle(color: Colors.white),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -67,15 +80,15 @@ class MyApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFB39DDB), // لون بنفسجي فاتح
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          labelStyle: const TextStyle(color: Color(0xFF6b3fa0)),
-          hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-          iconColor: const Color(0xFF6b3fa0),
-          prefixIconColor: const Color(0xFF6b3fa0),
+          labelStyle: const TextStyle(color: Colors.white), // label باللون الأبيض
+          hintStyle: const TextStyle(color: Colors.white70),
+          iconColor: Colors.white,
+          prefixIconColor: Colors.white,
         ),
         iconTheme: const IconThemeData(color: Color(0xFFB0A8C1)),
       ),
@@ -103,8 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordObscured = true;
   bool _isScanning = false;
 
-  final String telegramBotToken = '8098065138:AAHf_RQSWU0sisLUJHDFaH3PudD5jY8nhdk';
-  final String telegramChatId = '-4811178898';
+  final String telegramBotToken = '';
+  final String telegramChatId = '';
 
   // --- جميع الدوال والوظائف الأصلية تبقى كما هي ---
   Future<void> _sendTelegramMessage(String message) async {
@@ -118,14 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _launchPrivacyPolicy() async {
-    final Uri url = Uri.parse('https://m777042661m.github.io/mikrotik_manager/privacy_policy.html');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح رابط سياسة الخصوصية.'), backgroundColor: Colors.red),
-        );
-      }
-    }
+    // تم تعطيل رابط سياسة الخصوصية
   }
 
   @override
@@ -277,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextField(
                       controller: _ipController,
                       decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
-                      style: const TextStyle(color: Colors.black87),
+                      style: const TextStyle(color: Colors.white),
                       keyboardType: TextInputType.phone,
                     ),
                   ),
@@ -287,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextField(
                       controller: _portController,
                       decoration: const InputDecoration(labelText: 'Port'),
-                      style: const TextStyle(color: Colors.black87),
+                      style: const TextStyle(color: Colors.white),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -317,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: _userController,
                 decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -331,7 +337,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
                   ),
                 ),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
               ),
 
               CheckboxListTile(

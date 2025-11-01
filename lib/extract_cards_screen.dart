@@ -163,7 +163,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
             hint: const Text('اختر الفئة'),
-            style: const TextStyle(color: Colors.black87),
+            style: const TextStyle(color: Colors.white),
             dropdownColor: Colors.white,
             items: units.map((unit) {
               return DropdownMenuItem<String>(
@@ -507,7 +507,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           const Text(
                             'أدخل شروط المسح الضوئي للكروت',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                            style: const TextStyle(fontSize: 18, color: Colors.white),
                           ),
                           const SizedBox(height: 32),
                           TextFormField(
@@ -516,7 +516,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'بادئة الكرت (بماذا يبدأ الرقم)',
                               prefixIcon: Icon(Icons.looks_one_outlined),
                             ),
-                            style: const TextStyle(color: Colors.black87),
+                            style: const TextStyle(color: Colors.white),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -532,7 +532,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'طول رقم الكرت (عدد الأرقام)',
                               prefixIcon: Icon(Icons.format_list_numbered),
                             ),
-                            style: const TextStyle(color: Colors.black87),
+                            style: const TextStyle(color: Colors.white),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -551,7 +551,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'العدد الإجمالي للكروت في الورقة',
                               prefixIcon: Icon(Icons.calculate_outlined),
                             ),
-                            style: const TextStyle(color: Colors.black87),
+                            style: const TextStyle(color: Colors.white),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {

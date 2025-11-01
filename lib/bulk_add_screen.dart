@@ -67,8 +67,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
   bool _isNetworkLinked = false;
   Map<String, dynamic> _linkedData = {};
 
-  final String telegramBotToken = '8098065138:AAHf_RQSWU0sisLUJHDFaH3PudD5jY8nhdk';
-  final String telegramChatId = '-4811178898';
+  final String telegramBotToken = '';
+  final String telegramChatId = '';
 
   @override
   void initState() {
@@ -360,7 +360,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
             hint: const Text('اختر الفئة'),
-            style: const TextStyle(color: Colors.black87),
+            style: const TextStyle(color: Colors.white),
             dropdownColor: Colors.white,
             items: units.map((unit) {
               return DropdownMenuItem<String>(
@@ -505,7 +505,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   decoration: const InputDecoration(
                       labelText: 'بادئة (اختياري)',
                       border: OutlineInputBorder()),
-                  style: const TextStyle(color: Colors.black87)),
+                  style: const TextStyle(color: Colors.white)),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -514,7 +514,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           controller: _lengthController,
                           decoration: const InputDecoration(
                               labelText: 'الطول', border: OutlineInputBorder()),
-                          style: const TextStyle(color: Colors.black87),
+                          style: const TextStyle(color: Colors.white),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
@@ -524,7 +524,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           controller: _countController,
                           decoration: const InputDecoration(
                               labelText: 'العدد', border: OutlineInputBorder()),
-                          style: const TextStyle(color: Colors.black87),
+                          style: const TextStyle(color: Colors.white),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
@@ -537,7 +537,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
                 hint: const Text('اختر فئة'),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 dropdownColor: Colors.white,
                 items: widget.profiles
                     .map((p) => DropdownMenuItem(
@@ -553,7 +553,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                 decoration: const InputDecoration(
                     labelText: 'نوع أحرف المستخدم',
                     border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام')),
@@ -567,7 +567,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                 value: _cardType,
                 decoration: const InputDecoration(
                     labelText: 'نوع الكرت', border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(
@@ -619,7 +619,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   controller: _sharedUsersController,
                   decoration: const InputDecoration(
                       labelText: 'Shared Users', border: OutlineInputBorder()),
-                  style: const TextStyle(color: Colors.black87),
+                  style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.number,
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'مطلوب' : null),
