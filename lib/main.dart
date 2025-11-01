@@ -23,6 +23,7 @@ import 'network_map_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
 import 'mikrotik_connector.dart';
+import 'system_dashboard_screen.dart';
 // -----------------------------------------
 
 void main() {
@@ -521,6 +522,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (context) => const QahtaniLinkScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'لوحة المعلومات',
+        icon: Icons.dashboard,
+        color: const Color(0xFF00BCD4), // Cyan
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const SystemDashboardScreen()));
         },
       ),
       ServiceItem(
