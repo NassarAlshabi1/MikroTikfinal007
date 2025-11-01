@@ -281,11 +281,13 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
+                style: const TextStyle(color: Colors.black87),
                 validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
               ),
               TextFormField(
                 controller: ipController,
                 decoration: const InputDecoration(labelText: 'عنوان IP'),
+                style: const TextStyle(color: Colors.black87),
                 validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
               ),
             ],
