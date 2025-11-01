@@ -116,8 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordObscured = true;
   bool _isScanning = false;
 
-  final String telegramBotToken = '8098065138:AAHf_RQSWU0sisLUJHDFaH3PudD5jY8nhdk';
-  final String telegramChatId = '-4811178898';
+  final String telegramBotToken = '';
+  final String telegramChatId = '';
 
   // --- جميع الدوال والوظائف الأصلية تبقى كما هي ---
   Future<void> _sendTelegramMessage(String message) async {
@@ -131,14 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _launchPrivacyPolicy() async {
-    final Uri url = Uri.parse('https://m777042661m.github.io/mikrotik_manager/privacy_policy.html');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح رابط سياسة الخصوصية.'), backgroundColor: Colors.red),
-        );
-      }
-    }
+    // تم تعطيل رابط سياسة الخصوصية
   }
 
   @override
