@@ -3,7 +3,9 @@ import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
 import 'dart:math' as math;
 
-enum TimeRange { all, today, week, month }
+enum TimeRange { all, today, week, month, custom }
+
+enum CardStatusFilter { all, active, disabled, expired, withSessions }
 
 class CardsStatisticsScreen extends StatefulWidget {
   const CardsStatisticsScreen({super.key});
@@ -19,6 +21,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   int _totalCards = 0;
   int _activeCards = 0;
   int _disabledCards = 0;
+  int _expiredCards = 0;
   int _cardsWithSessions = 0;
   int _totalSessions = 0;
 
@@ -27,11 +30,20 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Map<String, int> _cardsByProfile = {};
 
   TimeRange _selectedRange = TimeRange.all;
+  CardStatusFilter _statusFilter = CardStatusFilter.all;
+  String? _selectedProfile;
+  
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
+  
   List<Map<String, dynamic>> _usersRaw = [];
   List<Map<String, dynamic>> _sessionsRaw = [];
+  List<Map<String, dynamic>> _filteredUsers = [];
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  
+  bool _showFilters = false;
 
   @override
   void initState() {
@@ -74,32 +86,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       _usersRaw = usersResponse.map((e) => Map<String, dynamic>.from(e)).toList();
       _sessionsRaw = sessionsResponse.map((e) => Map<String, dynamic>.from(e)).toList();
 
-      _totalCards = _usersRaw.length;
-      _activeCards = 0;
-      _disabledCards = 0;
-      _cardsByProfile.clear();
-
-      double allTimeUploadBytes = 0.0;
-      double allTimeDownloadBytes = 0.0;
-
-      for (final user in _usersRaw) {
-        final disabled = user['disabled'] == 'true';
-        if (disabled) {
-          _disabledCards++;
-        } else {
-          _activeCards++;
-        }
-
-        final uploadUsed = double.tryParse(user['upload-used'] ?? '0') ?? 0.0;
-        final downloadUsed = double.tryParse(user['download-used'] ?? '0') ?? 0.0;
-        allTimeUploadBytes += uploadUsed;
-        allTimeDownloadBytes += downloadUsed;
-
-        final profile = user['actual-profile'] ?? 'غير محدد';
-        _cardsByProfile[profile] = (_cardsByProfile[profile] ?? 0) + 1;
-      }
-
-      _recalculateForRange(allTimeUploadBytes, allTimeDownloadBytes);
+      _applyFilters();
 
       if (mounted) {
         setState(() {
@@ -119,34 +106,123 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     }
   }
 
-  void _recalculateForRange(double allTimeUploadBytes, double allTimeDownloadBytes) {
-    final DateTime now = DateTime.now();
-    DateTime? start;
+  void _applyFilters() {
+    // Filter by date range
+    DateTime? startDate;
+    DateTime? endDate = DateTime.now();
+    
     switch (_selectedRange) {
       case TimeRange.today:
-        start = DateTime(now.year, now.month, now.day);
+        startDate = DateTime(endDate.year, endDate.month, endDate.day);
         break;
       case TimeRange.week:
-        start = now.subtract(const Duration(days: 7));
+        startDate = endDate.subtract(const Duration(days: 7));
         break;
       case TimeRange.month:
-        start = now.subtract(const Duration(days: 30));
+        startDate = endDate.subtract(const Duration(days: 30));
+        break;
+      case TimeRange.custom:
+        startDate = _customStartDate;
+        endDate = _customEndDate ?? DateTime.now();
         break;
       case TimeRange.all:
-        start = null;
+        startDate = null;
         break;
     }
 
-    List<Map<String, dynamic>> filteredSessions;
-    if (start == null) {
-      filteredSessions = _sessionsRaw;
-    } else {
-      filteredSessions = _sessionsRaw.where((s) {
-        final DateTime? st = _inferSessionStartTime(s);
-        if (st == null) return false;
-        return st.isAfter(start!);
+    _filteredUsers = List.from(_usersRaw);
+
+    // Filter by status
+    if (_statusFilter != CardStatusFilter.all) {
+      final Set<String> usersWithSessions = _sessionsRaw.map((s) => s['user'] as String?).whereType<String>().toSet();
+      
+      _filteredUsers = _filteredUsers.where((user) {
+        switch (_statusFilter) {
+          case CardStatusFilter.active:
+            return user['disabled'] != 'true';
+          case CardStatusFilter.disabled:
+            return user['disabled'] == 'true';
+          case CardStatusFilter.expired:
+            return _isCardExpired(user);
+          case CardStatusFilter.withSessions:
+            return usersWithSessions.contains(user['username']);
+          case CardStatusFilter.all:
+            return true;
+        }
       }).toList();
     }
+
+    // Filter by profile
+    if (_selectedProfile != null && _selectedProfile!.isNotEmpty) {
+      _filteredUsers = _filteredUsers.where((user) {
+        return user['actual-profile'] == _selectedProfile;
+      }).toList();
+    }
+
+    _calculateStatistics(startDate, endDate);
+  }
+
+  bool _isCardExpired(Map<String, dynamic> user) {
+    final uptimeLimit = user['uptime-limit'];
+    final uptimeUsed = user['uptime-used'];
+    
+    if (uptimeLimit == null || uptimeUsed == null) return false;
+    
+    try {
+      final limitDuration = _parseRosDuration(uptimeLimit.toString());
+      final usedDuration = _parseRosDuration(uptimeUsed.toString());
+      
+      return usedDuration.inSeconds >= limitDuration.inSeconds && limitDuration.inSeconds > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void _calculateStatistics(DateTime? startDate, DateTime? endDate) {
+    _totalCards = _filteredUsers.length;
+    _activeCards = 0;
+    _disabledCards = 0;
+    _expiredCards = 0;
+    _cardsByProfile.clear();
+
+    double allTimeUploadBytes = 0.0;
+    double allTimeDownloadBytes = 0.0;
+
+    for (final user in _filteredUsers) {
+      final disabled = user['disabled'] == 'true';
+      if (disabled) {
+        _disabledCards++;
+      } else {
+        _activeCards++;
+      }
+      
+      if (_isCardExpired(user)) {
+        _expiredCards++;
+      }
+
+      final uploadUsed = double.tryParse(user['upload-used'] ?? '0') ?? 0.0;
+      final downloadUsed = double.tryParse(user['download-used'] ?? '0') ?? 0.0;
+      allTimeUploadBytes += uploadUsed;
+      allTimeDownloadBytes += downloadUsed;
+
+      final profile = user['actual-profile'] ?? 'غير محدد';
+      _cardsByProfile[profile] = (_cardsByProfile[profile] ?? 0) + 1;
+    }
+
+    // Filter sessions by date and users
+    List<Map<String, dynamic>> filteredSessions = _sessionsRaw;
+    
+    if (startDate != null) {
+      filteredSessions = filteredSessions.where((s) {
+        final DateTime? st = _inferSessionStartTime(s);
+        if (st == null) return false;
+        return st.isAfter(startDate) && st.isBefore(endDate!);
+      }).toList();
+    }
+    
+    // Filter sessions by filtered users
+    final filteredUsernames = _filteredUsers.map((u) => u['username'] as String?).whereType<String>().toSet();
+    filteredSessions = filteredSessions.where((s) => filteredUsernames.contains(s['user'])).toList();
 
     final Set<String> usersWithSessions = {};
     double periodUploadBytes = 0.0;
@@ -164,7 +240,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     _cardsWithSessions = usersWithSessions.length;
     _totalSessions = filteredSessions.length;
 
-    if (_selectedRange == TimeRange.all) {
+    if (_selectedRange == TimeRange.all || startDate == null) {
       _totalUploadGB = allTimeUploadBytes / (1024 * 1024 * 1024);
       _totalDownloadGB = allTimeDownloadBytes / (1024 * 1024 * 1024);
     } else {
@@ -220,6 +296,39 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     return Duration(days: (weeks * 7) + days, hours: hours, minutes: minutes, seconds: seconds);
   }
 
+  Future<void> _pickDateRange() async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: _customStartDate != null && _customEndDate != null
+          ? DateTimeRange(start: _customStartDate!, end: _customEndDate!)
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: Theme.of(context).primaryColor,
+              onPrimary: Colors.white,
+              surface: Theme.of(context).cardColor,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customStartDate = picked.start;
+        _customEndDate = picked.end;
+        _selectedRange = TimeRange.custom;
+        _applyFilters();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -232,6 +341,15 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
+            onPressed: () {
+              setState(() {
+                _showFilters = !_showFilters;
+              });
+            },
+            tooltip: 'الفلاتر',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _fetchStatistics,
@@ -288,11 +406,17 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          if (_showFilters) ...[
+                            _buildFiltersSection(theme),
+                            const SizedBox(height: 20),
+                          ],
+                          _buildActiveFiltersChips(theme),
+                          const SizedBox(height: 16),
                           _buildRangeSelector(theme),
                           const SizedBox(height: 20),
                           _buildMainStatCard(theme),
                           const SizedBox(height: 16),
-                          _buildStatusCardsRow(theme),
+                          _buildStatusCardsGrid(theme),
                           const SizedBox(height: 16),
                           _buildDataUsageCard(theme),
                           const SizedBox(height: 16),
@@ -307,6 +431,257 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     );
   }
 
+  Widget _buildFiltersSection(ThemeData theme) {
+    final allProfiles = _usersRaw.map((u) => u['actual-profile'] as String? ?? 'غير محدد').toSet().toList()..sort();
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.primaryColor.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.tune, color: theme.primaryColor, size: 24),
+              const SizedBox(width: 12),
+              const Text(
+                'فلترة متقدمة',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Status Filter
+          const Text('حالة الكرت', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: CardStatusFilter.values.map((filter) {
+              final selected = _statusFilter == filter;
+              String label;
+              IconData icon;
+              
+              switch (filter) {
+                case CardStatusFilter.all:
+                  label = 'الكل';
+                  icon = Icons.select_all;
+                  break;
+                case CardStatusFilter.active:
+                  label = 'مفعل';
+                  icon = Icons.check_circle;
+                  break;
+                case CardStatusFilter.disabled:
+                  label = 'معطل';
+                  icon = Icons.cancel;
+                  break;
+                case CardStatusFilter.expired:
+                  label = 'منتهي';
+                  icon = Icons.hourglass_empty;
+                  break;
+                case CardStatusFilter.withSessions:
+                  label = 'نشط الآن';
+                  icon = Icons.wifi;
+                  break;
+              }
+              
+              return FilterChip(
+                selected: selected,
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 16, color: selected ? Colors.white : Colors.white60),
+                    const SizedBox(width: 6),
+                    Text(label),
+                  ],
+                ),
+                onSelected: (value) {
+                  setState(() {
+                    _statusFilter = filter;
+                    _applyFilters();
+                  });
+                },
+                backgroundColor: theme.cardColor,
+                selectedColor: theme.primaryColor,
+                labelStyle: TextStyle(color: selected ? Colors.white : Colors.white60),
+                side: BorderSide(color: selected ? theme.primaryColor : Colors.white30),
+              );
+            }).toList(),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Profile Filter
+          const Text('الفئة', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white30),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _selectedProfile,
+                hint: const Text('اختر الفئة', style: TextStyle(color: Colors.white60)),
+                dropdownColor: theme.cardColor,
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('جميع الفئات', style: TextStyle(color: Colors.white)),
+                  ),
+                  ...allProfiles.map((profile) {
+                    return DropdownMenuItem<String>(
+                      value: profile,
+                      child: Text(profile, style: const TextStyle(color: Colors.white)),
+                    );
+                  }).toList(),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedProfile = value;
+                    _applyFilters();
+                  });
+                },
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Reset Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('إعادة تعيين الفلاتر'),
+              onPressed: () {
+                setState(() {
+                  _statusFilter = CardStatusFilter.all;
+                  _selectedProfile = null;
+                  _selectedRange = TimeRange.all;
+                  _customStartDate = null;
+                  _customEndDate = null;
+                  _applyFilters();
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white70,
+                side: const BorderSide(color: Colors.white30),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveFiltersChips(ThemeData theme) {
+    List<Widget> chips = [];
+    
+    if (_statusFilter != CardStatusFilter.all) {
+      String label;
+      switch (_statusFilter) {
+        case CardStatusFilter.active:
+          label = 'مفعل';
+          break;
+        case CardStatusFilter.disabled:
+          label = 'معطل';
+          break;
+        case CardStatusFilter.expired:
+          label = 'منتهي';
+          break;
+        case CardStatusFilter.withSessions:
+          label = 'نشط الآن';
+          break;
+        default:
+          label = '';
+      }
+      
+      chips.add(
+        Chip(
+          label: Text(label, style: const TextStyle(fontSize: 12)),
+          deleteIcon: const Icon(Icons.close, size: 16),
+          onDeleted: () {
+            setState(() {
+              _statusFilter = CardStatusFilter.all;
+              _applyFilters();
+            });
+          },
+          backgroundColor: theme.primaryColor.withOpacity(0.2),
+          side: BorderSide(color: theme.primaryColor),
+        ),
+      );
+    }
+    
+    if (_selectedProfile != null) {
+      chips.add(
+        Chip(
+          label: Text(_selectedProfile!, style: const TextStyle(fontSize: 12)),
+          deleteIcon: const Icon(Icons.close, size: 16),
+          onDeleted: () {
+            setState(() {
+              _selectedProfile = null;
+              _applyFilters();
+            });
+          },
+          backgroundColor: theme.primaryColor.withOpacity(0.2),
+          side: BorderSide(color: theme.primaryColor),
+        ),
+      );
+    }
+    
+    if (_selectedRange == TimeRange.custom && _customStartDate != null && _customEndDate != null) {
+      chips.add(
+        Chip(
+          label: Text(
+            '${_formatDate(_customStartDate!)} - ${_formatDate(_customEndDate!)}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          deleteIcon: const Icon(Icons.close, size: 16),
+          onDeleted: () {
+            setState(() {
+              _selectedRange = TimeRange.all;
+              _customStartDate = null;
+              _customEndDate = null;
+              _applyFilters();
+            });
+          },
+          backgroundColor: theme.primaryColor.withOpacity(0.2),
+          side: BorderSide(color: theme.primaryColor),
+        ),
+      );
+    }
+    
+    if (chips.isEmpty) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('الفلاتر النشطة:', style: TextStyle(fontSize: 12, color: Colors.white60)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: chips,
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildRangeSelector(ThemeData theme) {
     String label(TimeRange r) {
       switch (r) {
@@ -316,6 +691,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           return 'أسبوع';
         case TimeRange.month:
           return 'شهر';
+        case TimeRange.custom:
+          return 'مخصص';
         case TimeRange.all:
           return 'الكل';
       }
@@ -334,16 +711,16 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           return Expanded(
             child: GestureDetector(
               onTap: () {
-                if (r == _selectedRange) return;
-                setState(() {
-                  _selectedRange = r;
-                  double up = 0.0, down = 0.0;
-                  for (final u in _usersRaw) {
-                    up += double.tryParse(u['upload-used'] ?? '0') ?? 0.0;
-                    down += double.tryParse(u['download-used'] ?? '0') ?? 0.0;
-                  }
-                  _recalculateForRange(up, down);
-                });
+                if (r == TimeRange.custom) {
+                  _pickDateRange();
+                } else {
+                  setState(() {
+                    _selectedRange = r;
+                    _customStartDate = null;
+                    _customEndDate = null;
+                    _applyFilters();
+                  });
+                }
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -353,14 +730,25 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                   color: selected ? theme.primaryColor : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  label(r),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: selected ? Colors.white : Colors.white60,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 14,
-                  ),
+                child: Column(
+                  children: [
+                    if (r == TimeRange.custom)
+                      Icon(
+                        Icons.date_range,
+                        size: 16,
+                        color: selected ? Colors.white : Colors.white60,
+                      ),
+                    if (r == TimeRange.custom) const SizedBox(height: 4),
+                    Text(
+                      label(r),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: selected ? Colors.white : Colors.white60,
+                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -421,6 +809,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               Container(width: 1, height: 40, color: Colors.white30),
               _buildMiniStat('معطل', _disabledCards, Icons.cancel, Colors.redAccent),
               Container(width: 1, height: 40, color: Colors.white30),
+              _buildMiniStat('منتهي', _expiredCards, Icons.hourglass_empty, Colors.orangeAccent),
+              Container(width: 1, height: 40, color: Colors.white30),
               _buildMiniStat('نشط', _cardsWithSessions, Icons.wifi, Colors.blueAccent),
             ],
           ),
@@ -432,12 +822,12 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Widget _buildMiniStat(String label, int value, IconData icon, Color color) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 28),
+        Icon(icon, color: color, size: 24),
         const SizedBox(height: 8),
         Text(
           '$value',
           style: const TextStyle(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -446,7 +836,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         Text(
           label,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             color: Colors.white70,
           ),
         ),
@@ -454,28 +844,29 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     );
   }
 
-  Widget _buildStatusCardsRow(ThemeData theme) {
-    return Row(
+  Widget _buildStatusCardsGrid(ThemeData theme) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      childAspectRatio: 1.4,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
       children: [
-        Expanded(
-          child: _buildSmallStatCard(
-            'الجلسات النشطة',
-            _totalSessions,
-            Icons.devices,
-            Colors.orangeAccent,
-            theme,
-          ),
+        _buildSmallStatCard(
+          'الجلسات النشطة',
+          _totalSessions,
+          Icons.devices,
+          Colors.orangeAccent,
+          theme,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSmallStatCard(
-            'معدل النشاط',
-            _totalCards > 0 ? ((_cardsWithSessions / _totalCards) * 100).round() : 0,
-            Icons.trending_up,
-            Colors.purpleAccent,
-            theme,
-            suffix: '%',
-          ),
+        _buildSmallStatCard(
+          'معدل النشاط',
+          _totalCards > 0 ? ((_cardsWithSessions / _totalCards) * 100).round() : 0,
+          Icons.trending_up,
+          Colors.purpleAccent,
+          theme,
+          suffix: '%',
         ),
       ],
     );
@@ -539,6 +930,13 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       case TimeRange.month:
         suffix = ' (آخر 30 يوم)';
         break;
+      case TimeRange.custom:
+        if (_customStartDate != null && _customEndDate != null) {
+          suffix = ' (${_formatDate(_customStartDate!)} - ${_formatDate(_customEndDate!)})';
+        } else {
+          suffix = '';
+        }
+        break;
       case TimeRange.all:
         suffix = '';
         break;
@@ -571,7 +969,9 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               Expanded(
                 child: Text(
                   'استهلاك البيانات$suffix',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ),
             ],
@@ -772,6 +1172,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Widget _buildQuickStatsGrid(ThemeData theme) {
     final avgSessionsPerCard = _cardsWithSessions > 0 ? (_totalSessions / _cardsWithSessions).toStringAsFixed(1) : '0';
     final activePercentage = _totalCards > 0 ? ((_activeCards / _totalCards) * 100).round() : 0;
+    final expiredPercentage = _totalCards > 0 ? ((_expiredCards / _totalCards) * 100).round() : 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -800,8 +1201,32 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               child: _buildQuickStatCard(
                 'نسبة التفعيل',
                 '$activePercentage%',
-                Icons.percent,
+                Icons.check_circle_outline,
                 Colors.indigoAccent,
+                theme,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickStatCard(
+                'نسبة المنتهي',
+                '$expiredPercentage%',
+                Icons.hourglass_bottom,
+                Colors.deepOrangeAccent,
+                theme,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildQuickStatCard(
+                'الفئات',
+                '${_cardsByProfile.length}',
+                Icons.category_outlined,
+                Colors.amberAccent,
                 theme,
               ),
             ),
