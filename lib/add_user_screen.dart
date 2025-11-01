@@ -124,7 +124,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('تمت إضافة المستخدم "$username" بنجاح'),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).primaryColor,
             action: SnackBarAction(
               label: 'نسخ',
               textColor: Colors.white,
@@ -201,6 +201,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 controller: _usernameController,
                 decoration: const InputDecoration(
                     labelText: 'اسم المستخدم', border: OutlineInputBorder()),
+                style: const TextStyle(color: Colors.black87),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'هذا الحقل مطلوب';
@@ -213,6 +214,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 controller: _sharedUsersController,
                 decoration: const InputDecoration(
                     labelText: 'Shared Users', border: OutlineInputBorder()),
+                style: const TextStyle(color: Colors.black87),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -231,6 +233,8 @@ class _AddUserScreenState extends State<AddUserScreen> {
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
                 hint: const Text('اختر فئة'),
+                style: const TextStyle(color: Colors.black87),
+                dropdownColor: Colors.white,
                 items: widget.profiles.map((profile) {
                   final profileName = profile['name'] as String;
                   return DropdownMenuItem(
@@ -255,6 +259,8 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 initialValue: _cardType,
                 decoration: const InputDecoration(
                     labelText: 'نوع الكرت', border: OutlineInputBorder()),
+                style: const TextStyle(color: Colors.black87),
+                dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(
                       value: 'username_only', child: Text('اسم مستخدم فقط')),
@@ -273,6 +279,8 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 decoration: const InputDecoration(
                     labelText: 'نوع أحرف المستخدم',
                     border: OutlineInputBorder()),
+                style: const TextStyle(color: Colors.black87),
+                dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(
                       value: 'mixed', child: Text('حروف وأرقام')),

@@ -128,7 +128,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message['message'] ?? 'تمت العملية بنجاح.'),
-                backgroundColor: Colors.green,
+                backgroundColor: Theme.of(context).primaryColor,
               ),
             );
           }
@@ -163,6 +163,8 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
           title: const Text('اختر فئة القحطاني'),
           content: DropdownButtonFormField<String>(
             hint: const Text('اختر الفئة'),
+            style: const TextStyle(color: Colors.black87),
+            dropdownColor: Colors.white,
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
@@ -406,7 +408,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           label: const Text('إضافة للقحطاني', style: TextStyle(fontSize: 11)),
                           onPressed: () => _showAddCardsToQahtaniDialog(_extractedCardNumbers),
                            style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
+                            backgroundColor: Theme.of(context).primaryColor,
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                         ),
@@ -500,7 +502,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Icon(Icons.camera_alt_outlined,
-                              size: 80, color: Colors.deepOrange),
+                              size: 80, color: Color(0xFF6b3fa0)),
                           const SizedBox(height: 20),
                           const Text(
                             'أدخل شروط المسح الضوئي للكروت',
@@ -514,6 +516,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'بادئة الكرت (بماذا يبدأ الرقم)',
                               prefixIcon: Icon(Icons.looks_one_outlined),
                             ),
+                            style: const TextStyle(color: Colors.black87),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -529,6 +532,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'طول رقم الكرت (عدد الأرقام)',
                               prefixIcon: Icon(Icons.format_list_numbered),
                             ),
+                            style: const TextStyle(color: Colors.black87),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -547,6 +551,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'العدد الإجمالي للكروت في الورقة',
                               prefixIcon: Icon(Icons.calculate_outlined),
                             ),
+                            style: const TextStyle(color: Colors.black87),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {

@@ -128,7 +128,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message['message'] ?? 'تمت العملية بنجاح.'),
-              backgroundColor: Colors.green,
+              backgroundColor: Theme.of(context).primaryColor,
             ),
           );
           break;
@@ -260,8 +260,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Center(
-                child: Text('عملية ناجحة',
-                    style: TextStyle(color: Colors.green))),
+                child: Text('عملية ناجحة')),
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
@@ -288,8 +287,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                       await Share.shareXFiles([XFile(filePath)],
                           text: 'New MikroTik Users');
                     },
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                   ),
 
                   if (relevantTemplate != null) ...[
@@ -297,7 +295,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                      ElevatedButton.icon(
                         icon: const Icon(Icons.picture_as_pdf),
                         label: const Text('تصدير PDF'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                         onPressed: () {
                           Navigator.of(context).pop();
                           final List<String> usernamesOnly = users.map((u) => u['username']!).toList();
@@ -319,8 +317,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                         Navigator.of(context).pop();
                         _showAddCardsToQahtaniDialog(users);
                       },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal),
+                      style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                     ),
                   ],
                   TextButton(child: const Text('إغلاق'), onPressed: () => Navigator.of(context).pop())
@@ -343,6 +340,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
           title: const Text('اختر فئة القحطاني'),
           content: DropdownButtonFormField<String>(
             hint: const Text('اختر الفئة'),
+            style: const TextStyle(color: Colors.black87),
+            dropdownColor: Colors.white,
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
@@ -485,7 +484,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   controller: _prefixController,
                   decoration: const InputDecoration(
                       labelText: 'بادئة (اختياري)',
-                      border: OutlineInputBorder())),
+                      border: OutlineInputBorder()),
+                  style: const TextStyle(color: Colors.black87)),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -494,6 +494,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           controller: _lengthController,
                           decoration: const InputDecoration(
                               labelText: 'الطول', border: OutlineInputBorder()),
+                          style: const TextStyle(color: Colors.black87),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
@@ -503,6 +504,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           controller: _countController,
                           decoration: const InputDecoration(
                               labelText: 'العدد', border: OutlineInputBorder()),
+                          style: const TextStyle(color: Colors.black87),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
@@ -515,6 +517,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
                 hint: const Text('اختر فئة'),
+                style: const TextStyle(color: Colors.black87),
+                dropdownColor: Colors.white,
                 items: widget.profiles
                     .map((p) => DropdownMenuItem(
                         value: p['name'] as String,
@@ -529,6 +533,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                 decoration: const InputDecoration(
                     labelText: 'نوع أحرف المستخدم',
                     border: OutlineInputBorder()),
+                style: const TextStyle(color: Colors.black87),
+                dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام')),
                   DropdownMenuItem(value: 'letters', child: Text('حروف فقط')),
@@ -541,6 +547,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                 initialValue: _cardType,
                 decoration: const InputDecoration(
                     labelText: 'نوع الكرت', border: OutlineInputBorder()),
+                style: const TextStyle(color: Colors.black87),
+                dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(
                       value: 'username_only', child: Text('اسم مستخدم فقط')) ,
@@ -570,6 +578,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   controller: _sharedUsersController,
                   decoration: const InputDecoration(
                       labelText: 'Shared Users', border: OutlineInputBorder()),
+                  style: const TextStyle(color: Colors.black87),
                   keyboardType: TextInputType.number,
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'مطلوب' : null),
