@@ -198,7 +198,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> {
         num = '';
       }
     }
-    return Duration(weeks: weeks, days: days, hours: hours, minutes: minutes, seconds: seconds);
+    return Duration(days: (weeks * 7) + days, hours: hours, minutes: minutes, seconds: seconds);
   }
 
   @override
