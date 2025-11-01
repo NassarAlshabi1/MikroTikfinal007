@@ -544,7 +544,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               const SizedBox(height: 16),
 
               // Charts Section
-              if (_cpuHistory.length > 1) ..[
+              if (_cpuHistory.length > 1) ...[
                 _buildChartCard(
                   title: 'استخدام المعالج (CPU)',
                   data: _cpuHistory,
