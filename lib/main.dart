@@ -49,40 +49,35 @@ class MyApp extends StatelessWidget {
       title: 'MikroTik Manager',
       theme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: const Color(0xFF8A56AC), // لون بنفسجي مميز
-        scaffoldBackgroundColor: const Color(0xFF2C2444), // خلفية بنفسجية داكنة
+        primaryColor: const Color(0xFF6b3fa0),
+        scaffoldBackgroundColor: const Color(0xFF1a1329),
         fontFamily: 'Tajawal',
-        cardColor: const Color(0xFF3E355F), // لون البطاقات
+        cardColor: const Color(0xFF2d213f),
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Color(0xFFE0D7F1)),
           bodyMedium: TextStyle(color: Color(0xFFB0A8C1)),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF8A56AC), // لون أساسي للأزرار
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            textStyle: const TextStyle(fontSize: 18, fontFamily: 'Tajawal', fontWeight: FontWeight.bold),
+            backgroundColor: const Color(0xFF6b3fa0),
+            minimumSize: const Size(double.infinity, 52),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFF3E355F),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.0),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          hintStyle: const TextStyle(color: Color(0xFFB0A8C1)),
-          labelStyle: const TextStyle(color: Color(0xFFE0D7F1)),
-          prefixIconColor: const Color(0xFFB0A8C1),
+          labelStyle: const TextStyle(color: Color(0xFF6b3fa0)),
+          hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+          iconColor: const Color(0xFF6b3fa0),
+          prefixIconColor: const Color(0xFF6b3fa0),
         ),
-        iconTheme: const IconThemeData(
-          color: Color(0xFFB0A8C1),
-        ),
+        iconTheme: const IconThemeData(color: Color(0xFFB0A8C1)),
       ),
       home: const LoginScreen(),
     );
@@ -337,6 +332,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextField(
                       controller: _ipController,
                       decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
+                      style: const TextStyle(color: Colors.black87),
                       keyboardType: TextInputType.phone,
                     ),
                   ),
@@ -346,6 +342,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextField(
                       controller: _portController,
                       decoration: const InputDecoration(labelText: 'Port'),
+                      style: const TextStyle(color: Colors.black87),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -353,13 +350,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     height: 58,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3E355F),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: _isScanning
-                        ? const Padding(padding: EdgeInsets.all(12.0), child: CircularProgressIndicator())
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF6b3fa0),
+                            ),
+                          )
                         : IconButton(
-                            icon: const Icon(Icons.search),
+                            icon: const Icon(Icons.search, color: Color(0xFF6b3fa0)),
                             onPressed: _forceDiscoverGateway,
                             tooltip: 'بحث عن البوابة',
                           ),
@@ -367,7 +369,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              TextField(controller: _userController, decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline))),
+              TextField(
+                controller: _userController,
+                decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
+                style: const TextStyle(color: Colors.black87),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
@@ -380,6 +386,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
                   ),
                 ),
+                style: const TextStyle(color: Colors.black87),
               ),
 
               CheckboxListTile(
