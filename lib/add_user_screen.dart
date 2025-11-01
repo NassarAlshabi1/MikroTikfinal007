@@ -201,7 +201,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 controller: _usernameController,
                 decoration: const InputDecoration(
                     labelText: 'اسم المستخدم', border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'هذا الحقل مطلوب';
@@ -214,7 +214,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 controller: _sharedUsersController,
                 decoration: const InputDecoration(
                     labelText: 'Shared Users', border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -233,7 +233,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
                 hint: const Text('اختر فئة'),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 dropdownColor: Colors.white,
                 items: widget.profiles.map((profile) {
                   final profileName = profile['name'] as String;
@@ -259,7 +259,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 value: _cardType,
                 decoration: const InputDecoration(
                     labelText: 'نوع الكرت', border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(
@@ -279,7 +279,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 decoration: const InputDecoration(
                     labelText: 'نوع أحرف المستخدم',
                     border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: Colors.white),
                 dropdownColor: Colors.white,
                 items: const [
                   DropdownMenuItem(

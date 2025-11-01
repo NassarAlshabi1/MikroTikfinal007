@@ -118,7 +118,7 @@ class _CardListScreenState extends State<CardListScreen> {
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
             hint: const Text('اختر الفئة'),
-            style: const TextStyle(color: Colors.black87),
+            style: const TextStyle(color: Colors.white),
             dropdownColor: Colors.white,
             items: units.map((unit) {
               return DropdownMenuItem<String>(
