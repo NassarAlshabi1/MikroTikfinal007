@@ -195,7 +195,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
               // Removed 'disconnected' option
               const PopupMenuItem<String>(
                 value: 'all',
-                child: ListTile(leading: const Icon(Icons.devices), title: const Text('جميع الأجهزة')),
+                child: ListTile(leading: Icon(Icons.devices), title: Text('جميع الأجهزة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
               ),
             ],
           ),

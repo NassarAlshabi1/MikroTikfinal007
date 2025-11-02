@@ -50,6 +50,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
+  assets:
+    - assets/images/
 
 flutter_app_name:
   name: "اداره الكروت"
