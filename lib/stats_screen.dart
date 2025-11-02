@@ -161,7 +161,7 @@ class _StatsScreenState extends State<StatsScreen> {
         if (dataString != null) {
           try {
             final data = Map<String, dynamic>.from(
-              (await import('dart:convert')).jsonDecode(dataString)
+              jsonDecode(dataString)
             );
             clientName = data['client_info']?['name'] ?? 'غير محدد';
           } catch (e) {
