@@ -231,8 +231,6 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                             decoration: const InputDecoration(
                                 labelText: 'اختر الفئة (البروفايل)',
                                 prefixIcon: Icon(Icons.category_outlined)),
-                            style: const TextStyle(color: Colors.white),
-                            dropdownColor: Colors.white,
                             items: widget.profiles
                                 .map((p) => DropdownMenuItem(
                                       value: p['name'] as String,
