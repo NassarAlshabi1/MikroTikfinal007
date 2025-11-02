@@ -38,11 +38,11 @@ class MikrotikConnector {
       user: user,
       password: pass,
       port: port,
-      verbose: true,
+      verbose: false, // تعطيل verbose لتحسين الأداء
     );
 
     try {
-      final bool loggedIn = await client.login().timeout(const Duration(seconds: 10));
+      final bool loggedIn = await client.login().timeout(const Duration(seconds: 5)); // تقليل timeout إلى 5 ثواني
       if (loggedIn) {
         return client;
       } else {
