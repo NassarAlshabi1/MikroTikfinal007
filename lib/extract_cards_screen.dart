@@ -267,7 +267,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
         });
       }
     } catch (e) {
-      print('Error during document scanning: $e');
+      debugPrint('Error during document scanning: $e');
     }
   }
 

@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await _loadSavedCredentials();
       await _discoverGateway();
     } catch (e, s) {
-      print('Error in initState: $e\n$s');
+      debugPrint('Error in initState: $e\n$s');
     }
   }
 
@@ -611,7 +611,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             final data = jsonDecode(dataString);
             clientName = data['client_info']?['name'] ?? '';
           } catch (e) {
-            print('Error decoding qahtani_linked_data: $e');
+            debugPrint('Error decoding qahtani_linked_data: $e');
           }
         }
       }

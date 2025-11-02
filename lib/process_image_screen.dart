@@ -100,7 +100,7 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
 
       Navigator.pop(context, cardNumbers.toList());
     } catch (e) {
-      print("Error processing image: $e");
+      debugPrint("Error processing image: $e");
       Navigator.pop(context, []);
     }
   }
