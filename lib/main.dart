@@ -7,7 +7,6 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
 
 // --- افترض أن هذه الملفات موجودة في مشروعك ---
@@ -19,7 +18,6 @@ import 'qahtani_link_screen.dart';
 import 'profile_screen.dart';
 import 'pdf_templates_screen.dart';
 import 'check_user_screen.dart';
-import 'network_map_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
 import 'cards_statistics_screen.dart';

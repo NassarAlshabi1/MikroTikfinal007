@@ -26,7 +26,7 @@ class NetworkToolsScreen extends StatelessWidget {
               label: const Text('خريطة الشبكة'),
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => NetworkMapScreen(client: client),
+                  builder: (context) => const NetworkMapScreen(),
                 ));
               },
             ),
