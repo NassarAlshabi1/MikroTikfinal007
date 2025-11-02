@@ -103,19 +103,21 @@ class _StatsScreenState extends State<StatsScreen> {
       final freeMemory = double.tryParse(resourceData['free-memory']?.toString() ?? '0') ?? 0.0;
       final memoryUsagePercent = ((totalMemory - freeMemory) / totalMemory * 100);
 
-      setState(() {
-        _stats = {
-          'totalSessions': sessions.length,
-          'dataDownloaded': totalDownload / (1024 * 1024),
-          'dataUploaded': totalUpload / (1024 * 1024),
-          'cpuUsage': double.tryParse(cpuLoad) ?? 0.0,
-          'memoryUsage': memoryUsagePercent,
-          'uptime': resourceData['uptime']?.toString() ?? 'غير متوفر',
-          'activeUsers': activeUsers.length,
-          'version': resourceData['version']?.toString() ?? 'غير معروف',
-        };
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _stats = {
+            'totalSessions': sessions.length,
+            'dataDownloaded': totalDownload / (1024 * 1024),
+            'dataUploaded': totalUpload / (1024 * 1024),
+            'cpuUsage': double.tryParse(cpuLoad) ?? 0.0,
+            'memoryUsage': memoryUsagePercent,
+            'uptime': resourceData['uptime']?.toString() ?? 'غير متوفر',
+            'activeUsers': activeUsers.length,
+            'version': resourceData['version']?.toString() ?? 'غير معروف',
+          };
+          _isLoading = false;
+        });
+      }
 
       await prefs.setString('mikrotik_version', resourceData['version']?.toString() ?? '6');
 
