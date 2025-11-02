@@ -264,10 +264,8 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Icon(Icons.router_outlined, size: 80, color: Theme.of(context).primaryColor),
-              const SizedBox(height: 16),
-              const Text('MikroTik Manager', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 8),
+              Image.asset('assets/images/wifi_logo.png', width: 120, height: 120),
+              const SizedBox(height: 24),
               Text('إدارة شبكتك بسهولة وأمان', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color)),
               const SizedBox(height: 32),
 
