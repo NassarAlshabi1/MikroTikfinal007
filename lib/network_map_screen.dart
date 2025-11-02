@@ -443,11 +443,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               const PopupMenuItem<String>(
                 value: 'export',
-                child: ListTile(leading: Icon(Icons.file_upload), title: Text('تصدير / مشاركة')),
+                child: ListTile(leading: Icon(Icons.file_upload), title: Text('تصدير / مشاركة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
               ),
               const PopupMenuItem<String>(
                 value: 'import',
-                child: ListTile(leading: Icon(Icons.file_download), title: Text('استيراد خريطة')),
+                child: ListTile(leading: Icon(Icons.file_download), title: Text('استيراد خريطة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
               ),
             ],
           ),
@@ -595,21 +595,21 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           value: 'add',
           child: const ListTile(
             leading: Icon(Icons.add_circle_outline),
-            title: Text('إضافة جهاز فرعي'),
+            title: Text('إضافة جهاز فرعي', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ),
         PopupMenuItem(
           value: 'edit',
           child: const ListTile(
             leading: Icon(Icons.edit_outlined),
-            title: Text('تعديل الجهاز'),
+            title: Text('تعديل الجهاز', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ),
         PopupMenuItem(
           value: 'delete',
           child: const ListTile(
             leading: Icon(Icons.delete_outline, color: Colors.redAccent),
-            title: Text('حذف الجهاز', style: TextStyle(color: Colors.redAccent)),
+            title: Text('حذف الجهاز', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
         ),
       ]
