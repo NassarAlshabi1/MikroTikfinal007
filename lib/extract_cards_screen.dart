@@ -162,13 +162,13 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
         return AlertDialog(
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            hint: const Text('اختر الفئة'),
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             dropdownColor: Colors.white,
+            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name']),
+                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (value) {

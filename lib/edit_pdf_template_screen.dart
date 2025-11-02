@@ -226,6 +226,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                         children: [
                           DropdownButtonFormField<String>(
                             value: _selectedProfile,
+                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                            dropdownColor: Colors.white,
                             decoration: const InputDecoration(
                                 labelText: 'اختر الفئة (البروفايل)',
                                 prefixIcon: Icon(Icons.category_outlined)),
@@ -234,7 +236,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                             items: widget.profiles
                                 .map((p) => DropdownMenuItem(
                                       value: p['name'] as String,
-                                      child: Text(p['name'] as String),
+                                      child: Text(p['name'] as String, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                                     ))
                                 .toList(),
                             onChanged: (v) =>
