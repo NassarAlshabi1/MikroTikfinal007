@@ -38,6 +38,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   List<Map<String, dynamic>> _usersRaw = [];
   List<Map<String, dynamic>> _sessionsRaw = [];
   List<Map<String, dynamic>> _filteredUsers = [];
+  
+  // Cache للبيانات لتحسين الأداء
+  DateTime? _lastFetchTime;
+  static const _cacheDuration = Duration(minutes: 2);
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -65,6 +69,14 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   }
 
   Future<void> _fetchStatistics() async {
+    // التحقق من الـ cache
+    if (_lastFetchTime != null && 
+        DateTime.now().difference(_lastFetchTime!) < _cacheDuration &&
+        _usersRaw.isNotEmpty) {
+      _applyFilters();
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -76,14 +88,15 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
 
       final usersResponse = await client.talk([
         '/tool/user-manager/user/print',
-      ]);
+      ]).timeout(const Duration(seconds: 10));
 
       final sessionsResponse = await client.talk([
         '/tool/user-manager/session/print',
-      ]);
+      ]).timeout(const Duration(seconds: 10));
 
       _usersRaw = usersResponse.map((e) => Map<String, dynamic>.from(e)).toList();
       _sessionsRaw = sessionsResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+      _lastFetchTime = DateTime.now(); // حفظ وقت آخر fetch
 
       _applyFilters();
 

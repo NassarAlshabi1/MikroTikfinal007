@@ -17,15 +17,12 @@ import 'mqtt_service.dart';
 import 'qahtani_link_screen.dart';
 import 'profile_screen.dart';
 import 'pdf_templates_screen.dart';
-import 'check_user_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
 import 'cards_statistics_screen.dart';
 import 'stats_screen.dart';
-import 'starlink_blocker_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
-import 'remote_printing_setup_screen.dart';
 // -----------------------------------------
 
 void main() {
@@ -715,15 +712,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'حظر Starlink',
-        icon: Icons.block,
-        color: const Color(0xFFE53935), // Red
-        onTap: () {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const StarlinkBlockerScreen()));
-        },
-      ),
-      ServiceItem(
         title: 'طبيب الشبكة',
         icon: Icons.local_hospital_outlined,
         color: const Color(0xFF42A5F5), // Blue
@@ -760,15 +748,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'فحص الكرت',
-        icon: Icons.search_sharp,
-        color: const Color(0xFFAB47BC), // Purple
-        onTap: () {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const CheckUserScreen()));
-        },
-      ),
-      ServiceItem(
         title: 'إحصائيات الكروت',
         icon: Icons.bar_chart,
         color: const Color(0xFF9C27B0), // Purple
@@ -793,15 +772,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (context) => const BackupSystemScreen()));
-        },
-      ),
-      ServiceItem(
-        title: 'إعدادات الطباعة',
-        icon: Icons.print_outlined,
-        color: const Color(0xFF00BCD4), // Cyan
-        onTap: () {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const RemotePrintingSetupScreen()));
         },
       ),
     ];
@@ -907,11 +877,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     physics: const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
                       final service = services[index];
-                      return _buildServiceGridItem(
-                        title: service.title,
-                        icon: service.icon,
-                        iconBgColor: service.color,
-                        onTap: service.onTap,
+                      return RepaintBoundary(
+                        child: _buildServiceGridItem(
+                          title: service.title,
+                          icon: service.icon,
+                          iconBgColor: service.color,
+                          onTap: service.onTap,
+                        ),
                       );
                     },
                   ),
