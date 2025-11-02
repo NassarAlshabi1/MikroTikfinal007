@@ -26,6 +26,7 @@ import 'cards_statistics_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'system_dashboard_screen.dart';
+import 'remote_printing_setup_screen.dart';
 // -----------------------------------------
 
 void main() {
