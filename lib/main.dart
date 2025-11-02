@@ -20,11 +20,11 @@ import 'pdf_templates_screen.dart';
 import 'check_user_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
+import 'cards_statistics_screen.dart';
 import 'stats_screen.dart';
 import 'starlink_blocker_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
-import 'system_dashboard_screen.dart';
 import 'remote_printing_setup_screen.dart';
 // -----------------------------------------
 
