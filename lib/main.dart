@@ -20,7 +20,8 @@ import 'pdf_templates_screen.dart';
 import 'check_user_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
-import 'cards_statistics_screen.dart';
+import 'stats_screen.dart';
+import 'starlink_blocker_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'system_dashboard_screen.dart';
@@ -705,12 +706,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'لوحة المعلومات',
-        icon: Icons.dashboard,
-        color: const Color(0xFF00BCD4), // Cyan
+        title: 'الإحصائيات',
+        icon: Icons.bar_chart_rounded,
+        color: const Color(0xFF26A69A), // Teal
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const SystemDashboardScreen()));
+              .push(MaterialPageRoute(builder: (context) => const StatsScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'حظر Starlink',
+        icon: Icons.block,
+        color: const Color(0xFFE53935), // Red
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const StarlinkBlockerScreen()));
         },
       ),
       ServiceItem(
