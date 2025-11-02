@@ -18,6 +18,7 @@ import 'mqtt_service.dart';
 import 'qahtani_link_screen.dart';
 import 'profile_screen.dart';
 import 'pdf_templates_screen.dart';
+import 'remote_printing_setup_screen.dart';
 import 'check_user_screen.dart';
 import 'network_map_screen.dart';
 import 'network_doctor_screen.dart';
@@ -355,6 +356,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: _isLoading
                     ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
                     : const Text('اتصال', style: TextStyle(fontSize: 18)),
+              ),
+
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const RemotePrintingSetupScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.print, size: 20),
+                label: const Text('إعداد الطباعة عن بعد'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                  side: const BorderSide(color: Colors.blue),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
 
               const SizedBox(height: 8),
