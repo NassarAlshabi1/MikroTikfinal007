@@ -98,7 +98,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
       switch (status) {
         // --- الحالات الجديدة لتتبع الطلب ---
         case 'acknowledged':
-          print("✅ [التحقق] تم استلام الطلب من السكربت.");
+          debugPrint("✅ [التحقق] تم استلام الطلب من السكربت.");
           setState(() {
             _isJobAcknowledged = true;
             _statusMessage = 'تم استلام طلبك، جاري المعالجة...';
@@ -107,9 +107,9 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
         
         case 'job_status_response':
           final jobStatus = message['job_status'];
-          print("ℹ️ [التحقق] حالة الطلب هي: $jobStatus");
+          debugPrint("ℹ️ [التحقق] حالة الطلب هي: $jobStatus");
           if (jobStatus == 'not_found' && _isAwaitingCode) {
-            print("🔁 [التحقق] الطلب لم يوجد، جاري إعادة الإرسال...");
+            debugPrint("🔁 [التحقق] الطلب لم يوجد، جاري إعادة الإرسال...");
              _verificationTimer?.cancel();
             _confirmVerificationCode(); // إعادة إرسال الطلب
           }
@@ -213,14 +213,14 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
 
     // إذا استلمنا تأكيداً بالوصول، لا تفعل شيئاً وانتظر الرد
     if (_isJobAcknowledged) {
-      print("⏰ [التحقق] انتهت المهلة، لكن الطلب تم استلامه. ننتظر الرد النهائي.");
+      debugPrint("⏰ [التحقق] انتهت المهلة، لكن الطلب تم استلامه. ننتظر الرد النهائي.");
       setState(() {
           _statusMessage = 'المعالجة تستغرق وقتاً أطول من المعتاد...';
       });
       return;
     }
     
-    print("⏰ [التحقق] لم يتم استلام تأكيد، جاري فحص حالة الطلب...");
+    debugPrint("⏰ [التحقق] لم يتم استلام تأكيد، جاري فحص حالة الطلب...");
     setState(() {
         _statusMessage = 'الشبكة بطيئة، جاري التحقق من حالة الطلب...';
     });

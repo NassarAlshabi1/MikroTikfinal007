@@ -21,16 +21,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _uptime = '';
   String _version = '';
   String _boardName = '';
-  String _cpu = '';
-  String _cpuCount = '';
-  String _cpuFrequency = '';
   int _cpuLoad = 0;
   int _freeMemory = 0;
   int _totalMemory = 0;
   int _freeHddSpace = 0;
   int _totalHddSpace = 0;
-  String _architectureName = '';
-  String _platform = '';
 
   // System Health data
   String _voltage = 'غير متاح';
@@ -38,11 +33,6 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   // RouterBoard data
   String _model = '';
-  String _serialNumber = '';
-  String _firmwareType = '';
-  String _factoryFirmware = '';
-  String _currentFirmware = '';
-  String _upgradeFirmware = '';
 
   // Interface Statistics
   int _rxBitsPerSecond = 0;
@@ -55,7 +45,6 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   // System Clock
   String _time = '';
   String _date = '';
-  String _timeZoneName = '';
 
   // History for Charts (last 20 data points)
   final List<FlSpot> _cpuHistory = [];
@@ -167,7 +156,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _platform = data['platform'] ?? '';
       }
     } catch (e) {
-      print('Error fetching system resource: $e');
+      debugPrint('Error fetching system resource: $e');
     }
   }
 
@@ -199,7 +188,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _upgradeFirmware = data['upgrade-firmware'] ?? '';
       }
     } catch (e) {
-      print('Error fetching routerboard: $e');
+      debugPrint('Error fetching routerboard: $e');
     }
   }
 
@@ -237,7 +226,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         }
       }
     } catch (e) {
-      print('Error fetching interface stats: $e');
+      debugPrint('Error fetching interface stats: $e');
       _rxBitsPerSecond = 0;
       _txBitsPerSecond = 0;
     }
@@ -267,7 +256,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _totalUsers = 0;
       }
     } catch (e) {
-      print('Error fetching active users: $e');
+      debugPrint('Error fetching active users: $e');
       _activeUsers = 0;
       _totalUsers = 0;
     }
@@ -283,7 +272,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _timeZoneName = data['time-zone-name'] ?? '';
       }
     } catch (e) {
-      print('Error fetching system clock: $e');
+      debugPrint('Error fetching system clock: $e');
     }
   }
 
@@ -323,6 +312,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     if (days > 0) parts.add('$days يوم');
     if (hours > 0) parts.add('$hours ساعة');
     if (minutes > 0) parts.add('$minutes دقيقة');
+    if (seconds > 0 && parts.isEmpty) parts.add('$seconds ثانية');
 
     return parts.take(2).join(' و ');
   }
