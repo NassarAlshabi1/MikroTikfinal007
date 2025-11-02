@@ -21,11 +21,16 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _uptime = '';
   String _version = '';
   String _boardName = '';
+  String _cpu = '';
+  String _cpuCount = '';
+  String _cpuFrequency = '';
   int _cpuLoad = 0;
   int _freeMemory = 0;
   int _totalMemory = 0;
   int _freeHddSpace = 0;
   int _totalHddSpace = 0;
+  String _architectureName = '';
+  String _platform = '';
 
   // System Health data
   String _voltage = 'غير متاح';
@@ -33,6 +38,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   // RouterBoard data
   String _model = '';
+  String _serialNumber = '';
+  String _firmwareType = '';
+  String _factoryFirmware = '';
+  String _currentFirmware = '';
+  String _upgradeFirmware = '';
 
   // Interface Statistics
   int _rxBitsPerSecond = 0;
@@ -45,6 +55,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   // System Clock
   String _time = '';
   String _date = '';
+  String _timeZoneName = '';
 
   // History for Charts (last 20 data points)
   final List<FlSpot> _cpuHistory = [];
