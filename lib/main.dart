@@ -18,7 +18,6 @@ import 'mqtt_service.dart';
 import 'qahtani_link_screen.dart';
 import 'profile_screen.dart';
 import 'pdf_templates_screen.dart';
-import 'remote_printing_setup_screen.dart';
 import 'check_user_screen.dart';
 import 'network_map_screen.dart';
 import 'network_doctor_screen.dart';
@@ -107,11 +106,15 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  
   final _ipController = TextEditingController();
   final _userController = TextEditingController();
   final _passwordController = TextEditingController();
   final _portController = TextEditingController(text: '8728');
+  final _printUrlController = TextEditingController();
+  final _printPortController = TextEditingController();
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -140,6 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _init();
   }
 
@@ -191,6 +195,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _userController.text = prefs.getString('user') ?? '';
         _passwordController.text = prefs.getString('pass') ?? '';
         _portController.text = prefs.getString('port') ?? '8728';
+        _printUrlController.text = prefs.getString('remote_printing_url') ?? '';
+        _printPortController.text = prefs.getString('remote_printing_port') ?? '';
         _rememberMe = true;
       });
     }
@@ -204,11 +210,15 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString('user', _userController.text);
       await prefs.setString('pass', _passwordController.text);
       await prefs.setString('port', _portController.text);
+      await prefs.setString('remote_printing_url', _printUrlController.text);
+      await prefs.setString('remote_printing_port', _printPortController.text);
     } else {
       await prefs.remove('ip');
       await prefs.remove('user');
       await prefs.remove('pass');
       await prefs.remove('port');
+      await prefs.remove('remote_printing_url');
+      await prefs.remove('remote_printing_port');
     }
   }
 
@@ -256,6 +266,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    _ipController.dispose();
+    _userController.dispose();
+    _passwordController.dispose();
+    _portController.dispose();
+    _printUrlController.dispose();
+    _printPortController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
@@ -268,7 +290,32 @@ class _LoginScreenState extends State<LoginScreen> {
               Image.asset('assets/images/wifi_logo.png', width: 120, height: 120),
               const SizedBox(height: 24),
               Text('إدارة شبكتك بسهولة وأمان', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color)),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Theme.of(context).primaryColor,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorWeight: 3,
+                  tabs: const [
+                    Tab(
+                      icon: Icon(Icons.lan),
+                      text: 'اتصال محلي',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.cloud),
+                      text: 'اتصال عن بعد',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
 
               if (_errorMessage.isNotEmpty)
                 Padding(
@@ -276,129 +323,231 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(_errorMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent, fontSize: 16)),
                 ),
 
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: _ipController,
-                      decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.phone,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _portController,
-                      decoration: const InputDecoration(labelText: 'Port'),
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: _isScanning
-                        ? const Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: CircularProgressIndicator(
-                              color: Color(0xFF6b3fa0),
-                            ),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.search, color: Color(0xFF6b3fa0)),
-                            onPressed: _forceDiscoverGateway,
-                            tooltip: 'بحث عن البوابة',
-                          ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _userController,
-                decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
-                style: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: _isPasswordObscured,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(_isPasswordObscured ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
-                  ),
+              SizedBox(
+                height: 550,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildLocalLoginForm(),
+                    _buildRemoteLoginForm(),
+                  ],
                 ),
-                style: const TextStyle(color: Colors.white),
-              ),
-
-              CheckboxListTile(
-                title: const Text("تذكرني"),
-                value: _rememberMe,
-                onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-                activeColor: Theme.of(context).primaryColor,
-              ),
-
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _login,
-                child: _isLoading
-                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-                    : const Text('اتصال', style: TextStyle(fontSize: 18)),
-              ),
-
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const RemotePrintingSetupScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.print, size: 20),
-                label: const Text('إعداد الطباعة عن بعد'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.blue,
-                  side: const BorderSide(color: Colors.blue),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _launchPrivacyPolicy,
-                child: Text(
-                  'سياسة الخصوصية',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    decoration: TextDecoration.underline,
-                    decorationColor: Colors.white.withOpacity(0.7),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'جميع الحقوق محفوظة © م/نصار الشعبي',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLocalLoginForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: TextField(
+                controller: _ipController,
+                decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.phone,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _portController,
+                decoration: const InputDecoration(labelText: 'Port'),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              height: 58,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: _isScanning
+                  ? const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6b3fa0),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.search, color: Color(0xFF6b3fa0)),
+                      onPressed: _forceDiscoverGateway,
+                      tooltip: 'بحث عن البوابة',
+                    ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _userController,
+          decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
+          style: const TextStyle(color: Colors.white),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _passwordController,
+          obscureText: _isPasswordObscured,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_isPasswordObscured ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+            ),
+          ),
+          style: const TextStyle(color: Colors.white),
+        ),
+        CheckboxListTile(
+          title: const Text("تذكرني"),
+          value: _rememberMe,
+          onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+          activeColor: Theme.of(context).primaryColor,
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _login,
+          child: _isLoading
+              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+              : const Text('اتصال', style: TextStyle(fontSize: 18)),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: _launchPrivacyPolicy,
+          child: Text(
+            'سياسة الخصوصية',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.white.withOpacity(0.7),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'جميع الحقوق محفوظة © م/نصار الشعبي',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRemoteLoginForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _printUrlController,
+          decoration: const InputDecoration(
+            labelText: 'رابط الخادم (URL)',
+            hintText: 'https://example.com',
+            prefixIcon: Icon(Icons.link),
+          ),
+          style: const TextStyle(color: Colors.white),
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _printPortController,
+          decoration: const InputDecoration(
+            labelText: 'بورت الطباعة',
+            hintText: '8080',
+            prefixIcon: Icon(Icons.numbers),
+          ),
+          style: const TextStyle(color: Colors.white),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        const Divider(),
+        const SizedBox(height: 8),
+        Text(
+          'بيانات MikroTik',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: TextField(
+                controller: _ipController,
+                decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.phone,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _portController,
+                decoration: const InputDecoration(labelText: 'Port'),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _userController,
+          decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
+          style: const TextStyle(color: Colors.white),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _passwordController,
+          obscureText: _isPasswordObscured,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_isPasswordObscured ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+            ),
+          ),
+          style: const TextStyle(color: Colors.white),
+        ),
+        CheckboxListTile(
+          title: const Text("تذكرني"),
+          value: _rememberMe,
+          onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+          activeColor: Theme.of(context).primaryColor,
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _login,
+          child: _isLoading
+              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+              : const Text('اتصال عن بعد', style: TextStyle(fontSize: 18)),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'جميع الحقوق محفوظة © م/نصار الشعبي',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
+        ),
+      ],
     );
   }
 }
@@ -635,6 +784,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (context) => const BackupSystemScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'إعدادات الطباعة',
+        icon: Icons.print_outlined,
+        color: const Color(0xFF00BCD4), // Cyan
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const RemotePrintingSetupScreen()));
         },
       ),
     ];
