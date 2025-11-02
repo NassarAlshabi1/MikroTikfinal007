@@ -22,6 +22,8 @@ import 'check_user_screen.dart';
 import 'network_map_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
+import 'stats_screen.dart';
+import 'starlink_blocker_screen.dart';
 import 'mikrotik_connector.dart';
 // -----------------------------------------
 
@@ -521,6 +523,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (context) => const QahtaniLinkScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'الإحصائيات',
+        icon: Icons.bar_chart_rounded,
+        color: const Color(0xFF26A69A), // Teal
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const StatsScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'حظر Starlink',
+        icon: Icons.block,
+        color: const Color(0xFFE53935), // Red
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const StarlinkBlockerScreen()));
         },
       ),
       ServiceItem(
