@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'snackbar_helpers.dart';
 
 import 'card_list_screen.dart';
 import 'pdf_generator.dart';      // <-- ١. استيراد جديد
@@ -99,9 +100,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     try {
       await Share.shareXFiles([XFile(path)]);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشلت عملية المشاركة.'), backgroundColor: Colors.red),
-      );
+      showErrorSnackBar(context, 'فشلت عملية المشاركة.');
     }
   }
 
@@ -144,17 +143,13 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل عرض الملف.'), backgroundColor: Colors.red),
-      );
+      showErrorSnackBar(context, 'فشل عرض الملف.');
     }
   }
   
   // --- ٦. دالة جديدة للمشاركة كملف PDF ---
   Future<void> _shareAsPdf(SavedFile savedFile) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('جاري تحضير ملف PDF...')),
-    );
+    showSuccessSnackBar(context, 'جاري تحضير ملف PDF...');
 
     try {
       // البحث عن القالب المطابق لاسم الفئة
@@ -178,16 +173,9 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       );
 
     } on StateError { // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
-       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('لم يتم العثور على قالب PDF لهذه الفئة "${savedFile.profileName}".'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+       showErrorSnackBar(context, 'لم يتم العثور على قالب PDF للفئة "${savedFile.profileName}".');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل إنشاء ملف PDF.'), backgroundColor: Colors.red),
-      );
+      showErrorSnackBar(context, 'فشل إنشاء ملف PDF.');
     }
   }
   // ----------------------------------------

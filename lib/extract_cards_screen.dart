@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'snackbar_helpers.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
@@ -125,12 +126,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
           _addCardsTimer?.cancel();
           if (mounted) {
             Navigator.of(context, rootNavigator: true).pop(); 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message['message'] ?? 'تمت العملية بنجاح.'),
-                backgroundColor: Theme.of(context).primaryColor,
-              ),
-            );
+            showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
           }
           break;
 
@@ -147,9 +143,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
 
   void _showAddCardsToQahtaniDialog(List<String> cards) {
     if (!_isNetworkLinked) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الشبكة غير مرتبطة بحساب م/نصار الشعبي')),
-      );
+      showErrorSnackBar(context, 'الشبكة غير مرتبطة بحساب م/نصار الشعبي.');
       return;
     }
 
@@ -246,11 +240,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
 
   void _showErrorDialog(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.redAccent),
-    );
+    showErrorSnackBar(context, message);
   }
 
   // --- Original Methods ---
@@ -319,9 +309,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
 
   void _copyToClipboard(String text, String message) {
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    showSuccessSnackBar(context, message);
   }
 
   @override
