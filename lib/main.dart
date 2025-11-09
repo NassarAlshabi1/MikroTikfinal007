@@ -23,6 +23,8 @@ import 'cards_statistics_screen.dart';
 import 'stats_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
+import 'active_users_screen.dart';
+import 'snackbar_helpers.dart';
 // -----------------------------------------
 
 void main() {
@@ -37,6 +39,66 @@ void main() {
 // A global key for the ScaffoldMessenger
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
+/* snackbar helpers moved to snackbar_helpers.dart */
+void showErrorSnackBar(BuildContext context, String message) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.white, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(fontSize: 14, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.redAccent,
+      duration: const Duration(seconds: 5),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.all(16),
+      action: SnackBarAction(
+        label: 'إغلاق',
+        textColor: Colors.white,
+        onPressed: () {},
+      ),
+    ),
+  );
+}
+
+void showSuccessSnackBar(BuildContext context, String message) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(fontSize: 14, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: const Color(0xFF4CAF50),
+      duration: const Duration(seconds: 3),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.all(16),
+    ),
+  );
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -47,51 +109,249 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'MikroTik Manager',
       theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFF6b3fa0),
-        scaffoldBackgroundColor: const Color(0xFF1a1329),
-        fontFamily: 'Tajawal',
-        cardColor: const Color(0xFF2d213f),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(color: Colors.white),
-          displayMedium: TextStyle(color: Colors.white),
-          displaySmall: TextStyle(color: Colors.white),
-          headlineLarge: TextStyle(color: Colors.white),
-          headlineMedium: TextStyle(color: Colors.white),
-          headlineSmall: TextStyle(color: Colors.white),
-          titleLarge: TextStyle(color: Colors.white),
-          titleMedium: TextStyle(color: Colors.white),
-          titleSmall: TextStyle(color: Colors.white),
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white),
-          bodySmall: TextStyle(color: Colors.white),
-          labelLarge: TextStyle(color: Colors.white),
-          labelMedium: TextStyle(color: Colors.white),
-          labelSmall: TextStyle(color: Colors.white),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6b3fa0),
-            minimumSize: const Size(double.infinity, 52),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFFB39DDB), // لون بنفسجي فاتح
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          labelStyle: const TextStyle(color: Colors.white), // label باللون الأبيض
-          hintStyle: const TextStyle(color: Colors.white70),
-          iconColor: Colors.white,
-          prefixIconColor: Colors.white,
-        ),
-        iconTheme: const IconThemeData(color: Color(0xFFB0A8C1)),
+  brightness: Brightness.dark,
+  primaryColor: const Color(0xFF6b3fa0),
+  scaffoldBackgroundColor: const Color(0xFF1a1329),
+  fontFamily: 'Tajawal',
+  cardColor: const Color(0xFF2d213f),
+  colorScheme: ColorScheme.dark(
+    primary: const Color(0xFF6b3fa0),
+    secondary: const Color(0xFFB39DDB),
+    surface: const Color(0xFF2d213f),
+    background: const Color(0xFF1a1329),
+    error: Colors.redAccent,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+    onSurface: Colors.white,
+    onBackground: Colors.white,
+    onError: Colors.white,
+  ),
+  textTheme: const TextTheme(
+    displayLarge: TextStyle(
+      color: Colors.white,
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
+      height: 1.4,
+    ),
+    displayMedium: TextStyle(
+      color: Colors.white,
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+      height: 1.4,
+    ),
+    displaySmall: TextStyle(
+      color: Colors.white,
+      fontSize: 22,
+      fontWeight: FontWeight.w600,
+      height: 1.4,
+    ),
+    headlineLarge: TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      height: 1.5,
+    ),
+    headlineMedium: TextStyle(
+      color: Colors.white,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      height: 1.5,
+    ),
+    headlineSmall: TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      height: 1.5,
+    ),
+    titleLarge: TextStyle(
+      color: Colors.white,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      height: 1.5,
+    ),
+    titleMedium: TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      height: 1.5,
+    ),
+    titleSmall: TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.5,
+    ),
+    bodyLarge: TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      height: 1.6,
+    ),
+    bodyMedium: TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      height: 1.6,
+    ),
+    bodySmall: TextStyle(
+      color: Colors.white,
+      fontSize: 12,
+      height: 1.6,
+    ),
+    labelLarge: TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
+    labelMedium: TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+    labelSmall: TextStyle(
+      color: Colors.white,
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+    ),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF6b3fa0),
+      foregroundColor: Colors.white,
+      minimumSize: const Size(double.infinity, 52),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
+      textStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        height: 1.5,
+      ),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.3),
+    ),
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: const Color(0xFFB39DDB),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+    labelStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      height: 1.5,
+    ),
+    hintStyle: TextStyle(
+      color: Colors.white.withOpacity(0.7),
+      fontSize: 14,
+      height: 1.5,
+    ),
+    iconColor: Colors.white,
+    prefixIconColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 16,
+    ),
+  ),
+  cardTheme: CardThemeData(
+    color: const Color(0xFF2d213f),
+    elevation: 2,
+    shadowColor: Colors.black.withOpacity(0.2),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    margin: const EdgeInsets.all(8),
+  ),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Color(0xFF2d213f),
+    elevation: 0,
+    centerTitle: true,
+    titleTextStyle: TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      fontFamily: 'Tajawal',
+      height: 1.5,
+    ),
+    iconTheme: IconThemeData(
+      color: Colors.white,
+    ),
+  ),
+  iconTheme: const IconThemeData(
+    color: Color(0xFFB0A8C1),
+    size: 24,
+  ),
+  dividerTheme: DividerThemeData(
+    color: Colors.white.withOpacity(0.1),
+    thickness: 1,
+    space: 16,
+  ),
+  snackBarTheme: SnackBarThemeData(
+    backgroundColor: const Color(0xFF2d213f),
+    contentTextStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontFamily: 'Tajawal',
+      height: 1.5,
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    behavior: SnackBarBehavior.floating,
+    elevation: 4,
+  ),
+  dialogTheme: DialogTheme(
+    backgroundColor: const Color(0xFF2d213f),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
+    elevation: 8,
+    titleTextStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      fontFamily: 'Tajawal',
+      height: 1.5,
+    ),
+    contentTextStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontFamily: 'Tajawal',
+      height: 1.6,
+    ),
+  ),
+),
       home: const LoginScreen(),
+    );
+  }
+}
+
+// صفحة انتقال مخصصة مع animation
+class CustomPageRoute<T> extends MaterialPageRoute<T> {
+  CustomPageRoute({required super.builder, super.settings});
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 300);
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.05, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        )),
+        child: child,
+      ),
     );
   }
 }
@@ -110,8 +370,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final _userController = TextEditingController();
   final _passwordController = TextEditingController();
   final _portController = TextEditingController(text: '8728');
-  final _printUrlController = TextEditingController();
-  final _printPortController = TextEditingController();
+  final _remoteServerController = TextEditingController();
+  final _remotePortController = TextEditingController(text: '8728');
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -192,8 +452,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         _userController.text = prefs.getString('user') ?? '';
         _passwordController.text = prefs.getString('pass') ?? '';
         _portController.text = prefs.getString('port') ?? '8728';
-        _printUrlController.text = prefs.getString('remote_printing_url') ?? '';
-        _printPortController.text = prefs.getString('remote_printing_port') ?? '';
+        _remoteServerController.text = prefs.getString('remote_server') ?? '';
+        _remotePortController.text = prefs.getString('remote_port') ?? '8728';
         _rememberMe = true;
       });
     }
@@ -207,15 +467,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await prefs.setString('user', _userController.text);
       await prefs.setString('pass', _passwordController.text);
       await prefs.setString('port', _portController.text);
-      await prefs.setString('remote_printing_url', _printUrlController.text);
-      await prefs.setString('remote_printing_port', _printPortController.text);
+      await prefs.setString('remote_server', _remoteServerController.text);
+      await prefs.setString('remote_port', _remotePortController.text);
     } else {
       await prefs.remove('ip');
       await prefs.remove('user');
       await prefs.remove('pass');
       await prefs.remove('port');
-      await prefs.remove('remote_printing_url');
-      await prefs.remove('remote_printing_port');
+      await prefs.remove('remote_server');
+      await prefs.remove('remote_port');
     }
   }
 
@@ -245,17 +505,26 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       }
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
+          CustomPageRoute(
             builder: (context) => HomeScreen(isVersion7OrNewer: isVersion7OrNewer, username: _userController.text),
           ),
         );
       }
     } on MikrotikCredentialsMissingException catch (e) {
-      if (mounted) setState(() => _errorMessage = 'خطأ في بيانات الدخول: ${e.message}');
+      if (mounted) {
+        setState(() => _errorMessage = 'خطأ في بيانات الدخول: ${e.message}');
+        showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
+      }
     } on MikrotikConnectionException catch (e) {
-      if (mounted) setState(() => _errorMessage = 'خطأ في الاتصال: ${e.message}');
+      if (mounted) {
+        setState(() => _errorMessage = 'خطأ في الاتصال: ${e.message}');
+        showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
+      }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'فشل الاتصال. تحقق من البيانات أو الشبكة.\n(الخطأ: ${e.toString()})');
+      if (mounted) {
+        setState(() => _errorMessage = 'فشل الاتصال. تحقق من البيانات أو الشبكة.\n(الخطأ: ${e.toString()})');
+        showErrorSnackBar(context, 'فشل الاتصال. تحقق من البيانات أو الشبكة.');
+      }
     } finally {
       client?.close();
       if (mounted) setState(() => _isLoading = false);
@@ -269,8 +538,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     _userController.dispose();
     _passwordController.dispose();
     _portController.dispose();
-    _printUrlController.dispose();
-    _printPortController.dispose();
+    _remoteServerController.dispose();
+    _remotePortController.dispose();
     super.dispose();
   }
 
@@ -284,7 +553,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Image.asset('assets/images/wifi_logo.png', width: 120, height: 120),
+              Image.asset('assets/images/wifi_logo.png', width: 48, height: 48),
               const SizedBox(height: 24),
               Text('إدارة شبكتك بسهولة وأمان', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color)),
               const SizedBox(height: 24),
@@ -324,6 +593,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 height: 550,
                 child: TabBarView(
                   controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
                   children: [
                     _buildLocalLoginForm(),
                     _buildRemoteLoginForm(),
@@ -335,6 +605,53 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ),
       ),
     );
+  }
+
+  Future<void> _remoteConnect() async {
+    if (_remoteServerController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال عنوان الخادم البعيد');
+      return;
+    }
+    
+    // التحقق من أن الإدخال هو Domain وليس IP
+    final input = _remoteServerController.text.trim();
+    final ipPattern = RegExp(r'^(\d{1,3}\.){3}\d{1,3}$');
+    if (ipPattern.hasMatch(input)) {
+      setState(() => _errorMessage = 'الرجاء إدخال اسم النطاق (Domain) وليس عنوان IP');
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+    
+    try {
+      await _handleCredentials();
+      
+      // حفظ عنوان الخادم البعيد والبورت في SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ip', _remoteServerController.text);
+      await prefs.setString('port', _remotePortController.text);
+      
+      // الانتقال مباشرة إلى الشاشة الرئيسية بدون توثيق
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          CustomPageRoute(
+            builder: (context) => const HomeScreen(
+              isVersion7OrNewer: true, 
+              username: 'Remote User'
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'فشل الاتصال: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Widget _buildLocalLoginForm() {
@@ -447,96 +764,39 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextField(
-          controller: _printUrlController,
+          controller: _remoteServerController,
           decoration: const InputDecoration(
-            labelText: 'رابط الخادم (URL)',
-            hintText: 'https://example.com',
-            prefixIcon: Icon(Icons.link),
+            labelText: 'عنوان الخادم البعيد (Domain)',
+            hintText: 'mikrotik.example.com',
+            prefixIcon: Icon(Icons.cloud),
           ),
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.url,
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: _printPortController,
+          controller: _remotePortController,
           decoration: const InputDecoration(
-            labelText: 'بورت الطباعة',
-            hintText: '8080',
+            labelText: 'Port',
+            hintText: '8728',
             prefixIcon: Icon(Icons.numbers),
           ),
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.number,
         ),
-        const SizedBox(height: 16),
-        const Divider(),
-        const SizedBox(height: 8),
-        Text(
-          'بيانات MikroTik',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: TextField(
-                controller: _ipController,
-                decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.phone,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: TextField(
-                controller: _portController,
-                decoration: const InputDecoration(labelText: 'Port'),
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.number,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _userController,
-          decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
-          style: const TextStyle(color: Colors.white),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _passwordController,
-          obscureText: _isPasswordObscured,
-          decoration: InputDecoration(
-            labelText: 'Password',
-            prefixIcon: const Icon(Icons.lock_outline),
-            suffixIcon: IconButton(
-              icon: Icon(_isPasswordObscured ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
-            ),
-          ),
-          style: const TextStyle(color: Colors.white),
-        ),
-        CheckboxListTile(
-          title: const Text("تذكرني"),
-          value: _rememberMe,
-          onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
-          controlAffinity: ListTileControlAffinity.leading,
-          contentPadding: EdgeInsets.zero,
-          activeColor: Theme.of(context).primaryColor,
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: _isLoading ? null : _login,
+          onPressed: _isLoading ? null : _remoteConnect,
           child: _isLoading
-              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-              : const Text('اتصال عن بعد', style: TextStyle(fontSize: 18)),
+              ? const SizedBox(
+                  height: 24, 
+                  width: 24, 
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3, 
+                    color: Colors.white
+                  )
+                )
+              : const Text('الدخول', style: TextStyle(fontSize: 18)),
         ),
         const SizedBox(height: 16),
         const Text(
@@ -545,6 +805,38 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
         ),
       ],
+    );
+  }
+}
+
+class CustomLoadingIndicator extends StatelessWidget {
+  final String? message;
+  const CustomLoadingIndicator({super.key, this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0)),
+          ),
+          if (message != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              message!,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -658,8 +950,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red));
+        showErrorSnackBar(context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
       }
     } finally {
       client?.close();
@@ -676,7 +967,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.person_add_alt_1,
         color: const Color(0xFF5C6BC0), // Indigo
         onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(
+          Navigator.of(context).push(CustomPageRoute(
             builder: (context) =>
                 AddUserScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, customer: widget.username),
           ));
@@ -687,7 +978,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.groups,
         color: const Color(0xFF4CAF50), // Green
         onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(
+          Navigator.of(context).push(CustomPageRoute(
             builder: (context) =>
                 BulkAddScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, username: widget.username),
           ));
@@ -699,7 +990,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFF42A5F5), // Blue
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const QahtaniLinkScreen()));
+              .push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen()));
         },
       ),
       ServiceItem(
@@ -708,7 +999,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFF26A69A), // Teal
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const StatsScreen()));
+              .push(CustomPageRoute(builder: (context) => const StatsScreen()));
         },
       ),
       ServiceItem(
@@ -717,7 +1008,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFF42A5F5), // Blue
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const NetworkDoctorScreen()));
+              .push(CustomPageRoute(builder: (context) => const NetworkDoctorScreen()));
         },
       ),
       ServiceItem(
@@ -726,7 +1017,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFFFFA726), // Orange
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const SavedFilesScreen()));
+              .push(CustomPageRoute(builder: (context) => const SavedFilesScreen()));
         },
       ),
       ServiceItem(
@@ -735,7 +1026,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFF78909C), // Blue Grey
         onTap: () {
           Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => PdfTemplatesScreen(profiles: _profiles)));
+              CustomPageRoute(builder: (context) => PdfTemplatesScreen(profiles: _profiles)));
         },
       ),
       ServiceItem(
@@ -744,7 +1035,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFFEF5350), // Red
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const ExtractCardsScreen()));
+              .push(CustomPageRoute(builder: (context) => const ExtractCardsScreen()));
         },
       ),
       ServiceItem(
@@ -753,7 +1044,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFF9C27B0), // Purple
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const CardsStatisticsScreen()));
+              .push(CustomPageRoute(builder: (context) => const CardsStatisticsScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'المستخدمين النشطين',
+        icon: Icons.people_outline,
+        color: const Color(0xFF00ACC1), // Cyan
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const ActiveUsersScreen()));
         },
       ),
       ServiceItem(
@@ -762,7 +1062,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFF29B6F6), // Light Blue
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
+              .push(CustomPageRoute(builder: (context) => const ProfileScreen()));
         },
       ),
       ServiceItem(
@@ -771,7 +1071,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: const Color(0xFF2196F3), // Blue
         onTap: () {
           Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const BackupSystemScreen()));
+              .push(CustomPageRoute(builder: (context) => const BackupSystemScreen()));
         },
       ),
     ];
@@ -799,14 +1099,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             tooltip: 'تسجيل الخروج',
             onPressed: () {
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                CustomPageRoute(builder: (context) => const LoginScreen()),
               );
             },
           ),
         ],
       ),
       body: _isLoadingProfiles
-          ? const Center(child: CircularProgressIndicator())
+          ? const CustomLoadingIndicator(message: 'جاري التحميل...')
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -4,6 +4,7 @@ import 'dart:io';
 // --- ✨ إصلاح: تم تصحيح الأخطاء الإملائية في الـ import ---
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'snackbar_helpers.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -141,10 +142,7 @@ class PdfGenerator {
     } catch (e) {
       if(context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('فشل إنشاء ملف PDF. الرجاء التأكد من وجود القالب وصلاحية الصورة.'),
-          backgroundColor: Colors.red,
-        ));
+        showErrorSnackBar(context, 'فشل إنشاء ملف PDF. تأكد من القالب وصلاحية الصورة.');
       }
     }
   }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'snackbar_helpers.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
@@ -240,12 +241,7 @@ class _StatsScreenState extends State<StatsScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل إنشاء تقرير PDF: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, 'فشل إنشاء تقرير PDF.');
       }
     }
   }

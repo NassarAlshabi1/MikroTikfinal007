@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'snackbar_helpers.dart';
 import 'package:uuid/uuid.dart';
 
 enum DeviceStatus { online, offline }
@@ -123,15 +124,11 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       await _saveDevices();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم جلب الأجهزة بنجاح.'), backgroundColor: Colors.green),
-        );
+        showSuccessSnackBar(context, 'تم جلب الأجهزة بنجاح.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('فشل جلب الأجهزة: ${e.toString()}'), backgroundColor: Colors.red),
-        );
+        showErrorSnackBar(context, 'فشل جلب الأجهزة. تحقق من الاتصال بالشبكة.');
       }
     } finally {
       if (mounted) {
@@ -153,9 +150,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       _displayedDevices = _allDevices.where((device) => device.status == DeviceStatus.offline).toList();
       _showingDisconnectedOnly = true; // Added this line
       if (_displayedDevices.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا توجد أجهزة غير متصلة حاليًا.'), backgroundColor: Colors.orange),
-        );
+        showErrorSnackBar(context, 'لا توجد أجهزة غير متصلة حاليًا.');
       }
     });
   }
@@ -304,15 +299,15 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم فحص ${device.name}: ${newStatus == DeviceStatus.online ? 'متصل' : 'غير متصل'}'), backgroundColor: newStatus == DeviceStatus.online ? Colors.green : Colors.red),
-      );
+      if (newStatus == DeviceStatus.online) {
+        showSuccessSnackBar(context, 'تم فحص ${device.name}: متصل');
+      } else {
+        showErrorSnackBar(context, 'تم فحص ${device.name}: غير متصل');
+      }
 
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('فشل فحص الجهاز: ${e.toString()}'), backgroundColor: Colors.red),
-        );
+        showErrorSnackBar(context, 'فشل فحص الجهاز.');
       }
     } finally {
       if (mounted) {

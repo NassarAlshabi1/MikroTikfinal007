@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'snackbar_helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_pdf_template_screen.dart';
 
@@ -127,11 +128,7 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
     await prefs.setStringList('pdf_templates', updatedTemplatesJson);
     if (mounted) {
       setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('تم حذف القالب بنجاح'),
-            backgroundColor: Colors.green),
-      );
+      showSuccessSnackBar(context, 'تم حذف القالب بنجاح.');
     }
   }
 
