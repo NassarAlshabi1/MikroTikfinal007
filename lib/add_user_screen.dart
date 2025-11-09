@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 
 import 'mikrotik_connector.dart';
+import 'snackbar_helpers.dart';
 
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
@@ -121,50 +122,22 @@ class _AddUserScreenState extends State<AddUserScreen> {
           : 'اسم المستخدم: $username\nكلمة المرور: $password';
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('تمت إضافة المستخدم "$username" بنجاح'),
-            backgroundColor: Theme.of(context).primaryColor,
-            action: SnackBarAction(
-              label: 'نسخ',
-              textColor: Colors.white,
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: cardDetails));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('تم نسخ تفاصيل الكرت!')), 
-                );
-              },
-            ),
-          ),
-        );
+        showSuccessSnackBar(context, 'تمت إضافة المستخدم "$username" بنجاح');
+        Clipboard.setData(ClipboardData(text: cardDetails));
+        showSuccessSnackBar(context, 'تم نسخ تفاصيل الكرت!');
         Navigator.of(context).pop(true);
       }
     } on MikrotikCredentialsMissingException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطأ في بيانات الدخول: ${e.message}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
       }
     } on MikrotikConnectionException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطأ في الاتصال: ${e.message}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشلت الإضافة. قد يكون الاتصال انقطع.\n(الخطأ: ${e.toString()})'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        showErrorSnackBar(context, 'فشلت الإضافة. تحقق من الاتصال بالشبكة.');
       }
     } finally {
       client?.close();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'mikrotik_connector.dart';
+import 'snackbar_helpers.dart';
 
 class SystemDashboardScreen extends StatefulWidget {
   const SystemDashboardScreen({super.key});
@@ -58,8 +59,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _timeZoneName = '';
 
   // History for Charts (last 20 data points)
-  final List<FlSpot> _cpuHistory = [];
-  final List<FlSpot> _memoryHistory = [];
+  List<FlSpot> _cpuHistory = [];
+  List<FlSpot> _memoryHistory = [];
   int _dataPointIndex = 0;
 
   // Alert System
@@ -83,8 +84,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     super.initState();
     _fetchData();
 
-    // تحديث تلقائي كل 5 ثواني
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    // تحديث تلقائي كل 10 ثواني
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
         _fetchData();
       }
@@ -143,6 +144,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           _isLoading = false;
           _errorMessage = 'فشل الاتصال بالراوتر: ${e.toString()}';
         });
+        showErrorSnackBar(context, 'فشل الاتصال بالراوتر. تحقق من إعدادات الشبكة.');
       }
     }
   }
@@ -364,12 +366,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     _cpuHistory.add(FlSpot(_dataPointIndex.toDouble(), cpuValue));
     _memoryHistory.add(FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage));
 
-    // Keep only last 20 data points
+    // Keep only last 20 data points using sublist to avoid repeated removals
     if (_cpuHistory.length > 20) {
-      _cpuHistory.removeAt(0);
+      _cpuHistory = _cpuHistory.sublist(_cpuHistory.length - 20);
     }
     if (_memoryHistory.length > 20) {
-      _memoryHistory.removeAt(0);
+      _memoryHistory = _memoryHistory.sublist(_memoryHistory.length - 20);
     }
 
     _dataPointIndex++;

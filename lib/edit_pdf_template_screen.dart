@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'snackbar_helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
@@ -98,10 +99,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     final imageContext = _imageKey.currentContext;
 
     if (_imageFile == null || imageContext == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('الرجاء اختيار صورة وانتظار تحميلها أولاً'),
-        backgroundColor: Colors.orange,
-      ));
+      showErrorSnackBar(context, 'الرجاء اختيار صورة وانتظار تحميلها أولاً.');
       return;
     }
 
@@ -151,18 +149,12 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       await prefs.setStringList('pdf_templates', templatesJson);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('تم حفظ القالب بنجاح!'),
-          backgroundColor: Theme.of(context).primaryColor,
-        ));
+        showSuccessSnackBar(context, 'تم حفظ القالب بنجاح.');
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('حدث خطأ أثناء الحفظ: $e'),
-          backgroundColor: Colors.red,
-        ));
+        showErrorSnackBar(context, 'فشل حفظ القالب.');
       }
     } finally {
       if (mounted) {

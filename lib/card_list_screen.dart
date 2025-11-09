@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'mqtt_service.dart';
+import 'snackbar_helpers.dart';
 
 class CardListScreen extends StatefulWidget {
   final List<String> cardList;
@@ -79,12 +80,7 @@ class _CardListScreenState extends State<CardListScreen> {
         case 'cards_added_success':
           _addCardsTimer?.cancel();
           Navigator.of(context, rootNavigator: true).pop(); 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message['message'] ?? 'تمت العملية بنجاح.'),
-              backgroundColor: Theme.of(context).primaryColor,
-            ),
-          );
+          showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
           break;
 
         case 'error':
@@ -190,9 +186,7 @@ class _CardListScreenState extends State<CardListScreen> {
 
   void _showErrorDialog(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
-    );
+    showErrorSnackBar(context, message);
   }
 
   @override
@@ -209,9 +203,7 @@ class _CardListScreenState extends State<CardListScreen> {
         child: ElevatedButton.icon(
           onPressed: () {
             Clipboard.setData(ClipboardData(text: widget.cardList.join('\n')));
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('تم نسخ جميع الكروت!')),
-            );
+            showSuccessSnackBar(context, 'تم نسخ جميع الكروت!');
           },
           icon: const Icon(Icons.copy_all),
           label: const Text('نسخ الكل'),
@@ -259,9 +251,7 @@ class _CardListScreenState extends State<CardListScreen> {
                 icon: const Icon(Icons.copy),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: widget.cardList[index]));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تم نسخ الكرت!')),
-                  );
+                  showSuccessSnackBar(context, 'تم نسخ الكرت!');
                 },
                 tooltip: 'نسخ',
               ),
