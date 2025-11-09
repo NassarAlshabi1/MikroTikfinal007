@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
+import 'snackbar_helpers.dart';
 
 class BackupSystemScreen extends StatefulWidget {
   const BackupSystemScreen({super.key});
@@ -46,12 +47,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل تحميل النسخ الاحتياطية: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, 'فشل تحميل النسخ الاحتياطية.');
       }
     } finally {
       client?.close();
@@ -101,22 +97,12 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
       snackBar.close();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم إنشاء النسخة الاحتياطية بنجاح'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        showSuccessSnackBar(context, 'تم إنشاء النسخة الاحتياطية بنجاح');
       }
     } catch (e) {
       snackBar.close();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل إنشاء النسخة: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, 'فشل إنشاء النسخة.');
       }
     } finally {
       client?.close();
@@ -291,24 +277,12 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ]);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم بدء عملية الاستعادة. سيعيد الراوتر التشغيل الآن...'),
-            backgroundColor: Colors.blue,
-            duration: Duration(seconds: 5),
-          ),
-        );
-
+        showSuccessSnackBar(context, 'تم بدء عملية الاستعادة. سيعيد الراوتر التشغيل الآن...');
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشلت الاستعادة: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, 'فشلت عملية الاستعادة.');
       }
     } finally {
       client?.close();
@@ -351,21 +325,11 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       await _loadBackups();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حذف النسخة الاحتياطية'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        showSuccessSnackBar(context, 'تم حذف النسخة الاحتياطية');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل الحذف: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, 'فشل حذف النسخة الاحتياطية.');
       }
     } finally {
       client?.close();

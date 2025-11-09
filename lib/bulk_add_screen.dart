@@ -19,6 +19,7 @@ import 'card_list_screen.dart';
 import 'mqtt_service.dart';
 import 'pdf_templates_screen.dart';
 import 'pdf_generator.dart';
+import 'snackbar_helpers.dart';
 
 class BulkAddScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
@@ -140,12 +141,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
         case 'cards_added_success':
           _addCardsTimer?.cancel();
           Navigator.of(context, rootNavigator: true).pop(); 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message['message'] ?? 'تمت العملية بنجاح.'),
-              backgroundColor: Theme.of(context).primaryColor,
-            ),
-          );
+          showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
           break;
 
         case 'error':
@@ -446,11 +442,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
 
   void _showErrorDialog(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.redAccent),
-    );
+    showErrorSnackBar(context, message);
   }
 
 

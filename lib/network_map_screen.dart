@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'snackbar_helpers.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:router_os_client/router_os_client.dart';
@@ -138,9 +139,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('network_map_json');
       if(mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم حذف الخريطة.'), backgroundColor: Colors.orange),
-        );
+        showSuccessSnackBar(context, 'تم حذف الخريطة.');
       }
       return;
     }
@@ -148,9 +147,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     final mapJson = jsonEncode(_rootNode!.toJson());
     await prefs.setString('network_map_json', mapJson);
     if(mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حفظ الخريطة بنجاح!'), backgroundColor: Colors.green),
-      );
+      showSuccessSnackBar(context, 'تم حفظ الخريطة بنجاح.');
     }
   }
   
@@ -167,9 +164,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
 
   Future<void> _checkAllStatuses() async {
     if (_rootNode == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الخريطة فارغة، قم بإضافة جهاز رئيسي أولاً.')),
-      );
+      showErrorSnackBar(context, 'الخريطة فارغة، قم بإضافة جهاز رئيسي أولاً.');
       return;
     }
     await _performCheck(_rootNode!);
@@ -210,27 +205,19 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
 
     } on MikrotikCredentialsMissingException catch (e) {
       if(mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ في بيانات الدخول: ${e.message}'), backgroundColor: Colors.red),
-        );
+        showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
       }
     } on MikrotikConnectionException catch (e) {
       if(mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ في الاتصال: ${e.message}'), backgroundColor: Colors.red),
-        );
+        showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
       }
     } on TimeoutException {
        if(mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('انتهت مهلة الفحص. قد تكون الشبكة بطيئة أو بعض الأجهزة لا تستجيب.'), backgroundColor: Colors.orange),
-        );
+        showErrorSnackBar(context, 'انتهت مهلة الفحص. قد تكون الشبكة بطيئة أو بعض الأجهزة لا تستجيب.');
       }
     } catch (e) {
       if(mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('حدث خطأ أثناء الفحص: ${e.toString()}'), backgroundColor: Colors.red),
-        );
+        showErrorSnackBar(context, 'حدث خطأ أثناء الفحص.');
       }
     } finally {
       client?.close();
@@ -365,7 +352,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
 
   Future<void> _exportMap() async {
     if (_rootNode == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا توجد خريطة لتصديرها.')));
+      showErrorSnackBar(context, 'لا توجد خريطة لتصديرها.');
       return;
     }
     
@@ -381,9 +368,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       await Share.shareXFiles([xFile], text: 'ملف النسخ الاحتياطي لخريطة الشبكة');
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشلت عملية التصدير.'), backgroundColor: Colors.red),
-      );
+      showErrorSnackBar(context, 'فشلت عملية التصدير.');
     }
   }
 
@@ -419,9 +404,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل الاستيراد: ملف غير صالح أو خطأ في القراءة.'), backgroundColor: Colors.red),
-      );
+      showErrorSnackBar(context, 'فشل الاستيراد: ملف غير صالح أو خطأ في القراءة.');
     }
   }
 
