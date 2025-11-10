@@ -356,8 +356,12 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Text(_errorMessage!,
                   textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: context.theme.appColors.error,
+                    fontSize: 12,
+                  ),
                   style: const TextStyle(
-                      color: Colors.redAccent, fontSize: 16)),
+                      color: Colors.redAccent, fontSize: 12)),
             ),
           if (_isAwaitingCode)
             Text(_statusMessage,
