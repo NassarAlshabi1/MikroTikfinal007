@@ -25,7 +25,8 @@ import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
 import 'snackbar_helpers.dart';
-import 'constants/material_theme.dart';
+import 'theme/app_theme.dart';
+import 'theme/app_palette.dart';
 // -----------------------------------------
 
 void main() {
@@ -57,7 +58,7 @@ void showErrorSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: Colors.redAccent,
+      backgroundColor: AppPalette.error,
       duration: const Duration(seconds: 5),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
@@ -89,7 +90,7 @@ void showSuccessSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: const Color(0xFF4CAF50),
+      backgroundColor: AppPalette.success,
       duration: const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
@@ -109,57 +110,9 @@ class MyApp extends StatelessWidget {
       scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       title: 'MikroTik Manager',
-      theme: ThemeData(
-  useMaterial3: true,
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: MaterialColors.primary,
-    primary: MaterialColors.primary,
-    secondary: MaterialColors.info,
-    error: MaterialColors.error,
-  ),
-  appBarTheme: AppBarTheme(
-    backgroundColor: MaterialColors.primary,
-    foregroundColor: Colors.white,
-    elevation: 0,
-  ),
-  floatingActionButtonTheme: FloatingActionButtonThemeData(
-    backgroundColor: MaterialColors.primary,
-    foregroundColor: Colors.white,
-  ),
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: MaterialColors.primary,
-      foregroundColor: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-    ),
-  ),
-  inputDecorationTheme: InputDecorationTheme(
-    filled: true,
-    fillColor: MaterialColors.input.withOpacity(0.1),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: MaterialColors.border),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: MaterialColors.border),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: MaterialColors.primary, width: 2),
-    ),
-  ),
-  cardTheme: CardTheme(
-    elevation: 2,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-  ),
-  scaffoldBackgroundColor: MaterialColors.bgColorScreen,
-),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.light,
       home: const LoginScreen(),
     );
   }
