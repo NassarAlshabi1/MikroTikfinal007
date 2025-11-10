@@ -25,6 +25,7 @@ import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
 import 'snackbar_helpers.dart';
+import 'constants/material_theme.dart';
 // -----------------------------------------
 
 void main() {
@@ -109,217 +110,55 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'MikroTik Manager',
       theme: ThemeData(
-  brightness: Brightness.dark,
-  primaryColor: const Color(0xFF6b3fa0),
-  scaffoldBackgroundColor: const Color(0xFF1a1329),
-  fontFamily: 'Tajawal',
-  cardColor: const Color(0xFF2d213f),
-  colorScheme: ColorScheme.dark(
-    primary: const Color(0xFF6b3fa0),
-    secondary: const Color(0xFFB39DDB),
-    surface: const Color(0xFF2d213f),
-    background: const Color(0xFF1a1329),
-    error: Colors.redAccent,
-    onPrimary: Colors.white,
-    onSecondary: Colors.white,
-    onSurface: Colors.white,
-    onBackground: Colors.white,
-    onError: Colors.white,
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: MaterialColors.primary,
+    primary: MaterialColors.primary,
+    secondary: MaterialColors.info,
+    error: MaterialColors.error,
   ),
-  textTheme: const TextTheme(
-    displayLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 28,
-      fontWeight: FontWeight.bold,
-      height: 1.4,
-    ),
-    displayMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-      height: 1.4,
-    ),
-    displaySmall: TextStyle(
-      color: Colors.white,
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-      height: 1.4,
-    ),
-    headlineLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      height: 1.5,
-    ),
-    headlineMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-      height: 1.5,
-    ),
-    headlineSmall: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      height: 1.5,
-    ),
-    titleLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-      height: 1.5,
-    ),
-    titleMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w500,
-      height: 1.5,
-    ),
-    titleSmall: TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-      height: 1.5,
-    ),
-    bodyLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      height: 1.6,
-    ),
-    bodyMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      height: 1.6,
-    ),
-    bodySmall: TextStyle(
-      color: Colors.white,
-      fontSize: 12,
-      height: 1.6,
-    ),
-    labelLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-    ),
-    labelMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-    ),
-    labelSmall: TextStyle(
-      color: Colors.white,
-      fontSize: 12,
-      fontWeight: FontWeight.w500,
-    ),
+  appBarTheme: AppBarTheme(
+    backgroundColor: MaterialColors.primary,
+    foregroundColor: Colors.white,
+    elevation: 0,
+  ),
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
+    backgroundColor: MaterialColors.primary,
+    foregroundColor: Colors.white,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF6b3fa0),
+      backgroundColor: MaterialColors.primary,
       foregroundColor: Colors.white,
-      minimumSize: const Size(double.infinity, 52),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      textStyle: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        height: 1.5,
-      ),
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
-    fillColor: const Color(0xFFB39DDB),
+    fillColor: MaterialColors.input.withOpacity(0.1),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: MaterialColors.border),
     ),
-    labelStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      height: 1.5,
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: MaterialColors.border),
     ),
-    hintStyle: TextStyle(
-      color: Colors.white.withOpacity(0.7),
-      fontSize: 14,
-      height: 1.5,
-    ),
-    iconColor: Colors.white,
-    prefixIconColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 16,
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: MaterialColors.primary, width: 2),
     ),
   ),
-  cardTheme: CardThemeData(
-    color: const Color(0xFF2d213f),
+  cardTheme: CardTheme(
     elevation: 2,
-    shadowColor: Colors.black.withOpacity(0.2),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    margin: const EdgeInsets.all(8),
-  ),
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Color(0xFF2d213f),
-    elevation: 0,
-    centerTitle: true,
-    titleTextStyle: TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      fontFamily: 'Tajawal',
-      height: 1.5,
-    ),
-    iconTheme: IconThemeData(
-      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
     ),
   ),
-  iconTheme: const IconThemeData(
-    color: Color(0xFFB0A8C1),
-    size: 24,
-  ),
-  dividerTheme: DividerThemeData(
-    color: Colors.white.withOpacity(0.1),
-    thickness: 1,
-    space: 16,
-  ),
-  snackBarTheme: SnackBarThemeData(
-    backgroundColor: const Color(0xFF2d213f),
-    contentTextStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontFamily: 'Tajawal',
-      height: 1.5,
-    ),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-    behavior: SnackBarBehavior.floating,
-    elevation: 4,
-  ),
-  dialogTheme: DialogTheme(
-    backgroundColor: const Color(0xFF2d213f),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-    elevation: 8,
-    titleTextStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      fontFamily: 'Tajawal',
-      height: 1.5,
-    ),
-    contentTextStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontFamily: 'Tajawal',
-      height: 1.6,
-    ),
-  ),
+  scaffoldBackgroundColor: MaterialColors.bgColorScreen,
 ),
       home: const LoginScreen(),
     );
