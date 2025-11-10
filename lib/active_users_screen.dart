@@ -148,7 +148,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               Text(
                 _errorMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.theme.appColors.error, fontSize: 16),
+                style: TextStyle(color: context.theme.appColors.error, fontSize: 12),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(

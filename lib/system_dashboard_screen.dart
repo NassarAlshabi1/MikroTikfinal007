@@ -501,7 +501,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(

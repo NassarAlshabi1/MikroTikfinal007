@@ -168,6 +168,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _isLoading = false;
   String _errorMessage = '';
   bool _rememberMe = true;
+  bool _rememberMeRemote = false;
   bool _isPasswordObscured = true;
   bool _isScanning = false;
 
@@ -244,9 +245,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         _userController.text = prefs.getString('user') ?? '';
         _passwordController.text = prefs.getString('pass') ?? '';
         _portController.text = prefs.getString('port') ?? '8728';
+        _rememberMe = true;
+      });
+    }
+    if (prefs.getBool('remember_me_remote') ?? false) {
+      setState(() {
         _remoteServerController.text = prefs.getString('remote_server') ?? '';
         _remotePortController.text = prefs.getString('remote_port') ?? '8728';
-        _rememberMe = true;
+        _rememberMeRemote = true;
       });
     }
   }
@@ -259,13 +265,21 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await prefs.setString('user', _userController.text);
       await prefs.setString('pass', _passwordController.text);
       await prefs.setString('port', _portController.text);
-      await prefs.setString('remote_server', _remoteServerController.text);
-      await prefs.setString('remote_port', _remotePortController.text);
     } else {
       await prefs.remove('ip');
       await prefs.remove('user');
       await prefs.remove('pass');
       await prefs.remove('port');
+    }
+  }
+  
+  Future<void> _handleRemoteCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('remember_me_remote', _rememberMeRemote);
+    if (_rememberMeRemote) {
+      await prefs.setString('remote_server', _remoteServerController.text);
+      await prefs.setString('remote_port', _remotePortController.text);
+    } else {
       await prefs.remove('remote_server');
       await prefs.remove('remote_port');
     }
@@ -378,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               if (_errorMessage.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(_errorMessage, textAlign: TextAlign.center, style: TextStyle(color: context.theme.appColors.error, fontSize: 16)),
+                  child: Text(_errorMessage, textAlign: TextAlign.center, style: TextStyle(color: context.theme.appColors.error, fontSize: 12)),
                 ),
 
               SizedBox(
@@ -419,9 +433,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     });
     
     try {
-      await _handleCredentials();
+      await _handleRemoteCredentials();
       
-      // حفظ عنوان الخادم البعيد والبورت في SharedPreferences
+      // حفظ عنوان الخادم البعيد والبورت في SharedPreferences للجلسة الحالية
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('ip', _remoteServerController.text);
       await prefs.setString('port', _remotePortController.text);
@@ -570,7 +584,19 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           ),
           keyboardType: TextInputType.number,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        CheckboxListTile(
+          title: Text('تذكرني', style: TextStyle(color: context.theme.appColors.onSurface)),
+          value: _rememberMeRemote,
+          onChanged: (bool? value) {
+            setState(() {
+              _rememberMeRemote = value ?? false;
+            });
+          },
+          activeColor: context.theme.appColors.primary,
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _isLoading ? null : _remoteConnect,
           child: _isLoading

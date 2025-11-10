@@ -307,7 +307,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.redAccent,
-                  fontSize: 16,
+                  fontSize: 12,
                 ),
               ),
               const SizedBox(height: 24),
