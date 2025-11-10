@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
+import 'theme/app_theme.dart';
 import 'mikrotik_connector.dart';
 
 enum TimeRange { all, today, week, month, custom }
@@ -387,7 +388,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, size: 80, color: Colors.redAccent.withOpacity(0.8)),
+                        Icon(Icons.error_outline, size: 80, color: context.theme.appColors.error.withOpacity(0.8)),
                         const SizedBox(height: 24),
                         Text(
                           _errorMessage!,
@@ -817,13 +818,13 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildMiniStat('مفعل', _activeCards, Icons.check_circle, Colors.greenAccent),
+              _buildMiniStat('مفعل', _activeCards, Icons.check_circle, context.theme.appColors.success),
               Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniStat('معطل', _disabledCards, Icons.cancel, Colors.redAccent),
+              _buildMiniStat('معطل', _disabledCards, Icons.cancel, context.theme.appColors.error),
               Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniStat('منتهي', _expiredCards, Icons.hourglass_empty, Colors.orangeAccent),
+              _buildMiniStat('منتهي', _expiredCards, Icons.hourglass_empty, context.theme.appColors.warning),
               Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniStat('نشط', _cardsWithSessions, Icons.wifi, Colors.blueAccent),
+              _buildMiniStat('نشط', _cardsWithSessions, Icons.wifi, context.theme.appColors.info),
             ],
           ),
         ],
@@ -869,14 +870,14 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           'الجلسات النشطة',
           _totalSessions,
           Icons.devices,
-          Colors.orangeAccent,
+          context.theme.appColors.warning,
           theme,
         ),
         _buildSmallStatCard(
           'معدل النشاط',
           _totalCards > 0 ? ((_cardsWithSessions / _totalCards) * 100).round() : 0,
           Icons.trending_up,
-          Colors.purpleAccent,
+          context.theme.appColors.primary,
           theme,
           suffix: '%',
         ),
@@ -996,7 +997,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                   'التحميل',
                   _totalDownloadGB,
                   Icons.download,
-                  Colors.greenAccent,
+                  context.theme.appColors.success,
                   downloadPercent,
                 ),
               ),
@@ -1006,7 +1007,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                   'الرفع',
                   _totalUploadGB,
                   Icons.upload,
-                  Colors.blueAccent,
+                  context.theme.appColors.info,
                   uploadPercent,
                 ),
               ),
@@ -1024,7 +1025,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               children: [
                 Row(
                   children: [
-                    Icon(Icons.storage, color: Colors.orangeAccent, size: 20),
+                    Icon(Icons.storage, color: context.theme.appColors.warning, size: 20),
                     const SizedBox(width: 8),
                     const Text('المجموع الكلي', style: TextStyle(color: Colors.white70)),
                   ],
@@ -1034,7 +1035,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.orangeAccent,
+                    color: context.theme.appColors.warning,
                   ),
                 ),
               ],
@@ -1109,10 +1110,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.purpleAccent.withOpacity(0.15),
+                  color: context.theme.appColors.primary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.category, color: Colors.purpleAccent, size: 24),
+                child: Icon(Icons.category, color: context.theme.appColors.primary, size: 24),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -1128,10 +1129,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
             final percentage = (_totalCards > 0 ? (profileEntry.value / _totalCards) : 0.0);
             
             final colors = [
-              Colors.purpleAccent,
-              Colors.blueAccent,
-              Colors.greenAccent,
-              Colors.orangeAccent,
+              context.theme.appColors.primary,
+              context.theme.appColors.info,
+              context.theme.appColors.success,
+              context.theme.appColors.warning,
               Colors.pinkAccent,
               Colors.cyanAccent,
             ];

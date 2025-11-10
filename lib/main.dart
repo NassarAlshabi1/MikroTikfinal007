@@ -357,9 +357,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 ),
                 child: TabBar(
                   controller: _tabController,
-                  indicatorColor: Theme.of(context).primaryColor,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: context.theme.appColors.primary,
+                  labelColor: context.theme.appColors.onSurface,
+                  unselectedLabelColor: context.theme.appColors.muted,
                   indicatorWeight: 3,
                   tabs: const [
                     Tab(
@@ -378,7 +378,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               if (_errorMessage.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(_errorMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent, fontSize: 16)),
+                  child: Text(_errorMessage, textAlign: TextAlign.center, style: TextStyle(color: context.theme.appColors.error, fontSize: 16)),
                 ),
 
               SizedBox(
@@ -458,7 +458,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: TextField(
                 controller: _ipController,
                 decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
-                style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.phone,
               ),
             ),
@@ -468,7 +467,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: TextField(
                 controller: _portController,
                 decoration: const InputDecoration(labelText: 'Port'),
-                style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.number,
               ),
             ),
@@ -476,18 +474,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             Container(
               height: 58,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.theme.appColors.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: _isScanning
-                  ? const Padding(
-                      padding: EdgeInsets.all(12.0),
+                  ? Padding(
+                      padding: const EdgeInsets.all(12.0),
                       child: CircularProgressIndicator(
-                        color: Color(0xFF6b3fa0),
+                        color: context.theme.appColors.primary,
                       ),
                     )
                   : IconButton(
-                      icon: const Icon(Icons.search, color: Color(0xFF6b3fa0)),
+                      icon: Icon(Icons.search, color: context.theme.appColors.primary),
                       onPressed: _forceDiscoverGateway,
                       tooltip: 'بحث عن البوابة',
                     ),
@@ -498,7 +496,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         TextField(
           controller: _userController,
           decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
-          style: const TextStyle(color: Colors.white),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -512,7 +509,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
             ),
           ),
-          style: const TextStyle(color: Colors.white),
         ),
         CheckboxListTile(
           title: const Text("تذكرني"),
@@ -520,13 +516,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
-          activeColor: Theme.of(context).primaryColor,
+          activeColor: context.theme.appColors.primary,
         ),
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _isLoading ? null : _login,
           child: _isLoading
-              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+              ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: context.theme.appColors.onPrimary))
               : const Text('اتصال', style: TextStyle(fontSize: 18)),
         ),
         const SizedBox(height: 8),
@@ -535,17 +531,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           child: Text(
             'سياسة الخصوصية',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: context.theme.appColors.onBackground.withOpacity(0.7),
               decoration: TextDecoration.underline,
-              decorationColor: Colors.white.withOpacity(0.7),
+              decorationColor: context.theme.appColors.onBackground.withOpacity(0.7),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'جميع الحقوق محفوظة © م/نصار الشعبي',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
+          style: TextStyle(color: context.theme.appColors.muted, fontSize: 12),
         ),
       ],
     );
@@ -562,7 +558,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             hintText: 'mikrotik.example.com',
             prefixIcon: Icon(Icons.cloud),
           ),
-          style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.url,
         ),
         const SizedBox(height: 16),
@@ -573,7 +568,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             hintText: '8728',
             prefixIcon: Icon(Icons.numbers),
           ),
-          style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.number,
         ),
         const SizedBox(height: 24),
@@ -591,10 +585,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               : const Text('الدخول', style: TextStyle(fontSize: 18)),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'جميع الحقوق محفوظة © م/نصار الشعبي',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
+          style: TextStyle(color: context.theme.appColors.muted, fontSize: 12),
         ),
       ],
     );
@@ -611,16 +605,16 @@ class CustomLoadingIndicator extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(
+          CircularProgressIndicator(
             strokeWidth: 3,
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0)),
+            valueColor: AlwaysStoppedAnimation<Color>(context.theme.appColors.primary),
           ),
           if (message != null) ...[
             const SizedBox(height: 16),
             Text(
               message!,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: context.theme.appColors.onBackground.withOpacity(0.7),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -757,7 +751,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إضافة كرت فردي',
         icon: Icons.person_add_alt_1,
-        color: const Color(0xFF5C6BC0), // Indigo
+        color: AppPalette.primary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) =>
@@ -768,7 +762,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إضافة كروت جماعية',
         icon: Icons.groups,
-        color: const Color(0xFF4CAF50), // Green
+        color: AppPalette.success,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) =>
@@ -779,7 +773,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'ربط الشبكة',
         icon: Icons.link,
-        color: const Color(0xFF42A5F5), // Blue
+        color: AppPalette.info,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen()));
@@ -788,7 +782,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'الإحصائيات',
         icon: Icons.bar_chart_rounded,
-        color: const Color(0xFF26A69A), // Teal
+        color: AppPalette.secondaryDark,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const StatsScreen()));
@@ -797,7 +791,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'طبيب الشبكة',
         icon: Icons.local_hospital_outlined,
-        color: const Color(0xFF42A5F5), // Blue
+        color: AppPalette.info,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const NetworkDoctorScreen()));
@@ -806,7 +800,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'الملفات المحفوظة',
         icon: Icons.folder_copy,
-        color: const Color(0xFFFFA726), // Orange
+        color: AppPalette.warning,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const SavedFilesScreen()));
@@ -815,7 +809,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إدارة قوالب PDF',
         icon: Icons.picture_as_pdf,
-        color: const Color(0xFF78909C), // Blue Grey
+        color: AppPalette.muted,
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => PdfTemplatesScreen(profiles: _profiles)));
@@ -824,7 +818,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'استخراج الكروت',
         icon: Icons.document_scanner_outlined,
-        color: const Color(0xFFEF5350), // Red
+        color: AppPalette.error,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const ExtractCardsScreen()));
@@ -833,7 +827,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إحصائيات الكروت',
         icon: Icons.bar_chart,
-        color: const Color(0xFF9C27B0), // Purple
+        color: AppPalette.primary,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const CardsStatisticsScreen()));
@@ -842,7 +836,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'المستخدمين النشطين',
         icon: Icons.people_outline,
-        color: const Color(0xFF00ACC1), // Cyan
+        color: AppPalette.secondary,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const ActiveUsersScreen()));
@@ -851,7 +845,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'الملف الشخصي',
         icon: Icons.account_circle,
-        color: const Color(0xFF29B6F6), // Light Blue
+        color: AppPalette.secondaryLight,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const ProfileScreen()));
@@ -860,7 +854,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'النسخ الاحتياطي',
         icon: Icons.backup,
-        color: const Color(0xFF2196F3), // Blue
+        color: AppPalette.info,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const BackupSystemScreen()));
@@ -878,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
             backgroundColor: Theme.of(context).cardColor,
-            child: const Icon(Icons.person_outline, color: Colors.white),
+            child: Icon(Icons.person_outline, color: context.theme.appColors.onSurface),
           ),
         ),
         actions: [
@@ -913,7 +907,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: context.theme.appColors.onBackground.withOpacity(0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -933,12 +927,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                   _isNetworkLinked && _clientName.isNotEmpty
                                       ? _clientName
                                       : 'لوحة تحكم MikroTik',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      color: context.theme.appColors.onSurface, fontSize: 22, fontWeight: FontWeight.bold),
                                   overflow: TextOverflow.ellipsis, // to handle long names
                                 ),
                               ),
-                              const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
+                              Icon(Icons.settings_ethernet, color: context.theme.appColors.onSurface.withOpacity(0.7), size: 28),
                             ],
                           ),
                         ],
@@ -951,7 +945,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     padding: EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0, bottom: 12.0),
                     child: Text(
                       'الخدمات الأساسية',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.theme.appColors.onBackground),
                     ),
                   ),
 

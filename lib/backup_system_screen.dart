@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
+import 'theme/app_theme.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
 
@@ -452,7 +453,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFB39DDB),
+                        color: context.theme.appColors.secondary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -476,7 +477,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFB39DDB).withOpacity(0.3),
+                            color: context.theme.appColors.secondary.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
