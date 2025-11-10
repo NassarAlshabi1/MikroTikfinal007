@@ -290,7 +290,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           padding: const EdgeInsets.only(bottom: 12.0),
           child: Row(
             children: [
-              const Text(
+              Text(
                 'المتصلين حالياً',
                 style: TextStyle(
                   fontSize: 20,
@@ -368,7 +368,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person,
                     color: context.theme.appColors.onPrimary,
                     size: 28,
@@ -381,7 +381,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     children: [
                       Text(
                         username,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: context.theme.appColors.onSurface,
@@ -392,7 +392,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.location_on,
                             size: 14,
                             color: context.theme.appColors.secondary,
@@ -401,7 +401,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                           Expanded(
                             child: Text(
                               ipAddress,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 color: context.theme.appColors.secondary,
                               ),
@@ -414,7 +414,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.access_time,
                             size: 14,
                             color: context.theme.appColors.success,
@@ -422,7 +422,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                           const SizedBox(width: 4),
                           Text(
                             _formatUptime(uptime),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               color: context.theme.appColors.success,
                             ),
@@ -466,7 +466,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'تفاصيل المستخدم',
                     style: TextStyle(
                       fontSize: 20,

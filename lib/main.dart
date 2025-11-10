@@ -941,8 +941,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
 
                   // --- عنوان قسم الخدمات ---
-                  const Padding(
-                    padding: EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0, bottom: 12.0),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0, bottom: 12.0),
                     child: Text(
                       'الخدمات الأساسية',
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.theme.appColors.onBackground),

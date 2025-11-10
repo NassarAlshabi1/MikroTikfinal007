@@ -1032,7 +1032,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 ),
                 Text(
                   '${totalData.toStringAsFixed(2)} GB',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: context.theme.appColors.warning,
