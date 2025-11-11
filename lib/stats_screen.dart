@@ -554,10 +554,10 @@ class _StatsScreenState extends State<StatsScreen> {
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
               ),
             ),
           ],
@@ -597,10 +597,10 @@ class _StatsScreenState extends State<StatsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _formatUptime(_stats['uptime']),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87,
                     ),
                   ),
                 ],
