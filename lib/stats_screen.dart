@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme/app_gradients.dart';
 import 'mikrotik_connector.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -314,11 +315,14 @@ class _StatsScreenState extends State<StatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('الإحصائيات'),
-        backgroundColor: Theme.of(context).cardColor,
-        actions: [
+    return Container(
+      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('الإحصائيات'),
+          backgroundColor: Theme.of(context).cardColor,
+          actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: (_isLoading || _isRefreshing)
@@ -334,8 +338,9 @@ class _StatsScreenState extends State<StatsScreen> {
             tooltip: 'تصدير PDF',
           ),
         ],
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 

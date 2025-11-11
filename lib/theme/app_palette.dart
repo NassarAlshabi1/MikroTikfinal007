@@ -40,6 +40,10 @@ abstract class AppPalette {
   // Gradient Colors
   static const gradientStart = Color(0xFF6B24AA);
   static const gradientEnd = Color(0xFFAC2688);
+
+  static const gradientSoftStart = Color(0xFFEAF2FF);
+  static const gradientSoftMiddle = Color(0xFFEFF7FF);
+  static const gradientSoftEnd = Color(0xFFFBF6FF);
   
   // Sign/Auth Gradient
   static const signStartGradient = Color(0xFF6C24AA);
