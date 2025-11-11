@@ -164,12 +164,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final _portController = TextEditingController(text: '8728');
   final _remoteServerController = TextEditingController();
   final _remotePortController = TextEditingController(text: '8728');
+  final _remoteUserController = TextEditingController();
+  final _remotePasswordController = TextEditingController();
 
   bool _isLoading = false;
   String _errorMessage = '';
   bool _rememberMe = true;
   bool _rememberMeRemote = false;
   bool _isPasswordObscured = true;
+  bool _isRemotePasswordObscured = true;
   bool _isScanning = false;
 
   final String telegramBotToken = '';
@@ -252,6 +255,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() {
         _remoteServerController.text = prefs.getString('remote_server') ?? '';
         _remotePortController.text = prefs.getString('remote_port') ?? '8728';
+        _remoteUserController.text = prefs.getString('remote_user') ?? '';
+        _remotePasswordController.text = prefs.getString('remote_pass') ?? '';
         _rememberMeRemote = true;
       });
     }
@@ -279,9 +284,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     if (_rememberMeRemote) {
       await prefs.setString('remote_server', _remoteServerController.text);
       await prefs.setString('remote_port', _remotePortController.text);
+      await prefs.setString('remote_user', _remoteUserController.text);
+      await prefs.setString('remote_pass', _remotePasswordController.text);
     } else {
       await prefs.remove('remote_server');
       await prefs.remove('remote_port');
+      await prefs.remove('remote_user');
+      await prefs.remove('remote_pass');
     }
   }
 
@@ -346,6 +355,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     _portController.dispose();
     _remoteServerController.dispose();
     _remotePortController.dispose();
+    _remoteUserController.dispose();
+    _remotePasswordController.dispose();
     super.dispose();
   }
 
@@ -418,8 +429,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() => _errorMessage = 'الرجاء إدخال عنوان الخادم البعيد');
       return;
     }
+
+    if (_remoteUserController.text.isEmpty || _remotePasswordController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور للاتصال البعيد');
+      return;
+    }
     
-    // التحقق من أن الإدخال هو Domain وليس IP
     final input = _remoteServerController.text.trim();
     final ipPattern = RegExp(r'^(\d{1,3}\.){3}\d{1,3}$');
     if (ipPattern.hasMatch(input)) {
@@ -435,18 +450,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     try {
       await _handleRemoteCredentials();
       
-      // حفظ عنوان الخادم البعيد والبورت في SharedPreferences للجلسة الحالية
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('ip', _remoteServerController.text);
       await prefs.setString('port', _remotePortController.text);
+      await prefs.setString('user', _remoteUserController.text);
+      await prefs.setString('pass', _remotePasswordController.text);
       
-      // الانتقال مباشرة إلى الشاشة الرئيسية بدون توثيق
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
-            builder: (context) => const HomeScreen(
+            builder: (context) => HomeScreen(
               isVersion7OrNewer: true, 
-              username: 'Remote User'
+              username: _remoteUserController.text,
             ),
           ),
         );
@@ -583,6 +598,27 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             prefixIcon: Icon(Icons.numbers),
           ),
           keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _remoteUserController,
+          decoration: const InputDecoration(
+            labelText: 'Username',
+            prefixIcon: Icon(Icons.person_outline),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _remotePasswordController,
+          obscureText: _isRemotePasswordObscured,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_isRemotePasswordObscured ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _isRemotePasswordObscured = !_isRemotePasswordObscured),
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         CheckboxListTile(

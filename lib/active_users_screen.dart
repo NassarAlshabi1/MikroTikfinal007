@@ -273,7 +273,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               Text(
                 'لا توجد مستخدمين نشطين حالياً',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.black54,
                   fontSize: 16,
                 ),
               ),

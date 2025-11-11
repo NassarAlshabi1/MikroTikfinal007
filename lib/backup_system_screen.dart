@@ -435,8 +435,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                     ),
                     Text(
                       backupType,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black87,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -458,8 +458,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       ),
                       child: Text(
                         name,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -482,8 +482,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                           ),
                           child: Text(
                             sizeText,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                               fontSize: 12,
                             ),
                           ),
@@ -498,8 +498,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                         const SizedBox(width: 4),
                         Text(
                           timeAgo,
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Colors.black54,
                             fontSize: 12,
                           ),
                         ),
@@ -509,7 +509,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
+                icon: Icon(Icons.more_vert, color: Theme.of(context).iconTheme.color),
                 onPressed: () => _showBackupOptions(backup),
               ),
             ],

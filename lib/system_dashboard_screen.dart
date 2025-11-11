@@ -841,7 +841,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             title,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.7),
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.black54,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1049,7 +1049,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         return Text(
                           '${value.toInt()}$unit',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Colors.black45,
                             fontSize: 12,
                           ),
                         );
@@ -1143,7 +1143,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.6),
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6) ?? Colors.black54,
           ),
         ),
         const SizedBox(height: 4),
