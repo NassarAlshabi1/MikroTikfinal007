@@ -27,6 +27,7 @@ import 'active_users_screen.dart';
 import 'snackbar_helpers.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_palette.dart';
+import 'theme/app_gradients.dart';
 // -----------------------------------------
 
 void main() {
@@ -362,62 +363,77 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Image.asset('assets/images/wifi_logo.png', width: 48, height: 48),
-              const SizedBox(height: 24),
-              Text('إدارة شبكتك بسهولة وأمان', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color)),
-              const SizedBox(height: 24),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Image.asset('assets/images/wifi_logo.png', width: 48, height: 48),
+                const SizedBox(height: 24),
+                Text(
+                  'إدارة شبكتك بسهولة وأمان',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
                 ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicatorColor: context.theme.appColors.primary,
-                  labelColor: context.theme.appColors.onSurface,
-                  unselectedLabelColor: context.theme.appColors.muted,
-                  indicatorWeight: 3,
-                  tabs: const [
-                    Tab(
-                      icon: Icon(Icons.lan),
-                      text: 'اتصال محلي',
+                const SizedBox(height: 24),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: context.theme.appColors.primary,
+                    labelColor: context.theme.appColors.onSurface,
+                    unselectedLabelColor: context.theme.appColors.muted,
+                    indicatorWeight: 3,
+                    tabs: const [
+                      Tab(
+                        icon: Icon(Icons.lan),
+                        text: 'اتصال محلي',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.cloud),
+                        text: 'اتصال عن بعد',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (_errorMessage.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      _errorMessage,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: context.theme.appColors.error,
+                        fontSize: 12,
+                      ),
                     ),
-                    Tab(
-                      icon: Icon(Icons.cloud),
-                      text: 'اتصال عن بعد',
-                    ),
-                  ],
+                  ),
+                SizedBox(
+                  height: 550,
+                  child: TabBarView(
+                    controller: _tabController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildLocalLoginForm(),
+                      _buildRemoteLoginForm(),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-
-              if (_errorMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(_errorMessage, textAlign: TextAlign.center, style: TextStyle(color: context.theme.appColors.error, fontSize: 12)),
-                ),
-
-              SizedBox(
-                height: 550,
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildLocalLoginForm(),
-                    _buildRemoteLoginForm(),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -728,12 +744,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isNetworkLinked = false;
   String _clientName = '';
 
+  Map<String, dynamic>? _dashboardStatus;
+  bool _isLoadingStatus = true;
+  bool _isRefreshingStatus = false;
+  String _statusError = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _fetchProfiles();
     _loadLinkStatus();
+    _loadCachedDashboardStatus();
+    _refreshDashboardStatus();
   }
 
   Future<void> _loadLinkStatus() async {
@@ -780,6 +803,124 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         });
       }
     }
+  }
+
+  Future<void> _loadCachedDashboardStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString('cached_dashboard_status') ?? prefs.getString('cached_stats');
+    if (cached == null) return;
+    try {
+      final decoded = jsonDecode(cached);
+      if (decoded is! Map<String, dynamic>) return;
+      if (!mounted) return;
+      setState(() {
+        _dashboardStatus = {
+          'cpuUsage': (decoded['cpuUsage'] as num?)?.toDouble() ?? 0.0,
+          'memoryUsage': (decoded['memoryUsage'] as num?)?.toDouble() ?? 0.0,
+          'uptime': decoded['uptime']?.toString() ?? 'غير متوفر',
+          'dataDownloaded': (decoded['dataDownloaded'] as num?)?.toDouble() ?? 0.0,
+          'dataUploaded': (decoded['dataUploaded'] as num?)?.toDouble() ?? 0.0,
+          'activeUsers': (decoded['activeUsers'] as num?)?.toInt() ?? 0,
+          'version': decoded['version']?.toString() ?? 'غير معروف',
+        };
+        _isLoadingStatus = false;
+        _statusError = '';
+      });
+    } catch (_) {
+      // ignore cache parse errors
+    }
+  }
+
+  Future<void> _refreshDashboardStatus({bool silent = true}) async {
+    if (!mounted) return;
+    setState(() {
+      _statusError = '';
+      if (silent && _dashboardStatus != null) {
+        _isRefreshingStatus = true;
+      } else {
+        _isLoadingStatus = true;
+      }
+    });
+
+    RouterOSClient? client;
+    try {
+      client = await MikrotikConnector.connect();
+
+      final resourceResponse = await client.talk(['/system/resource/print']);
+      Map<String, dynamic> resourceData = {};
+      if (resourceResponse.isNotEmpty) {
+        resourceData = Map<String, dynamic>.from(resourceResponse[0]);
+      }
+
+      final interfaceResponse = await client.talk([
+        '/interface/print',
+        '=.proplist=name,rx-byte,tx-byte',
+        'stats',
+      ]);
+      double totalDownload = 0.0;
+      double totalUpload = 0.0;
+      for (var iface in interfaceResponse) {
+        final rxBytes = double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
+        final txBytes = double.tryParse(iface['tx-byte']?.toString() ?? '0') ?? 0.0;
+        totalDownload += rxBytes;
+        totalUpload += txBytes;
+      }
+
+      List<Map<String, dynamic>> activeUsers = [];
+      try {
+        final activeResponse = await client.talk(['/ip/hotspot/active/print']);
+        activeUsers = activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+      } catch (_) {
+        activeUsers = [];
+      }
+
+      final cpuLoad = double.tryParse(resourceData['cpu-load']?.toString() ?? '0') ?? 0.0;
+      final totalMemory = double.tryParse(resourceData['total-memory']?.toString() ?? '0') ?? 0.0;
+      final freeMemory = double.tryParse(resourceData['free-memory']?.toString() ?? '0') ?? 0.0;
+      final memoryUsagePercent = totalMemory <= 0
+          ? 0.0
+          : ((totalMemory - freeMemory) / totalMemory * 100);
+
+      final updatedStatus = {
+        'cpuUsage': cpuLoad,
+        'memoryUsage': memoryUsagePercent,
+        'uptime': resourceData['uptime']?.toString() ?? 'غير متوفر',
+        'dataDownloaded': totalDownload / (1024 * 1024),
+        'dataUploaded': totalUpload / (1024 * 1024),
+        'activeUsers': activeUsers.length,
+        'version': resourceData['version']?.toString() ?? 'غير معروف',
+      };
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_dashboard_status', jsonEncode(updatedStatus));
+
+      if (mounted) {
+        setState(() {
+          _dashboardStatus = updatedStatus;
+          _isLoadingStatus = false;
+          _isRefreshingStatus = false;
+          _statusError = '';
+        });
+      }
+    } on MikrotikCredentialsMissingException catch (e) {
+      _handleStatusError('بيانات الدخول غير متوفرة: ${e.message}');
+    } on MikrotikConnectionException catch (e) {
+      _handleStatusError('تعذر الاتصال بالجهاز: ${e.message}');
+    } catch (e) {
+      _handleStatusError('فشل تحديث حالة MikroTik: ${e.toString()}');
+    } finally {
+      client?.close();
+    }
+  }
+
+  void _handleStatusError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _statusError = message;
+      _isLoadingStatus = false;
+      _isRefreshingStatus = false;
+    });
+    showErrorSnackBar(context, message);
   }
 
   Future<void> _fetchProfiles() async {
@@ -924,121 +1065,318 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
+    return Container(
+      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('الرئيسية', style: TextStyle(fontWeight: FontWeight.bold)),
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Theme.of(context).cardColor,
-            child: Icon(Icons.person_outline, color: context.theme.appColors.onSurface),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: null,
+          centerTitle: false,
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              backgroundColor: Theme.of(context).cardColor,
+              child: Icon(Icons.person_outline, color: context.theme.appColors.onSurface),
+            ),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'تحديث الحالة',
+              onPressed: _isRefreshingStatus ? null : () => _refreshDashboardStatus(silent: false),
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'تسجيل الخروج',
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  CustomPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.notifications_none_rounded),
-              onPressed: () {},
-              tooltip: 'الإشعارات'),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'تسجيل الخروج',
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                CustomPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
+        body: _isLoadingProfiles
+            ? const CustomLoadingIndicator(message: 'جاري التحميل...')
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: _buildDashboardStatusCard(),
+                    ),
+                    if (_statusError.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text(
+                          _statusError,
+                          style: TextStyle(
+                            color: context.theme.appColors.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    GridView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.9,
+                      ),
+                      itemCount: services.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final service = services[index];
+                        return RepaintBoundary(
+                          child: _buildServiceGridItem(
+                            title: service.title,
+                            icon: service.icon,
+                            iconBgColor: service.color,
+                            onTap: service.onTap,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardStatusCard() {
+    if (_isLoadingStatus && _dashboardStatus == null) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white70,
+              Colors.white,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: const [
+            CircularProgressIndicator(strokeWidth: 2),
+            SizedBox(width: 16),
+            Text('جاري تحديث حالة MikroTik...'),
+          ],
+        ),
+      );
+    }
+
+    final status = _dashboardStatus ?? {
+      'cpuUsage': 0.0,
+      'memoryUsage': 0.0,
+      'uptime': 'غير متوفر',
+      'dataDownloaded': 0.0,
+      'dataUploaded': 0.0,
+      'activeUsers': 0,
+      'version': 'غير معروف',
+    };
+
+    final cpuUsage = _asDouble(status['cpuUsage']);
+    final memoryUsage = _asDouble(status['memoryUsage']);
+    final downloadMb = _asDouble(status['dataDownloaded']);
+    final uploadMb = _asDouble(status['dataUploaded']);
+    final activeUsers = (status['activeUsers'] is num)
+        ? (status['activeUsers'] as num).toInt()
+        : int.tryParse(status['activeUsers']?.toString() ?? '') ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFB6C4FF),
+            Color(0xFFD7C8FF),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
-      body: _isLoadingProfiles
-          ? const CustomLoadingIndicator(message: 'جاري التحميل...')
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- بطاقة الحالة ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: context.theme.appColors.onBackground.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(gradient: AppGradients.cardOverlay),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(_isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
-                              style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _isNetworkLinked && _clientName.isNotEmpty
-                                      ? _clientName
-                                      : 'لوحة تحكم MikroTik',
-                                  style: TextStyle(
-                                      color: context.theme.appColors.onSurface, fontSize: 22, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis, // to handle long names
-                                ),
-                              ),
-                              Icon(Icons.settings_ethernet, color: context.theme.appColors.onSurface.withOpacity(0.7), size: 28),
-                            ],
+                          Text(
+                            _isNetworkLinked && _clientName.isNotEmpty ? _clientName : 'حالة MikroTik',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1F2937),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'الإصدار: ${status['version']}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF4B5563),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'وقت التشغيل: ${status['uptime']}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF4B5563),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-
-                  // --- عنوان قسم الخدمات ---
-                  Padding(
-                    padding: const EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0, bottom: 12.0),
-                    child: Text(
-                      'الخدمات الأساسية',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.theme.appColors.onBackground),
+                    Icon(
+                      Icons.router,
+                      size: 48,
+                      color: const Color(0xFF6B3FA0).withOpacity(0.8),
                     ),
-                  ),
-
-                  // --- شبكة الخدمات ---
-                  GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3, // 3 أعمدة لمظهر أفضل على معظم الشاشات
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.9, // تعديل النسبة لتناسب المحتوى
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _buildStatusMetric(
+                      label: 'المعالج',
+                      value: '${cpuUsage.toStringAsFixed(1)}%',
+                      icon: Icons.speed,
+                      color: const Color(0xFF8254FF),
                     ),
-                    itemCount: services.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final service = services[index];
-                      return RepaintBoundary(
-                        child: _buildServiceGridItem(
-                          title: service.title,
-                          icon: service.icon,
-                          iconBgColor: service.color,
-                          onTap: service.onTap,
-                        ),
-                      );
-                    },
+                    _buildStatusMetric(
+                      label: 'الذاكرة',
+                      value: '${memoryUsage.toStringAsFixed(1)}%',
+                      icon: Icons.memory,
+                      color: const Color(0xFF00BFA5),
+                    ),
+                    _buildStatusMetric(
+                      label: 'التحميل',
+                      value: '${downloadMb.toStringAsFixed(1)} MB',
+                      icon: Icons.download_rounded,
+                      color: const Color(0xFF0288D1),
+                    ),
+                    _buildStatusMetric(
+                      label: 'الرفع',
+                      value: '${uploadMb.toStringAsFixed(1)} MB',
+                      icon: Icons.upload_rounded,
+                      color: const Color(0xFFFF7043),
+                    ),
+                    _buildStatusMetric(
+                      label: 'المستخدمون النشطون',
+                      value: '$activeUsers',
+                      icon: Icons.wifi,
+                      color: const Color(0xFF7C4DFF),
+                    ),
+                  ],
+                ),
+                if (_isRefreshingStatus)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16.0),
+                    child: LinearProgressIndicator(minHeight: 3),
                   ),
-                ],
-              ),
+              ],
             ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildStatusMetric({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF4B5563),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  double _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
   }
 
   Widget _buildServiceGridItem({
