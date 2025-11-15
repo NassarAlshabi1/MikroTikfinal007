@@ -627,8 +627,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -642,11 +642,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'الفحوصات',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -693,8 +697,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   children: [
                     Text(
                       t.title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -702,8 +706,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     const SizedBox(height: 4),
                     Text(
                       t.description,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                         fontSize: 13,
                       ),
                     ),
@@ -735,11 +739,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.timer, color: Colors.white70, size: 16),
+                  Icon(Icons.timer, color: Theme.of(context).iconTheme.color?.withOpacity(0.7) ?? Colors.black54, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'المتوسط: ${t.latencyMs!.toStringAsFixed(0)} مللي ثانية',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87, fontSize: 14),
                   ),
                 ],
               ),
@@ -749,12 +753,12 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.speed, color: Colors.white70, size: 16),
+                  Icon(Icons.speed, color: Theme.of(context).iconTheme.color?.withOpacity(0.7) ?? Colors.black54, size: 16),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'التحميل: ${t.downloadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps • الرفع: ${t.uploadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps',
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87, fontSize: 14),
                     ),
                   ),
                 ],
@@ -769,8 +773,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
             width: double.infinity,
             child: Text(
               t.message,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                 fontSize: 13,
               ),
             ),
@@ -843,11 +847,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'التوصيات',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -858,14 +866,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle, color: AppPalette.success, size: 24),
-                SizedBox(width: 12),
+                const Icon(Icons.check_circle, color: AppPalette.success, size: 24),
+                const SizedBox(width: 12),
                 Text(
                   'لا توجد توصيات - الشبكة في حالة جيدة!',
-                  style: TextStyle(color: Colors.white, fontSize: 15),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87, fontSize: 15),
                 ),
               ],
             ),
@@ -936,8 +944,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         Expanded(
                           child: Text(
                             r.title,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -963,8 +971,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     const SizedBox(height: 6),
                     Text(
                       r.description,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                         fontSize: 13,
                       ),
                     ),
@@ -977,19 +985,19 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                 },
                 icon: Icon(
                   r.expanded ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.white60,
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.black54,
                 ),
               ),
             ],
           ),
           if (r.expanded) ...[
             const SizedBox(height: 16),
-            const Divider(color: Colors.white12),
+            Divider(color: Theme.of(context).dividerColor.withOpacity(0.3)),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'خطوات الحل:',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).textTheme.titleSmall?.color ?? Colors.black87,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
@@ -1024,8 +1032,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     Expanded(
                       child: Text(
                         step,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                           fontSize: 13,
                         ),
                       ),
@@ -1047,11 +1055,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'أدوات متقدمة',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -1083,10 +1095,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         child: Icon(Icons.hub_outlined, size: 32, color: primary),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'خريطة الشبكة',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Theme.of(context).textTheme.titleSmall?.color ?? Colors.black87,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -1124,10 +1136,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'كاشف DHCP الدخيل',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Theme.of(context).textTheme.titleSmall?.color ?? Colors.black87,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
