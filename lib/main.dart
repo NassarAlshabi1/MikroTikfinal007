@@ -113,7 +113,8 @@ class MyApp extends StatelessWidget {
       title: 'MikroTik Manager',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.light,
+      // لتفعيل الثيم الغامق المحسّن، غيّر ThemeMode.light إلى ThemeMode.dark
+      themeMode: ThemeMode.light, // أو ThemeMode.dark أو ThemeMode.system
       home: const LoginScreen(),
     );
   }
