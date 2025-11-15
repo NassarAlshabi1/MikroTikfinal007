@@ -40,7 +40,7 @@ class AppTheme with ChangeNotifier {
         secondary: AppPalette.secondary,
         error: AppPalette.error,
         background: AppPalette.bgColorScreen,
-        surface: Colors.white,
+        surface: AppPalette.cardSurface,
       ),
       textTheme: TextTheme(
         displayLarge: AppTypography.displayLarge.copyWith(color: AppPalette.textPrimary),
@@ -74,7 +74,7 @@ class AppTheme with ChangeNotifier {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        color: Colors.white,
+        color: AppPalette.cardSurface,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -90,7 +90,7 @@ class AppTheme with ChangeNotifier {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppPalette.input.withOpacity(0.1),
+        fillColor: AppPalette.input,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: AppPalette.border),
@@ -135,9 +135,9 @@ class AppTheme with ChangeNotifier {
     onInfo: Colors.white,
     background: AppPalette.bgColorScreen,
     onBackground: AppPalette.textPrimary,
-    surface: Colors.white,
+    surface: AppPalette.cardSurface,
     onSurface: AppPalette.textPrimary,
-    card: Colors.white,
+    card: AppPalette.cardSurface,
     onCard: AppPalette.textPrimary,
     accent: AppPalette.accent,
     muted: AppPalette.muted,

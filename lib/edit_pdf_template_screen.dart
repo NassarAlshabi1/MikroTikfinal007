@@ -241,7 +241,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                             decoration: const InputDecoration(
                                 labelText: 'عدد الكروت في كل صفحة',
                                 prefixIcon: Icon(Icons.view_module_outlined)),
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             keyboardType: TextInputType.number,
                             validator: (v) {
                               if (v == null || v.isEmpty) return 'الحقل مطلوب';
