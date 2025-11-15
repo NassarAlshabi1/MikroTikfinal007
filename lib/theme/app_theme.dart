@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app_colors_extension.dart';
 import 'app_text_theme_extension.dart';
 import 'app_typography.dart';
@@ -6,24 +7,78 @@ import 'app_palette.dart';
 
 /// Custom app theme with Material Kit Flutter colors and ThemeExtension support.
 /// Provides both light and dark theme configurations with smooth transitions.
+/// Manages theme switching and saves user preference.
 ///
 /// Usage in MaterialApp:
 /// ```dart
-/// MaterialApp(
-///   theme: AppTheme.light,
-///   darkTheme: AppTheme.dark,
-///   themeMode: ThemeMode.system, // or ThemeMode.light / ThemeMode.dark
+/// ChangeNotifierProvider(
+///   create: (context) => AppTheme(),
+///   child: Consumer<AppTheme>(
+///     builder: (context, themeProvider, child) => MaterialApp(
+///       theme: AppTheme.light,
+///       darkTheme: AppTheme.dark,
+///       themeMode: themeProvider.themeMode,
+///     ),
+///   ),
 /// )
 /// ```
 class AppTheme with ChangeNotifier {
+  static const String _themeModeKey = 'theme_mode';
   ThemeMode _themeMode = ThemeMode.system;
 
   ThemeMode get themeMode => _themeMode;
 
-  set themeMode(ThemeMode themeMode) {
+  /// Initialize theme from saved preference
+  Future<void> initialize() async {
+    await _loadThemeFromPrefs();
+  }
+
+  /// Toggle between light and dark themes
+  Future<void> toggleTheme() async {
+    if (_themeMode == ThemeMode.light) {
+      await setThemeMode(ThemeMode.dark);
+    } else {
+      await setThemeMode(ThemeMode.light);
+    }
+  }
+
+  /// Set specific theme mode and save to preferences
+  Future<void> setThemeMode(ThemeMode themeMode) async {
     _themeMode = themeMode;
     notifyListeners();
+    await _saveThemeToPrefs();
   }
+
+  /// Load theme preference from SharedPreferences
+  Future<void> _loadThemeFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedThemeIndex = prefs.getInt(_themeModeKey);
+      if (savedThemeIndex != null) {
+        _themeMode = ThemeMode.values[savedThemeIndex];
+        notifyListeners();
+      }
+    } catch (e) {
+      // If loading fails, keep default theme
+      debugPrint('Error loading theme preference: $e');
+    }
+  }
+
+  /// Save theme preference to SharedPreferences
+  Future<void> _saveThemeToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_themeModeKey, _themeMode.index);
+    } catch (e) {
+      debugPrint('Error saving theme preference: $e');
+    }
+  }
+
+  /// Check if current theme is dark
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  /// Check if current theme is light
+  bool get isLightMode => _themeMode == ThemeMode.light;
 
   //
   // Light theme (Material Kit Flutter style)
