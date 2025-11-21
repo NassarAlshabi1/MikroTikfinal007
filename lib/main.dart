@@ -1122,6 +1122,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'القائمة',
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
           IconButton(
               icon: const Icon(Icons.notifications_none_rounded),
               onPressed: () {},
@@ -1137,90 +1144,92 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
+      endDrawer: Drawer(
+        child: SafeArea(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: Text(widget.username),
+                accountEmail: Text(widget.isVersion7OrNewer ? 'RouterOS v7+' : 'RouterOS v6'),
+                currentAccountPicture: CircleAvatar(
+                  backgroundColor: Theme.of(context).cardColor,
+                  child: const Icon(Icons.person_outline, color: Colors.white),
+                ),
+              ),
+              ...services.map((service) => ListTile(
+                    leading: Icon(service.icon, color: service.color),
+                    title: Text(service.title),
+                    onTap: () {
+                      Navigator.pop(context);
+                      service.onTap();
+                    },
+                  )),
+            ],
+          ),
+        ),
+      ),
+      endDrawerEnableOpenDragGesture: true,
       body: _isLoadingProfiles
           ? const CustomLoadingIndicator(message: 'جاري التحميل...')
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- بطاقة الحالة ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
-                              style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _isNetworkLinked && _clientName.isNotEmpty
-                                      ? _clientName
-                                      : 'لوحة تحكم MikroTik',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis, // to handle long names
-                                ),
-                              ),
-                              const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // --- عنوان قسم الخدمات ---
-                  const Padding(
-                    padding: EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0, bottom: 12.0),
-                    child: Text(
-                      'الخدمات الأساسية',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-
-                  // --- شبكة الخدمات ---
-                  GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3, // 3 أعمدة لمظهر أفضل على معظم الشاشات
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.9, // تعديل النسبة لتناسب المحتوى
-                    ),
-                    itemCount: services.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final service = services[index];
-                      return RepaintBoundary(
-                        child: _buildServiceGridItem(
-                          title: service.title,
-                          icon: service.icon,
-                          iconBgColor: service.color,
-                          onTap: service.onTap,
+          : ListView(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      );
-                    },
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _isNetworkLinked && _clientName.isNotEmpty
+                                    ? _clientName
+                                    : 'لوحة تحكم MikroTik',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  child: Text(
+                    'اسحب من يمين الشاشة أو اضغط زر القائمة لاختيار خدمة',
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+                ),
+              ],
             ),
     );
   }
