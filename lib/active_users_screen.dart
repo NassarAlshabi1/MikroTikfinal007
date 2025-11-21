@@ -153,8 +153,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         });
       }
       _backoffExp = math.min(_backoffExp + 1, 5);
-      final delay = _baseInterval * math.pow(2, _backoffExp).toInt();
-      _scheduleNextFetch(delay > _maxInterval ? _maxInterval : Duration(seconds: delay));
+      final factor = math.pow(2, _backoffExp).toInt();
+      final secs = (_baseInterval.inSeconds * factor).clamp(0, _maxInterval.inSeconds);
+      final next = Duration(seconds: secs);
+      _scheduleNextFetch(next);
     } on MikrotikConnectionException catch (e) {
       if (mounted) {
         setState(() {
@@ -163,8 +165,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         });
       }
       _backoffExp = math.min(_backoffExp + 1, 5);
-      final delay = _baseInterval * math.pow(2, _backoffExp).toInt();
-      _scheduleNextFetch(delay > _maxInterval ? _maxInterval : Duration(seconds: delay));
+      final factor = math.pow(2, _backoffExp).toInt();
+      final secs = (_baseInterval.inSeconds * factor).clamp(0, _maxInterval.inSeconds);
+      final next = Duration(seconds: secs);
+      _scheduleNextFetch(next);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -173,8 +177,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         });
       }
       _backoffExp = math.min(_backoffExp + 1, 5);
-      final delay = _baseInterval * math.pow(2, _backoffExp).toInt();
-      _scheduleNextFetch(delay > _maxInterval ? _maxInterval : Duration(seconds: delay));
+      final factor = math.pow(2, _backoffExp).toInt();
+      final secs = (_baseInterval.inSeconds * factor).clamp(0, _maxInterval.inSeconds);
+      final next = Duration(seconds: secs);
+      _scheduleNextFetch(next);
     } finally {
       client?.close();
     }
