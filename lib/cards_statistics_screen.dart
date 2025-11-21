@@ -88,10 +88,12 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
 
       final usersResponse = await client.talk([
         '/tool/user-manager/user/print',
+        '=.proplist=username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
       ]).timeout(const Duration(seconds: 10));
 
       final sessionsResponse = await client.talk([
         '/tool/user-manager/session/print',
+        '=.proplist=user,upload,download,uptime,start-time',
       ]).timeout(const Duration(seconds: 10));
 
       _usersRaw = usersResponse.map((e) => Map<String, dynamic>.from(e)).toList();
