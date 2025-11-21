@@ -253,7 +253,7 @@ class MyApp extends StatelessWidget {
       vertical: 16,
     ),
   ),
-  cardTheme: CardThemeData(
+  cardTheme: CardTheme(
     color: const Color(0xFF2d213f),
     elevation: 2,
     shadowColor: Colors.black.withOpacity(0.2),
