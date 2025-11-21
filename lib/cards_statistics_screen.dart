@@ -132,16 +132,16 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         client,
         '/tool/user-manager/user/print',
         'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
-        chunk: 200,
-        maxRecords: 2000,
+        chunk: 20,
+        maxRecords: 50,
       );
 
       final sessionsResponse = await _fetchPaginated(
         client,
         '/tool/user-manager/session/print',
         'user,upload,download,uptime,start-time',
-        chunk: 200,
-        maxRecords: 2000,
+        chunk: 20,
+        maxRecords: 50,
       );
 
       _usersRaw = usersResponse;
