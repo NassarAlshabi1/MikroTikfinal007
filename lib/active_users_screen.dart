@@ -17,13 +17,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   int _totalUsers = 0;
   int _activeCount = 0;
   Timer? _refreshTimer;
+  DateTime? _lastTotalUsersFetch;
   bool _isHotspotMode = true;
 
   @override
   void initState() {
     super.initState();
     _fetchActiveUsers();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
       if (mounted) _fetchActiveUsers();
     });
   }
@@ -64,10 +65,13 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       }
 
       try {
-        final allUsers = await client.talk(['/tool/user-manager/user/print']);
-        _totalUsers = allUsers.length;
+        if (_lastTotalUsersFetch == null || DateTime.now().difference(_lastTotalUsersFetch!) > const Duration(seconds: 90)) {
+          final allUsers = await client.talk(['/tool/user-manager/user/print']);
+          _totalUsers = allUsers.length;
+          _lastTotalUsersFetch = DateTime.now();
+        }
       } catch (e) {
-        _totalUsers = 0;
+        // لا تحدّث الرقم في حال الفشل لتجنّب وميض الواجهة
       }
 
       if (mounted) {
