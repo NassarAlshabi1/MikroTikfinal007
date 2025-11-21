@@ -248,7 +248,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   }
 
   Future<void> _checkSpeedTest(_NetworkDiagnostic test) async {
-    const downloadTestUrl = 'https://speed.cloudflare.com/__down?bytes=25000000';
+    const downloadTestUrl = 'https://speed.cloudflare.com/__down?bytes=10000000';
     const uploadTestUrl = 'https://speed.cloudflare.com/__up';
     
     // إنشاء Dio instance منفصل مع timeout أطول لاختبار السرعة
