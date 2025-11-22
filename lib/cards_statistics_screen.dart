@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
 
@@ -27,6 +28,16 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   double _totalUploadGB = 0.0;
   double _totalDownloadGB = 0.0;
   Map<String, int> _cardsByProfile = {};
+
+  int _usersTotalPages = 0;
+  int _usersFetchedPages = 0;
+  int _sessionsTotalPages = 0;
+  int _sessionsFetchedPages = 0;
+
+  DateTime? _fetchStartTime;
+  Duration? _fetchDuration;
+  int _fetchedBytes = 0;
+  double _pagesPerSecond = 0.0;
 
   TimeRange _selectedRange = TimeRange.all;
   CardStatusFilter _statusFilter = CardStatusFilter.all;
@@ -68,6 +79,53 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     super.dispose();
   }
 
+  Future<List<Map<String, dynamic>>> _fetchPaginated(
+      RouterOSClient client,
+      String path,
+      String fields, {
+      int chunk = 200,
+      int maxRecords = 2000,
+      void Function(int fetchedPages, int totalPages)? onProgress,
+    }) async {
+      final totalPages = (maxRecords / chunk).ceil();
+      const parallel = 4;
+      final all = <Map<String, dynamic>>[];
+      int fetched = 0;
+
+      for (int start = 0; start < totalPages; start += parallel) {
+        final end = (start + parallel) > totalPages ? totalPages : (start + parallel);
+        final futures = <Future<List<dynamic>>>[];
+        for (int i = start; i < end; i++) {
+          final offset = i * chunk;
+          futures.add(
+            client
+                .talk([
+                  path,
+                  '=.proplist=$fields',
+                  '=.skip=$offset',
+                  '=.limit=$chunk',
+                ])
+                .timeout(const Duration(seconds: 5)),
+          );
+        }
+
+        final pages = await Future.wait(futures);
+        for (final page in pages) {
+          for (final e in page) {
+            all.add(Map<String, dynamic>.from(e));
+            if (all.length >= maxRecords) {
+              onProgress?.call(totalPages, totalPages);
+              return all.sublist(0, maxRecords);
+            }
+          }
+        }
+        fetched += (end - start);
+        onProgress?.call(fetched, totalPages);
+      }
+
+      return all;
+    }
+
   Future<void> _fetchStatistics() async {
     // التحقق من الـ cache
     if (_lastFetchTime != null && 
@@ -86,22 +144,71 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     try {
       client = await MikrotikConnector.connect();
 
-      final results = await Future.wait([
-        client.talk(['/tool/user-manager/user/print']).timeout(const Duration(seconds: 5)),
-        client.talk(['/tool/user-manager/session/print']).timeout(const Duration(seconds: 5)),
+      final usersChunk = 20;
+      final usersMax = 50;
+      final sessionsChunk = 20;
+      final sessionsMax = 50;
+
+      setState(() {
+        _fetchStartTime = DateTime.now();
+        _fetchDuration = null;
+        _fetchedBytes = 0;
+        _pagesPerSecond = 0.0;
+        _usersTotalPages = (usersMax / usersChunk).ceil();
+        _usersFetchedPages = 0;
+        _sessionsTotalPages = (sessionsMax / sessionsChunk).ceil();
+        _sessionsFetchedPages = 0;
+      });
+
+      final results = await Future.wait<List<Map<String, dynamic>>>([
+        _fetchPaginated(
+          client!,
+          '/tool/user-manager/user/print',
+          'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
+          chunk: usersChunk,
+          maxRecords: usersMax,
+          onProgress: (f, t) {
+            if (!mounted) return;
+            setState(() {
+              _usersFetchedPages = f;
+              _usersTotalPages = t;
+            });
+          },
+        ),
+        _fetchPaginated(
+          client!,
+          '/tool/user-manager/session/print',
+          'user,upload,download,uptime,start-time',
+          chunk: sessionsChunk,
+          maxRecords: sessionsMax,
+          onProgress: (f, t) {
+            if (!mounted) return;
+            setState(() {
+              _sessionsFetchedPages = f;
+              _sessionsTotalPages = t;
+            });
+          },
+        ),
       ]);
 
-      final usersResponse = results[0] as List;
-      final sessionsResponse = results[1] as List;
-
-      _usersRaw = usersResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-      _sessionsRaw = sessionsResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+      _usersRaw = results[0];
+      _sessionsRaw = results[1];
       _lastFetchTime = DateTime.now();
 
       _applyFilters();
 
+      final duration = _fetchStartTime != null ? DateTime.now().difference(_fetchStartTime!) : const Duration();
+      final totalPages = _usersTotalPages + _sessionsTotalPages;
+      final pps = totalPages > 0 && duration.inMilliseconds > 0
+          ? totalPages / (duration.inMilliseconds / 1000.0)
+          : 0.0;
+      final fetchedBytes = utf8.encode(jsonEncode(_usersRaw)).length + utf8.encode(jsonEncode(_sessionsRaw)).length;
+
       if (mounted) {
         setState(() {
+          _fetchDuration = duration;
+          _pagesPerSecond = pps;
+          _fetchedBytes = fetchedBytes;
           _isLoading = false;
         });
         _animationController.forward(from: 0);
@@ -379,18 +486,62 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CircularProgressIndicator(color: theme.primaryColor),
-                    const SizedBox(height: 16),
-                    const Text('جاري تحميل الإحصائيات...', style: TextStyle(color: Colors.white70)),
+                    Center(child: CircularProgressIndicator(color: theme.primaryColor)),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: 220,
-                      child: LinearProgressIndicator(
-                        minHeight: 6,
-                        color: theme.primaryColor,
-                        backgroundColor: Colors.white10,
-                      ),
+                    const Center(
+                      child: Text('جاري تحميل الإحصائيات...', style: TextStyle(color: Colors.white70)),
+                    ),
+                    const SizedBox(height: 16),
+                    // Users progress
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.person, size: 18, color: Colors.white70),
+                            SizedBox(width: 6),
+                            Text('المستخدمين', style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
+                        Text(
+                          _usersTotalPages > 0 ? '${_usersFetchedPages}/${_usersTotalPages}' : '--',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      minHeight: 6,
+                      value: _usersTotalPages > 0 ? (_usersFetchedPages / _usersTotalPages) : null,
+                      color: theme.primaryColor,
+                      backgroundColor: Colors.white10,
+                    ),
+                    const SizedBox(height: 14),
+                    // Sessions progress
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.wifi, size: 18, color: Colors.white70),
+                            SizedBox(width: 6),
+                            Text('الجلسات', style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
+                        Text(
+                          _sessionsTotalPages > 0 ? '${_sessionsFetchedPages}/${_sessionsTotalPages}' : '--',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      minHeight: 6,
+                      value: _sessionsTotalPages > 0 ? (_sessionsFetchedPages / _sessionsTotalPages) : null,
+                      color: theme.primaryColor,
+                      backgroundColor: Colors.white10,
                     ),
                   ],
                 ),
@@ -442,6 +593,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                           const SizedBox(height: 16),
                           _buildRangeSelector(theme),
                           const SizedBox(height: 20),
+                          if (_fetchDuration != null) ...[
+                            _buildFetchMetricsCard(theme),
+                            const SizedBox(height: 16),
+                          ],
                           _buildMainStatCard(theme),
                           const SizedBox(height: 16),
                           _buildStatusCardsGrid(theme),
@@ -784,6 +939,71 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         }).toList(),
       ),
     );
+  }
+
+  Widget _buildFetchMetricsCard(ThemeData theme) {
+    final elapsed = _fetchDuration != null ? _formatDuration(_fetchDuration!) : '--';
+    final ppsStr = _pagesPerSecond > 0 ? _pagesPerSecond.toStringAsFixed(1) : '--';
+    final dataSize = _formatBytes(_fetchedBytes);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('الوقت المستغرق', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text(elapsed, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text('الصفحات/ثانية', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text(ppsStr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text('حجم البيانات', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text(dataSize, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDuration(Duration d) {
+    final s = d.inMilliseconds / 1000.0;
+    return '${s.toStringAsFixed(2)} s';
+  }
+
+  String _formatBytes(int bytes) {
+    const k = 1024;
+    if (bytes < k) return '$bytes B';
+    final kb = bytes / k;
+    if (kb < k) return '${kb.toStringAsFixed(2)} KB';
+    final mb = kb / k;
+    if (mb < k) return '${mb.toStringAsFixed(2)} MB';
+    final gb = mb / k;
+    return '${gb.toStringAsFixed(2)} GB';
   }
 
   Widget _buildMainStatCard(ThemeData theme) {
