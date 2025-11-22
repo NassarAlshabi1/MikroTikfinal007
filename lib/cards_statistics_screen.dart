@@ -28,6 +28,11 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   double _totalDownloadGB = 0.0;
   Map<String, int> _cardsByProfile = {};
 
+  int _usersTotalPages = 0;
+  int _usersFetchedPages = 0;
+  int _sessionsTotalPages = 0;
+  int _sessionsFetchedPages = 0;
+
   TimeRange _selectedRange = TimeRange.all;
   CardStatusFilter _statusFilter = CardStatusFilter.all;
   String? _selectedProfile;
@@ -74,10 +79,12 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       String fields, {
       int chunk = 200,
       int maxRecords = 2000,
+      void Function(int fetchedPages, int totalPages)? onProgress,
     }) async {
       final totalPages = (maxRecords / chunk).ceil();
       const parallel = 4;
       final all = <Map<String, dynamic>>[];
+      int fetched = 0;
 
       for (int start = 0; start < totalPages; start += parallel) {
         final end = (start + parallel) > totalPages ? totalPages : (start + parallel);
@@ -101,10 +108,13 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           for (final e in page) {
             all.add(Map<String, dynamic>.from(e));
             if (all.length >= maxRecords) {
+              onProgress?.call(totalPages, totalPages);
               return all.sublist(0, maxRecords);
             }
           }
         }
+        fetched += (end - start);
+        onProgress?.call(fetched, totalPages);
       }
 
       return all;
@@ -128,20 +138,46 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     try {
       client = await MikrotikConnector.connect();
 
+      final usersChunk = 20;
+      final usersMax = 50;
+      final sessionsChunk = 20;
+      final sessionsMax = 50;
+
+      setState(() {
+        _usersTotalPages = (usersMax / usersChunk).ceil();
+        _usersFetchedPages = 0;
+        _sessionsTotalPages = (sessionsMax / sessionsChunk).ceil();
+        _sessionsFetchedPages = 0;
+      });
+
       final results = await Future.wait<List<Map<String, dynamic>>>([
         _fetchPaginated(
           client!,
           '/tool/user-manager/user/print',
           'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
-          chunk: 20,
-          maxRecords: 50,
+          chunk: usersChunk,
+          maxRecords: usersMax,
+          onProgress: (f, t) {
+            if (!mounted) return;
+            setState(() {
+              _usersFetchedPages = f;
+              _usersTotalPages = t;
+            });
+          },
         ),
         _fetchPaginated(
           client!,
           '/tool/user-manager/session/print',
           'user,upload,download,uptime,start-time',
-          chunk: 20,
-          maxRecords: 50,
+          chunk: sessionsChunk,
+          maxRecords: sessionsMax,
+          onProgress: (f, t) {
+            if (!mounted) return;
+            setState(() {
+              _sessionsFetchedPages = f;
+              _sessionsTotalPages = t;
+            });
+          },
         ),
       ]);
 
@@ -430,18 +466,62 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CircularProgressIndicator(color: theme.primaryColor),
-                    const SizedBox(height: 16),
-                    const Text('جاري تحميل الإحصائيات...', style: TextStyle(color: Colors.white70)),
+                    Center(child: CircularProgressIndicator(color: theme.primaryColor)),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: 220,
-                      child: LinearProgressIndicator(
-                        minHeight: 6,
-                        color: theme.primaryColor,
-                        backgroundColor: Colors.white10,
-                      ),
+                    const Center(
+                      child: Text('جاري تحميل الإحصائيات...', style: TextStyle(color: Colors.white70)),
+                    ),
+                    const SizedBox(height: 16),
+                    // Users progress
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.person, size: 18, color: Colors.white70),
+                            SizedBox(width: 6),
+                            Text('المستخدمين', style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
+                        Text(
+                          _usersTotalPages > 0 ? '${_usersFetchedPages}/${_usersTotalPages}' : '--',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      minHeight: 6,
+                      value: _usersTotalPages > 0 ? (_usersFetchedPages / _usersTotalPages) : null,
+                      color: theme.primaryColor,
+                      backgroundColor: Colors.white10,
+                    ),
+                    const SizedBox(height: 14),
+                    // Sessions progress
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.wifi, size: 18, color: Colors.white70),
+                            SizedBox(width: 6),
+                            Text('الجلسات', style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
+                        Text(
+                          _sessionsTotalPages > 0 ? '${_sessionsFetchedPages}/${_sessionsTotalPages}' : '--',
+                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      minHeight: 6,
+                      value: _sessionsTotalPages > 0 ? (_sessionsFetchedPages / _sessionsTotalPages) : null,
+                      color: theme.primaryColor,
+                      backgroundColor: Colors.white10,
                     ),
                   ],
                 ),
