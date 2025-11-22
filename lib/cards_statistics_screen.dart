@@ -76,32 +76,37 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       int maxRecords = 2000,
     }) async {
       final totalPages = (maxRecords / chunk).ceil();
-      final futures = <Future<List<dynamic>>>[];
-
-      for (int i = 0; i < totalPages; i++) {
-        final offset = i * chunk;
-        futures.add(
-          client
-              .talk([
-                path,
-                '=.proplist=$fields',
-                '=.skip=$offset',
-                '=.limit=$chunk',
-              ])
-              .timeout(const Duration(seconds: 5)),
-        );
-      }
-
-      final pages = await Future.wait(futures);
+      const parallel = 4;
       final all = <Map<String, dynamic>>[];
-      for (final page in pages) {
-        for (final e in page) {
-          all.add(Map<String, dynamic>.from(e));
+
+      for (int start = 0; start < totalPages; start += parallel) {
+        final end = (start + parallel) > totalPages ? totalPages : (start + parallel);
+        final futures = <Future<List<dynamic>>>[];
+        for (int i = start; i < end; i++) {
+          final offset = i * chunk;
+          futures.add(
+            client
+                .talk([
+                  path,
+                  '=.proplist=$fields',
+                  '=.skip=$offset',
+                  '=.limit=$chunk',
+                ])
+                .timeout(const Duration(seconds: 5)),
+          );
+        }
+
+        final pages = await Future.wait(futures);
+        for (final page in pages) {
+          for (final e in page) {
+            all.add(Map<String, dynamic>.from(e));
+            if (all.length >= maxRecords) {
+              return all.sublist(0, maxRecords);
+            }
+          }
         }
       }
-      if (all.length > maxRecords) {
-        return all.sublist(0, maxRecords);
-      }
+
       return all;
     }
 
