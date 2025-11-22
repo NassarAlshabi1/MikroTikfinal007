@@ -86,17 +86,17 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     try {
       client = await MikrotikConnector.connect();
 
-      final usersResponse = await client.talk([
-        '/tool/user-manager/user/print',
-      ]).timeout(const Duration(seconds: 10));
+      final results = await Future.wait([
+        client.talk(['/tool/user-manager/user/print']).timeout(const Duration(seconds: 5)),
+        client.talk(['/tool/user-manager/session/print']).timeout(const Duration(seconds: 5)),
+      ]);
 
-      final sessionsResponse = await client.talk([
-        '/tool/user-manager/session/print',
-      ]).timeout(const Duration(seconds: 10));
+      final usersResponse = results[0] as List;
+      final sessionsResponse = results[1] as List;
 
       _usersRaw = usersResponse.map((e) => Map<String, dynamic>.from(e)).toList();
       _sessionsRaw = sessionsResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-      _lastFetchTime = DateTime.now(); // حفظ وقت آخر fetch
+      _lastFetchTime = DateTime.now();
 
       _applyFilters();
 
@@ -371,13 +371,29 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       ),
       body: _isLoading
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: theme.primaryColor),
-                  const SizedBox(height: 16),
-                  const Text('جاري تحميل الإحصائيات...', style: TextStyle(color: Colors.white70)),
-                ],
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: theme.primaryColor),
+                    const SizedBox(height: 16),
+                    const Text('جاري تحميل الإحصائيات...', style: TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: 220,
+                      child: LinearProgressIndicator(
+                        minHeight: 6,
+                        color: theme.primaryColor,
+                        backgroundColor: Colors.white10,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
           : _errorMessage != null
