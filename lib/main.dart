@@ -253,7 +253,7 @@ class MyApp extends StatelessWidget {
       vertical: 16,
     ),
   ),
-  cardTheme: CardThemeData(
+  cardTheme: CardTheme(
     color: const Color(0xFF2d213f),
     elevation: 2,
     shadowColor: Colors.black.withOpacity(0.2),
@@ -372,6 +372,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final _portController = TextEditingController(text: '8728');
   final _remoteServerController = TextEditingController();
   final _remotePortController = TextEditingController(text: '8728');
+  final _remoteUserController = TextEditingController();
+  final _remotePassController = TextEditingController();
+  bool _remoteObscured = true;
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -612,35 +615,35 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() => _errorMessage = 'الرجاء إدخال عنوان الخادم البعيد');
       return;
     }
-    
-    // التحقق من أن الإدخال هو Domain وليس IP
-    final input = _remoteServerController.text.trim();
-    final ipPattern = RegExp(r'^(\d{1,3}\.){3}\d{1,3}$');
-    if (ipPattern.hasMatch(input)) {
-      setState(() => _errorMessage = 'الرجاء إدخال اسم النطاق (Domain) وليس عنوان IP');
+    if (_remoteUserController.text.isEmpty || _remotePassController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور');
       return;
     }
-    
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
-    
+
     try {
-      await _handleCredentials();
-      
-      // حفظ عنوان الخادم البعيد والبورت في SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('ip', _remoteServerController.text);
-      await prefs.setString('port', _remotePortController.text);
-      
-      // الانتقال مباشرة إلى الشاشة الرئيسية بدون توثيق
+      await prefs.setString('ip', _remoteServerController.text.trim());
+      await prefs.setString('user', _remoteUserController.text.trim());
+      await prefs.setString('pass', _remotePassController.text);
+      await prefs.setString('port', _remotePortController.text.trim().isEmpty ? '8728' : _remotePortController.text.trim());
+
+      RouterOSClient? client;
+      try {
+        client = await MikrotikConnector.connect();
+      } finally {
+        client?.close();
+      }
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
-            builder: (context) => const HomeScreen(
-              isVersion7OrNewer: true, 
-              username: 'Remote User'
+            builder: (context) => HomeScreen(
+              isVersion7OrNewer: true,
+              username: _remoteUserController.text.trim(),
             ),
           ),
         );
@@ -766,35 +769,64 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         TextField(
           controller: _remoteServerController,
           decoration: const InputDecoration(
-            labelText: 'عنوان الخادم البعيد (Domain)',
-            hintText: 'mikrotik.example.com',
+            labelText: 'عنوان الخادم البعيد (Domain أو IP)',
+            hintText: 'router.example.com أو 1.2.3.4',
             prefixIcon: Icon(Icons.cloud),
           ),
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.url,
         ),
         const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _remotePortController,
+                decoration: const InputDecoration(
+                  labelText: 'Port',
+                  hintText: '8728 أو 8729',
+                  prefixIcon: Icon(Icons.numbers),
+                ),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         TextField(
-          controller: _remotePortController,
+          controller: _remoteUserController,
           decoration: const InputDecoration(
-            labelText: 'Port',
-            hintText: '8728',
-            prefixIcon: Icon(Icons.numbers),
+            labelText: 'Username',
+            prefixIcon: Icon(Icons.person_outline),
           ),
           style: const TextStyle(color: Colors.white),
-          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _remotePassController,
+          obscureText: _remoteObscured,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_remoteObscured ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _remoteObscured = !_remoteObscured),
+            ),
+          ),
+          style: const TextStyle(color: Colors.white),
         ),
         const SizedBox(height: 24),
         ElevatedButton(
           onPressed: _isLoading ? null : _remoteConnect,
           child: _isLoading
               ? const SizedBox(
-                  height: 24, 
-                  width: 24, 
+                  height: 24,
+                  width: 24,
                   child: CircularProgressIndicator(
-                    strokeWidth: 3, 
-                    color: Colors.white
-                  )
+                    strokeWidth: 3,
+                    color: Colors.white,
+                  ),
                 )
               : const Text('الدخول', style: TextStyle(fontSize: 18)),
         ),
@@ -1090,6 +1122,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'القائمة',
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
           IconButton(
               icon: const Icon(Icons.notifications_none_rounded),
               onPressed: () {},
@@ -1105,90 +1144,92 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
+      endDrawer: Drawer(
+        child: SafeArea(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: Text(widget.username),
+                accountEmail: Text(widget.isVersion7OrNewer ? 'RouterOS v7+' : 'RouterOS v6'),
+                currentAccountPicture: CircleAvatar(
+                  backgroundColor: Theme.of(context).cardColor,
+                  child: const Icon(Icons.person_outline, color: Colors.white),
+                ),
+              ),
+              ...services.map((service) => ListTile(
+                    leading: Icon(service.icon, color: service.color),
+                    title: Text(service.title),
+                    onTap: () {
+                      Navigator.pop(context);
+                      service.onTap();
+                    },
+                  )),
+            ],
+          ),
+        ),
+      ),
+      endDrawerEnableOpenDragGesture: true,
       body: _isLoadingProfiles
           ? const CustomLoadingIndicator(message: 'جاري التحميل...')
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- بطاقة الحالة ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
-                              style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _isNetworkLinked && _clientName.isNotEmpty
-                                      ? _clientName
-                                      : 'لوحة تحكم MikroTik',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis, // to handle long names
-                                ),
-                              ),
-                              const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // --- عنوان قسم الخدمات ---
-                  const Padding(
-                    padding: EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0, bottom: 12.0),
-                    child: Text(
-                      'الخدمات الأساسية',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-
-                  // --- شبكة الخدمات ---
-                  GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3, // 3 أعمدة لمظهر أفضل على معظم الشاشات
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.9, // تعديل النسبة لتناسب المحتوى
-                    ),
-                    itemCount: services.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final service = services[index];
-                      return RepaintBoundary(
-                        child: _buildServiceGridItem(
-                          title: service.title,
-                          icon: service.icon,
-                          iconBgColor: service.color,
-                          onTap: service.onTap,
+          : ListView(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      );
-                    },
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _isNetworkLinked && _clientName.isNotEmpty
+                                    ? _clientName
+                                    : 'لوحة تحكم MikroTik',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  child: Text(
+                    'اسحب من يمين الشاشة أو اضغط زر القائمة لاختيار خدمة',
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+                ),
+              ],
             ),
     );
   }
