@@ -68,6 +68,43 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     super.dispose();
   }
 
+  Future<List<Map<String, dynamic>>> _fetchPaginated(
+      RouterOSClient client,
+      String path,
+      String fields, {
+      int chunk = 200,
+      int maxRecords = 2000,
+    }) async {
+      final totalPages = (maxRecords / chunk).ceil();
+      final futures = <Future<List<dynamic>>>[];
+
+      for (int i = 0; i < totalPages; i++) {
+        final offset = i * chunk;
+        futures.add(
+          client
+              .talk([
+                path,
+                '=.proplist=$fields',
+                '=.skip=$offset',
+                '=.limit=$chunk',
+              ])
+              .timeout(const Duration(seconds: 5)),
+        );
+      }
+
+      final pages = await Future.wait(futures);
+      final all = <Map<String, dynamic>>[];
+      for (final page in pages) {
+        for (final e in page) {
+          all.add(Map<String, dynamic>.from(e));
+        }
+      }
+      if (all.length > maxRecords) {
+        return all.sublist(0, maxRecords);
+      }
+      return all;
+    }
+
   Future<void> _fetchStatistics() async {
     // التحقق من الـ cache
     if (_lastFetchTime != null && 
@@ -86,16 +123,25 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     try {
       client = await MikrotikConnector.connect();
 
-      final results = await Future.wait([
-        client.talk(['/tool/user-manager/user/print']).timeout(const Duration(seconds: 5)),
-        client.talk(['/tool/user-manager/session/print']).timeout(const Duration(seconds: 5)),
+      final results = await Future.wait<List<Map<String, dynamic>>>([
+        _fetchPaginated(
+          client!,
+          '/tool/user-manager/user/print',
+          'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
+          chunk: 20,
+          maxRecords: 50,
+        ),
+        _fetchPaginated(
+          client!,
+          '/tool/user-manager/session/print',
+          'user,upload,download,uptime,start-time',
+          chunk: 20,
+          maxRecords: 50,
+        ),
       ]);
 
-      final usersResponse = results[0] as List;
-      final sessionsResponse = results[1] as List;
-
-      _usersRaw = usersResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-      _sessionsRaw = sessionsResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+      _usersRaw = results[0];
+      _sessionsRaw = results[1];
       _lastFetchTime = DateTime.now();
 
       _applyFilters();
