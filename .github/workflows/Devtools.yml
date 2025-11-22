@@ -1,0 +1,45 @@
+name: Flutter CI with DevTools
+
+on:
+  push:
+    branches:
+      - "**"   # يعمل على أي فرع جديد
+  pull_request:
+    branches:
+      - "**"   # يعمل على أي PR
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter Pub Get
+        run: flutter pub get
+
+      # 🔥 تفعيل DevTools داخل GitHub Actions
+      - name: Activate DevTools
+        run: flutter pub global activate devtools
+
+      # 👇 تشغيل DevTools لإخراج بيانات الأداء
+      - name: Run DevTools Headless
+        run: |
+          devtools --machine --trace-directory=devtools_trace
+
+      # 👇 تشغيل اختبارات Flutter
+      - name: Run Flutter Tests
+        run: flutter test --coverage
+
+      # حفظ نتائج DevTools كـ Artifact قابل للتحميل
+      - name: Upload DevTools Trace
+        uses: actions/upload-artifact@v4
+        with:
+          name: devtools_trace
+          path: devtools_trace
