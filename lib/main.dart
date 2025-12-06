@@ -528,12 +528,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() => _errorMessage = 'الرجاء إدخال اسم النطاق (Domain) وليس عنوان IP');
       return;
     }
-    
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
-    
+
     try {
       await _handleRemoteCredentials();
       
@@ -670,19 +669,49 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         TextField(
           controller: _remoteServerController,
           decoration: const InputDecoration(
-            labelText: 'عنوان الخادم البعيد (Domain)',
-            hintText: 'mikrotik.example.com',
+            labelText: 'عنوان الخادم البعيد (Domain أو IP)',
+            hintText: 'router.example.com أو 1.2.3.4',
             prefixIcon: Icon(Icons.cloud),
           ),
           keyboardType: TextInputType.url,
         ),
         const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _remotePortController,
+                decoration: const InputDecoration(
+                  labelText: 'Port',
+                  hintText: '8728 أو 8729',
+                  prefixIcon: Icon(Icons.numbers),
+                ),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         TextField(
-          controller: _remotePortController,
+          controller: _remoteUserController,
           decoration: const InputDecoration(
-            labelText: 'Port',
-            hintText: '8728',
-            prefixIcon: Icon(Icons.numbers),
+            labelText: 'Username',
+            prefixIcon: Icon(Icons.person_outline),
+          ),
+          style: const TextStyle(color: Colors.white),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _remotePassController,
+          obscureText: _remoteObscured,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_remoteObscured ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _remoteObscured = !_remoteObscured),
+            ),
           ),
           keyboardType: TextInputType.number,
         ),
@@ -724,12 +753,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           onPressed: _isLoading ? null : _remoteConnect,
           child: _isLoading
               ? const SizedBox(
-                  height: 24, 
-                  width: 24, 
+                  height: 24,
+                  width: 24,
                   child: CircularProgressIndicator(
-                    strokeWidth: 3, 
-                    color: Colors.white
-                  )
+                    strokeWidth: 3,
+                    color: Colors.white,
+                  ),
                 )
               : const Text('الدخول', style: TextStyle(fontSize: 18)),
         ),
