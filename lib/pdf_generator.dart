@@ -9,6 +9,7 @@ import 'snackbar_helpers.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:path_provider/path_provider.dart';
 import 'pdf_templates_screen.dart';
 
 
@@ -145,6 +146,51 @@ class PdfGenerator {
         Navigator.of(context).pop();
         showErrorSnackBar(context, 'فشل إنشاء ملف PDF. تأكد من القالب وصلاحية الصورة.');
       }
+    }
+  }
+
+  static Future<String?> savePdf(
+    BuildContext context, {
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final Map<String, dynamic> generationData = {
+        'cardUsernames': cardUsernames,
+        'imagePath': template.imagePath,
+        'textXRatio': template.textXRatio,
+        'textYRatio': template.textYRatio,
+        'cardsPerPage': template.cardsPerPage,
+        'imageWidth': template.imageWidth,
+        'imageHeight': template.imageHeight,
+        'markerWidthRatio': template.markerWidthRatio,
+        'markerHeightRatio': template.markerHeightRatio,
+      };
+
+      final pdfBytes = await compute(_generatePdfInBackground, generationData);
+
+      final docsDir = await getApplicationDocumentsDirectory();
+      final now = DateTime.now();
+      final filename = 'wifi-cards-${now.millisecondsSinceEpoch}.pdf';
+      final savePath = '${docsDir.path}/$filename';
+      final file = File(savePath);
+      await file.writeAsBytes(pdfBytes, flush: true);
+
+      if (context.mounted) Navigator.of(context).pop();
+      showSuccessSnackBar(context, 'تم حفظ PDF في: $savePath');
+      return savePath;
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        showErrorSnackBar(context, 'فشل حفظ PDF.');
+      }
+      return null;
     }
   }
 }
