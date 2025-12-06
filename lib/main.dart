@@ -777,22 +777,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           keyboardType: TextInputType.url,
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _remotePortController,
-                decoration: const InputDecoration(
-                  labelText: 'Port',
-                  hintText: '8728 أو 8729',
-                  prefixIcon: Icon(Icons.numbers),
-                ),
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.number,
-              ),
-            ),
-          ],
-        ),
+        TextField(
+          controller: _remotePortController,
+          decoration: const InputDecoration(
+            labelText: 'Port',
+            hintText: '8728 أو 8729',
+            prefixIcon: Icon(Icons.numbers),
+          ),
+          style: const TextStyle(color: Colors.white),
+          keyboardType: TextInputType.number,
+        )
         const SizedBox(height: 16),
         TextField(
           controller: _remoteUserController,
