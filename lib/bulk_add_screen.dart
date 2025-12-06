@@ -370,11 +370,11 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
           content: DropdownButtonFormField<String>(
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             dropdownColor: Colors.white,
-            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            hint: Text('اختر الفئة', style: TextStyle(color: context.theme.appColors.muted, fontWeight: FontWeight.bold)),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: Text(unit['name'], style: TextStyle(color: context.theme.appColors.onSurface, fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (value) {
@@ -510,7 +510,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   decoration: const InputDecoration(
                       labelText: 'بادئة (اختياري)',
                       border: OutlineInputBorder()),
-                  style: const TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87)),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -519,7 +519,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           controller: _lengthController,
                           decoration: const InputDecoration(
                               labelText: 'الطول', border: OutlineInputBorder()),
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
@@ -529,7 +529,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           controller: _countController,
                           decoration: const InputDecoration(
                               labelText: 'العدد', border: OutlineInputBorder()),
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
@@ -543,7 +543,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                 decoration: const InputDecoration(
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
-                hint: const Text('اختر فئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                hint: Text('اختر فئة', style: TextStyle(color: context.theme.appColors.muted, fontWeight: FontWeight.bold)),
                 items: widget.profiles
                     .map((p) => DropdownMenuItem(
                         value: p['name'] as String,
@@ -624,7 +624,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   controller: _sharedUsersController,
                   decoration: const InputDecoration(
                       labelText: 'Shared Users', border: OutlineInputBorder()),
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                   keyboardType: TextInputType.number,
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'مطلوب' : null),

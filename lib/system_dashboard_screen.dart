@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
+import 'theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
@@ -500,7 +501,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -796,7 +797,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isAlert ? Colors.red.withOpacity(0.9) : const Color(0xFFB39DDB),
+              color: isAlert ? context.theme.appColors.error.withOpacity(0.9) : context.theme.appColors.secondary,
               borderRadius: BorderRadius.circular(8),
               boxShadow: isAlert ? [
                 BoxShadow(
@@ -840,7 +841,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             title,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.7),
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.black54,
             ),
             textAlign: TextAlign.center,
           ),
@@ -848,7 +849,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFB39DDB),
+              color: context.theme.appColors.secondary,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -992,7 +993,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isAlert ? color.withOpacity(0.9) : const Color(0xFFB39DDB),
+                  color: isAlert ? color.withOpacity(0.9) : context.theme.appColors.secondary,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -1048,7 +1049,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         return Text(
                           '${value.toInt()}$unit',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Colors.black45,
                             fontSize: 12,
                           ),
                         );
@@ -1142,7 +1143,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.6),
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6) ?? Colors.black54,
           ),
         ),
         const SizedBox(height: 4),
