@@ -845,7 +845,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+            color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface,
           ),
         ),
         const SizedBox(height: 4),
