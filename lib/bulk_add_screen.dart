@@ -308,12 +308,27 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                     const SizedBox(height: 8),
                      ElevatedButton.icon(
                         icon: const Icon(Icons.picture_as_pdf),
-                        label: const Text('تصدير PDF'),
+                        label: const Text('مشاركة PDF'),
                         style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                         onPressed: () {
                           Navigator.of(context).pop();
                           final List<String> usernamesOnly = users.map((u) => u['username']!).toList();
                           PdfGenerator.sharePdf(
+                            context,
+                            cardUsernames: usernamesOnly,
+                            template: relevantTemplate!,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.save_alt),
+                        label: const Text('حفظ PDF'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          final List<String> usernamesOnly = users.map((u) => u['username']!).toList();
+                          await PdfGenerator.savePdf(
                             context,
                             cardUsernames: usernamesOnly,
                             template: relevantTemplate!,

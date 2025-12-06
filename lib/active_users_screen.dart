@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'mikrotik_connector.dart';
 
 class ActiveUsersScreen extends StatefulWidget {
@@ -12,18 +13,24 @@ class ActiveUsersScreen extends StatefulWidget {
 
 class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   List<Map<String, dynamic>> _activeUsers = [];
+  DateTime? _lastActiveFetch;
+  static const Duration _minRefreshGap = Duration(seconds: 20);
+  static const Duration _cacheDuration = Duration(minutes: 2);
+  int _page = 0;
+  static const int _pageSize = 50;
   bool _isLoading = true;
   String _errorMessage = '';
   int _totalUsers = 0;
   int _activeCount = 0;
   Timer? _refreshTimer;
+  DateTime? _lastTotalUsersFetch;
   bool _isHotspotMode = true;
 
   @override
   void initState() {
     super.initState();
     _fetchActiveUsers();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
       if (mounted) _fetchActiveUsers();
     });
   }
@@ -34,9 +41,16 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchActiveUsers() async {
+  Future<void> _fetchActiveUsers({bool force = false}) async {
     if (!mounted) return;
     
+    if (!force && _lastActiveFetch != null && DateTime.now().difference(_lastActiveFetch!) < _minRefreshGap) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -47,13 +61,19 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       client = await MikrotikConnector.connect();
       
       try {
-        final hotspotResponse = await client.talk(['/ip/hotspot/active/print']);
+        final hotspotResponse = await client.talk([
+          '/ip/hotspot/active/print',
+          '=.proplist=user,address,uptime',
+        ]);
         _activeUsers = hotspotResponse.map((e) => Map<String, dynamic>.from(e)).toList();
         _activeCount = _activeUsers.length;
         _isHotspotMode = true;
       } catch (e) {
         try {
-          final userManagerResponse = await client.talk(['/tool/user-manager/session/print']);
+          final userManagerResponse = await client.talk([
+            '/tool/user-manager/session/print',
+            '=.proplist=user,session-time-left,framed-ip-address,uptime',
+          ]);
           _activeUsers = userManagerResponse.map((e) => Map<String, dynamic>.from(e)).toList();
           _activeCount = _activeUsers.length;
           _isHotspotMode = false;
@@ -64,12 +84,19 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       }
 
       try {
-        final allUsers = await client.talk(['/tool/user-manager/user/print']);
-        _totalUsers = allUsers.length;
+        if (_lastTotalUsersFetch == null || DateTime.now().difference(_lastTotalUsersFetch!) > const Duration(seconds: 90)) {
+          final allUsers = await client.talk([
+            '/tool/user-manager/user/print',
+            '=.proplist=.id',
+          ]);
+          _totalUsers = allUsers.length;
+          _lastTotalUsersFetch = DateTime.now();
+        }
       } catch (e) {
-        _totalUsers = 0;
+        // لا تحدّث الرقم في حال الفشل لتجنّب وميض الواجهة
       }
 
+      _lastActiveFetch = DateTime.now();
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -121,7 +148,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _fetchActiveUsers,
+            onPressed: _isLoading ? null : () => _fetchActiveUsers(force: true),
             tooltip: 'تحديث',
           ),
         ],
@@ -173,6 +200,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             _buildStatsCard(),
             const SizedBox(height: 20),
             _buildUsersList(),
+            const SizedBox(height: 12),
+            _buildPager(),
           ],
         ),
       ),
@@ -282,6 +311,12 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       );
     }
 
+    final totalPages = (_activeUsers.length + _pageSize - 1) ~/ _pageSize;
+    if (_page >= totalPages) _page = math.max(0, totalPages - 1);
+    final start = _page * _pageSize;
+    final end = math.min(start + _pageSize, _activeUsers.length);
+    final current = _activeUsers.sublist(start, end);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -319,11 +354,38 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _activeUsers.length,
-          itemBuilder: (context, index) {
-            final user = _activeUsers[index];
-            return _buildUserCard(user, index);
+          itemCount: current.length,
+          itemBuilder: (context, idx) {
+            final user = current[idx];
+            return _buildUserCard(user, start + idx);
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPager() {
+    if (_activeUsers.isEmpty) return const SizedBox.shrink();
+    final totalPages = (_activeUsers.length + _pageSize - 1) ~/ _pageSize;
+    if (totalPages <= 1) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        OutlinedButton(
+          onPressed: _page > 0
+              ? () => setState(() => _page = _page - 1)
+              : null,
+          child: const Text('السابق'),
+        ),
+        const SizedBox(width: 12),
+        Text('صفحة ${_page + 1} من $totalPages', style: const TextStyle(color: Colors.white70)),
+        const SizedBox(width: 12),
+        OutlinedButton(
+          onPressed: (_page + 1) < totalPages
+              ? () => setState(() => _page = _page + 1)
+              : null,
+          child: const Text('التالي'),
         ),
       ],
     );
