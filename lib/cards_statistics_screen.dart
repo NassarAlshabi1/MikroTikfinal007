@@ -571,7 +571,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 ..._expiredUsersList.asMap().entries.map((entry) {
                   final user = entry.value;
                   final isLast = entry.key == _expiredUsersList.length - 1;
-                  final username = user['username']?.toString() ?? '—';\n                  final profile = user['actual-profile']?.toString() ?? '—';\n                  final limit = user['uptime-limit']?.toString() ?? '';\n                  final disabled = user['disabled'] == 'true';
+                  final username = user['username']?.toString() ?? '—';
+                  final profile = user['actual-profile']?.toString() ?? '—';
+                  final limit = user['uptime-limit']?.toString() ?? '';
+                  final disabled = user['disabled'] == 'true';
 
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
