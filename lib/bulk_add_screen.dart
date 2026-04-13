@@ -317,6 +317,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                             context,
                             cardUsernames: usernamesOnly,
                             template: relevantTemplate!,
+                            documentTitle: 'كروت Wi-Fi - $_selectedProfile',
                           );
                         },
                       ),
@@ -332,6 +333,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                             context,
                             cardUsernames: usernamesOnly,
                             template: relevantTemplate!,
+                            documentTitle: 'كروت Wi-Fi - $_selectedProfile',
                           );
                         },
                       ),

@@ -22,6 +22,9 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   final imageHeight = data['imageHeight'] as double;
   final markerWidthRatio = data['markerWidthRatio'] as double;
   final markerHeightRatio = data['markerHeightRatio'] as double;
+  final String documentTitle = data['documentTitle'] as String;
+  final String profileName = data['profileName'] as String;
+  final String exportDate = data['exportDate'] as String;
 
 
   final doc = pw.Document();
@@ -40,6 +43,55 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
         margin: const pw.EdgeInsets.all(20),
         pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
+
+          // --- ترويسة المستند: تسمية المستند، فئة الكرت، تاريخ التصدير ---
+          final List<pw.Widget> headerChildren = [
+            pw.Container(
+              padding: const pw.EdgeInsets.only(bottom: 12),
+              decoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(color: PdfColors.grey400, width: 1.5),
+                ),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // تسمية المستند
+                  pw.Text(
+                    documentTitle,
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
+                    ),
+                  ),
+                  pw.SizedBox(height: 6),
+                  // فئة الكرت + تاريخ التصدير
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'فئة الكرت: $profileName',
+                        style: const pw.TextStyle(
+                          fontSize: 12,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                      pw.Text(
+                        'تاريخ التصدير: $exportDate',
+                        style: const pw.TextStyle(
+                          fontSize: 12,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 8),
+          ];
+          // --- نهاية الترويسة ---
 
           final List<pw.Widget> gridChildren = [];
 
@@ -95,12 +147,19 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
           }
 
 
-          return pw.GridView(
-            crossAxisSpacing: 5,
-            mainAxisSpacing: 5,
-            crossAxisCount: 3,
-            childAspectRatio: imageWidth / imageHeight,
-            children: gridChildren,
+          return pw.Column(
+            children: [
+              ...headerChildren,
+              pw.Expanded(
+                child: pw.GridView(
+                  crossAxisSpacing: 5,
+                  mainAxisSpacing: 5,
+                  crossAxisCount: 3,
+                  childAspectRatio: imageWidth / imageHeight,
+                  children: gridChildren,
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -116,6 +175,9 @@ class PdfGenerator {
     BuildContext context, {
     required List<String> cardUsernames,
     required PdfTemplate template,
+    String? documentTitle,
+    String? profileName,
+    String? exportDate,
   }) async {
     showDialog(
       context: context,
@@ -124,6 +186,7 @@ class PdfGenerator {
     );
 
     try {
+      final now = DateTime.now();
       final Map<String, dynamic> generationData = {
         'cardUsernames': cardUsernames,
         'imagePath': template.imagePath,
@@ -134,6 +197,9 @@ class PdfGenerator {
         'imageHeight': template.imageHeight,
         'markerWidthRatio': template.markerWidthRatio,
         'markerHeightRatio': template.markerHeightRatio,
+        'documentTitle': documentTitle ?? 'كروت Wi-Fi',
+        'profileName': profileName ?? template.profileName,
+        'exportDate': exportDate ?? '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}  ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
       };
 
       final pdfBytes = await compute(_generatePdfInBackground, generationData);
@@ -152,6 +218,9 @@ class PdfGenerator {
     BuildContext context, {
     required List<String> cardUsernames,
     required PdfTemplate template,
+    String? documentTitle,
+    String? profileName,
+    String? exportDate,
   }) async {
     showDialog(
       context: context,
@@ -160,6 +229,7 @@ class PdfGenerator {
     );
 
     try {
+      final now = DateTime.now();
       final Map<String, dynamic> generationData = {
         'cardUsernames': cardUsernames,
         'imagePath': template.imagePath,
@@ -170,6 +240,9 @@ class PdfGenerator {
         'imageHeight': template.imageHeight,
         'markerWidthRatio': template.markerWidthRatio,
         'markerHeightRatio': template.markerHeightRatio,
+        'documentTitle': documentTitle ?? 'كروت Wi-Fi',
+        'profileName': profileName ?? template.profileName,
+        'exportDate': exportDate ?? '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}  ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
       };
 
       final pdfBytes = await compute(_generatePdfInBackground, generationData);
