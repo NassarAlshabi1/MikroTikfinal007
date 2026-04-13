@@ -38,6 +38,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   List<Map<String, dynamic>> _usersRaw = [];
   List<Map<String, dynamic>> _sessionsRaw = [];
   List<Map<String, dynamic>> _filteredUsers = [];
+  List<Map<String, dynamic>> _expiredUsersList = [];
   
   // Cache للبيانات لتحسين الأداء
   DateTime? _lastFetchTime;
@@ -131,17 +132,17 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       final usersResponse = await _fetchPaginated(
         client,
         '/tool/user-manager/user/print',
-        'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
-        chunk: 20,
-        maxRecords: 50,
+        'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used,last-seen',
+        chunk: 500,
+        maxRecords: 5000,
       );
 
       final sessionsResponse = await _fetchPaginated(
         client,
         '/tool/user-manager/session/print',
         'user,upload,download,uptime,start-time',
-        chunk: 20,
-        maxRecords: 50,
+        chunk: 500,
+        maxRecords: 5000,
       );
 
       _usersRaw = usersResponse;
@@ -245,6 +246,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     _activeCards = 0;
     _disabledCards = 0;
     _expiredCards = 0;
+    _expiredUsersList = [];
     _cardsByProfile.clear();
 
     double allTimeUploadBytes = 0.0;
@@ -260,6 +262,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       
       if (_isCardExpired(user)) {
         _expiredCards++;
+        _expiredUsersList.add(user);
       }
 
       final uploadUsed = double.tryParse(user['upload-used'] ?? '0') ?? 0.0;
@@ -485,11 +488,154 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                           _buildProfilesCard(theme),
                           const SizedBox(height: 16),
                           _buildQuickStatsGrid(theme),
+                          const SizedBox(height: 16),
+                          _buildExpiredCardsSection(theme),
                         ],
                       ),
                     ),
                   ),
                 ),
+    );
+  }
+
+  Widget _buildExpiredCardsSection(ThemeData theme) {
+    if (_expiredUsersList.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orangeAccent.withOpacity(0.3), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orangeAccent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.hourglass_empty, color: Colors.orangeAccent, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'الكروت المنتهية الصلاحية',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    Text(
+                      '$_expiredCards كرت منتهي',
+                      style: const TextStyle(fontSize: 13, color: Colors.orangeAccent),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Column(
+              children: [
+                // رأس الجدول
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.orangeAccent.withOpacity(0.1),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Expanded(flex: 3, child: Text('اسم المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                      Expanded(flex: 3, child: Text('الفئة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                      Expanded(flex: 2, child: Text('المدة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                      Expanded(flex: 2, child: Text('المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                    ],
+                  ),
+                ),
+                // القائمة
+                ..._expiredUsersList.asMap().entries.map((entry) {
+                  final user = entry.value;
+                  final isLast = entry.key == _expiredUsersList.length - 1;
+                  final username = user['username']?.toString() ?? '—';\n                  final profile = user['actual-profile']?.toString() ?? '—';\n                  final limit = user['uptime-limit']?.toString() ?? '';\n                  final disabled = user['disabled'] == 'true';
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: isLast
+                            ? BorderSide.none
+                            : BorderSide(color: Colors.white.withOpacity(0.05)),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            username,
+                            style: const TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            profile,
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            limit,
+                            style: const TextStyle(color: Colors.white60, fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: disabled ? Colors.redAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              disabled ? 'معطل' : 'منتهي',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: disabled ? Colors.redAccent : Colors.orangeAccent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
