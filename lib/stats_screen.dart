@@ -48,14 +48,9 @@ class _StatsScreenState extends State<StatsScreen> {
     try {
       client = await MikrotikConnector.connect();
 
+      // الإصلاح: استخدام القيمة المحفوظة عند تسجيل الدخول بدلاً من الافتراضي
       final prefs = await SharedPreferences.getInstance();
-      final versionString = prefs.getString('mikrotik_version') ?? '6';
-      bool isVersion7OrNewer = false;
-      try {
-        isVersion7OrNewer = int.parse(versionString.split('.').first) >= 7;
-      } catch (e) {
-        isVersion7OrNewer = false;
-      }
+      final bool isVersion7OrNewer = prefs.getBool('is_version7_plus') ?? false;
 
       final resourceResponse = await client.talk(['/system/resource/print']);
       Map<String, dynamic> resourceData = {};
@@ -74,29 +69,23 @@ class _StatsScreenState extends State<StatsScreen> {
         totalUpload += txBytes;
       }
 
+      // الإصلاح: جلب بيانات المستخدمين النشطين مرة واحدة فقط
       List<Map<String, dynamic>> activeUsers = [];
+      List<Map<String, dynamic>> sessions = [];
       try {
         final activeResponse = await client.talk(['/ip/hotspot/active/print']);
         activeUsers = activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+        // استخدام نفس البيانات للجلسات (لا حاجة لجلب مكرر)
+        sessions = activeUsers;
       } catch (e) {
+        // إذا فشل hotspot، جرب user-manager
         activeUsers = [];
-      }
-
-      List<Map<String, dynamic>> sessions = [];
-      try {
-        if (isVersion7OrNewer) {
-          final sessionResponse = await client.talk(['/ip/hotspot/active/print']);
+        try {
+          final sessionResponse = await client.talk(['/tool/user-manager/session/print']);
           sessions = sessionResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-        } else {
-          try {
-            final sessionResponse = await client.talk(['/tool/user-manager/session/print']);
-            sessions = sessionResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-          } catch (e) {
-            sessions = [];
-          }
+        } catch (e) {
+          sessions = [];
         }
-      } catch (e) {
-        sessions = [];
       }
 
       final cpuLoad = resourceData['cpu-load']?.toString() ?? '0';
@@ -120,7 +109,15 @@ class _StatsScreenState extends State<StatsScreen> {
         });
       }
 
-      await prefs.setString('mikrotik_version', resourceData['version']?.toString() ?? '6');
+      // تحديث إصدار RouterOS
+      final versionStr = resourceData['version']?.toString() ?? '6';
+      await prefs.setString('mikrotik_version', versionStr);
+      try {
+        final isV7 = int.parse(versionStr.split('.').first) >= 7;
+        await prefs.setBool('is_version7_plus', isV7);
+      } catch (e) {
+        // تجاهل أخطاء تحليل الإصدار
+      }
 
     } on MikrotikCredentialsMissingException catch (e) {
       setState(() {

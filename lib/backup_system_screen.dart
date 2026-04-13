@@ -56,8 +56,10 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   }
 
   Future<void> _createNewBackup() async {
-    final backupName = await _showBackupNameDialog();
-    if (backupName == null || backupName.isEmpty) return;
+    final result = await _showBackupNameDialog();
+    if (result == null) return;
+    final backupName = result['name'] as String;
+    final encrypt = result['encrypt'] as bool;
 
     setState(() => _isCreatingBackup = true);
 
@@ -65,14 +67,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       const SnackBar(
         content: Row(
           children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(Colors.white),
-              ),
-            ),
+            SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white))),
             SizedBox(width: 16),
             Text('جاري إنشاء النسخة الاحتياطية...'),
           ],
@@ -85,11 +80,14 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     try {
       client = await MikrotikConnector.connect();
 
-      await client.talk([
+      final command = [
         '/system/backup/save',
         '=name=$backupName',
-        '=dont-encrypt=yes',
-      ]);
+      ];
+      // الإصلاح: خيار تشفير النسخة بدلاً من تعطيله دائماً
+      if (!encrypt) command.add('=dont-encrypt=yes');
+
+      await client.talk(command);
 
       await Future.delayed(const Duration(seconds: 3));
 
@@ -110,32 +108,46 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
   }
 
-  Future<String?> _showBackupNameDialog() async {
+  Future<Map<String, dynamic>?> _showBackupNameDialog() async {
     final TextEditingController controller = TextEditingController(
       text: 'backup_${DateTime.now().day}-${DateTime.now().month}_${DateTime.now().hour}-${DateTime.now().minute}',
     );
+    bool encrypt = false;
 
-    return showDialog<String>(
+    return showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('اسم النسخة الاحتياطية'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'الاسم',
-            hintText: 'backup_01-11_10-30',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('إنشاء نسخة احتياطية'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'الاسم',
+                  hintText: 'backup_01-11_10-30',
+                ),
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('تشفير النسخة', style: TextStyle(fontSize: 14)),
+                subtitle: const Text('يُنصح بالتشفير لحماية الإعدادات', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                value: encrypt,
+                activeColor: Theme.of(context).primaryColor,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (v) => setDialogState(() => encrypt = v),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, {'name': controller.text, 'encrypt': encrypt}),
+              child: const Text('إنشاء'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('إنشاء'),
-          ),
-        ],
       ),
     );
   }

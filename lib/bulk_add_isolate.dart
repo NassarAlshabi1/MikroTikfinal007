@@ -122,6 +122,8 @@ String _generateRandomString(int length, String type) {
     default:
       chars = charsMixed;
   }
+  // الإصلاح: استخدام Random.secure() لتوليد أسماء/كلمات مرور آمنة
+  final random = Random.secure();
   return String.fromCharCodes(Iterable.generate(
-      length, (_) => chars.codeUnitAt(Random().nextInt(chars.length))));
+      length, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
 }
