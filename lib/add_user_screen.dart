@@ -1,13 +1,11 @@
-// ملف: add_user_screen.dart
-
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:router_os_client/router_os_client.dart';
-import 'dart:math';
-import 'package:dio/dio.dart';
 
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
+import 'notification_service.dart';
 
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
@@ -35,49 +33,26 @@ class _AddUserScreenState extends State<AddUserScreen> {
   String _cardType = 'username_only';
   String _charType = 'numbers';
 
-  final String telegramBotToken = '';
-  final String telegramChatId = '';
-
-  Future<void> _sendTelegramMessage(String message) async {
-    final dio = Dio();
-    final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
-    try {
-      await dio.post(url, data: {
-        'chat_id': telegramChatId,
-        'text': message,
-      });
-    } catch (e) {
-      // print("Failed to send Telegram message: $e");
-    }
-  }
-
+  /// الإصلاح: استخدام Random.secure() بدلاً من Random()
   String _generateRandomString(int length, String type) {
     const charsMixed = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const charsLetters = 'abcdefghijklmnopqrstuvwxyz';
     const charsNumbers = '0123456789';
     String chars;
     switch (type) {
-      case 'letters':
-        chars = charsLetters;
-        break;
-      case 'numbers':
-        chars = charsNumbers;
-        break;
-      default:
-        chars = charsMixed;
+      case 'letters': chars = charsLetters; break;
+      case 'numbers': chars = charsNumbers; break;
+      default: chars = charsMixed;
     }
+    final random = Random.secure();
     return String.fromCharCodes(Iterable.generate(
-        length, (_) => chars.codeUnitAt(Random().nextInt(chars.length))));
+        length, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }
 
   Future<void> _addUser() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() { _isLoading = true; });
 
     RouterOSClient? client;
     try {
@@ -85,7 +60,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
 
       final username = _usernameController.text.trim();
       final sharedUsers = _sharedUsersController.text.trim();
-      
+
       String password = "";
       if (_cardType == 'username_and_password_equal') {
         password = username;
@@ -111,11 +86,12 @@ class _AddUserScreenState extends State<AddUserScreen> {
         '=profile=$_selectedProfile',
       ]);
 
-      final String notificationMessage = "تم إضافة كرت فردي جديد بنجاح!\n" 
-          "IP: ${client.address}\n" 
-          "اسم المستخدم: $username\n" 
-          "الفئة: $_selectedProfile";
-      _sendTelegramMessage(notificationMessage);
+      // الإصلاح: استخدام NotificationService المركزي
+      NotificationService.instance.notifySingleCardAdded(
+        username: username,
+        profile: _selectedProfile,
+        address: client.address,
+      );
 
       final String cardDetails = _cardType == 'username_only'
           ? 'اسم المستخدم: $username'
@@ -128,24 +104,14 @@ class _AddUserScreenState extends State<AddUserScreen> {
         Navigator.of(context).pop(true);
       }
     } on MikrotikCredentialsMissingException catch (e) {
-      if (mounted) {
-        showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
-      }
+      if (mounted) showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
     } on MikrotikConnectionException catch (e) {
-      if (mounted) {
-        showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
-      }
+      if (mounted) showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
     } catch (e) {
-      if (mounted) {
-        showErrorSnackBar(context, 'فشلت الإضافة. تحقق من الاتصال بالشبكة.');
-      }
+      if (mounted) showErrorSnackBar(context, 'فشلت الإضافة. تحقق من الاتصال بالشبكة.');
     } finally {
       client?.close();
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() { _isLoading = false; });
     }
   }
 
@@ -159,123 +125,78 @@ class _AddUserScreenState extends State<AddUserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('إضافة كرت جديد'),
-        backgroundColor: Theme.of(context).cardColor,
-      ),
+      appBar: AppBar(title: const Text('إضافة كرت جديد'), backgroundColor: Theme.of(context).cardColor),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                    labelText: 'اسم المستخدم', border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.white),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'هذا الحقل مطلوب';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _sharedUsersController,
-                decoration: const InputDecoration(
-                    labelText: 'Shared Users', border: OutlineInputBorder()),
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'هذا الحقل مطلوب';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'الرجاء إدخال رقم صحيح';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedProfile,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
-                decoration: const InputDecoration(
-                    labelText: 'الفئة (البروفايل)',
-                    border: OutlineInputBorder()),
-                hint: const Text('اختر فئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-                items: widget.profiles.map((profile) {
-                  final profileName = profile['name'] as String;
-                  return DropdownMenuItem(
-                    value: profileName,
-                    child: Text(profileName, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedProfile = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'الرجاء اختيار فئة';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _cardType,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
-                decoration: const InputDecoration(
-                    labelText: 'نوع الكرت', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(
-                      value: 'username_and_password_equal',
-                      child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(
-                      value: 'username_and_password_different',
-                      child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                ],
-                onChanged: (v) => setState(() => _cardType = v!),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _charType,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
-                decoration: const InputDecoration(
-                    labelText: 'نوع أحرف المستخدم',
-                    border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(
-                      value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(
-                      value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                ],
-                onChanged: (v) => setState(() => _charType = v!),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _addUser,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white))
-                    : const Text('حفظ وإضافة'),
-              ),
-            ],
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            TextFormField(
+              controller: _usernameController,
+              decoration: const InputDecoration(labelText: 'اسم المستخدم', border: OutlineInputBorder()),
+              style: const TextStyle(color: Colors.white),
+              validator: (value) => (value == null || value.isEmpty) ? 'هذا الحقل مطلوب' : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _sharedUsersController,
+              decoration: const InputDecoration(labelText: 'Shared Users', border: OutlineInputBorder()),
+              style: const TextStyle(color: Colors.white),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'هذا الحقل مطلوب';
+                if (int.tryParse(value) == null) return 'الرجاء إدخال رقم صحيح';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedProfile,
+              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              dropdownColor: Colors.white,
+              decoration: const InputDecoration(labelText: 'الفئة (البروفايل)', border: OutlineInputBorder()),
+              hint: const Text('اختر فئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+              items: widget.profiles.map((profile) {
+                final profileName = profile['name'] as String;
+                return DropdownMenuItem(value: profileName, child: Text(profileName, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)));
+              }).toList(),
+              onChanged: (value) => setState(() { _selectedProfile = value; }),
+              validator: (value) => (value == null) ? 'الرجاء اختيار فئة' : null,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _cardType,
+              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              dropdownColor: Colors.white,
+              decoration: const InputDecoration(labelText: 'نوع الكرت', border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'username_and_password_equal', child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'username_and_password_different', child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+              ],
+              onChanged: (v) => setState(() => _cardType = v!),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _charType,
+              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              dropdownColor: Colors.white,
+              decoration: const InputDecoration(labelText: 'نوع أحرف المستخدم', border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+              ],
+              onChanged: (v) => setState(() => _charType = v!),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _addUser,
+              child: _isLoading
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
+                  : const Text('حفظ وإضافة'),
+            ),
+          ]),
         ),
       ),
     );

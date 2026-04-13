@@ -1,11 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:uuid/uuid.dart';
+
+/// مفتاح عالمي لـ ScaffoldMessenger - يتم تعريفه هنا مرة واحدة
+/// ويُستخدم عبر جميع الشاشات
+final GlobalKey<ScaffoldMessengerState> mqttScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class MqttService with ChangeNotifier {
   MqttServerClient? _client;
@@ -17,9 +22,14 @@ class MqttService with ChangeNotifier {
   final String _mainTopic = 'MyChatApp/ali/inbox';
   String? _responseTopic;
 
-  final StreamController<Map<String, dynamic>> _messageStreamController =
-      StreamController.broadcast();
+  final StreamController<Map<String, dynamic>> _messageStreamController = StreamController.broadcast();
   Stream<Map<String, dynamic>> get messages => _messageStreamController.stream;
+
+  // --- الإصلاح: متغيرات Exponential Backoff ---
+  int _retryCount = 0;
+  static const int _maxRetryDelay = 30;
+  Timer? _retryTimer;
+  bool _isDisposed = false;
 
   MqttService() {
     _initialize();
@@ -44,20 +54,17 @@ class MqttService with ChangeNotifier {
         return iosInfo.identifierForVendor;
       }
     } catch (e) {
-      
+      debugPrint('Error getting device ID: $e');
     }
     return null;
   }
 
+  /// الإصلاح: اتصال مع Exponential Backoff
   void _connect() async {
-    if (_deviceId == null) {
-      
-      return;
-    }
+    if (_deviceId == null || _isDisposed) return;
 
     if (_client?.connectionStatus?.state == MqttConnectionState.connecting ||
         _client?.connectionStatus?.state == MqttConnectionState.connected) {
-      
       return;
     }
 
@@ -81,59 +88,68 @@ class MqttService with ChangeNotifier {
     _client!.connectionMessage = connMessage;
 
     try {
-      
       await _client!.connect();
+      // نجاح الاتصال - إعادة تعيين العداد
+      _retryCount = 0;
+      _retryTimer?.cancel();
     } catch (e) {
-      
-      _client!.disconnect();
+      debugPrint('MQTT connection failed (attempt $_retryCount): $e');
+      _client?.disconnect();
+      _scheduleReconnect();
     }
   }
-  
+
+  /// جدولة إعادة المحاولة مع تأخير متزايد
+  void _scheduleReconnect() {
+    if (_isDisposed) return;
+    _retryTimer?.cancel();
+    // حساب التأخير: 2^n ثواني، بحد أقصى 30 ثانية
+    final delaySeconds = min(_maxRetryDelay, pow(2, _retryCount).toInt());
+    _retryCount++;
+    debugPrint('MQTT: Scheduling reconnect in ${delaySeconds}s (attempt $_retryCount)');
+    _retryTimer = Timer(Duration(seconds: delaySeconds), () {
+      if (!_isDisposed) _connect();
+    });
+  }
+
   void checkAndReconnect() {
-    
+    if (_isDisposed) return;
     if (_client?.connectionStatus?.state != MqttConnectionState.connected) {
-      
       _connect();
-    } else {
-      
     }
   }
 
   void _onConnected() {
-    
+    debugPrint('MQTT: Connected');
     _client!.subscribe(_responseTopic!, MqttQos.atLeastOnce);
-
     _client!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> c) {
       final MqttPublishMessage recMess = c[0].payload as MqttPublishMessage;
       final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-      
       try {
         final messageJson = jsonDecode(pt) as Map<String, dynamic>;
         _messageStreamController.add(messageJson);
       } catch (e) {
-        
+        debugPrint('MQTT: Failed to parse message: $e');
       }
     });
   }
 
   void _onDisconnected() {
-    
+    debugPrint('MQTT: Disconnected');
+    if (!_isDisposed) _scheduleReconnect();
   }
 
   void _onSubscribed(String topic) {
-    
+    debugPrint('MQTT: Subscribed to $topic');
   }
 
-  void _pong() {
-    
-  }
+  void _pong() {}
 
   void publish(Map<String, dynamic> message) {
     if (_client?.connectionStatus?.state != MqttConnectionState.connected) {
-      
-      // لا تعيد المحاولة تلقائياً هنا، اترك المنطق في الواجهة يقرر إعادة الإرسال
       checkAndReconnect();
-      scaffoldMessengerKey.currentState?.showSnackBar(
+      // الإصلاح: استخدام mqttScaffoldMessengerKey بدلاً من scaffoldMessengerKey المكرر
+      mqttScaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
           content: Text('فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.'),
           backgroundColor: Colors.orange,
@@ -141,27 +157,23 @@ class MqttService with ChangeNotifier {
       );
       return;
     }
-    
     message['reply_to'] = _responseTopic;
     message['device_id'] = _deviceId;
-
     final builder = MqttClientPayloadBuilder();
     builder.addString(jsonEncode(message));
     _client!.publishMessage(_mainTopic, MqttQos.atLeastOnce, builder.payload!);
   }
 
-  // ==== تم تعديل اسم الدالة لتكون أكثر عمومية ====
   String generateUniqueId() {
     return const Uuid().v4();
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
+    _retryTimer?.cancel();
     _messageStreamController.close();
     _client?.disconnect();
     super.dispose();
   }
 }
-
-// مفتاح عام للوصول إلى ScaffoldMessenger من أي مكان
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();

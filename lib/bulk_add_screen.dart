@@ -10,7 +10,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 
 import 'bulk_add_isolate.dart';
@@ -20,6 +19,7 @@ import 'mqtt_service.dart';
 import 'pdf_templates_screen.dart';
 import 'pdf_generator.dart';
 import 'snackbar_helpers.dart';
+import 'notification_service.dart';
 
 class BulkAddScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
@@ -65,9 +65,6 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
   StreamSubscription? _mqttSubscription;
   bool _isNetworkLinked = false;
   Map<String, dynamic> _linkedData = {};
-
-  final String telegramBotToken = '';
-  final String telegramChatId = '';
 
   @override
   void initState() {
@@ -153,16 +150,6 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
     });
   }
 
-  Future<void> _sendTelegramMessage(String message) async {
-    final dio = Dio();
-    final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
-    try {
-      await dio.post(url, data: {'chat_id': telegramChatId, 'text': message});
-    } catch (e) {
-      // print("Failed to send Telegram message: $e");
-    }
-  }
-
   Future<void> _generateUsers() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -206,11 +193,12 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
         final successCount = message['count'] as int;
         final address = message['address'] as String;
 
-        final String notificationMessage =
-            "تم إضافة $successCount كرت جديد بنجاح!\n"
-            "IP: $address\n"
-            "الفئة: $_selectedProfile";
-        _sendTelegramMessage(notificationMessage);
+        // الإصلاح: استخدام NotificationService المركزي
+        NotificationService.instance.notifyBulkCardsAdded(
+          count: successCount,
+          profile: _selectedProfile,
+          address: address,
+        );
 
         setState(() { _isGenerating = false; });
 
