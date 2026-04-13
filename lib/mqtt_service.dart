@@ -12,25 +12,33 @@ class MqttService with ChangeNotifier {
   String? _deviceId;
   final String _broker = 'ue1f6bff.ala.us-east-1.emqxsl.com';
   final int _port = 8883;
-  final String _username = '777042661';
-  final String _password = 'mohammed77#7042661';
+  String _username = '';
+  String _password = '';
   final String _mainTopic = 'MyChatApp/ali/inbox';
   String? _responseTopic;
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
   final StreamController<Map<String, dynamic>> _messageStreamController =
       StreamController.broadcast();
   Stream<Map<String, dynamic>> get messages => _messageStreamController.stream;
 
-  MqttService() {
-    _initialize();
+  MqttService({required this.scaffoldMessengerKey}) {
+    _initializeDeviceId();
   }
 
-  Future<void> _initialize() async {
+  /// تهيئة معرف الجهاز فقط بدون اتصال (بيانات الاعتماد ستُمرّر لاحقاً)
+  Future<void> _initializeDeviceId() async {
     _deviceId = await _getDeviceId();
     if (_deviceId != null) {
       _responseTopic = 'MyChatApp/client/$_deviceId/response';
-      _connect();
     }
+  }
+
+  /// تعيين بيانات اعتماد MQTT والاتصال
+  void configure(String username, String password) {
+    _username = username;
+    _password = password;
+    _connect();
   }
 
   Future<String?> _getDeviceId() async {
@@ -51,7 +59,10 @@ class MqttService with ChangeNotifier {
 
   void _connect() async {
     if (_deviceId == null) {
-      
+      return;
+    }
+
+    if (_username.isEmpty || _password.isEmpty) {
       return;
     }
 
@@ -162,6 +173,3 @@ class MqttService with ChangeNotifier {
     super.dispose();
   }
 }
-
-// مفتاح عام للوصول إلى ScaffoldMessenger من أي مكان
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
