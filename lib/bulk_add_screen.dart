@@ -192,7 +192,6 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
 
     final isolate = await Isolate.spawn(bulkAddIsolate, isolateData);
 
-    final receivePort = ReceivePort();
     final subscription = receivePort.listen((message) {
       if (!mounted) return;
 
