@@ -40,9 +40,13 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     super.initState();
   }
 
+  bool _initialized = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
     _mqttService = Provider.of<MqttService>(context, listen: false);
     _setupMqttListener();
     _loadInitialData();

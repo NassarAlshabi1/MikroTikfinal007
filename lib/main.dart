@@ -482,32 +482,43 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   Future<void> _handleCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('remember_me', _rememberMe);
+    // كتابة جميع القيم بشكل متوازي لتسريع العملية
+    final futures = <Future<void>>[
+      prefs.setBool('remember_me', _rememberMe),
+    ];
     if (_rememberMe) {
-      await prefs.setString('ip', _ipController.text);
-      await prefs.setString('user', _userController.text);
-      await prefs.setString('pass', _passwordController.text);
-      await prefs.setString('port', _portController.text);
-      await prefs.setString('remote_server', _remoteServerController.text);
-      await prefs.setString('remote_port', _remotePortController.text);
+      futures.addAll([
+        prefs.setString('ip', _ipController.text),
+        prefs.setString('user', _userController.text),
+        prefs.setString('pass', _passwordController.text),
+        prefs.setString('port', _portController.text),
+        prefs.setString('remote_server', _remoteServerController.text),
+        prefs.setString('remote_port', _remotePortController.text),
+      ]);
       // حفظ بيانات اعتماد MQTT
       if (_mqttUsernameController.text.isNotEmpty) {
-        await prefs.setString('mqtt_username', _mqttUsernameController.text.trim());
-        await prefs.setString('mqtt_password', _mqttPasswordController.text.trim());
-        if (mounted) {
-          context.read<MqttService>().configure(
-            _mqttUsernameController.text.trim(),
-            _mqttPasswordController.text.trim(),
-          );
-        }
+        futures.addAll([
+          prefs.setString('mqtt_username', _mqttUsernameController.text.trim()),
+          prefs.setString('mqtt_password', _mqttPasswordController.text.trim()),
+        ]);
+      }
+      await Future.wait(futures);
+      if (mounted && _mqttUsernameController.text.isNotEmpty) {
+        context.read<MqttService>().configure(
+          _mqttUsernameController.text.trim(),
+          _mqttPasswordController.text.trim(),
+        );
       }
     } else {
-      await prefs.remove('ip');
-      await prefs.remove('user');
-      await prefs.remove('pass');
-      await prefs.remove('port');
-      await prefs.remove('remote_server');
-      await prefs.remove('remote_port');
+      futures.addAll([
+        prefs.remove('ip'),
+        prefs.remove('user'),
+        prefs.remove('pass'),
+        prefs.remove('port'),
+        prefs.remove('remote_server'),
+        prefs.remove('remote_port'),
+      ]);
+      await Future.wait(futures);
     }
   }
 
@@ -558,7 +569,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         showErrorSnackBar(context, 'فشل الاتصال. تحقق من البيانات أو الشبكة.');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -666,7 +677,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       try {
         client = await MikrotikConnector.connect();
       } finally {
-        client?.close();
+        // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
       }
 
       if (mounted) {
@@ -1050,7 +1061,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         showErrorSnackBar(context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال يدوياً - تجمع الاتصالات يديره تلقائياً
       if (mounted) setState(() => _isLoadingProfiles = false);
     }
   }

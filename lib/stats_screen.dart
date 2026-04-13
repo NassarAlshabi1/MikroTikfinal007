@@ -138,7 +138,7 @@ class _StatsScreenState extends State<StatsScreen> {
         _isLoading = false;
       });
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
     }
   }
 

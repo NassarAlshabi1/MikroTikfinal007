@@ -140,7 +140,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
         showErrorSnackBar(context, 'فشلت الإضافة. تحقق من الاتصال بالشبكة.');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
       if (mounted) {
         setState(() {
           _isLoading = false;

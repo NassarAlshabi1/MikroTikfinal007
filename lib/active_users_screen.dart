@@ -73,6 +73,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     try {
       client = await MikrotikConnector.connect();
       
+      // محاولة سريعة: أمر واحد مع تمرير الصفحة (اتصال TCP واحد فقط)
       try {
         final args = [
           '/ip/hotspot/active/print',
@@ -86,6 +87,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         _activeCount = _activeUsers.length;
         _isHotspotMode = true;
       } catch (e) {
+        // إذا فشل مع الصفحة، حاول بدون صفحة (نفس الاتصال)
         try {
           _serverPaging = false;
           final hotspotResponse = await client.talk([
@@ -96,32 +98,20 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           _activeCount = _activeUsers.length;
           _isHotspotMode = true;
         } catch (e) {
+          // ليس hotspot، جرب user-manager (نفس الاتصال)
           try {
             final argsUm = [
               '/tool/user-manager/session/print',
               '=.proplist=user,session-time-left,framed-ip-address,uptime',
-              '=.limit=${_pageSize}',
-              '=.skip=${_page * _pageSize}',
             ];
             final userManagerResponse = await client.talk(argsUm);
-            _serverPaging = true;
+            _serverPaging = false;
             _activeUsers = userManagerResponse.map((e) => Map<String, dynamic>.from(e)).toList();
             _activeCount = _activeUsers.length;
             _isHotspotMode = false;
           } catch (e) {
-            try {
-              _serverPaging = false;
-              final userManagerResponse = await client.talk([
-                '/tool/user-manager/session/print',
-                '=.proplist=user,session-time-left,framed-ip-address,uptime',
-              ]);
-              _activeUsers = userManagerResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-              _activeCount = _activeUsers.length;
-              _isHotspotMode = false;
-            } catch (e) {
-              _activeUsers = [];
-              _activeCount = 0;
-            }
+            _activeUsers = [];
+            _activeCount = 0;
           }
         }
       }
@@ -182,7 +172,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       final next = Duration(seconds: secs);
       _scheduleNextFetch(next);
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
     }
   }
 

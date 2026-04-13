@@ -92,11 +92,14 @@ class MqttService with ChangeNotifier {
     _client!.connectionMessage = connMessage;
 
     try {
-      
-      await _client!.connect();
+      await _client!.connect().timeout(const Duration(seconds: 10));
+      debugPrint('MQTT: Connected successfully');
+    } on TimeoutException {
+      debugPrint('MQTT: Connection timed out (10s)');
+      _client?.disconnect();
     } catch (e) {
-      
-      _client!.disconnect();
+      debugPrint('MQTT: Connection error: $e');
+      _client?.disconnect();
     }
   }
   
