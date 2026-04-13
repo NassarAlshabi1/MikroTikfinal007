@@ -295,7 +295,9 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
     if (result != null) {
       final path = result.files.single.path!;
       final file = File(path);
-      final document = PdfDocument(inputBytes: file.readAsBytesSync());
+      // قراءة الملف بشكل غير متزامن لعدم تجميد واجهة المستخدم
+      final bytes = await file.readAsBytes();
+      final document = PdfDocument(inputBytes: bytes);
       final text = PdfTextExtractor(document).extractText();
       document.dispose();
       final RegExp codeRegExp = RegExp(r'[a-zA-Z0-9]{6,}');

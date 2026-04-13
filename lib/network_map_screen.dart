@@ -220,7 +220,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         showErrorSnackBar(context, 'حدث خطأ أثناء الفحص.');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
       if(mounted) {
         _rebuildGraph();
         setState(() { _isCheckingStatus = false; });

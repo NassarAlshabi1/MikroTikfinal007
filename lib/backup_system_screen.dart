@@ -50,7 +50,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل تحميل النسخ الاحتياطية.');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -91,7 +91,20 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         '=dont-encrypt=yes',
       ]);
 
-      await Future.delayed(const Duration(seconds: 3));
+      // انتظار ذكي - التحقق من اكتمال النسخة الاحتياطية بدل انتظار أعمى
+      for (int i = 0; i < 10; i++) {
+        await Future.delayed(const Duration(seconds: 1));
+        try {
+          final check = await client.talk([
+            '/file/print',
+            '=.proplist=name',
+            '?name=$backupName',
+          ]);
+          if (check.isNotEmpty) break;
+        } catch (_) {
+          break; // اتصال مغلق، خرج
+        }
+      }
 
       await _loadBackups();
 
@@ -105,7 +118,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل إنشاء النسخة.');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
       if (mounted) setState(() => _isCreatingBackup = false);
     }
   }
@@ -285,7 +298,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشلت عملية الاستعادة.');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
     }
   }
 
@@ -332,7 +345,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل حذف النسخة الاحتياطية.');
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
     }
   }
 

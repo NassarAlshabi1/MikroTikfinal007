@@ -164,7 +164,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         });
       }
     } finally {
-      client?.close();
+      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
     }
   }
 

@@ -460,6 +460,12 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   }
 
   @override
+  void dispose() {
+    _dio.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     

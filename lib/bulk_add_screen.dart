@@ -192,7 +192,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
 
     final isolate = await Isolate.spawn(bulkAddIsolate, isolateData);
 
-    receivePort.listen((message) {
+    final receivePort = ReceivePort();
+    final subscription = receivePort.listen((message) {
       if (!mounted) return;
 
       final type = message['type'];
@@ -218,13 +219,13 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
           _showSuccessDialog(newlyCreatedUsers.map((e) => {'username': e['username'] as String, 'password': e['password'] as String}).toList());
         }
 
-        isolate.kill();
+        _cleanupIsolate(isolate, subscription, receivePort);
       } else if (type == 'error') {
         final errorMessage = message['message'] as String;
         final successCount = message['count'] as int;
         _showErrorDialog('فشلت العملية بعد إنشاء $successCount كرت: $errorMessage');
         setState(() { _isGenerating = false; });
-        isolate.kill();
+        _cleanupIsolate(isolate, subscription, receivePort);
       }
     });
   }
@@ -455,6 +456,13 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
         ]),
       ),
     );
+  }
+
+  /// تنظيف موارد الـ Isolate لمنع تسرب الذاكرة
+  void _cleanupIsolate(Isolate isolate, StreamSubscription subscription, ReceivePort receivePort) {
+    subscription.cancel();
+    receivePort.close();
+    isolate.kill(priority: Isolate.immediate);
   }
 
   void _showErrorDialog(String message) {
