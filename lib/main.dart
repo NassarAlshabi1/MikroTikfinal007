@@ -30,7 +30,7 @@ import 'snackbar_helpers.dart';
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (_) => MqttService(),
+      create: (_) => MqttService(scaffoldMessengerKey: scaffoldMessengerKey),
       child: const MyApp(),
     ),
   );
@@ -376,6 +376,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final _remotePassController = TextEditingController();
   bool _remoteObscured = true;
 
+  // بيانات اعتماد MQTT
+  final _mqttUsernameController = TextEditingController();
+  final _mqttPasswordController = TextEditingController();
+  bool _showMqttSettings = false;
+  bool _mqttPasswordObscured = true;
+
   bool _isLoading = false;
   String _errorMessage = '';
   bool _rememberMe = true;
@@ -460,6 +466,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         _rememberMe = true;
       });
     }
+    // تحميل بيانات اعتماد MQTT وتكوين الخدمة
+    final mqttUsername = prefs.getString('mqtt_username') ?? '';
+    final mqttPassword = prefs.getString('mqtt_password') ?? '';
+    if (mqttUsername.isNotEmpty) {
+      setState(() {
+        _mqttUsernameController.text = mqttUsername;
+        _mqttPasswordController.text = mqttPassword;
+      });
+      if (mounted) {
+        context.read<MqttService>().configure(mqttUsername, mqttPassword);
+      }
+    }
   }
 
   Future<void> _handleCredentials() async {
@@ -472,6 +490,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await prefs.setString('port', _portController.text);
       await prefs.setString('remote_server', _remoteServerController.text);
       await prefs.setString('remote_port', _remotePortController.text);
+      // حفظ بيانات اعتماد MQTT
+      if (_mqttUsernameController.text.isNotEmpty) {
+        await prefs.setString('mqtt_username', _mqttUsernameController.text.trim());
+        await prefs.setString('mqtt_password', _mqttPasswordController.text.trim());
+        if (mounted) {
+          context.read<MqttService>().configure(
+            _mqttUsernameController.text.trim(),
+            _mqttPasswordController.text.trim(),
+          );
+        }
+      }
     } else {
       await prefs.remove('ip');
       await prefs.remove('user');
@@ -540,6 +569,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     _ipController.dispose();
     _userController.dispose();
     _passwordController.dispose();
+    _mqttUsernameController.dispose();
+    _mqttPasswordController.dispose();
     _portController.dispose();
     _remoteServerController.dispose();
     _remotePortController.dispose();
@@ -733,6 +764,40 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           contentPadding: EdgeInsets.zero,
           activeColor: Theme.of(context).primaryColor,
         ),
+        const SizedBox(height: 8),
+        // إعدادات MQTT
+        GestureDetector(
+          onTap: () => setState(() => _showMqttSettings = !_showMqttSettings),
+          child: Row(
+            children: [
+              Icon(_showMqttSettings ? Icons.expand_less : Icons.expand_more, color: Colors.white54, size: 20),
+              const SizedBox(width: 4),
+              Text('إعدادات MQTT', style: TextStyle(color: Colors.white54, fontSize: 13)),
+            ],
+          ),
+        ),
+        if (_showMqttSettings) ...[
+          const SizedBox(height: 12),
+          TextField(
+            controller: _mqttUsernameController,
+            decoration: const InputDecoration(labelText: 'MQTT Username', prefixIcon: Icon(Icons.cloud_outlined)),
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _mqttPasswordController,
+            obscureText: _mqttPasswordObscured,
+            decoration: InputDecoration(
+              labelText: 'MQTT Password',
+              prefixIcon: const Icon(Icons.cloud_lock_outlined),
+              suffixIcon: IconButton(
+                icon: Icon(_mqttPasswordObscured ? Icons.visibility_off : Icons.visibility),
+                onPressed: () => setState(() => _mqttPasswordObscured = !_mqttPasswordObscured),
+              ),
+            ),
+            style: const TextStyle(color: Colors.white),
+          ),
+        ],
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _isLoading ? null : _login,
