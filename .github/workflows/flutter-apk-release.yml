@@ -1,12 +1,9 @@
 name: Build Flutter Release APK
 
 on:
-  pull_request:
-    paths:
-      - 'android/**'
-      - 'lib/**'
-      - 'pubspec.yaml'
-      - '.github/workflows/flutter-apk-release.yml'
+  push:
+    branches:
+      - 'capy/v2-riverpod'
   workflow_dispatch:
 
 jobs:
@@ -36,8 +33,8 @@ jobs:
       - name: Clean build artifacts
         run: flutter clean
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build release APK (arm64 only - modern devices)
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4

@@ -789,7 +789,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             obscureText: _mqttPasswordObscured,
             decoration: InputDecoration(
               labelText: 'MQTT Password',
-              prefixIcon: const Icon(Icons.cloud_lock_outlined),
+              prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
                 icon: Icon(_mqttPasswordObscured ? Icons.visibility_off : Icons.visibility),
                 onPressed: () => setState(() => _mqttPasswordObscured = !_mqttPasswordObscured),

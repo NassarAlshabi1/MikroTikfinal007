@@ -248,7 +248,6 @@ class PdfGenerator {
       final pdfBytes = await compute(_generatePdfInBackground, generationData);
 
       final docsDir = await getApplicationDocumentsDirectory();
-      final now = DateTime.now();
       final filename = 'wifi-cards-${now.millisecondsSinceEpoch}.pdf';
       final savePath = '${docsDir.path}/$filename';
       final file = File(savePath);

@@ -45,9 +45,12 @@ android {
     defaultConfig {
         applicationId = "com.example.mikrotik_manager"
         minSdk = 21
-        targetSdk = 36 // <-- يجب أن يطابق compileSdk
+        targetSdk = 36
         versionCode = flutterVersionCode.toInt()
         versionName = flutterVersionName
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
     }
 
     buildTypes {
