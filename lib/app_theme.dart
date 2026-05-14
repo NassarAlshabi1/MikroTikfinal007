@@ -66,7 +66,7 @@ class AppTheme {
       prefixIconColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       color: cardBg,
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.2),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'connection_service.dart';
@@ -242,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onPressed: () async {
               await ConnectionService.instance.disconnect();
               if (mounted) {
-                Navigator.of(context).pushReplacement(CustomPageRoute(builder: (context) => const LoginScreen()));
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
               }
             },
           ),
