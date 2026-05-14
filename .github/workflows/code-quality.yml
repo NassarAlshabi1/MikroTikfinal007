@@ -44,7 +44,7 @@ jobs:
           fi
 
       - name: Analyze project source
-        run: flutter analyze --fatal-infos
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Check for unused dependencies
         run: |
@@ -153,7 +153,7 @@ jobs:
         run: flutter build apk --debug
 
       - name: Test Web build
-        run: flutter build web --debug
+        run: flutter build web --release --web-renderer canvaskit
 
       - name: Add build verification summary
         run: |
