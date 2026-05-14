@@ -220,6 +220,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final formMaxHeight = MediaQuery.of(context).size.height * 0.65;
+    final formMinHeight = formMaxHeight < 400 ? formMaxHeight : 400.0;
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -261,8 +264,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               // استخدام MediaQuery لجعل الارتفاع متجاوباً بدلاً من 550 ثابت
               ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.65,
-                  minHeight: 400,
+                  maxHeight: formMaxHeight,
+                  minHeight: formMinHeight,
                 ),
                 child: TabBarView(
                   controller: _tabController,
