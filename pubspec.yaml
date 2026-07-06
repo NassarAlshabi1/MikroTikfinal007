@@ -64,7 +64,8 @@ flutter:
   
   assets:
     - assets/images/
-    - .env                  # ملف إعدادات AI (لا ترفعه لـ git)
+    # ملاحظة: .env غير مُضاف كـ asset لأنه في .gitignore
+    # المفاتيح تُحمّل من flutter_secure_storage بدل .env
 
 flutter_app_name:
   name: "اداره الكروت"
