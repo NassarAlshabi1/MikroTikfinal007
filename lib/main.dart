@@ -27,6 +27,7 @@ import 'active_users_screen.dart';
 import 'snackbar_helpers.dart';
 import 'perf/device_capability.dart';
 import 'perf/dio_cache_service.dart';
+import 'ai_diagnostics_screen.dart';
 // -----------------------------------------
 
 /// إقلاع محسّن:
@@ -1197,6 +1198,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const ProfileScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'تشخيص AI',
+        icon: Icons.psychology,
+        color: const Color(0xFF00BCD4), // Cyan
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const AiDiagnosticsScreen()));
         },
       ),
       ServiceItem(

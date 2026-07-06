@@ -1,0 +1,483 @@
+// ============================================================
+//  AI Diagnostics Screen — شاشة التشخيص بالذكاء الاصطناعي
+//  - محادثة تفاعلية مع الـ AI
+//  - زر تشخيص سريع يجمع بيانات MikroTik
+//  - عرض الأوامر المقترحة مع زر نسخ
+// ============================================================
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'ai/diagnostics_models.dart';
+import 'ai/diagnostics_provider.dart';
+import 'ai/ai_settings_screen.dart';
+import 'snackbar_helpers.dart';
+
+class AiDiagnosticsScreen extends ConsumerStatefulWidget {
+  const AiDiagnosticsScreen({super.key});
+
+  @override
+  ConsumerState<AiDiagnosticsScreen> createState() =>
+      _AiDiagnosticsScreenState();
+}
+
+class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
+  final _inputController = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _inputEnabled = true;
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _handleSend() async {
+    final text = _inputController.text.trim();
+    if (text.isEmpty) return;
+
+    _inputController.clear();
+    setState(() => _inputEnabled = false);
+
+    try {
+      // إذا كانت أول رسالة، نشغّل تشخيص كامل
+      final hasSnapshot = ref.read(diagnosticsProvider).lastSnapshot != null;
+      if (hasSnapshot) {
+        await ref.read(diagnosticsProvider.notifier).askFollowUp(text);
+      } else {
+        await ref.read(diagnosticsProvider.notifier).runDiagnostics(
+              userQuery: text,
+            );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _inputEnabled = true);
+        _scrollToBottom();
+      }
+    }
+  }
+
+  Future<void> _handleQuickDiagnose() async {
+    setState(() => _inputEnabled = false);
+    try {
+      await ref.read(diagnosticsProvider.notifier).runDiagnostics();
+    } finally {
+      if (mounted) {
+        setState(() => _inputEnabled = true);
+        _scrollToBottom();
+      }
+    }
+  }
+
+  Future<void> _copyCommand(String command) async {
+    await Clipboard.setData(ClipboardData(text: command));
+    if (mounted) showSuccessSnackBar(context, 'تم نسخ الأمر: $command');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(diagnosticsProvider);
+    final settingsAsync = ref.watch(aiSettingsNotifierProvider);
+
+    // تحديث الإعدادات في الـ diagnostics notifier عند تغييرها
+    settingsAsync.whenData((settings) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(diagnosticsProvider.notifier).updateSettings(settings);
+      });
+    });
+
+    // scroll تلقائي عند وصول رسالة جديدة
+    ref.listen(diagnosticsProvider, (previous, next) {
+      if (previous?.messages.length != next.messages.length) {
+        _scrollToBottom();
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('تشخيص بالذكاء الاصطناعي'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.cleaning_services),
+            tooltip: 'مسح المحادثة',
+            onPressed: () =>
+                ref.read(diagnosticsProvider.notifier).clearChat(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'إعدادات الـ AI',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AiSettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // شريط حالة الإعدادات
+          if (!state.settings.isConfigured)
+            _buildNotConfiguredBanner()
+          else
+            _buildStatusBar(state),
+
+          // قائمة الرسائل
+          Expanded(
+            child: RepaintBoundary(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(12),
+                cacheExtent: 300,
+                itemCount: state.messages.length,
+                itemBuilder: (context, index) {
+                  final msg = state.messages[index];
+                  return _MessageBubble(
+                    message: msg,
+                    onCopyCommand: _copyCommand,
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // شريط حالة التحميل
+          if (state.isLoading)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      state.loadingStage ?? 'جاري المعالجة...',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // صندوق الإدخال + زر التشخيص السريع
+          _buildInputBar(state),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotConfiguredBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      color: Colors.orange.withOpacity(0.2),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber, color: Colors.orange),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'لم يتم إعداد مفتاح AI. اضغط على أيقونة الإعدادات.',
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+            ),
+            child: const Text('إعداد'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBar(DiagnosticsState state) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      color: Theme.of(context).cardColor,
+      child: Row(
+        children: [
+          Icon(
+            state.settings.provider == AiProvider.openAI
+                ? Icons.smart_toy
+                : Icons.auto_awesome,
+            size: 16,
+            color: Colors.white70,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${state.settings.provider.displayName} • ${state.settings.model}',
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          ),
+          const Spacer(),
+          Text(
+            state.settings.connectionMethod.displayName,
+            style: const TextStyle(fontSize: 11, color: Colors.white54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputBar(DiagnosticsState state) {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border(
+            top: BorderSide(color: Colors.white.withOpacity(0.1)),
+          ),
+        ),
+        child: Row(
+          children: [
+            // زر التشخيص السريع
+            IconButton(
+              icon: const Icon(Icons.auto_fix_high),
+              tooltip: 'تشخيص سريع',
+              onPressed: state.isLoading ? null : _handleQuickDiagnose,
+              color: Theme.of(context).primaryColor,
+            ),
+            // حقل الإدخال
+            Expanded(
+              child: TextField(
+                controller: _inputController,
+                enabled: _inputEnabled && !state.isLoading,
+                decoration: InputDecoration(
+                  hintText: 'اكتب سؤالك أو صف المشكلة...',
+                  hintStyle: const TextStyle(fontSize: 13),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).scaffoldBackgroundColor,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                ),
+                style: const TextStyle(fontSize: 14),
+                maxLines: 3,
+                minLines: 1,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _handleSend(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // زر الإرسال
+            IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: _inputEnabled && !state.isLoading ? _handleSend : null,
+              color: Theme.of(context).primaryColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+//  فقاعة الرسالة
+// ============================================================
+class _MessageBubble extends StatelessWidget {
+  final DiagnosticMessage message;
+  final void Function(String) onCopyCommand;
+
+  const _MessageBubble({
+    required this.message,
+    required this.onCopyCommand,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isUser = message.type == MessageType.user;
+    final isError = message.type == MessageType.error;
+    final isSystem = message.type == MessageType.system;
+
+    if (isSystem) {
+      return _buildSystemMessage(context);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser) _buildAvatar(context),
+          Flexible(
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.85,
+              ),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isError
+                    ? Colors.red.withOpacity(0.1)
+                    : isUser
+                        ? Theme.of(context).primaryColor
+                        : Theme.of(context).cardColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isUser ? 16 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 16),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // محتوى الرسالة
+                  SelectableText(
+                    message.content,
+                    style: TextStyle(
+                      color: isUser ? Colors.white : Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                  // الأوامر المقترحة
+                  if (message.suggestedCommands != null &&
+                      message.suggestedCommands!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, color: Colors.white24),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'أوامر مقترحة (اضغط للنسخ):',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    for (final cmd in message.suggestedCommands!)
+                      _CommandChip(command: cmd, onTap: () => onCopyCommand(cmd)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          if (isUser) _buildAvatar(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar(BuildContext context) {
+    final isUser = message.type == MessageType.user;
+    return CircleAvatar(
+      radius: 16,
+      backgroundColor: isUser ? Colors.blue : Theme.of(context).primaryColor,
+      child: Icon(
+        isUser
+            ? Icons.person
+            : message.type == MessageType.error
+                ? Icons.error_outline
+                : Icons.smart_toy,
+        size: 18,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildSystemMessage(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).primaryColor.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline,
+              size: 18, color: Theme.of(context).primaryColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message.content,
+              style: const TextStyle(fontSize: 13, color: Colors.white70),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+//  chip لأمر قابل للنسخ
+// ============================================================
+class _CommandChip extends StatelessWidget {
+  final String command;
+  final VoidCallback onTap;
+
+  const _CommandChip({required this.command, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.terminal, size: 14, color: Colors.greenAccent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  command,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    color: Colors.greenAccent,
+                  ),
+                ),
+              ),
+              const Icon(Icons.copy, size: 14, color: Colors.white54),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
