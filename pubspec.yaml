@@ -51,6 +51,8 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   flutter_app_name: ^0.1.1
   flutter_launcher_icons: ^0.14.1
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
