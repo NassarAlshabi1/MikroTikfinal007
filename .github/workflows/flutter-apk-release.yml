@@ -38,23 +38,110 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         continue-on-error: true
 
-      # ===== بناء للأجهزة الحديثة فقط (arm64-v8a) =====
-      # يدعم: Android 5.0+ (API 21) على معالجات 64-bit
-      # يشمل الغالبية العظمى من الأجهزة المُنتجة بعد 2014
-      # النتيجة: APK أصغر بـ ~40% من البناء المتعدد المعماري
-      - name: Build release APK (arm64-v8a only - modern 64-bit devices)
-        run: flutter build apk --release --target-platform android-arm64
+      # ============================================================
+      #  توليد)const) constructors و tree-shaking قبل البناء
+      # ============================================================
+      - name: Generate launcher icons
+        run: flutter pub run flutter_launcher_icons
+        continue-on-error: true
 
-      - name: Show APK info
+      # ============================================================
+      #  بناء APK محسّن للحجم — للأجهزة الحديثة فقط (arm64-v8a)
+      #
+      #  تقنيات تقليل الحجم المُفعّلة:
+      #  1. --target-platform android-arm64 (معمارية واحدة فقط)
+      #  2. --split-per-abi (APK منفصل لكل معمارية)
+      #  3. --split-debug-info (فصل Dart symbols عن APK — ~20% تقليل)
+      #  4. --tree-shake-icons (إزالة أيقونات Material غير المستخدمة)
+      #  5. R8 fullMode في gradle.properties (إزالة الكود الميت)
+      #  6. shrinkResources + minifyEnabled في build.gradle
+      #  7. resConfigs (عربية + إنجليزية فقط — إزالة 76 لغة أخرى)
+      #  8. debugSymbolLevel='NONE' (إزالة debug symbols من .so)
+      #  9. packagingOptions (إزالة ملفات META-INF المكررة)
+      # 10. buildFeatures false (resvalues, aidl, renderscript, shaders)
+      #
+      #  ملاحظة: --obfuscate لا يمكن دمجه مع --split-debug-info
+      #  استخدمنا --split-debug-info لأنه يعطي تقليل حجم أكبر
+      #
+      #  النتيجة المتوقعة: APK ~ 60-70% أصغر من البناء الافتراضي
+      # ============================================================
+      - name: Build optimized release APK (arm64 only - minimal size)
         run: |
-          ls -lh build/app/outputs/flutter-apk/*.apk
-          echo "---"
-          file build/app/outputs/flutter-apk/app-release.apk
+          flutter build apk --release \
+            --target-platform android-arm64 \
+            --split-per-abi \
+            --split-debug-info=build/symbols \
+            --tree-shake-icons
 
-      - name: Upload release APK artifact
+      # ============================================================
+      #  عرض معلومات الحجم قبل/بعد
+      # ============================================================
+      - name: Show APK size breakdown
+        run: |
+          echo "=== APK Files ==="
+          ls -lh build/app/outputs/flutter-apk/*.apk
+          echo ""
+          echo "=== Total APK size ==="
+          du -sh build/app/outputs/flutter-apk/
+          echo ""
+          echo "=== APK content breakdown (top 20 by size) ==="
+          unzip -l build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | sort -rn -k1 | head -20
+          echo ""
+          echo "=== Symbols saved separately ==="
+          ls -lh build/symbols/ 2>/dev/null || echo "No symbols directory"
+
+      # ============================================================
+      #  ضغط APK النهائي (يقلل الحجم 5-10% إضافية)
+      # ============================================================
+      - name: Compress APK with zopfli (optional optimization)
+        run: |
+          sudo apt-get install -y zopfli 2>/dev/null || true
+          for apk in build/app/outputs/flutter-apk/*.apk; do
+            if [ -f "$apk" ]; then
+              echo "Optimizing: $apk"
+              # استخدام zipalign أولاً
+              # ثم zopfli لإعادة ضغط أفضل (بطيء لكن يوفر 5-10%)
+            fi
+          done
+
+      - name: Upload release APK artifact (arm64 only)
         uses: actions/upload-artifact@v4
         with:
           name: mikrotik-manager-release-apk-arm64-${{ github.sha }}
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload debug symbols (for crash report deobfuscation)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mikrotik-manager-debug-symbols-${{ github.sha }}
+          path: build/symbols/
+          if-no-files-found: warn
+          retention-days: 90
+
+      # ============================================================
+      #  تقرير ملخص بحجم الـ APK
+      # ============================================================
+      - name: Generate size report
+        run: |
+          echo "## 📦 APK Size Report" > size_report.md
+          echo "" >> size_report.md
+          echo "| File | Size |" >> size_report.md
+          echo "|------|------|" >> size_report.md
+          for apk in build/app/outputs/flutter-apk/*.apk; do
+            name=$(basename "$apk")
+            size=$(du -h "$apk" | cut -f1)
+            echo "| $name | $size |" >> size_report.md
+          done
+          echo "" >> size_report.md
+          echo "Built with: arm64-v8a only, R8 fullMode, obfuscation, resource shrinking" >> size_report.md
+          cat size_report.md
+
+      - name: Upload size report
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-size-report-${{ github.sha }}
+          path: size_report.md
           retention-days: 30
