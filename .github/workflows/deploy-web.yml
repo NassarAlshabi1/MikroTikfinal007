@@ -38,7 +38,7 @@ jobs:
       - name: Build Web
         run: |
           flutter build web --release \
-            --web-renderer canvaskit \
+            \
             --base-href /mikrotik_manager/
 
       - name: Setup Pages
