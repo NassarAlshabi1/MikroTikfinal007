@@ -3,7 +3,6 @@ import 'package:router_os_client/router_os_client.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'mikrotik_connector.dart';
-import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 class ActiveUsersScreen extends StatefulWidget {
@@ -17,10 +16,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   List<Map<String, dynamic>> _activeUsers = [];
   DateTime? _lastActiveFetch;
   static const Duration _minRefreshGap = Duration(seconds: 20);
-  static const Duration _cacheDuration = Duration(minutes: 2);
   int _page = 0;
   static const int _pageSize = 20;
-  int? _totalActiveCount;
   bool _serverPaging = false;
   int _backoffExp = 0;
   static const Duration _baseInterval = Duration(seconds: 20);
@@ -80,7 +77,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         final args = [
           '/ip/hotspot/active/print',
           '=.proplist=user,address,uptime',
-          '=.limit=${_pageSize}',
+          '=.limit=$_pageSize',
           '=.skip=${_page * _pageSize}',
         ];
         final hotspotResponse = await client.talk(args);
@@ -196,9 +193,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final minutes = RegExp(r'(\d+)m').firstMatch(uptime)?.group(1);
     final seconds = RegExp(r'(\d+)s').firstMatch(uptime)?.group(1);
     final parts = <String>[];
-    if (hours != null && int.parse(hours) > 0) parts.add('${hours}س');
-    if (minutes != null && int.parse(minutes) > 0) parts.add('${minutes}د');
-    if (seconds != null && int.parse(seconds) > 0) parts.add('${seconds}ث');
+    if (hours != null && int.parse(hours) > 0) parts.add('$hoursس');
+    if (minutes != null && int.parse(minutes) > 0) parts.add('$minutesد');
+    if (seconds != null && int.parse(seconds) > 0) parts.add('$secondsث');
     return parts.isEmpty ? uptime : parts.join(' ');
   }
 

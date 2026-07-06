@@ -11,6 +11,8 @@ import 'diagnostics_models.dart';
 import 'mikrotik_data_collector.dart';
 import 'ai_service.dart';
 import 'ai_settings_service.dart';
+import 'command_executor.dart';
+import 'diagnostics_history.dart';
 
 // ============================================================
 //  Providers أساسية
@@ -29,7 +31,7 @@ final aiSettingsNotifierProvider =
 });
 
 class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
-  AiSettingsNotifier(AsyncValue<AiSettings> initial) : super(initial);
+  AiSettingsNotifier(super.initial);
 
   Future<void> update(AiSettings settings) async {
     state = AsyncData(settings);
@@ -78,8 +80,47 @@ class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
 }
 
 // ============================================================
-//  Diagnostics State Notifier
+//  History Provider — يحمّل الجلسات السابقة
 // ============================================================
+
+final diagnosticsHistoryProvider =
+    FutureProvider<List<DiagnosticSession>>((ref) async {
+  return await DiagnosticsHistoryService.instance.loadAll();
+});
+
+/// StateNotifier لإدارة الجلسات المحفوظة (تحديث بعد الحذف/الحفظ)
+final historyManagerProvider =
+    StateNotifierProvider<HistoryManager, AsyncValue<List<DiagnosticSession>>>(
+        (ref) {
+  return HistoryManager();
+});
+
+class HistoryManager extends StateNotifier<AsyncValue<List<DiagnosticSession>>> {
+  HistoryManager() : super(const AsyncValue.loading()) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final sessions = await DiagnosticsHistoryService.instance.loadAll();
+      state = AsyncValue.data(sessions);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> refresh() async => _load();
+
+  Future<void> deleteSession(String id) async {
+    await DiagnosticsHistoryService.instance.delete(id);
+    await _load();
+  }
+
+  Future<void> clearAll() async {
+    await DiagnosticsHistoryService.instance.clearAll();
+    await _load();
+  }
+}
 
 final diagnosticsProvider =
     StateNotifierProvider<DiagnosticsNotifier, DiagnosticsState>((ref) {
@@ -88,8 +129,86 @@ final diagnosticsProvider =
 });
 
 class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
+  DiagnosticSession? _currentSession;
+
   DiagnosticsNotifier(AiSettings settings)
-      : super(DiagnosticsState.initial(settings));
+      : super(DiagnosticsState.initial(settings)) {
+    // ابدأ جلسة جديدة عند الإنشاء
+    _currentSession = DiagnosticSession.start(
+      mode: settings.mode,
+      mikrotikIp: null, // سيُحدّث لاحقاً عند جمع البيانات
+    );
+  }
+
+  /// الجلسة الحالية (للوصول من UI)
+  DiagnosticSession? get currentSession => _currentSession;
+
+  /// ينفذ أمر RouterOS مباشرة
+  Future<CommandResult> executeCommand(String command) async {
+    if (state.isLoading) {
+      throw Exception('جاري تنفيذ عملية أخرى. انتظر...');
+    }
+
+    state = state.copyWith(
+      isLoading: true,
+      loadingStage: 'جاري تنفيذ الأمر...',
+      clearLastCommandResult: true,
+    );
+
+    try {
+      final result = await CommandExecutor.execute(
+        command: command,
+        method: state.settings.connectionMethod,
+      );
+
+      // أضف رسالة بنتيجة الأمر للمحادثة
+      final resultMessage = result.success
+          ? DiagnosticMessage.assistant(
+              '✅ تم تنفيذ الأمر بنجاح (${result.elapsed.inMilliseconds}ms):\n\n'
+              '```\n$command\n```\n\n'
+              '**المخرجات:**\n```\n${result.output.isEmpty ? "(لا مخرجات)" : result.output}\n```',
+              commands: [command],
+            )
+          : DiagnosticMessage.error(
+              '❌ فشل تنفيذ الأمر:\n\n'
+              '```\n$command\n```\n\n'
+              '**الخطأ:** ${result.error ?? "غير معروف"}',
+            );
+
+      state = state.copyWith(
+        messages: [...state.messages, resultMessage],
+        isLoading: false,
+        clearLoadingStage: true,
+        lastCommandResult: result,
+      );
+
+      // أضف الأمر للجلسة
+      if (_currentSession != null) {
+        _currentSession = _currentSession!.copyWith(
+          executedCommands: [..._currentSession!.executedCommands, result],
+        );
+        await _saveSession();
+      }
+
+      return result;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+      rethrow;
+    }
+  }
+
+  /// يحفظ الجلسة الحالية
+  Future<void> _saveSession() async {
+    if (_currentSession == null) return;
+    final session = _currentSession!.copyWith(
+      messages: state.messages,
+      endedAt: DateTime.now(),
+    );
+    await DiagnosticsHistoryService.instance.save(session);
+  }
 
   /// يجمع بيانات MikroTik ثم يحللها بالـ AI
   Future<void> runDiagnostics({String? userQuery}) async {
@@ -209,13 +328,24 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
     }
   }
 
-  /// يمسح المحادثة
-  void clearChat() {
+  /// يمسح المحادثة ويبدأ جلسة جديدة
+  Future<void> clearChat() async {
+    // احفظ الجلسة الحالية قبل بدء جديدة
+    if (_currentSession != null && _currentSession!.messages.isNotEmpty) {
+      await _saveSession();
+    }
+    // ابدأ جلسة جديدة
+    _currentSession = DiagnosticSession.start(
+      mode: state.settings.mode,
+      mikrotikIp: state.lastSnapshot?.ipAddress,
+    );
     state = DiagnosticsState.initial(state.settings);
   }
 
   /// يحدّث الإعدادات (عند تغييرها من شاشة الإعدادات)
   void updateSettings(AiSettings settings) {
     state = state.copyWith(settings: settings);
+    // DiagnosticSession.copyWith لا يقبل mode أو mikrotikIp بشكل منفصل
+    // نُنشئ جلسة جديدة بالـ mode الجديد عند الحاجة (يحدث في clearChat)
   }
 }

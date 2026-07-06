@@ -27,11 +27,16 @@ class MikrotikConnector {
   static DateTime? _lastUsed;
   static String? _currentIp;
   static String? _currentUser;
-  static String? _currentPass;
   static int _currentPort = 8728;
   static const _maxIdle = Duration(minutes: 3);
   static const _connectTimeout = Duration(seconds: 5);
   static bool _isConnecting = false;
+
+  /// معلومات الاتصال الحالي (للاستخدام في UI والتشخيص)
+  static String? get currentIp => _currentIp;
+  static String? get currentUser => _currentUser;
+  static int get currentPort => _currentPort;
+  static bool get isCached => _cachedClient != null;
 
   /// الحصول على اتصال MikroTik - يعيد الاتصال المخزّن إذا كان نشطاً
   /// أو ينشئ اتصالاً جديداً عند الحاجة فقط
@@ -94,7 +99,6 @@ class MikrotikConnector {
         _lastUsed = DateTime.now();
         _currentIp = ip;
         _currentUser = user;
-        _currentPass = pass;
         _currentPort = port;
         debugPrint('MikroTik: New connection established to $ip:$port');
         return client;
@@ -106,20 +110,14 @@ class MikrotikConnector {
     } catch (e) {
       _cachedClient = null;
       if (e is MikrotikConnectionException ||
-          e is MikrotikCredentialsMissingException) rethrow;
+          e is MikrotikCredentialsMissingException) {
+        rethrow;
+      }
       throw MikrotikConnectionException(
           'An unexpected error occurred.', e);
     } finally {
       _isConnecting = false;
     }
-  }
-
-  /// التحقق مما إذا كانت بيانات الاعتماد قد تغيرت (مثل تبديل الخادم)
-  static Future<bool> _credentialsChanged() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('ip') != _currentIp ||
-        prefs.getString('user') != _currentUser ||
-        prefs.getString('port') != _currentPort.toString();
   }
 
   /// إغلاق الاتصال المخزّن بشكل صريح
@@ -134,5 +132,6 @@ class MikrotikConnector {
   }
 
   /// التحقق مما إذا كان هناك اتصال نشط
-  static bool get isConnected => _cachedClient != null && !_isConnecting;
+  static bool get hasActiveConnection =>
+      _cachedClient != null && !_isConnecting;
 }

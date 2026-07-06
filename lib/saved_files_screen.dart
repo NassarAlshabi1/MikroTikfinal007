@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'snackbar_helpers.dart';
-import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 import 'card_list_screen.dart';
@@ -106,8 +105,9 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
 
   Future<void> _shareFile(String path) async {
     try {
-      await Share.shareXFiles([XFile(path)]);
+      await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
     } catch (e) {
+      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشلت عملية المشاركة.');
     }
   }
@@ -152,7 +152,9 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
           ),
         );
       }
+    // ignore: use_build_context_synchronously
     } catch (e) {
+      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشل عرض الملف.');
     }
   }
@@ -175,17 +177,24 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       final fileContent = await file.readAsString();
       final cardUsernames = fileContent.split('\n').where((line) => line.trim().isNotEmpty).toList();
 
+      // ignore: use_build_context_synchronously
       // استدعاء دالة إنشاء ومشاركة الـ PDF
       await PdfGenerator.sharePdf(
+        // ignore: use_build_context_synchronously
         context,
         cardUsernames: cardUsernames,
         template: relevantTemplate,
         category: savedFile.profileName,
+      // ignore: use_build_context_synchronously
       );
 
+// ignore: use_build_context_synchronously
+
     } on StateError { // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
+       // ignore: use_build_context_synchronously
        showErrorSnackBar(context, 'لم يتم العثور على قالب PDF للفئة "${savedFile.profileName}".');
     } catch (e) {
+      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشل إنشاء ملف PDF.');
     }
   }

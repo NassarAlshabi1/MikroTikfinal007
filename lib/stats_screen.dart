@@ -198,7 +198,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 pw.Text('الإحصائيات الرئيسية:', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 10),
                 
-                pw.Table.fromTextArray(
+                pw.TableHelper.fromTextArray(
                   headers: ['المؤشر', 'القيمة'],
                   data: [
                     ['إجمالي الجلسات', '${_stats['totalSessions']}'],

@@ -10,7 +10,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/pdf_templates_screen.dart';
 import 'package:mikrotik_manager/edit_pdf_template_screen.dart';

@@ -319,8 +319,10 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                     label: const Text('مشاركة كملف نصي'),
                     onPressed: () async {
                       Navigator.of(context).pop();
-                      await Share.shareXFiles([XFile(filePath)],
-                          text: 'New MikroTik Users');
+                      await SharePlus.instance.share(ShareParams(
+                        files: [XFile(filePath)],
+                        text: 'New MikroTik Users',
+                      ));
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                   ),

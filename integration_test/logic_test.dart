@@ -10,10 +10,8 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/add_user_screen.dart';
 import 'package:mikrotik_manager/bulk_add_screen.dart';
@@ -350,7 +348,7 @@ void main() {
       // نفترض وجود clipboard mock في بيئة الاختبار
       await pumpScreen(
         tester,
-        CardListScreen(cardList: ['test_card_001']),
+        const CardListScreen(cardList: ['test_card_001']),
       );
 
       // اضغط أول زر نسخ

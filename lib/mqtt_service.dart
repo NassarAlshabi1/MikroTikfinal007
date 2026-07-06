@@ -51,8 +51,8 @@ class MqttService with ChangeNotifier {
         final iosInfo = await deviceInfo.iosInfo;
         return iosInfo.identifierForVendor;
       }
-    } catch (e) {
-      
+    } catch (_) {
+      // ignore — device id unavailable
     }
     return null;
   }
@@ -124,8 +124,8 @@ class MqttService with ChangeNotifier {
       try {
         final messageJson = jsonDecode(pt) as Map<String, dynamic>;
         _messageStreamController.add(messageJson);
-      } catch (e) {
-        
+      } catch (_) {
+        // ignore — invalid JSON
       }
     });
   }

@@ -5,7 +5,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
@@ -139,12 +138,10 @@ final ThemeData _testTheme = ThemeData(
     primary: Color(0xFF6b3fa0),
     secondary: Color(0xFFB39DDB),
     surface: Color(0xFF2d213f),
-    background: Color(0xFF1a1329),
     error: Colors.redAccent,
     onPrimary: Colors.white,
     onSecondary: Colors.white,
     onSurface: Colors.white,
-    onBackground: Colors.white,
     onError: Colors.white,
   ),
   appBarTheme: const AppBarTheme(

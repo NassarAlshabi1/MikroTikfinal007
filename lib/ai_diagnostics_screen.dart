@@ -12,6 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ai/diagnostics_models.dart';
 import 'ai/diagnostics_provider.dart';
 import 'ai/ai_settings_screen.dart';
+import 'ai/diagnostics_history_screen.dart';
+import 'ai/command_executor.dart';
 import 'snackbar_helpers.dart';
 
 class AiDiagnosticsScreen extends ConsumerStatefulWidget {
@@ -88,6 +90,98 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     if (mounted) showSuccessSnackBar(context, 'تم نسخ الأمر: $command');
   }
 
+  /// ينفذ أمر RouterOS مباشرة (مع تأكيد المستخدم حسب الخطورة)
+  Future<void> _handleExecuteCommand(String command) async {
+    final riskLevel = CommandExecutor.classifyRisk(command);
+
+    // اعرض تحذير للأوامر المتوسطة والخطرة
+    if (riskLevel != CommandRiskLevel.safe) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                riskLevel == CommandRiskLevel.dangerous
+                    ? Icons.dangerous
+                    : Icons.warning,
+                color: riskLevel == CommandRiskLevel.dangerous
+                    ? Colors.red
+                    : Colors.orange,
+              ),
+              const SizedBox(width: 8),
+              Text('تنفيذ أمر ${riskLevel.displayName}'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(riskLevel.warningMessage),
+              const SizedBox(height: 16),
+              const Text(
+                'الأمر:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: SelectableText(
+                  command,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: riskLevel == CommandRiskLevel.dangerous
+                    ? Colors.red
+                    : Theme.of(context).primaryColor,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('تنفيذ', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
+    // نفّذ الأمر
+    setState(() => _inputEnabled = false);
+    try {
+      final result = await ref
+          .read(diagnosticsProvider.notifier)
+          .executeCommand(command);
+      // حدّث السجل
+      ref.read(historyManagerProvider.notifier).refresh();
+      if (mounted) {
+        if (result.success) {
+          showSuccessSnackBar(
+              context, 'تم تنفيذ الأمر بنجاح (${result.elapsed.inMilliseconds}ms)');
+        } else {
+          showErrorSnackBar(context, 'فشل: ${result.error ?? "خطأ غير معروف"}');
+        }
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'خطأ: $e');
+    } finally {
+      if (mounted) setState(() => _inputEnabled = true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(diagnosticsProvider);
@@ -112,10 +206,24 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         title: const Text('تشخيص بالذكاء الاصطناعي'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'سجل التشخيصات',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const DiagnosticsHistoryScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.cleaning_services),
             tooltip: 'مسح المحادثة',
-            onPressed: () =>
-                ref.read(diagnosticsProvider.notifier).clearChat(),
+            onPressed: () async {
+              await ref.read(diagnosticsProvider.notifier).clearChat();
+              // حدّث قائمة السجل
+              ref.read(historyManagerProvider.notifier).refresh();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -151,6 +259,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   return _MessageBubble(
                     message: msg,
                     onCopyCommand: _copyCommand,
+                    onExecuteCommand: _handleExecuteCommand,
                   );
                 },
               ),
@@ -161,7 +270,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           if (state.isLoading)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               child: Row(
                 children: [
                   const SizedBox(
@@ -191,7 +300,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      color: Colors.orange.withOpacity(0.2),
+      color: Colors.orange.withValues(alpha: 0.2),
       child: Row(
         children: [
           const Icon(Icons.warning_amber, color: Colors.orange),
@@ -243,7 +352,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.2),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -325,7 +434,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.1)),
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           ),
         ),
         child: Row(
@@ -383,10 +492,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 class _MessageBubble extends StatelessWidget {
   final DiagnosticMessage message;
   final void Function(String) onCopyCommand;
+  final void Function(String) onExecuteCommand;
 
   const _MessageBubble({
     required this.message,
     required this.onCopyCommand,
+    required this.onExecuteCommand,
   });
 
   @override
@@ -415,7 +526,7 @@ class _MessageBubble extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isError
-                    ? Colors.red.withOpacity(0.1)
+                    ? Colors.red.withValues(alpha: 0.1)
                     : isUser
                         ? Theme.of(context).primaryColor
                         : Theme.of(context).cardColor,
@@ -433,7 +544,7 @@ class _MessageBubble extends StatelessWidget {
                   SelectableText(
                     message.content,
                     style: TextStyle(
-                      color: isUser ? Colors.white : Colors.white.withOpacity(0.9),
+                      color: isUser ? Colors.white : Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                       height: 1.5,
                     ),
@@ -454,7 +565,11 @@ class _MessageBubble extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     for (final cmd in message.suggestedCommands!)
-                      _CommandChip(command: cmd, onTap: () => onCopyCommand(cmd)),
+                      _CommandChip(
+                        command: cmd,
+                        onCopy: () => onCopyCommand(cmd),
+                        onExecute: () => onExecuteCommand(cmd),
+                      ),
                   ],
                 ],
               ),
@@ -488,10 +603,10 @@ class _MessageBubble extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).primaryColor.withOpacity(0.3),
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -512,46 +627,97 @@ class _MessageBubble extends StatelessWidget {
 }
 
 // ============================================================
-//  chip لأمر قابل للنسخ
+//  chip لأمر قابل للنسخ والتنفيذ
 // ============================================================
 class _CommandChip extends StatelessWidget {
   final String command;
-  final VoidCallback onTap;
+  final VoidCallback onCopy;
+  final VoidCallback onExecute;
 
-  const _CommandChip({required this.command, required this.onTap});
+  const _CommandChip({
+    required this.command,
+    required this.onCopy,
+    required this.onExecute,
+  });
+
+  /// مستوى خطورة الأمر (لعرض أيقونة مناسبة)
+  CommandRiskLevel get _riskLevel => CommandExecutor.classifyRisk(command);
 
   @override
   Widget build(BuildContext context) {
+    final riskEmoji = _riskLevel == CommandRiskLevel.dangerous
+        ? '🚨'
+        : _riskLevel == CommandRiskLevel.moderate
+            ? '⚠️'
+            : '✅';
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white24),
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _riskLevel == CommandRiskLevel.dangerous
+                ? Colors.red.withValues(alpha: 0.5)
+                : Colors.white24,
           ),
-          child: Row(
-            children: [
-              const Icon(Icons.terminal, size: 14, color: Colors.greenAccent),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  command,
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    color: Colors.greenAccent,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // الأمر نفسه + مستوى الخطورة
+            Row(
+              children: [
+                Text(riskEmoji, style: const TextStyle(fontSize: 14)),
+                const SizedBox(width: 6),
+                const Icon(Icons.terminal, size: 14, color: Colors.greenAccent),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    command,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      color: Colors.greenAccent,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(Icons.copy, size: 14, color: Colors.white54),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // أزرار النسخ والتنفيذ
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: onCopy,
+                  icon: const Icon(Icons.copy, size: 14),
+                  label: const Text('نسخ', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 30),
+                    foregroundColor: Colors.white70,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                ElevatedButton.icon(
+                  onPressed: onExecute,
+                  icon: const Icon(Icons.play_arrow, size: 14),
+                  label: const Text('تنفيذ', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: const Size(0, 30),
+                    backgroundColor: _riskLevel == CommandRiskLevel.dangerous
+                        ? Colors.red
+                        : Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -4,7 +4,6 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 class RogueDhcpDetectorScreen extends StatefulWidget {

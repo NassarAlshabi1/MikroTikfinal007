@@ -7,7 +7,6 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
 
 // --- افترض أن هذه الملفات موجودة في مشروعك ---
 import 'add_user_screen.dart';
@@ -24,7 +23,6 @@ import 'stats_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
-import 'snackbar_helpers.dart';
 import 'perf/device_capability.dart';
 import 'perf/dio_cache_service.dart';
 import 'ai_diagnostics_screen.dart';
@@ -124,16 +122,14 @@ class MyApp extends StatelessWidget {
   scaffoldBackgroundColor: const Color(0xFF1a1329),
   fontFamily: 'Tajawal',
   cardColor: const Color(0xFF2d213f),
-  colorScheme: ColorScheme.dark(
-    primary: const Color(0xFF6b3fa0),
-    secondary: const Color(0xFFB39DDB),
-    surface: const Color(0xFF2d213f),
-    background: const Color(0xFF1a1329),
+  colorScheme: const ColorScheme.dark(
+    primary: Color(0xFF6b3fa0),
+    secondary: Color(0xFFB39DDB),
+    surface: Color(0xFF2d213f),
     error: Colors.redAccent,
     onPrimary: Colors.white,
     onSecondary: Colors.white,
     onSurface: Colors.white,
-    onBackground: Colors.white,
     onError: Colors.white,
   ),
   textTheme: const TextTheme(
@@ -291,8 +287,8 @@ class MyApp extends StatelessWidget {
     color: Color(0xFFB0A8C1),
     size: 24,
   ),
-  dividerTheme: DividerThemeData(
-    color: const Color(0x1AFFFFFF),
+  dividerTheme: const DividerThemeData(
+    color: Color(0x1AFFFFFF),
     thickness: 1,
     space: 16,
   ),
@@ -700,9 +696,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await prefs.setString('pass', _remotePassController.text);
       await prefs.setString('port', _remotePortController.text.trim().isEmpty ? '8728' : _remotePortController.text.trim());
 
-      RouterOSClient? client;
       try {
-        client = await MikrotikConnector.connect();
+        await MikrotikConnector.connect();
       } finally {
         // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
       }
@@ -810,7 +805,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             children: [
               Icon(_showMqttSettings ? Icons.expand_less : Icons.expand_more, color: Colors.white54, size: 20),
               const SizedBox(width: 4),
-              Text('إعدادات MQTT', style: TextStyle(color: Colors.white54, fontSize: 13)),
+              const Text('إعدادات MQTT', style: TextStyle(color: Colors.white54, fontSize: 13)),
             ],
           ),
         ),
@@ -846,9 +841,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         const SizedBox(height: 8),
         TextButton(
           onPressed: _launchPrivacyPolicy,
-          child: Text(
+          child: const Text(
             'سياسة الخصوصية',
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xB3FFFFFF),
               decoration: TextDecoration.underline,
               decorationColor: Color(0xB3FFFFFF),
@@ -1263,11 +1258,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: const Color(0x33000000),
+                            color: Color(0x33000000),
                             blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),

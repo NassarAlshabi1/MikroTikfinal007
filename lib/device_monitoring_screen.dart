@@ -4,7 +4,6 @@ import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'snackbar_helpers.dart';
 import 'package:uuid/uuid.dart';
-import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 enum DeviceStatus { online, offline }
@@ -208,15 +207,15 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _displayedDevices.isEmpty
-              ? Center(
+              ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.devices_other, size: 80, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      const Text('لا توجد أجهزة للمراقبة', style: TextStyle(fontSize: 22, color: Colors.white)),
-                      const SizedBox(height: 8),
-                      const Text('اضغط على زر التحديث لجلب الأجهزة', style: TextStyle(color: Colors.white)),
+                      Icon(Icons.devices_other, size: 80, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text('لا توجد أجهزة للمراقبة', style: TextStyle(fontSize: 22, color: Colors.white)),
+                      SizedBox(height: 8),
+                      Text('اضغط على زر التحديث لجلب الأجهزة', style: TextStyle(color: Colors.white)),
                     ],
                   ),
                 )

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
-import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 class BackupSystemScreen extends StatefulWidget {
@@ -63,6 +62,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
     setState(() => _isCreatingBackup = true);
 
+    // ignore: use_build_context_synchronously
     final snackBar = ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Row(

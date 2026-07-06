@@ -8,8 +8,6 @@ import 'package:dio/dio.dart';
 
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
-import 'perf/perf_widgets.dart';
-import 'perf/device_capability.dart';
 
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;

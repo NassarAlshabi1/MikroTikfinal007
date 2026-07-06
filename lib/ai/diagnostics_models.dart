@@ -5,6 +5,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show IconData, Icons;
 
+// استيراد CommandResult (لتضمينه في DiagnosticsState)
+import 'command_executor.dart' show CommandResult;
+
 /// نوع/وضع التشخيص — يحدّد الـ System Prompt المُستخدم
 enum DiagnosticMode {
   general,        // تشخيص عام شامل
@@ -291,6 +294,7 @@ class DiagnosticsState {
   final String? loadingStage;  // "جاري جمع البيانات..." | "جاري التحليل..."
   final MikrotikSnapshot? lastSnapshot;
   final AiSettings settings;
+  final CommandResult? lastCommandResult;  // نتيجة آخر أمر منفّذ
 
   const DiagnosticsState({
     required this.messages,
@@ -298,6 +302,7 @@ class DiagnosticsState {
     this.loadingStage,
     this.lastSnapshot,
     required this.settings,
+    this.lastCommandResult,
   });
 
   static DiagnosticsState initial(AiSettings settings) => DiagnosticsState(
@@ -317,7 +322,9 @@ class DiagnosticsState {
     String? loadingStage,
     MikrotikSnapshot? lastSnapshot,
     AiSettings? settings,
+    CommandResult? lastCommandResult,
     bool clearLoadingStage = false,
+    bool clearLastCommandResult = false,
   }) =>
       DiagnosticsState(
         messages: messages ?? this.messages,
@@ -326,5 +333,8 @@ class DiagnosticsState {
             clearLoadingStage ? null : (loadingStage ?? this.loadingStage),
         lastSnapshot: lastSnapshot ?? this.lastSnapshot,
         settings: settings ?? this.settings,
+        lastCommandResult: clearLastCommandResult
+            ? null
+            : (lastCommandResult ?? this.lastCommandResult),
       );
 }
