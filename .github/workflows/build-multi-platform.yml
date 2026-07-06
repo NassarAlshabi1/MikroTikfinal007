@@ -37,11 +37,11 @@ jobs:
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons || echo "Icon generation skipped"
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Build APK (single ABI to avoid conflict with splits in build.gradle)
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Build AAB
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --target-platform android-arm64
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -73,7 +73,9 @@ jobs:
         run: flutter pub run flutter_launcher_icons || echo "Icon generation skipped"
 
       - name: Build Web
-        run: flutter build web --release --web-renderer canvaskit
+        run: flutter build web --release
+        # ملاحظة: --web-renderer تم إزالته في Flutter 3.10+
+        # CanvasKit هو الـ renderer الافتراضي منذ Flutter 3.0
 
       - name: Upload Web artifacts
         uses: actions/upload-artifact@v4

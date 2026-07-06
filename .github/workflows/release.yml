@@ -78,7 +78,7 @@ jobs:
         run: flutter pub run flutter_launcher_icons
 
       - name: Build Web release
-        run: flutter build web --release --web-renderer canvaskit
+        run: flutter build web --release
 
       - name: Create Web archive
         run: |
