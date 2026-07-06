@@ -62,18 +62,10 @@ android {
         buildConfig true
     }
 
-    // ===== فصل APK لكل معمارية =====
-    // أفضل تقنية لتقليل الحجم: APK منفصل لكل CPU
-    // الجهاز يُنزّل فقط APK الخاص بمعماريته
-    splits {
-        abi {
-            enable true
-            reset()
-            // للأجهزة الحديثة فقط (arm64-v8a) - الأصغر حجماً
-            include 'arm64-v8a'
-            universalApk false  // لا حاجة لـ universalAPK (يضاعف الحجم)
-        }
-    }
+    // ===== لا نستخدم splits.abi هنا =====
+    // Flutter يضيف abiFilters افتراضياً التي تتعارض مع splits.abi
+    // بدلاً من ذلك نستخدم --target-platform + --split-per-abi في flutter build
+    // هذا يعطي نفس النتيجة (APK منفصل لكل معمارية) بدون تعارض
 
     buildTypes {
         release {
