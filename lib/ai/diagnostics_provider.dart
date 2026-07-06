@@ -67,6 +67,14 @@ class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
     state = AsyncData(newSettings);
     await AiSettingsService.instance.save(newSettings);
   }
+
+  Future<void> setMode(DiagnosticMode mode) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(mode: mode);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+    debugPrint('[AiSettingsNotifier] Mode changed to: ${mode.name}');
+  }
 }
 
 // ============================================================

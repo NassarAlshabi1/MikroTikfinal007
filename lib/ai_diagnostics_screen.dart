@@ -228,16 +228,92 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             color: Colors.white70,
           ),
           const SizedBox(width: 8),
-          Text(
-            '${state.settings.provider.displayName} • ${state.settings.model}',
-            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          Flexible(
+            child: Text(
+              '${state.settings.provider.displayName} • ${state.settings.model}',
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          const Spacer(),
-          Text(
-            state.settings.connectionMethod.displayName,
-            style: const TextStyle(fontSize: 11, color: Colors.white54),
+          const SizedBox(width: 8),
+          // ===== selector لوضع التشخيص =====
+          InkWell(
+            onTap: () => _showModeSelector(context, state.settings.mode),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(state.settings.mode.icon, size: 12, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    state.settings.mode.displayName,
+                    style: const TextStyle(fontSize: 11, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// يعرض نافذة اختيار وضع التشخيص
+  void _showModeSelector(BuildContext context, DiagnosticMode currentMode) {
+    final settingsAsync = ref.read(aiSettingsNotifierProvider);
+    final settings = settingsAsync.valueOrNull ?? AiSettings.default_;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'اختر نوع التشخيص',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            ...DiagnosticMode.values.map((mode) {
+              final isSelected = mode == currentMode;
+              return ListTile(
+                leading: Icon(mode.icon,
+                    color: isSelected
+                        ? Theme.of(context).primaryColor
+                        : Colors.white70),
+                title: Text(mode.displayName),
+                subtitle: Text(
+                  mode.description,
+                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check_circle,
+                        color: Theme.of(context).primaryColor)
+                    : null,
+                onTap: () {
+                  ref
+                      .read(aiSettingsNotifierProvider.notifier)
+                      .setMode(mode);
+                  ref.read(diagnosticsProvider.notifier).updateSettings(
+                        settings.copyWith(mode: mode),
+                      );
+                  Navigator.of(ctx).pop();
+                },
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

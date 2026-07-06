@@ -3,6 +3,77 @@
 // ============================================================
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show IconData, Icons;
+
+/// نوع/وضع التشخيص — يحدّد الـ System Prompt المُستخدم
+enum DiagnosticMode {
+  general,        // تشخيص عام شامل
+  security,       // فحص أمني
+  performance,    // تحسين الأداء
+  hotspot,        // مشاكل Hotspot و User Manager
+  vpn,            // VPN و tunneling
+  routing,        // مشاكل التوجيه و BGP/OSPF
+  wifi,           // Wireless و CAPsMAN
+}
+
+extension DiagnosticModeExtension on DiagnosticMode {
+  String get displayName {
+    switch (this) {
+      case DiagnosticMode.general:
+        return 'تشخيص عام';
+      case DiagnosticMode.security:
+        return 'فحص أمني';
+      case DiagnosticMode.performance:
+        return 'تحسين الأداء';
+      case DiagnosticMode.hotspot:
+        return 'Hotspot و User Manager';
+      case DiagnosticMode.vpn:
+        return 'VPN و Tunneling';
+      case DiagnosticMode.routing:
+        return 'التوجيه و BGP/OSPF';
+      case DiagnosticMode.wifi:
+        return 'Wireless و CAPsMAN';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case DiagnosticMode.general:
+        return 'تحليل شامل لكل جوانب الجهاز';
+      case DiagnosticMode.security:
+        return 'فحص ثغرات Firewall و الأمان';
+      case DiagnosticMode.performance:
+        return 'تحسين CPU/RAM/Throughput';
+      case DiagnosticMode.hotspot:
+        return 'مشاكل تسجيل الدخول والكروت والملفات الشخصية';
+      case DiagnosticMode.vpn:
+        return 'IPSec, WireGuard, L2TP, OpenVPN, SSTP';
+      case DiagnosticMode.routing:
+        return 'Static routes, BGP, OSPF, BFD, policy routing';
+      case DiagnosticMode.wifi:
+        return 'WIFI signal, CAPsMAN, roaming, channel optimization';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case DiagnosticMode.general:
+        return Icons.healing;
+      case DiagnosticMode.security:
+        return Icons.security;
+      case DiagnosticMode.performance:
+        return Icons.speed;
+      case DiagnosticMode.hotspot:
+        return Icons.wifi_tethering;
+      case DiagnosticMode.vpn:
+        return Icons.vpn_lock;
+      case DiagnosticMode.routing:
+        return Icons.alt_route;
+      case DiagnosticMode.wifi:
+        return Icons.wifi;
+    }
+  }
+}
 
 /// مزود خدمة الـ AI
 enum AiProvider {
@@ -173,12 +244,14 @@ class AiSettings {
   final String apiKey;
   final MikrotikConnectionMethod connectionMethod;
   final int maxTokens;
+  final DiagnosticMode mode;  // نوع/وضع التشخيص
 
   const AiSettings({
     required this.provider,
     required this.model,
     required this.apiKey,
     required this.connectionMethod,
+    required this.mode,
     this.maxTokens = 1500,
   });
 
@@ -187,6 +260,7 @@ class AiSettings {
         model: 'gpt-4o-mini',
         apiKey: '',
         connectionMethod: MikrotikConnectionMethod.routerOS,
+        mode: DiagnosticMode.general,
       );
 
   AiSettings copyWith({
@@ -195,6 +269,7 @@ class AiSettings {
     String? apiKey,
     MikrotikConnectionMethod? connectionMethod,
     int? maxTokens,
+    DiagnosticMode? mode,
   }) =>
       AiSettings(
         provider: provider ?? this.provider,
@@ -202,6 +277,7 @@ class AiSettings {
         apiKey: apiKey ?? this.apiKey,
         connectionMethod: connectionMethod ?? this.connectionMethod,
         maxTokens: maxTokens ?? this.maxTokens,
+        mode: mode ?? this.mode,
       );
 
   bool get isConfigured => apiKey.isNotEmpty;
