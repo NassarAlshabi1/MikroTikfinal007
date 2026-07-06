@@ -17,6 +17,7 @@ enum DiagnosticMode {
   vpn,            // VPN و tunneling
   routing,        // مشاكل التوجيه و BGP/OSPF
   wifi,           // Wireless و CAPsMAN
+  qos,            // QoS و Queue management
 }
 
 extension DiagnosticModeExtension on DiagnosticMode {
@@ -36,6 +37,8 @@ extension DiagnosticModeExtension on DiagnosticMode {
         return 'التوجيه و BGP/OSPF';
       case DiagnosticMode.wifi:
         return 'Wireless و CAPsMAN';
+      case DiagnosticMode.qos:
+        return 'QoS و Queue Management';
     }
   }
 
@@ -55,6 +58,8 @@ extension DiagnosticModeExtension on DiagnosticMode {
         return 'Static routes, BGP, OSPF, BFD, policy routing';
       case DiagnosticMode.wifi:
         return 'WIFI signal, CAPsMAN, roaming, channel optimization';
+      case DiagnosticMode.qos:
+        return 'Queues, PCQ, HTB, traffic shaping, bandwidth control';
     }
   }
 
@@ -74,6 +79,8 @@ extension DiagnosticModeExtension on DiagnosticMode {
         return Icons.alt_route;
       case DiagnosticMode.wifi:
         return Icons.wifi;
+      case DiagnosticMode.qos:
+        return Icons.tune;
     }
   }
 }
