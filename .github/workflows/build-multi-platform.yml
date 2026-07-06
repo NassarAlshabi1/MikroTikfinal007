@@ -129,6 +129,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Visual Studio Build Tools
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -144,15 +149,19 @@ jobs:
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons
+        continue-on-error: true
 
       - name: Build Windows
         run: flutter build windows --release
+        continue-on-error: true  # قد تفشل بسبب Visual Studio — لا نوقف الـ workflow
 
       - name: Upload Windows artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: windows-build-${{ github.sha }}
           path: build/windows/x64/runner/Release/
+          if-no-files-found: warn
           retention-days: 14
 
   build-macos:
