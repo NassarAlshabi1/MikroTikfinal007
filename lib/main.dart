@@ -25,9 +25,17 @@ import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
 import 'snackbar_helpers.dart';
+import 'perf/device_capability.dart';
 // -----------------------------------------
 
-void main() {
+/// إقلاع محسّن:
+/// 1) تهيئة قدرة الجهاز (low/mid/high) قبل runApp
+/// 2) تمرير MqttService عبر Provider كالمعتاد
+void main() async {
+  // لا نحتاج WidgetsFlutterBinding هنا لأن DeviceCapability.init تستخدم device_info_plus
+  // الذي يُهيّئ binding داخلياً
+  await DeviceCapability.instance.init();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => MqttService(scaffoldMessengerKey: scaffoldMessengerKey),
@@ -226,7 +234,7 @@ class MyApp extends StatelessWidget {
         height: 1.5,
       ),
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.3),
+      shadowColor: const Color(0x4D000000),
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
@@ -241,8 +249,8 @@ class MyApp extends StatelessWidget {
       fontSize: 14,
       height: 1.5,
     ),
-    hintStyle: TextStyle(
-      color: Colors.white.withOpacity(0.7),
+    hintStyle: const TextStyle(
+      color: Color(0xB3FFFFFF),
       fontSize: 14,
       height: 1.5,
     ),
@@ -256,7 +264,7 @@ class MyApp extends StatelessWidget {
   cardTheme: CardTheme(
     color: const Color(0xFF2d213f),
     elevation: 2,
-    shadowColor: Colors.black.withOpacity(0.2),
+    shadowColor: const Color(0x33000000),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     ),
@@ -282,7 +290,7 @@ class MyApp extends StatelessWidget {
     size: 24,
   ),
   dividerTheme: DividerThemeData(
-    color: Colors.white.withOpacity(0.1),
+    color: const Color(0x1AFFFFFF),
     thickness: 1,
     space: 16,
   ),
@@ -326,12 +334,17 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// صفحة انتقال مخصصة مع animation
+// صفحة انتقال مخصصة مع animation — محسّنة للأجهزة الضعيفة
 class CustomPageRoute<T> extends MaterialPageRoute<T> {
   CustomPageRoute({required super.builder, super.settings});
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 300);
+  Duration get transitionDuration {
+    // على الأجهزة الضعيفة: انتقال فوري تقريباً (50ms)
+    // على المتوسطة: 150ms
+    // على القوية: 300ms (الأصلية)
+    return DeviceCapability.instance.animationDuration;
+  }
 
   @override
   Widget buildTransitions(
@@ -340,6 +353,10 @@ class CustomPageRoute<T> extends MaterialPageRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    // على الأجهزة الضعيفة: انتقال بسيط بدون slide (أرخص)
+    if (DeviceCapability.instance.isLowEnd) {
+      return FadeTransition(opacity: animation, child: child);
+    }
     return FadeTransition(
       opacity: animation,
       child: SlideTransition(
@@ -598,7 +615,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Image.asset('assets/images/wifi_logo.png', width: 48, height: 48),
+              Image.asset('assets/images/wifi_logo.png', width: 48, height: 48,
+                cacheWidth: 96,  // 2x للأجهزة عالية الدقة
+                filterQuality: DeviceCapability.instance.isLowEnd ? FilterQuality.low : FilterQuality.medium,
+                gaplessPlayback: true,
+              ),
               const SizedBox(height: 24),
               Text('إدارة شبكتك بسهولة وأمان', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color)),
               const SizedBox(height: 24),
@@ -821,10 +842,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           onPressed: _launchPrivacyPolicy,
           child: Text(
             'سياسة الخصوصية',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+            style: const TextStyle(
+              color: Color(0xB3FFFFFF),
               decoration: TextDecoration.underline,
-              decorationColor: Colors.white.withOpacity(0.7),
+              decorationColor: Color(0xB3FFFFFF),
             ),
           ),
         ),
@@ -935,8 +956,8 @@ class CustomLoadingIndicator extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               message!,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+              style: const TextStyle(
+                color: Color(0xB3FFFFFF),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -1229,7 +1250,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: const Color(0x33000000),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -1312,7 +1333,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       borderRadius: BorderRadius.circular(16),
       child: Card(
         // --- التغيير هنا: تم استخدام لون الأيقونة مع شفافية لخلفية الزر ---
-        color: iconBgColor.withOpacity(0.1),
+        color: Color.alphaBlend(iconBgColor.withValues(alpha: 0.1), Colors.transparent),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Column(
@@ -1322,7 +1343,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 // --- التغيير هنا: تم زيادة وضوح خلفية الأيقونة للتباين ---
-                color: iconBgColor.withOpacity(0.25),
+                color: Color.alphaBlend(iconBgColor.withValues(alpha: 0.25), Colors.transparent),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, size: 32, color: iconBgColor),

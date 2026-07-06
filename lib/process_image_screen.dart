@@ -5,6 +5,8 @@ import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+import 'perf/device_capability.dart';
+
 class ProcessImageScreen extends StatefulWidget {
   final String imagePath;
   final String prefix;
@@ -31,7 +33,10 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
   @override
   void initState() {
     super.initState();
-    _processImage();
+    // أجّل المعالجة الثقيلة حتى نهاية الإطار لتفادي jank في الـ build الأولي
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _processImage();
+    });
   }
 
   @override
@@ -52,12 +57,14 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
       }
 
       // 1. Convert to grayscale
+      if (!mounted) return;
       setState(() {
         _status = 'تحويل الصورة إلى أبيض وأسود...';
       });
       final grayscaleImage = img.grayscale(originalImage);
       
       // 2. Adjust contrast
+      if (!mounted) return;
       setState(() {
         _status = 'تحسين وضوح الأرقام...';
       });
@@ -69,6 +76,7 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
       await File(tempPath).writeAsBytes(img.encodeJpg(contrastImage));
 
       // 3. Perform OCR on the processed image
+      if (!mounted) return;
       setState(() {
         _status = 'جاري استخراج الأرقام...';
       });
@@ -76,32 +84,36 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
       final recognizedText = await _textRecognizer.processImage(inputImage);
 
       final RegExp numberRegExp = RegExp(r'\d+');
+      final RegExp nonDigitRegExp = RegExp(r'[^0-9]');
       final Set<String> cardNumbers = {};
+      final int targetLength = widget.length;
+      final String targetPrefix = widget.prefix;
+      final int targetTotal = widget.total;
 
-      for (TextBlock block in recognizedText.blocks) {
-        for (TextLine line in block.lines) {
-          final String cleanedLine = line.text.replaceAll(RegExp(r'[^0-9]'), '');
-          final numbersInLine =
-              numberRegExp.allMatches(cleanedLine).map((m) => m.group(0)!);
-
-          for (String numberStr in numbersInLine) {
-            if (numberStr.length == widget.length &&
-                numberStr.startsWith(widget.prefix)) {
+      for (final TextBlock block in recognizedText.blocks) {
+        for (final TextLine line in block.lines) {
+          final String cleanedLine = line.text.replaceAll(nonDigitRegExp, '');
+          final matches = numberRegExp.allMatches(cleanedLine);
+          for (final m in matches) {
+            final numberStr = m.group(0)!;
+            if (numberStr.length == targetLength &&
+                numberStr.startsWith(targetPrefix)) {
               cardNumbers.add(numberStr);
-              if (cardNumbers.length >= widget.total) {
+              if (cardNumbers.length >= targetTotal) {
                 break;
               }
             }
           }
-          if (cardNumbers.length >= widget.total) break;
+          if (cardNumbers.length >= targetTotal) break;
         }
-        if (cardNumbers.length >= widget.total) break;
+        if (cardNumbers.length >= targetTotal) break;
       }
 
+      if (!mounted) return;
       Navigator.pop(context, cardNumbers.toList());
     } catch (e) {
       debugPrint("Error processing image: $e");
-      Navigator.pop(context, []);
+      if (mounted) Navigator.pop(context, []);
     }
   }
 
@@ -112,16 +124,28 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
         title: const Text('معالجة الصورة'),
         backgroundColor: Theme.of(context).cardColor,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 20),
-            Text(_status),
-            const SizedBox(height: 10),
-            const Text('العملية قد تستغرق بعض الوقت...'),
-          ],
+      body: RepaintBoundary(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: 28,
+                width: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: DeviceCapability.instance.isLowEnd ? 2 : 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(_status),
+              const SizedBox(height: 10),
+              const Text('العملية قد تستغرق بعض الوقت...'),
+            ],
+          ),
         ),
       ),
     );

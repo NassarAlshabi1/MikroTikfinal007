@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'mqtt_service.dart';
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
 
 class QahtaniLinkScreen extends StatefulWidget {
   const QahtaniLinkScreen({super.key});
@@ -287,6 +289,8 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
+        cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+        addAutomaticKeepAlives: false,
         children: [
           const Icon(Icons.cloud_done, color: Colors.green, size: 80),
           const SizedBox(height: 16),
@@ -297,25 +301,31 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
                       fontWeight: FontWeight.bold,
                       color: Colors.green))),
           const SizedBox(height: 24),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.person),
-              title: Text(clientInfo['name'] ?? 'غير متوفر'),
-              subtitle: const Text('اسم العميل'),
+          RepaintBoundary(
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.person),
+                title: Text(clientInfo['name'] ?? 'غير متوفر'),
+                subtitle: const Text('اسم العميل'),
+              ),
             ),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.router),
-              title: Text(networkDetails['network_name'] ?? 'غير متوفر'),
-              subtitle: const Text('اسم الشبكة'),
+          RepaintBoundary(
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.router),
+                title: Text(networkDetails['network_name'] ?? 'غير متوفر'),
+                subtitle: const Text('اسم الشبكة'),
+              ),
             ),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.confirmation_number),
-              title: Text(_linkedData['account_id'] ?? 'غير متوفر'),
-              subtitle: const Text('رقم حساب م/نصار الشعبي'),
+          RepaintBoundary(
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.confirmation_number),
+                title: Text(_linkedData['account_id'] ?? 'غير متوفر'),
+                subtitle: const Text('رقم حساب م/نصار الشعبي'),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -324,17 +334,19 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
             child: Text('الفئات (الباقات) المتاحة:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           ),
-          if (units.isEmpty) const Center(child: Text('لا توجد فئات متاحة حالياً.'))
-          else ...units
-              .map((unit) => Card(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    child: ListTile(
-                      leading: const Icon(Icons.wifi_tethering,
-                          color: Colors.cyan),
-                      title: Text(unit['name'] ?? 'فئة غير مسماة'),
-                    ),
-                  ))
-              .toList(),
+          if (units.isEmpty)
+            const Center(child: Text('لا توجد فئات متاحة حالياً.'))
+          else
+            for (final unit in units)
+              RepaintBoundary(
+                child: Card(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  child: ListTile(
+                    leading: const Icon(Icons.wifi_tethering, color: Colors.cyan),
+                    title: Text(unit['name'] ?? 'فئة غير مسماة'),
+                  ),
+                ),
+              ),
         ],
       ),
     );

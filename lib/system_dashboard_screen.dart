@@ -82,7 +82,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchData());
 
     // تحديث تلقائي كل 10 ثواني
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
@@ -567,39 +567,41 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               ],
 
               // GridView للبطاقات الفرعية
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: 1.2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                children: [
-                  _buildInfoCard(
-                    'مدة التشغيل',
-                    _formatUptime(_uptime),
-                    Icons.timer,
-                    Colors.blue,
-                  ),
-                  _buildInfoCard(
-                    'المستخدمين النشطين',
-                    '$_activeUsers من $_totalUsers',
-                    Icons.people,
-                    Colors.green,
-                  ),
-                  _buildInfoCard(
-                    'سرعة النت',
-                    '${_formatSpeed(_rxBitsPerSecond)} ⬇\n${_formatSpeed(_txBitsPerSecond)} ⬆',
-                    Icons.speed,
-                    Colors.cyan,
-                  ),
-                  _buildInfoCard(
-                    'التخزين',
-                    '${_formatBytes(_totalHddSpace - _freeHddSpace)} من ${_formatBytes(_totalHddSpace)}\n${_calculatePercentage(_freeHddSpace, _totalHddSpace).toStringAsFixed(1)}%',
-                    Icons.storage,
-                    Colors.orange,
-                  ),
-                ],
+              RepaintBoundary(
+                child: GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  children: [
+                    _buildInfoCard(
+                      'مدة التشغيل',
+                      _formatUptime(_uptime),
+                      Icons.timer,
+                      Colors.blue,
+                    ),
+                    _buildInfoCard(
+                      'المستخدمين النشطين',
+                      '$_activeUsers من $_totalUsers',
+                      Icons.people,
+                      Colors.green,
+                    ),
+                    _buildInfoCard(
+                      'سرعة النت',
+                      '${_formatSpeed(_rxBitsPerSecond)} ⬇\n${_formatSpeed(_txBitsPerSecond)} ⬆',
+                      Icons.speed,
+                      Colors.cyan,
+                    ),
+                    _buildInfoCard(
+                      'التخزين',
+                      '${_formatBytes(_totalHddSpace - _freeHddSpace)} من ${_formatBytes(_totalHddSpace)}\n${_calculatePercentage(_freeHddSpace, _totalHddSpace).toStringAsFixed(1)}%',
+                      Icons.storage,
+                      Colors.orange,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -623,59 +625,61 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               ),
 
               // GridView للأزرار
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: 1.5,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                children: [
-                  _buildActionButton(
-                    'الأكتشف',
-                    Icons.person_search,
-                    theme.primaryColor,
-                    () {
-                      // TODO: Navigate to HotspotActiveUsersScreen
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
-                    'البروديائد',
-                    Icons.wifi_tethering,
-                    Colors.grey,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
-                    'يوزر متجر',
-                    Icons.group,
-                    Colors.grey,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
-                    'هوتسبوت',
-                    Icons.wifi,
-                    theme.primaryColor,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                ],
+              RepaintBoundary(
+                child: GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.5,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  children: [
+                    _buildActionButton(
+                      'الأكتشف',
+                      Icons.person_search,
+                      theme.primaryColor,
+                      () {
+                        // TODO: Navigate to HotspotActiveUsersScreen
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('قريباً...')),
+                        );
+                      },
+                    ),
+                    _buildActionButton(
+                      'البروديائد',
+                      Icons.wifi_tethering,
+                      Colors.grey,
+                      () {
+                        // TODO
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('قريباً...')),
+                        );
+                      },
+                    ),
+                    _buildActionButton(
+                      'يوزر متجر',
+                      Icons.group,
+                      Colors.grey,
+                      () {
+                        // TODO
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('قريباً...')),
+                        );
+                      },
+                    ),
+                    _buildActionButton(
+                      'هوتسبوت',
+                      Icons.wifi,
+                      theme.primaryColor,
+                      () {
+                        // TODO
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('قريباً...')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
             ],
@@ -686,77 +690,79 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   }
 
   Widget _buildMainSystemCard(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.primaryColor.withOpacity(0.8),
-            theme.primaryColor.withOpacity(0.4),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          const Icon(Icons.router, size: 64, color: Colors.white),
-          const SizedBox(height: 16),
-          Text(
-            _boardName.isEmpty ? _model : _boardName,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _version,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMiniInfoCard(
-                'الفولت',
-                _voltage,
-                Icons.bolt,
-                Colors.yellow,
-                false,
-              ),
-              Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniInfoCard(
-                'الحرارة',
-                _temperature == 'غير متاح' ? _temperature : '$_temperature°',
-                Icons.thermostat,
-                _temperatureAlert ? Colors.red : Colors.orange,
-                _temperatureAlert,
-              ),
-              Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniInfoCard(
-                'المعالج',
-                '$_cpuLoad%',
-                Icons.memory,
-                _cpuAlert ? Colors.red : Colors.purple,
-                _cpuAlert,
-              ),
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.primaryColor.withOpacity(0.8),
+              theme.primaryColor.withOpacity(0.4),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x4D000000),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const Icon(Icons.router, size: 64, color: Colors.white),
+            const SizedBox(height: 16),
+            Text(
+              _boardName.isEmpty ? _model : _boardName,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _version,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildMiniInfoCard(
+                  'الفولت',
+                  _voltage,
+                  Icons.bolt,
+                  Colors.yellow,
+                  false,
+                ),
+                Container(width: 1, height: 40, color: Colors.white30),
+                _buildMiniInfoCard(
+                  'الحرارة',
+                  _temperature == 'غير متاح' ? _temperature : '$_temperature°',
+                  Icons.thermostat,
+                  _temperatureAlert ? Colors.red : Colors.orange,
+                  _temperatureAlert,
+                ),
+                Container(width: 1, height: 40, color: Colors.white30),
+                _buildMiniInfoCard(
+                  'المعالج',
+                  '$_cpuLoad%',
+                  Icons.memory,
+                  _cpuAlert ? Colors.red : Colors.purple,
+                  _cpuAlert,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -796,11 +802,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isAlert ? Colors.red.withOpacity(0.9) : const Color(0xFFB39DDB),
+              color: isAlert ? const Color(0xE6F44336) : const Color(0xFFB39DDB),
               borderRadius: BorderRadius.circular(8),
               boxShadow: isAlert ? [
                 BoxShadow(
-                  color: Colors.red.withOpacity(0.5),
+                  color: const Color(0x80F44336),
                   blurRadius: 8,
                   spreadRadius: 2,
                 ),
@@ -838,9 +844,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           const SizedBox(height: 12),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.7),
+              color: Color(0xB3FFFFFF),
             ),
             textAlign: TextAlign.center,
           ),
@@ -876,7 +882,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: const Color(0x1A000000),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -941,196 +947,204 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   }) {
     if (data.isEmpty) return const SizedBox.shrink();
 
-    final maxY = data.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
-    final minY = data.map((spot) => spot.y).reduce((a, b) => a < b ? a : b);
-    final currentValue = data.isNotEmpty ? data.last.y : 0.0;
+    double maxY = data.first.y;
+    double minY = data.first.y;
+    double sumY = 0;
+    for (final spot in data) {
+      if (spot.y > maxY) maxY = spot.y;
+      if (spot.y < minY) minY = spot.y;
+      sumY += spot.y;
+    }
+    final currentValue = data.last.y;
+    final avgValue = sumY / data.length;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withOpacity(isAlert ? 0.8 : 0.3),
-          width: isAlert ? 2.5 : 1.5,
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withOpacity(isAlert ? 0.8 : 0.3),
+            width: isAlert ? 2.5 : 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(isAlert ? 0.3 : 0.1),
+              blurRadius: isAlert ? 15 : 10,
+              offset: const Offset(0, 4),
+              spreadRadius: isAlert ? 2 : 0,
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(isAlert ? 0.3 : 0.1),
-            blurRadius: isAlert ? 15 : 10,
-            offset: const Offset(0, 4),
-            spreadRadius: isAlert ? 2 : 0,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    if (isAlert) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.warning_rounded,
+                        color: color,
+                        size: 24,
+                      ),
+                    ],
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isAlert ? color.withOpacity(0.9) : const Color(0xFFB39DDB),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isAlert ? color : const Color(0xFF000000)).withOpacity(0.3),
+                        blurRadius: isAlert ? 6 : 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '${currentValue.toStringAsFixed(1)}$unit',
+                    style: const TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                  if (isAlert) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.warning_rounded,
-                      color: color,
-                      size: 24,
-                    ),
-                  ],
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isAlert ? color.withOpacity(0.9) : const Color(0xFFB39DDB),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isAlert ? color : Colors.black).withOpacity(0.3),
-                      blurRadius: isAlert ? 6 : 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '${currentValue.toStringAsFixed(1)}$unit',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 200,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 25,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.white.withOpacity(0.1),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 25,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}$unit',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 12,
-                          ),
-                        );
-                      },
-                      reservedSize: 45,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border.all(
-                    color: color.withOpacity(0.2),
-                    width: 1,
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 25,
+                    getDrawingHorizontalLine: (value) {
+                      return const FlLine(
+                        color: Color(0x1AFFFFFF),
+                        strokeWidth: 1,
+                      );
+                    },
                   ),
-                ),
-                minX: data.first.x,
-                maxX: data.last.x,
-                minY: 0,
-                maxY: 100,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: data,
-                    isCurved: true,
-                    color: color,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 3,
-                          color: color,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
-                      },
+                  titlesData: FlTitlesData(
+                    show: true,
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
                     ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          color.withOpacity(0.3),
-                          color.withOpacity(0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    bottomTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 25,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            '${value.toInt()}$unit',
+                            style: const TextStyle(
+                              color: Color(0x80FFFFFF),
+                              fontSize: 12,
+                            ),
+                          );
+                        },
+                        reservedSize: 45,
                       ),
                     ),
                   ),
-                ],
-                lineTouchData: LineTouchData(
-                  enabled: true,
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                      return touchedBarSpots.map((barSpot) {
-                        return LineTooltipItem(
-                          '${barSpot.y.toStringAsFixed(1)}$unit',
-                          const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        );
-                      }).toList();
-                    },
+                  borderData: FlBorderData(
+                    show: true,
+                    border: Border.all(
+                      color: color.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  minX: data.first.x,
+                  maxX: data.last.x,
+                  minY: 0,
+                  maxY: 100,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: data,
+                      isCurved: true,
+                      color: color,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) {
+                          return FlDotCirclePainter(
+                            radius: 3,
+                            color: color,
+                            strokeWidth: 2,
+                            strokeColor: Colors.white,
+                          );
+                        },
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            color.withOpacity(0.3),
+                            color.withOpacity(0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ],
+                  lineTouchData: LineTouchData(
+                    enabled: true,
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                        return [
+                          for (final barSpot in touchedBarSpots)
+                            LineTooltipItem(
+                              '${barSpot.y.toStringAsFixed(1)}$unit',
+                              const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                        ];
+                      },
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildChartStat('الحد الأدنى', minY, unit, Colors.green),
-              _buildChartStat('الحد الأقصى', maxY, unit, Colors.red),
-              _buildChartStat('المتوسط', 
-                data.map((e) => e.y).reduce((a, b) => a + b) / data.length, 
-                unit, Colors.orange),
-            ],
-          ),
-        ],
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildChartStat('الحد الأدنى', minY, unit, Colors.green),
+                _buildChartStat('الحد الأقصى', maxY, unit, Colors.red),
+                _buildChartStat('المتوسط', avgValue, unit, Colors.orange),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1140,9 +1154,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.6),
+            color: Color(0x99FFFFFF),
           ),
         ),
         const SizedBox(height: 4),
@@ -1202,120 +1216,123 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       });
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.red.shade700,
-            Colors.orange.shade600,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.warning_rounded,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'تنبيه أداء النظام',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'تم الكشف عن مشكلات في الأداء',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.red.shade700,
+              Colors.orange.shade600,
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 16),
-          ...alerts.map((alert) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 1,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x66F44336),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Color(0x33FFFFFF),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'تنبيه أداء النظام',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'تم الكشف عن مشكلات في الأداء',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            for (final alert in alerts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0x26FFFFFF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0x4DFFFFFF),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        alert['icon'] as IconData,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          alert['title'] as String,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0x4DFFFFFF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          alert['value'] as String,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    alert['icon'] as IconData,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      alert['title'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      alert['value'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )),
-        ],
+          ],
+        ),
       ),
     );
   }

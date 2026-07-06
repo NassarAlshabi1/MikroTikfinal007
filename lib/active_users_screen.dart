@@ -3,6 +3,8 @@ import 'package:router_os_client/router_os_client.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'mikrotik_connector.dart';
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
 
 class ActiveUsersScreen extends StatefulWidget {
   const ActiveUsersScreen({super.key});
@@ -83,7 +85,11 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         ];
         final hotspotResponse = await client.talk(args);
         _serverPaging = true;
-        _activeUsers = hotspotResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+        final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
+        for (final e in hotspotResponse) {
+          parsed.add(Map<String, dynamic>.from(e));
+        }
+        _activeUsers = parsed;
         _activeCount = _activeUsers.length;
         _isHotspotMode = true;
       } catch (e) {
@@ -94,7 +100,11 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             '/ip/hotspot/active/print',
             '=.proplist=user,address,uptime',
           ]);
-          _activeUsers = hotspotResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+          final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
+          for (final e in hotspotResponse) {
+            parsed.add(Map<String, dynamic>.from(e));
+          }
+          _activeUsers = parsed;
           _activeCount = _activeUsers.length;
           _isHotspotMode = true;
         } catch (e) {
@@ -106,7 +116,11 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             ];
             final userManagerResponse = await client.talk(argsUm);
             _serverPaging = false;
-            _activeUsers = userManagerResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+            final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
+            for (final e in userManagerResponse) {
+              parsed.add(Map<String, dynamic>.from(e));
+            }
+            _activeUsers = parsed;
             _activeCount = _activeUsers.length;
             _isHotspotMode = false;
           } catch (e) {
@@ -259,47 +273,67 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   }
 
   Widget _buildStatsCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Theme.of(context).primaryColor.withOpacity(0.8),
-            Theme.of(context).primaryColor.withOpacity(0.5),
+    final primaryColor = Theme.of(context).primaryColor;
+    // Precompute variants to avoid withOpacity allocations on each rebuild
+    final primary80 = Color.fromRGBO(
+      (primaryColor.r * 255).round(),
+      (primaryColor.g * 255).round(),
+      (primaryColor.b * 255).round(),
+      0.8,
+    );
+    final primary50 = Color.fromRGBO(
+      (primaryColor.r * 255).round(),
+      (primaryColor.g * 255).round(),
+      (primaryColor.b * 255).round(),
+      0.5,
+    );
+    final primary30 = Color.fromRGBO(
+      (primaryColor.r * 255).round(),
+      (primaryColor.g * 255).round(),
+      (primaryColor.b * 255).round(),
+      0.3,
+    );
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primary80, primary50],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: primary30,
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem(
-            icon: Icons.people,
-            label: 'النشطين الآن',
-            value: '$_activeCount',
-            color: Colors.white,
-          ),
-          Container(
-            width: 1,
-            height: 60,
-            color: Colors.white.withOpacity(0.3),
-          ),
-          _buildStatItem(
-            icon: Icons.group,
-            label: 'إجمالي المستخدمين',
-            value: '$_totalUsers',
-            color: Colors.white,
-          ),
-        ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildStatItem(
+              icon: Icons.people,
+              label: 'النشطين الآن',
+              value: '$_activeCount',
+              color: Colors.white,
+            ),
+            Container(
+              width: 1,
+              height: 60,
+              // Colors.white @ 0.3 -> alpha 0x4D
+              color: const Color(0x4DFFFFFF),
+            ),
+            _buildStatItem(
+              icon: Icons.group,
+              label: 'إجمالي المستخدمين',
+              value: '$_totalUsers',
+              color: Colors.white,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -310,6 +344,13 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     required String value,
     required Color color,
   }) {
+    // Precompute to avoid withOpacity allocation per build
+    final labelColor = Color.fromRGBO(
+      (color.r * 255).round(),
+      (color.g * 255).round(),
+      (color.b * 255).round(),
+      0.9,
+    );
     return Column(
       children: [
         Icon(icon, color: color, size: 40),
@@ -317,7 +358,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         Text(
           label,
           style: TextStyle(
-            color: color.withOpacity(0.9),
+            color: labelColor,
             fontSize: 14,
           ),
           textAlign: TextAlign.center,
@@ -337,21 +378,23 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Widget _buildUsersList() {
     if (_activeUsers.isEmpty) {
-      return Center(
+      return const Center(
         child: Padding(
-          padding: const EdgeInsets.all(48.0),
+          padding: EdgeInsets.all(48.0),
           child: Column(
             children: [
               Icon(
                 Icons.people_outline,
                 size: 80,
-                color: Colors.white.withOpacity(0.3),
+                // Colors.white @ 0.3 -> alpha 0x4D
+                color: Color(0x4DFFFFFF),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 'لا توجد مستخدمين نشطين حالياً',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                  // Colors.white @ 0.6 -> alpha 0x99
+                  color: Color(0x99FFFFFF),
                   fontSize: 16,
                 ),
               ),
@@ -366,6 +409,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final start = _page * _pageSize;
     final end = math.min(start + _pageSize, _activeUsers.length);
     final current = _activeUsers.sublist(start, end);
+
+    final primaryColor = Theme.of(context).primaryColor;
+    final primary20 = Color.fromRGBO(
+      (primaryColor.r * 255).round(),
+      (primaryColor.g * 255).round(),
+      (primaryColor.b * 255).round(),
+      0.2,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,13 +437,13 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.2),
+                  color: primary20,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   _isHotspotMode ? 'Hotspot' : 'User Manager',
                   style: TextStyle(
-                    color: Theme.of(context).primaryColor,
+                    color: primaryColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -405,9 +456,11 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: current.length,
+          cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+          addAutomaticKeepAlives: false,
           itemBuilder: (context, idx) {
             final user = current[idx];
-            return _buildUserCard(user, start + idx);
+            return RepaintBoundary(child: _buildUserCard(user, start + idx));
           },
         ),
       ],
@@ -475,14 +528,34 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final username = user['user'] ?? user['name'] ?? 'غير محدد';
     final ipAddress = user['address'] ?? user['framed-ip-address'] ?? 'غير متاح';
     final uptime = user['uptime'] ?? user['session-time-left'] ?? '';
-    
+
+    final primaryColor = Theme.of(context).primaryColor;
+    final primary80 = Color.fromRGBO(
+      (primaryColor.r * 255).round(),
+      (primaryColor.g * 255).round(),
+      (primaryColor.b * 255).round(),
+      0.8,
+    );
+    final primary40 = Color.fromRGBO(
+      (primaryColor.r * 255).round(),
+      (primaryColor.g * 255).round(),
+      (primaryColor.b * 255).round(),
+      0.4,
+    );
+    final primary20 = Color.fromRGBO(
+      (primaryColor.r * 255).round(),
+      (primaryColor.g * 255).round(),
+      (primaryColor.b * 255).round(),
+      0.2,
+    );
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).primaryColor.withOpacity(0.2),
+          color: primary20,
           width: 1,
         ),
       ),
@@ -502,10 +575,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                   height: 50,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).primaryColor.withOpacity(0.8),
-                        Theme.of(context).primaryColor.withOpacity(0.4),
-                      ],
+                      colors: [primary80, primary40],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -573,9 +643,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ],
                   ),
                 ),
-                Icon(
+                // Colors.white @ 0.3 -> alpha 0x4D
+                const Icon(
                   Icons.chevron_right,
-                  color: Colors.white.withOpacity(0.3),
+                  color: Color(0x4DFFFFFF),
                 ),
               ],
             ),
@@ -628,8 +699,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                         flex: 2,
                         child: Text(
                           entry.key,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
+                          style: const TextStyle(
+                            // Colors.white @ 0.6 -> alpha 0x99
+                            color: Color(0x99FFFFFF),
                             fontSize: 14,
                           ),
                         ),
@@ -648,7 +720,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ],
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

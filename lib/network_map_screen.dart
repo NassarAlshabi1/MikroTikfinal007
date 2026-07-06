@@ -40,7 +40,7 @@ class DeviceNode {
         'id': id,
         'name': name,
         'ip': ip,
-        'children': children.map((child) => child.toJson()).toList(),
+        'children': [for (final c in children) c.toJson()],
         'dx': dx,
         'dy': dy,
       };
@@ -49,9 +49,10 @@ class DeviceNode {
         id: json['id'],
         name: json['name'],
         ip: json['ip'],
-        children: (json['children'] as List<dynamic>)
-            .map((childJson) => DeviceNode.fromJson(childJson))
-            .toList(),
+        children: [
+          for (final childJson in json['children'] as List<dynamic>)
+            DeviceNode.fromJson(childJson as Map<String, dynamic>),
+        ],
         dx: json['dx'],
         dy: json['dy'],
       );
@@ -95,6 +96,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   final SugiyamaConfiguration _builder = SugiyamaConfiguration();
   late final ManualPositioningSugiyamaAlgorithm _algorithm;
   final TransformationController _transformationController = TransformationController();
+  late final Paint _edgePaint;
   DeviceNode? _rootNode;
   bool _isLoading = true;
   bool _isCheckingStatus = false;
@@ -104,7 +106,10 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    _edgePaint = Paint()
+      ..color = Colors.grey
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
     _builder
       ..bendPointShape = CurvedBendPointShape(curveLength: 20)
       ..nodeSeparation = 80
@@ -112,15 +117,20 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM;
 
     _algorithm = ManualPositioningSugiyamaAlgorithm(_builder);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitialData());
   }
   
   @override
   void dispose() {
     _transformationController.dispose();
+    _graph.nodes.clear();
+    _graph.edges.clear();
+    // Paint لا يملك dispose() في Flutter — لا مورد يحتاج تحرير
     super.dispose();
   }
 
   Future<void> _loadInitialData() async {
+     if (!mounted) return;
      setState(() { _isLoading = true; });
      final prefs = await SharedPreferences.getInstance();
      
@@ -131,6 +141,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       _isEditMode = true;
     }
     _rebuildGraph();
+    if (!mounted) return;
     setState(() { _isLoading = false; });
   }
 
@@ -469,23 +480,22 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   }
 
   Widget _buildGraphView() {
-    return InteractiveViewer(
-      transformationController: _transformationController,
-      constrained: false,
-      boundaryMargin: const EdgeInsets.all(double.infinity),
-      minScale: 0.01, 
-      maxScale: 5.0,
-      child: GraphView(
-        graph: _graph,
-        algorithm: _algorithm,
-        paint: Paint()
-          ..color = Colors.grey
-          ..strokeWidth = 1
-          ..style = PaintingStyle.stroke,
-        builder: (Node node) {
-          final deviceNode = node.key!.value as DeviceNode;
-          return _buildNodeWidget(deviceNode);
-        },
+    return RepaintBoundary(
+      child: InteractiveViewer(
+        transformationController: _transformationController,
+        constrained: false,
+        boundaryMargin: const EdgeInsets.all(double.infinity),
+        minScale: 0.01, 
+        maxScale: 5.0,
+        child: GraphView(
+          graph: _graph,
+          algorithm: _algorithm,
+          paint: _edgePaint,
+          builder: (Node node) {
+            final deviceNode = node.key!.value as DeviceNode;
+            return _buildNodeWidget(deviceNode);
+          },
+        ),
       ),
     );
   }
@@ -516,22 +526,29 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(deviceNode.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(deviceNode.ip, style: const TextStyle(color: Colors.white, fontSize: 12)),
-          if (!_isEditMode && deviceNode.status == DeviceStatus.offline)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('فحص', style: TextStyle(fontSize: 12)),
-                onPressed: () => _checkSpecificDeviceStatus(deviceNode),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  minimumSize: Size.zero, // Set this
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // and this
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap, // and this
-                ),
+          RepaintBoundary(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(deviceNode.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(deviceNode.ip, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  if (!_isEditMode && deviceNode.status == DeviceStatus.offline)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('فحص', style: TextStyle(fontSize: 12)),
+                        onPressed: () => _checkSpecificDeviceStatus(deviceNode),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          minimumSize: Size.zero, // Set this
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // and this
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap, // and this
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
         ],
@@ -631,7 +648,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.7),
+      color: const Color(0xB3000000),
       child: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

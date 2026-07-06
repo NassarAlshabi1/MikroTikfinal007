@@ -8,6 +8,8 @@ import 'package:dio/dio.dart';
 
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
 
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
@@ -208,13 +210,13 @@ class _AddUserScreenState extends State<AddUserScreen> {
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
                 hint: const Text('اختر فئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-                items: widget.profiles.map((profile) {
-                  final profileName = profile['name'] as String;
-                  return DropdownMenuItem(
-                    value: profileName,
-                    child: Text(profileName, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  );
-                }).toList(),
+                items: [
+                  for (final profile in widget.profiles)
+                    DropdownMenuItem(
+                      value: profile['name'] as String,
+                      child: Text(profile['name'] as String, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    ),
+                ],
                 onChanged: (value) {
                   setState(() {
                     _selectedProfile = value;

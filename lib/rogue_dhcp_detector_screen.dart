@@ -4,6 +4,8 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
 
 class RogueDhcpDetectorScreen extends StatefulWidget {
   const RogueDhcpDetectorScreen({super.key});
@@ -22,7 +24,7 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
   @override
   void initState() {
     super.initState();
-    _getGatewayIp();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _getGatewayIp());
   }
 
   Future<void> _getGatewayIp() async {
@@ -52,13 +54,14 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
     });
 
     RawDatagramSocket? socket;
+    StreamSubscription<RawSocketEvent>? subscription;
     try {
       // Bind to any address on port 68 (DHCP client port)
       socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 68);
       socket.broadcastEnabled = true;
 
       // Listen for DHCP offers
-      socket.listen((RawSocketEvent event) {
+      subscription = socket.listen((RawSocketEvent event) {
         if (event == RawSocketEvent.read) {
           final datagram = socket?.receive();
           if (datagram != null) {
@@ -91,6 +94,7 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
         });
       }
     } finally {
+      await subscription?.cancel();
       socket?.close();
       if (mounted) {
         setState(() {
@@ -235,20 +239,24 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
               ),
             if (_allServers.isNotEmpty)
               Expanded(
-                child: ListView.builder(
-                  itemCount: _allServers.length,
-                  itemBuilder: (context, index) {
-                    final serverIp = _allServers.elementAt(index);
-                    final isRogue = _rogueServers.contains(serverIp);
-                    return Card(
-                      color: isRogue ? Colors.red.withOpacity(0.1) : Colors.green.withOpacity(0.1),
-                      child: ListTile(
-                        leading: Icon(Icons.router, color: isRogue ? Colors.redAccent : Colors.green),
-                        title: Text(serverIp),
-                        subtitle: Text(isRogue ? 'خادم DHCP دخيل' : 'خادم DHCP شرعي (الراوتر)'),
-                      ),
-                    );
-                  },
+                child: RepaintBoundary(
+                  child: ListView.builder(
+                    itemCount: _allServers.length,
+                    cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+                    addAutomaticKeepAlives: false,
+                    itemBuilder: (context, index) {
+                      final serverIp = _allServers.elementAt(index);
+                      final isRogue = _rogueServers.contains(serverIp);
+                      return Card(
+                        color: isRogue ? const Color(0x1AF44336) : const Color(0x1A4CAF50),
+                        child: ListTile(
+                          leading: Icon(Icons.router, color: isRogue ? Colors.redAccent : Colors.green),
+                          title: Text(serverIp),
+                          subtitle: Text(isRogue ? 'خادم DHCP دخيل' : 'خادم DHCP شرعي (الراوتر)'),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
           ],

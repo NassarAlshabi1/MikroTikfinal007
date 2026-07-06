@@ -10,6 +10,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'pdf_templates_screen.dart';
 
+import 'perf/device_capability.dart';
+
 class EditPdfTemplateScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
   final PdfTemplate? existingTemplate;
@@ -61,6 +63,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       final RenderBox renderBox =
           _imageKey.currentContext!.findRenderObject() as RenderBox;
       final imageSize = renderBox.size;
+      if (!mounted) return;
       setState(() {
         _offset = Offset(
           _normalizedOffset.dx * imageSize.width,
@@ -74,16 +77,24 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _cardsPerPageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     final pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      if (!mounted) return;
       setState(() {
         _imageFile = File(pickedFile.path);
         _offset = Offset.zero;
         _normalizedOffset = const Offset(0.5, 0.5);
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         if (_imageKey.currentContext != null) {
           final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
           setState(() {
@@ -140,9 +151,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       );
 
       final prefs = await SharedPreferences.getInstance();
-      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
+      final templatesJson = prefs.getStringList('pdf_templates') ?? const [];
       templatesJson.removeWhere((jsonString) {
-        final t = PdfTemplate.fromJson(jsonDecode(jsonString));
+        final t = PdfTemplate.fromJson(jsonDecode(jsonString) as Map<String, dynamic>);
         return t.profileName == newTemplate.profileName;
       });
       templatesJson.add(jsonEncode(newTemplate.toJson()));
@@ -172,6 +183,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       final double dx = (_offset.dx / imageSize.width).clamp(0.0, 1.0);
       final double dy = (_offset.dy / imageSize.height).clamp(0.0, 1.0);
 
+      if (!mounted) return;
       setState(() {
         _normalizedOffset = Offset(dx, dy);
       });
@@ -182,6 +194,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (_imageKey.currentContext != null && _offset == Offset.zero) {
         final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
         setState(() {
@@ -189,6 +202,17 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
         });
       }
     });
+
+    // بناء عناصر القائمة المنسدلة بـ for loop بدلاً من map.toList()
+    final List<DropdownMenuItem<String>> profileItems = [
+      for (final p in widget.profiles)
+        DropdownMenuItem<String>(
+          value: p['name'] as String,
+          child: Text(p['name'] as String,
+              style: const TextStyle(
+                  color: Colors.black, fontWeight: FontWeight.bold)),
+        )
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -211,182 +235,185 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          DropdownButtonFormField<String>(
-                            value: _selectedProfile,
-                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                            dropdownColor: Colors.white,
-                            decoration: const InputDecoration(
-                                labelText: 'اختر الفئة (البروفايل)',
-                                prefixIcon: Icon(Icons.category_outlined)),
-                            items: widget.profiles
-                                .map((p) => DropdownMenuItem(
-                                      value: p['name'] as String,
-                                      child: Text(p['name'] as String, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                                    ))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedProfile = v),
-                            validator: (v) =>
-                                v == null ? 'الرجاء اختيار فئة' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _cardsPerPageController,
-                            decoration: const InputDecoration(
-                                labelText: 'عدد الكروت في كل صفحة',
-                                prefixIcon: Icon(Icons.view_module_outlined)),
-                            style: const TextStyle(color: Colors.white),
-                            keyboardType: TextInputType.number,
-                            validator: (v) {
-                              if (v == null || v.isEmpty) return 'الحقل مطلوب';
-                              if (int.tryParse(v) == null ||
-                                  int.parse(v) <= 0) {
-                                return 'أدخل رقماً صحيحاً أكبر من صفر';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
+                  RepaintBoundary(
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            DropdownButtonFormField<String>(
+                              value: _selectedProfile,
+                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                              dropdownColor: Colors.white,
+                              decoration: const InputDecoration(
+                                  labelText: 'اختر الفئة (البروفايل)',
+                                  prefixIcon: Icon(Icons.category_outlined)),
+                              items: profileItems,
+                              onChanged: (v) =>
+                                  setState(() => _selectedProfile = v),
+                              validator: (v) =>
+                                  v == null ? 'الرجاء اختيار فئة' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _cardsPerPageController,
+                              decoration: const InputDecoration(
+                                  labelText: 'عدد الكروت في كل صفحة',
+                                  prefixIcon: Icon(Icons.view_module_outlined)),
+                              style: const TextStyle(color: Colors.white),
+                              keyboardType: TextInputType.number,
+                              validator: (v) {
+                                if (v == null || v.isEmpty) return 'الحقل مطلوب';
+                                if (int.tryParse(v) == null ||
+                                    int.parse(v) <= 0) {
+                                  return 'أدخل رقماً صحيحاً أكبر من صفر';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Card(
-                    clipBehavior: Clip.antiAlias,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          const Text(
-                              'حرك المربع لتحديد منطقة طباعة الرقم',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 12),
-                          GestureDetector(
-                            onPanUpdate: (details) {
-                               if (_imageKey.currentContext == null) return;
-                               final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
-                               final newOffset = _offset + details.delta;
+                  RepaintBoundary(
+                    child: Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            const Text(
+                                'حرك المربع لتحديد منطقة طباعة الرقم',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 12),
+                            GestureDetector(
+                              onPanUpdate: (details) {
+                                 if (_imageKey.currentContext == null) return;
+                                 final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
+                                 final newOffset = _offset + details.delta;
 
-                               final constrainedDx = newOffset.dx.clamp(0.0, renderBox.size.width);
-                               final constrainedDy = newOffset.dy.clamp(0.0, renderBox.size.height);
+                                 final constrainedDx = newOffset.dx.clamp(0.0, renderBox.size.width);
+                                 final constrainedDy = newOffset.dy.clamp(0.0, renderBox.size.height);
 
-                               setState(() {
-                                 _offset = Offset(constrainedDx, constrainedDy);
-                               });
-                            },
-                            child: Container(
-                                constraints:
-                                    const BoxConstraints(maxHeight: 300),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.grey.shade700),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Stack(
-                                  children: [
-                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: _imageFile == null
-                                          ? const Center(
-                                              child: Text(
-                                                  'اختر صورة للقالب أولاً'))
-                                          : Image.file(
-                                              _imageFile!,
-                                              key: _imageKey,
-                                              fit: BoxFit.contain,
-                                            ),
-                                    ),
-                                    if (_imageFile != null)
-                                      Positioned(
-                                        left: _offset.dx - (_markerWidth / 2),
-                                        top: _offset.dy - (_markerHeight / 2),
-                                        child: IgnorePointer(
-                                          child: Container(
-                                            width: _markerWidth,
-                                            height: _markerHeight,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.redAccent,
-                                                  width: 2),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              color: Colors.redAccent
-                                                  .withAlpha((255 * 0.3).round()),
+                                 setState(() {
+                                   _offset = Offset(constrainedDx, constrainedDy);
+                                 });
+                              },
+                              child: Container(
+                                  constraints:
+                                      const BoxConstraints(maxHeight: 300),
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: const Color(0xFF616161)),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: _imageFile == null
+                                            ? const Center(
+                                                child: Text(
+                                                    'اختر صورة للقالب أولاً'))
+                                            : Image.file(
+                                                _imageFile!,
+                                                key: _imageKey,
+                                                fit: BoxFit.contain,
+                                                cacheWidth: DeviceCapability
+                                                        .instance.isLowEnd
+                                                    ? 600
+                                                    : null,
+                                              ),
+                                      ),
+                                      if (_imageFile != null)
+                                        Positioned(
+                                          left: _offset.dx - (_markerWidth / 2),
+                                          top: _offset.dy - (_markerHeight / 2),
+                                          child: IgnorePointer(
+                                            child: Container(
+                                              width: _markerWidth,
+                                              height: _markerHeight,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color: Colors.redAccent,
+                                                    width: 2),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                // 0.3 alpha ≈ 0x4D
+                                                color: const Color(0x4DF44336),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                          ),
-
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              const Text('العرض:', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Expanded(
-                                child: Slider(
-                                  value: _markerWidth,
-                                  min: 20.0,
-                                  max: 300.0,
-                                  divisions: 28,
-                                  label: _markerWidth.round().toString(),
-                                  onChanged: (double value) {
-                                    setState(() {
-                                      _markerWidth = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Text('الارتفاع:', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Expanded(
-                                child: Slider(
-                                  value: _markerHeight,
-                                  min: 10.0,
-                                  max: 150.0,
-                                  divisions: 14,
-                                  label: _markerHeight.round().toString(),
-                                  onChanged: (double value) {
-                                    setState(() {
-                                      _markerHeight = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: _pickImage,
-                            icon: const Icon(Icons.image_outlined),
-                            label: const Text('اختر/غير صورة القالب'),
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).primaryColor),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _saveTemplate,
-                            icon: const Icon(Icons.save),
-                            label: const Text('حفظ القالب'),
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 48),
                             ),
-                          )
-                        ],
+
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                const Text('العرض:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Expanded(
+                                  child: Slider(
+                                    value: _markerWidth,
+                                    min: 20.0,
+                                    max: 300.0,
+                                    divisions: 28,
+                                    label: _markerWidth.round().toString(),
+                                    onChanged: (double value) {
+                                      setState(() {
+                                        _markerWidth = value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Text('الارتفاع:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Expanded(
+                                  child: Slider(
+                                    value: _markerHeight,
+                                    min: 10.0,
+                                    max: 150.0,
+                                    divisions: 14,
+                                    label: _markerHeight.round().toString(),
+                                    onChanged: (double value) {
+                                      setState(() {
+                                        _markerHeight = value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: _pickImage,
+                              icon: const Icon(Icons.image_outlined),
+                              label: const Text('اختر/غير صورة القالب'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).primaryColor),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: _isLoading ? null : _saveTemplate,
+                              icon: const Icon(Icons.save),
+                              label: const Text('حفظ القالب'),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 48),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
