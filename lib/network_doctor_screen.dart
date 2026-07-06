@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'network_map_screen.dart';
 import 'rogue_dhcp_detector_screen.dart';
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
 
 enum DiagnosticStatus { pending, running, success, warning, error }
 
@@ -102,7 +104,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         sendTimeout: const Duration(seconds: 15),
       ),
     );
-    _resolveGateway();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resolveGateway());
   }
 
   Future<void> _resolveGateway() async {
@@ -509,88 +511,90 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     final theme = Theme.of(context);
     final primary = theme.primaryColor;
     
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [primary.withOpacity(0.6), primary.withOpacity(0.3)],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [primary.withOpacity(0.6), primary.withOpacity(0.3)],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: primary.withOpacity(0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0x33FFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.health_and_safety, color: Colors.white, size: 36),
                 ),
-                child: const Icon(Icons.health_and_safety, color: Colors.white, size: 36),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ملخص الفحوصات',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ملخص الفحوصات',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'تشخيص شامل لحالة الشبكة',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                  ],
+                      SizedBox(height: 4),
+                      Text(
+                        'تشخيص شامل لحالة الشبكة',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isRunningAll ? null : _runAll,
-              icon: _isRunningAll
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.play_arrow),
-              label: Text(
-                _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.2),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isRunningAll ? null : _runAll,
+                icon: _isRunningAll
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.play_arrow),
+                label: Text(
+                  _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0x33FFFFFF),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -655,10 +659,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        ..._tests.map((t) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildTestCard(t),
-        )).toList(),
+        for (final t in _tests)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: RepaintBoundary(child: _buildTestCard(t)),
+          ),
       ],
     );
   }
@@ -768,7 +773,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: const Color(0x0DFFFFFF),
               borderRadius: BorderRadius.circular(10),
             ),
             width: double.infinity,
@@ -816,9 +821,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.15),
+                    color: const Color(0x26FF9800),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    border: Border.all(color: const Color(0x4DFF9800)),
                   ),
                   alignment: Alignment.center,
                   child: const Row(
@@ -877,8 +882,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           ),
         ..._recommendations.map((r) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: _buildRecommendationCard(r),
-        )).toList(),
+          child: RepaintBoundary(child: _buildRecommendationCard(r)),
+        )),
       ],
     );
   }
@@ -1000,10 +1005,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            ...r.steps.asMap().entries.map((entry) {
-              final index = entry.key + 1;
-              final step = entry.value;
-              return Padding(
+            for (var i = 0; i < r.steps.length; i++)
+              Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1017,7 +1020,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '$index',
+                        '${i + 1}',
                         style: TextStyle(
                           color: sevColor,
                           fontSize: 12,
@@ -1028,7 +1031,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        step,
+                        r.steps[i],
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -1037,8 +1040,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     ),
                   ],
                 ),
-              );
-            }),
+              ),
           ],
         ],
       ),
@@ -1063,82 +1065,86 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         Row(
           children: [
             Expanded(
-              child: InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const NetworkMapScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: primary.withOpacity(0.3), width: 1.5),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: primary.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
+              child: RepaintBoundary(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const NetworkMapScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: primary.withOpacity(0.3), width: 1.5),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: primary.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(Icons.hub_outlined, size: 32, color: primary),
                         ),
-                        child: Icon(Icons.hub_outlined, size: 32, color: primary),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'خريطة الشبكة',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                        const SizedBox(height: 12),
+                        const Text(
+                          'خريطة الشبكة',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const RogueDhcpDetectorScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3), width: 1.5),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
+              child: RepaintBoundary(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const RogueDhcpDetectorScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0x4DFF5255), width: 1.5),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0x33FF5255),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
                         ),
-                        child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'كاشف DHCP الدخيل',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                        const SizedBox(height: 12),
+                        const Text(
+                          'كاشف DHCP الدخيل',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

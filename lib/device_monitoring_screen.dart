@@ -4,6 +4,8 @@ import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'snackbar_helpers.dart';
 import 'package:uuid/uuid.dart';
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
 
 enum DeviceStatus { online, offline }
 
@@ -54,24 +56,31 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDevices();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDevices());
   }
 
   Future<void> _loadDevices() async {
+    if (!mounted) return;
     setState(() { _isLoading = true; });
     final prefs = await SharedPreferences.getInstance();
     final String? devicesJson = prefs.getString('monitored_devices');
     if (devicesJson != null) {
       final List<dynamic> decodedData = jsonDecode(devicesJson);
-      _allDevices = decodedData.map((json) => Device.fromJson(json)).toList();
+      _allDevices = [
+        for (final json in decodedData) Device.fromJson(json as Map<String, dynamic>),
+      ];
     }
     _displayedDevices = List.from(_allDevices); // Initially display all loaded devices
+    if (!mounted) return;
     setState(() { _isLoading = false; });
   }
 
   Future<void> _saveDevices() async {
     final prefs = await SharedPreferences.getInstance();
-    final String devicesJson = jsonEncode(_allDevices.map((device) => device.toJson()).toList());
+    final List<Map<String, dynamic>> encoded = [
+      for (final device in _allDevices) device.toJson(),
+    ];
+    final String devicesJson = jsonEncode(encoded);
     await prefs.setString('monitored_devices', devicesJson);
   }
 
@@ -211,48 +220,52 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  itemCount: _displayedDevices.length,
-                  itemBuilder: (context, index) {
-                    final device = _displayedDevices[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4.0),
-                      color: device.status == DeviceStatus.online ? Colors.green.shade800.withAlpha((255 * 0.8).round()) : Colors.grey.shade700.withAlpha((255 * 0.8).round()),
-                      child: ListTile(
-                        leading: Icon(
-                          device.status == DeviceStatus.online ? Icons.circle : Icons.circle_outlined,
-                          color: device.status == DeviceStatus.online ? Colors.greenAccent : Colors.grey,
-                        ),
-                        title: Text(
-                          device.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                        subtitle: Text(
-                          device.ip,
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              device.status == DeviceStatus.online ? 'متصل' : 'غير متصل',
-                              style: TextStyle(
-                                color: device.status == DeviceStatus.online ? Colors.greenAccent : Colors.grey,
-                                fontWeight: FontWeight.bold,
+              : RepaintBoundary(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    itemCount: _displayedDevices.length,
+                    cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+                    addAutomaticKeepAlives: false,
+                    itemBuilder: (context, index) {
+                      final device = _displayedDevices[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4.0),
+                        color: device.status == DeviceStatus.online ? const Color(0xCC2E7D32) : const Color(0xCC616161),
+                        child: ListTile(
+                          leading: Icon(
+                            device.status == DeviceStatus.online ? Icons.circle : Icons.circle_outlined,
+                            color: device.status == DeviceStatus.online ? Colors.greenAccent : Colors.grey,
+                          ),
+                          title: Text(
+                            device.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            device.ip,
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                device.status == DeviceStatus.online ? 'متصل' : 'غير متصل',
+                                style: TextStyle(
+                                  color: device.status == DeviceStatus.online ? Colors.greenAccent : Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            if (device.status == DeviceStatus.offline)
-                              IconButton(
-                                icon: const Icon(Icons.refresh, color: Colors.orange),
-                                onPressed: () => _checkSingleDevice(device),
-                                tooltip: 'فحص الجهاز',
-                              ),
-                          ],
+                              if (device.status == DeviceStatus.offline)
+                                IconButton(
+                                  icon: const Icon(Icons.refresh, color: Colors.orange),
+                                  onPressed: () => _checkSingleDevice(device),
+                                  tooltip: 'فحص الجهاز',
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
     );
   }

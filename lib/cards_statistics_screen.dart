@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
 
+import 'perf/device_capability.dart';
+
 enum TimeRange { all, today, week, month, custom }
 
 enum CardStatusFilter { all, active, disabled, expired, withSessions }
@@ -26,7 +28,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
 
   double _totalUploadGB = 0.0;
   double _totalDownloadGB = 0.0;
-  Map<String, int> _cardsByProfile = {};
+  final Map<String, int> _cardsByProfile = {};
 
   TimeRange _selectedRange = TimeRange.all;
   CardStatusFilter _statusFilter = CardStatusFilter.all;
@@ -54,13 +56,16 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: DeviceCapability.instance.animationDuration,
     );
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    _fetchStatistics();
+    // أجّل الجلب الثقيل حتى نهاية الإطار لتفادي jank في الـ build الأولي
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetchStatistics();
+    });
   }
 
   @override
@@ -89,7 +94,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               '=.skip=$skip',
             ])
             .timeout(const Duration(seconds: 10));
-        final page = res.map((e) => Map<String, dynamic>.from(e)).toList();
+        // بناء القائمة بـ for loop بدلاً من map.toList()
+        final List<Map<String, dynamic>> page = [
+          for (final e in res) Map<String, dynamic>.from(e),
+        ];
         if (page.isEmpty) break;
         all.addAll(page);
         if (page.length < chunk) break;
@@ -106,7 +114,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
             '=.proplist=$proplist',
           ])
           .timeout(const Duration(seconds: 10));
-      return res.map((e) => Map<String, dynamic>.from(e)).toList();
+      // بناء القائمة بـ for loop بدلاً من map.toList()
+      return [for (final e in res) Map<String, dynamic>.from(e)];
     }
     return all;
   }
@@ -193,13 +202,17 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         break;
     }
 
-    _filteredUsers = List.from(_usersRaw);
-
-    // Filter by status
+    // فلترة حسب الحالة
+    List<Map<String, dynamic>> filtered = List.from(_usersRaw);
     if (_statusFilter != CardStatusFilter.all) {
-      final Set<String> usersWithSessions = _sessionsRaw.map((s) => s['user'] as String?).whereType<String>().toSet();
-      
-      _filteredUsers = _filteredUsers.where((user) {
+      // بناء Set بـ for loop بدلاً من map.whereType.toSet()
+      final Set<String> usersWithSessions = {};
+      for (final s in _sessionsRaw) {
+        final u = s['user'];
+        if (u is String) usersWithSessions.add(u);
+      }
+
+      filtered = filtered.where((user) {
         switch (_statusFilter) {
           case CardStatusFilter.active:
             return user['disabled'] != 'true';
@@ -215,12 +228,14 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       }).toList();
     }
 
-    // Filter by profile
+    // فلترة حسب الفئة
     if (_selectedProfile != null && _selectedProfile!.isNotEmpty) {
-      _filteredUsers = _filteredUsers.where((user) {
+      filtered = filtered.where((user) {
         return user['actual-profile'] == _selectedProfile;
       }).toList();
     }
+
+    _filteredUsers = filtered;
 
     _calculateStatistics(startDate, endDate);
   }
@@ -246,11 +261,13 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     _activeCards = 0;
     _disabledCards = 0;
     _expiredCards = 0;
-    _expiredUsersList = [];
+    _expiredUsersList = const [];
     _cardsByProfile.clear();
 
     double allTimeUploadBytes = 0.0;
     double allTimeDownloadBytes = 0.0;
+
+    final List<Map<String, dynamic>> expiredList = [];
 
     for (final user in _filteredUsers) {
       final disabled = user['disabled'] == 'true';
@@ -262,7 +279,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       
       if (_isCardExpired(user)) {
         _expiredCards++;
-        _expiredUsersList.add(user);
+        expiredList.add(user);
       }
 
       final uploadUsed = double.tryParse(user['upload-used'] ?? '0') ?? 0.0;
@@ -273,6 +290,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       final profile = user['actual-profile'] ?? 'غير محدد';
       _cardsByProfile[profile] = (_cardsByProfile[profile] ?? 0) + 1;
     }
+    _expiredUsersList = expiredList;
 
     // Filter sessions by date and users
     List<Map<String, dynamic>> filteredSessions = _sessionsRaw;
@@ -286,7 +304,12 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     }
     
     // Filter sessions by filtered users
-    final filteredUsernames = _filteredUsers.map((u) => u['username'] as String?).whereType<String>().toSet();
+    // بناء Set بـ for loop بدلاً من map.whereType.toSet()
+    final Set<String> filteredUsernames = {};
+    for (final u in _filteredUsers) {
+      final un = u['username'];
+      if (un is String) filteredUsernames.add(un);
+    }
     filteredSessions = filteredSessions.where((s) => filteredUsernames.contains(s['user'])).toList();
 
     final Set<String> usersWithSessions = {};
@@ -332,9 +355,11 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Duration _parseRosDuration(String s) {
     int weeks = 0, days = 0, hours = 0, minutes = 0, seconds = 0;
     String num = '';
+    // إعادة استخدام RegExp بدلاً من إنشائه في كل تكرار
+    final digitRegExp = RegExp(r'\d');
     for (int i = 0; i < s.length; i++) {
       final ch = s[i];
-      if (RegExp(r'\d').hasMatch(ch)) {
+      if (digitRegExp.hasMatch(ch)) {
         num += ch;
       } else {
         final v = int.tryParse(num) ?? 0;
@@ -440,7 +465,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, size: 80, color: Colors.redAccent.withOpacity(0.8)),
+                        const Icon(Icons.error_outline,
+                            size: 80, color: Color(0xCCF44336)),
                         const SizedBox(height: 24),
                         Text(
                           _errorMessage!,
@@ -468,29 +494,31 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (_showFilters) ...[
-                            _buildFiltersSection(theme),
+                      child: RepaintBoundary(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_showFilters) ...[
+                              _buildFiltersSection(theme),
+                              const SizedBox(height: 20),
+                            ],
+                            _buildActiveFiltersChips(theme),
+                            const SizedBox(height: 16),
+                            _buildRangeSelector(theme),
                             const SizedBox(height: 20),
+                            _buildMainStatCard(theme),
+                            const SizedBox(height: 16),
+                            _buildStatusCardsGrid(theme),
+                            const SizedBox(height: 16),
+                            _buildDataUsageCard(theme),
+                            const SizedBox(height: 16),
+                            _buildProfilesCard(theme),
+                            const SizedBox(height: 16),
+                            _buildQuickStatsGrid(theme),
+                            const SizedBox(height: 16),
+                            _buildExpiredCardsSection(theme),
                           ],
-                          _buildActiveFiltersChips(theme),
-                          const SizedBox(height: 16),
-                          _buildRangeSelector(theme),
-                          const SizedBox(height: 20),
-                          _buildMainStatCard(theme),
-                          const SizedBox(height: 16),
-                          _buildStatusCardsGrid(theme),
-                          const SizedBox(height: 16),
-                          _buildDataUsageCard(theme),
-                          const SizedBox(height: 16),
-                          _buildProfilesCard(theme),
-                          const SizedBox(height: 16),
-                          _buildQuickStatsGrid(theme),
-                          const SizedBox(height: 16),
-                          _buildExpiredCardsSection(theme),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -501,298 +529,312 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Widget _buildExpiredCardsSection(ThemeData theme) {
     if (_expiredUsersList.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.orangeAccent.withOpacity(0.3), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.hourglass_empty, color: Colors.orangeAccent, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'الكروت المنتهية الصلاحية',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    Text(
-                      '$_expiredCards كرت منتهي',
-                      style: const TextStyle(fontSize: 13, color: Colors.orangeAccent),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-            ),
-            child: Column(
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0x4DFFAB40), width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                // رأس الجدول
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.orangeAccent.withOpacity(0.1),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
+                    color: const Color(0x26FFAB40),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: const Icon(Icons.hourglass_empty, color: Colors.orangeAccent, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 3, child: Text('اسم المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
-                      Expanded(flex: 3, child: Text('الفئة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
-                      Expanded(flex: 2, child: Text('المدة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
-                      Expanded(flex: 2, child: Text('المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                      const Text(
+                        'الكروت المنتهية الصلاحية',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      Text(
+                        '$_expiredCards كرت منتهي',
+                        style: const TextStyle(fontSize: 13, color: Colors.orangeAccent),
+                      ),
                     ],
                   ),
                 ),
-                // القائمة
-                ..._expiredUsersList.asMap().entries.map((entry) {
-                  final user = entry.value;
-                  final isLast = entry.key == _expiredUsersList.length - 1;
-                  final username = user['username']?.toString() ?? '—';
-                  final profile = user['actual-profile']?.toString() ?? '—';
-                  final limit = user['uptime-limit']?.toString() ?? '';
-                  final disabled = user['disabled'] == 'true';
-
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: isLast
-                            ? BorderSide.none
-                            : BorderSide(color: Colors.white.withOpacity(0.05)),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            username,
-                            style: const TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.w500),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            profile,
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            limit,
-                            style: const TextStyle(color: Colors.white60, fontSize: 11),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: disabled ? Colors.redAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              disabled ? 'معطل' : 'منتهي',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: disabled ? Colors.redAccent : Colors.orangeAccent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
               ],
             ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0x08FFFFFF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0x1AFFFFFF)),
+              ),
+              child: Column(
+                children: [
+                  // رأس الجدول
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: const BoxDecoration(
+                      color: Color(0x1AFFAB40),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: const Row(
+                      children: [
+                        Expanded(flex: 3, child: Text('اسم المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                        Expanded(flex: 3, child: Text('الفئة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                        Expanded(flex: 2, child: Text('المدة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                        Expanded(flex: 2, child: Text('المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
+                      ],
+                    ),
+                  ),
+                  // القائمة - استخدم for loop بدلاً من asMap().entries.map()
+                  for (int i = 0; i < _expiredUsersList.length; i++)
+                    _buildExpiredRow(_expiredUsersList[i], i == _expiredUsersList.length - 1),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpiredRow(Map<String, dynamic> user, bool isLast) {
+    final username = user['username']?.toString() ?? '—';
+    final profile = user['actual-profile']?.toString() ?? '—';
+    final limit = user['uptime-limit']?.toString() ?? '';
+    final disabled = user['disabled'] == 'true';
+
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: isLast
+                ? BorderSide.none
+                : const BorderSide(color: Color(0x0DFFFFFF)),
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Text(
+                username,
+                style: const TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                profile,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                limit,
+                style: const TextStyle(color: Colors.white60, fontSize: 11),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: disabled ? const Color(0x33F44336) : const Color(0x0DFFFFFF),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  disabled ? 'معطل' : 'منتهي',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: disabled ? Colors.redAccent : Colors.orangeAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildFiltersSection(ThemeData theme) {
-    final allProfiles = _usersRaw.map((u) => u['actual-profile'] as String? ?? 'غير محدد').toSet().toList()..sort();
+    // بناء Set بـ for loop بدلاً من map.toSet().toList()
+    final Set<String> profilesSet = {};
+    for (final u in _usersRaw) {
+      profilesSet.add(u['actual-profile'] as String? ?? 'غير محدد');
+    }
+    final allProfiles = profilesSet.toList()..sort();
     
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.primaryColor.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.tune, color: theme.primaryColor, size: 24),
-              const SizedBox(width: 12),
-              const Text(
-                'فلترة متقدمة',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          
-          // Status Filter
-          const Text('حالة الكرت', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: CardStatusFilter.values.map((filter) {
-              final selected = _statusFilter == filter;
-              String label;
-              IconData icon;
-              
-              switch (filter) {
-                case CardStatusFilter.all:
-                  label = 'الكل';
-                  icon = Icons.select_all;
-                  break;
-                case CardStatusFilter.active:
-                  label = 'مفعل';
-                  icon = Icons.check_circle;
-                  break;
-                case CardStatusFilter.disabled:
-                  label = 'معطل';
-                  icon = Icons.cancel;
-                  break;
-                case CardStatusFilter.expired:
-                  label = 'منتهي';
-                  icon = Icons.hourglass_empty;
-                  break;
-                case CardStatusFilter.withSessions:
-                  label = 'نشط الآن';
-                  icon = Icons.wifi;
-                  break;
-              }
-              
-              return FilterChip(
-                selected: selected,
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 16, color: selected ? Colors.white : Colors.white60),
-                    const SizedBox(width: 6),
-                    Text(label),
-                  ],
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.primaryColor.withOpacity(0.3), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.tune, color: theme.primaryColor, size: 24),
+                const SizedBox(width: 12),
+                const Text(
+                  'فلترة متقدمة',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
-                onSelected: (value) {
+              ],
+            ),
+            const SizedBox(height: 20),
+            
+            // Status Filter
+            const Text('حالة الكرت', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final filter in CardStatusFilter.values)
+                  _buildFilterChip(theme, filter),
+              ],
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Profile Filter
+            const Text('الفئة', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0x0DFFFFFF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white30),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedProfile,
+                  hint: const Text('اختر الفئة', style: TextStyle(color: Colors.white60)),
+                  dropdownColor: theme.cardColor,
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('جميع الفئات', style: TextStyle(color: Colors.white)),
+                    ),
+                    for (final profile in allProfiles)
+                      DropdownMenuItem<String>(
+                        value: profile,
+                        child: Text(profile, style: const TextStyle(color: Colors.white)),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedProfile = value;
+                      _applyFilters();
+                    });
+                  },
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Reset Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('إعادة تعيين الفلاتر'),
+                onPressed: () {
                   setState(() {
-                    _statusFilter = filter;
+                    _statusFilter = CardStatusFilter.all;
+                    _selectedProfile = null;
+                    _selectedRange = TimeRange.all;
+                    _customStartDate = null;
+                    _customEndDate = null;
                     _applyFilters();
                   });
                 },
-                backgroundColor: theme.cardColor,
-                selectedColor: theme.primaryColor,
-                labelStyle: TextStyle(color: selected ? Colors.white : Colors.white60),
-                side: BorderSide(color: selected ? theme.primaryColor : Colors.white30),
-              );
-            }).toList(),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Profile Filter
-          const Text('الفئة', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white30),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                isExpanded: true,
-                value: _selectedProfile,
-                hint: const Text('اختر الفئة', style: TextStyle(color: Colors.white60)),
-                dropdownColor: theme.cardColor,
-                icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
-                items: [
-                  const DropdownMenuItem<String>(
-                    value: null,
-                    child: Text('جميع الفئات', style: TextStyle(color: Colors.white)),
-                  ),
-                  ...allProfiles.map((profile) {
-                    return DropdownMenuItem<String>(
-                      value: profile,
-                      child: Text(profile, style: const TextStyle(color: Colors.white)),
-                    );
-                  }).toList(),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedProfile = value;
-                    _applyFilters();
-                  });
-                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white30),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Reset Button
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('إعادة تعيين الفلاتر'),
-              onPressed: () {
-                setState(() {
-                  _statusFilter = CardStatusFilter.all;
-                  _selectedProfile = null;
-                  _selectedRange = TimeRange.all;
-                  _customStartDate = null;
-                  _customEndDate = null;
-                  _applyFilters();
-                });
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white70,
-                side: const BorderSide(color: Colors.white30),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(ThemeData theme, CardStatusFilter filter) {
+    final selected = _statusFilter == filter;
+    String label;
+    IconData icon;
+    switch (filter) {
+      case CardStatusFilter.all:
+        label = 'الكل';
+        icon = Icons.select_all;
+        break;
+      case CardStatusFilter.active:
+        label = 'مفعل';
+        icon = Icons.check_circle;
+        break;
+      case CardStatusFilter.disabled:
+        label = 'معطل';
+        icon = Icons.cancel;
+        break;
+      case CardStatusFilter.expired:
+        label = 'منتهي';
+        icon = Icons.hourglass_empty;
+        break;
+      case CardStatusFilter.withSessions:
+        label = 'نشط الآن';
+        icon = Icons.wifi;
+        break;
+    }
+    return FilterChip(
+      selected: selected,
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: selected ? Colors.white : Colors.white60),
+          const SizedBox(width: 6),
+          Text(label),
         ],
       ),
+      onSelected: (value) {
+        setState(() {
+          _statusFilter = filter;
+          _applyFilters();
+        });
+      },
+      backgroundColor: theme.cardColor,
+      selectedColor: theme.primaryColor,
+      labelStyle: TextStyle(color: selected ? Colors.white : Colors.white60),
+      side: BorderSide(color: selected ? theme.primaryColor : Colors.white30),
     );
   }
 
@@ -909,123 +951,132 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       }
     }
 
-    final items = TimeRange.values;
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
+    const items = TimeRange.values;
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            for (final r in items)
+              _buildRangeItem(theme, r, label),
+          ],
+        ),
       ),
-      child: Row(
-        children: items.map((r) {
-          final selected = _selectedRange == r;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (r == TimeRange.custom) {
-                  _pickDateRange();
-                } else {
-                  setState(() {
-                    _selectedRange = r;
-                    _customStartDate = null;
-                    _customEndDate = null;
-                    _applyFilters();
-                  });
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.all(4),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: selected ? theme.primaryColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+    );
+  }
+
+  Widget _buildRangeItem(ThemeData theme, TimeRange r, String Function(TimeRange) label) {
+    final selected = _selectedRange == r;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (r == TimeRange.custom) {
+            _pickDateRange();
+          } else {
+            setState(() {
+              _selectedRange = r;
+              _customStartDate = null;
+              _customEndDate = null;
+              _applyFilters();
+            });
+          }
+        },
+        child: AnimatedContainer(
+          duration: DeviceCapability.instance.animationDuration,
+          margin: const EdgeInsets.all(4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? theme.primaryColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              if (r == TimeRange.custom)
+                Icon(
+                  Icons.date_range,
+                  size: 16,
+                  color: selected ? Colors.white : Colors.white60,
                 ),
-                child: Column(
-                  children: [
-                    if (r == TimeRange.custom)
-                      Icon(
-                        Icons.date_range,
-                        size: 16,
-                        color: selected ? Colors.white : Colors.white60,
-                      ),
-                    if (r == TimeRange.custom) const SizedBox(height: 4),
-                    Text(
-                      label(r),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: selected ? Colors.white : Colors.white60,
-                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+              if (r == TimeRange.custom) const SizedBox(height: 4),
+              Text(
+                label(r),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.white60,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildMainStatCard(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.primaryColor.withOpacity(0.8),
-            theme.primaryColor.withOpacity(0.4),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: theme.primaryColor.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          const Icon(Icons.credit_card, size: 64, color: Colors.white),
-          const SizedBox(height: 16),
-          Text(
-            '$_totalCards',
-            style: const TextStyle(
-              fontSize: 56,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'إجمالي الكروت',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMiniStat('مفعل', _activeCards, Icons.check_circle, Colors.greenAccent),
-              Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniStat('معطل', _disabledCards, Icons.cancel, Colors.redAccent),
-              Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniStat('منتهي', _expiredCards, Icons.hourglass_empty, Colors.orangeAccent),
-              Container(width: 1, height: 40, color: Colors.white30),
-              _buildMiniStat('نشط', _cardsWithSessions, Icons.wifi, Colors.blueAccent),
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.primaryColor.withOpacity(0.8),
+              theme.primaryColor.withOpacity(0.4),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: theme.primaryColor.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const Icon(Icons.credit_card, size: 64, color: Colors.white),
+            const SizedBox(height: 16),
+            Text(
+              '$_totalCards',
+              style: const TextStyle(
+                fontSize: 56,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'إجمالي الكروت',
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildMiniStat('مفعل', _activeCards, Icons.check_circle, Colors.greenAccent),
+                Container(width: 1, height: 40, color: Colors.white30),
+                _buildMiniStat('معطل', _disabledCards, Icons.cancel, Colors.redAccent),
+                Container(width: 1, height: 40, color: Colors.white30),
+                _buildMiniStat('منتهي', _expiredCards, Icons.hourglass_empty, Colors.orangeAccent),
+                Container(width: 1, height: 40, color: Colors.white30),
+                _buildMiniStat('نشط', _cardsWithSessions, Icons.wifi, Colors.blueAccent),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1056,30 +1107,32 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   }
 
   Widget _buildStatusCardsGrid(ThemeData theme) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      childAspectRatio: 1.4,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      children: [
-        _buildSmallStatCard(
-          'الجلسات النشطة',
-          _totalSessions,
-          Icons.devices,
-          Colors.orangeAccent,
-          theme,
-        ),
-        _buildSmallStatCard(
-          'معدل النشاط',
-          _totalCards > 0 ? ((_cardsWithSessions / _totalCards) * 100).round() : 0,
-          Icons.trending_up,
-          Colors.purpleAccent,
-          theme,
-          suffix: '%',
-        ),
-      ],
+    return RepaintBoundary(
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        childAspectRatio: 1.4,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        children: [
+          _buildSmallStatCard(
+            'الجلسات النشطة',
+            _totalSessions,
+            Icons.devices,
+            Colors.orangeAccent,
+            theme,
+          ),
+          _buildSmallStatCard(
+            'معدل النشاط',
+            _totalCards > 0 ? ((_cardsWithSessions / _totalCards) * 100).round() : 0,
+            Icons.trending_up,
+            Colors.purpleAccent,
+            theme,
+            suffix: '%',
+          ),
+        ],
+      ),
     );
   }
 
@@ -1157,75 +1210,76 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     final downloadPercent = totalData > 0 ? (_totalDownloadGB / totalData) : 0.5;
     final uploadPercent = totalData > 0 ? (_totalUploadGB / totalData) : 0.5;
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.primaryColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.data_usage, color: theme.primaryColor, size: 24),
                 ),
-                child: Icon(Icons.data_usage, color: theme.primaryColor, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'استهلاك البيانات$suffix',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'استهلاك البيانات$suffix',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildDataColumn(
-                  'التحميل',
-                  _totalDownloadGB,
-                  Icons.download,
-                  Colors.greenAccent,
-                  downloadPercent,
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDataColumn(
+                    'التحميل',
+                    _totalDownloadGB,
+                    Icons.download,
+                    Colors.greenAccent,
+                    downloadPercent,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _buildDataColumn(
-                  'الرفع',
-                  _totalUploadGB,
-                  Icons.upload,
-                  Colors.blueAccent,
-                  uploadPercent,
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildDataColumn(
+                    'الرفع',
+                    _totalUploadGB,
+                    Icons.upload,
+                    Colors.blueAccent,
+                    uploadPercent,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0x0DFFFFFF),
+                borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
+                const Row(
                   children: [
                     Icon(Icons.storage, color: Colors.orangeAccent, size: 20),
-                    const SizedBox(width: 8),
-                    const Text('المجموع الكلي', style: TextStyle(color: Colors.white70)),
+                    SizedBox(width: 8),
+                    Text('المجموع الكلي', style: TextStyle(color: Colors.white70)),
                   ],
                 ),
                 Text(
@@ -1240,6 +1294,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -1272,7 +1327,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: percent,
-            backgroundColor: Colors.white.withOpacity(0.1),
+            backgroundColor: const Color(0x1AFFFFFF),
             color: color,
             minHeight: 6,
           ),
@@ -1294,87 +1349,90 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     final sortedProfiles = _cardsByProfile.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0x26BA68C8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.category, color: Colors.purpleAccent, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'توزيع الكروت حسب الفئة',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // بناء العناصر بـ for loop بدلاً من asMap().entries.map().toList()
+            for (int i = 0; i < sortedProfiles.length; i++)
+              _buildProfileRow(sortedProfiles[i], i),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildProfileRow(MapEntry<String, int> profileEntry, int index) {
+    final percentage = (_totalCards > 0 ? (profileEntry.value / _totalCards) : 0.0);
+    const colors = [
+      Colors.purpleAccent,
+      Colors.blueAccent,
+      Colors.greenAccent,
+      Colors.orangeAccent,
+      Colors.pinkAccent,
+      Colors.cyanAccent,
+    ];
+    final color = colors[index % colors.length];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.purpleAccent.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+              Expanded(
+                child: Text(
+                  profileEntry.key,
+                  style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: const Icon(Icons.category, color: Colors.purpleAccent, size: 24),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'توزيع الكروت حسب الفئة',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              Text(
+                '${profileEntry.value} (${(percentage * 100).toStringAsFixed(1)}%)',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: color,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          ...sortedProfiles.asMap().entries.map((entry) {
-            final index = entry.key;
-            final profileEntry = entry.value;
-            final percentage = (_totalCards > 0 ? (profileEntry.value / _totalCards) : 0.0);
-            
-            final colors = [
-              Colors.purpleAccent,
-              Colors.blueAccent,
-              Colors.greenAccent,
-              Colors.orangeAccent,
-              Colors.pinkAccent,
-              Colors.cyanAccent,
-            ];
-            final color = colors[index % colors.length];
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          profileEntry.key,
-                          style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        '${profileEntry.value} (${(percentage * 100).toStringAsFixed(1)}%)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: color,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: percentage,
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      color: color,
-                      minHeight: 8,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: percentage,
+              backgroundColor: const Color(0x1AFFFFFF),
+              color: color,
+              minHeight: 8,
+            ),
+          ),
         ],
       ),
     );
@@ -1385,65 +1443,67 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     final activePercentage = _totalCards > 0 ? ((_activeCards / _totalCards) * 100).round() : 0;
     final expiredPercentage = _totalCards > 0 ? ((_expiredCards / _totalCards) * 100).round() : 0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Text(
-            'إحصائيات سريعة',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+    return RepaintBoundary(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Text(
+              'إحصائيات سريعة',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildQuickStatCard(
-                'متوسط الجلسات',
-                avgSessionsPerCard,
-                Icons.analytics,
-                Colors.tealAccent,
-                theme,
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickStatCard(
+                  'متوسط الجلسات',
+                  avgSessionsPerCard,
+                  Icons.analytics,
+                  Colors.tealAccent,
+                  theme,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildQuickStatCard(
-                'نسبة التفعيل',
-                '$activePercentage%',
-                Icons.check_circle_outline,
-                Colors.indigoAccent,
-                theme,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickStatCard(
+                  'نسبة التفعيل',
+                  '$activePercentage%',
+                  Icons.check_circle_outline,
+                  Colors.indigoAccent,
+                  theme,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildQuickStatCard(
-                'نسبة المنتهي',
-                '$expiredPercentage%',
-                Icons.hourglass_bottom,
-                Colors.deepOrangeAccent,
-                theme,
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickStatCard(
+                  'نسبة المنتهي',
+                  '$expiredPercentage%',
+                  Icons.hourglass_bottom,
+                  Colors.deepOrangeAccent,
+                  theme,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildQuickStatCard(
-                'الفئات',
-                '${_cardsByProfile.length}',
-                Icons.category_outlined,
-                Colors.amberAccent,
-                theme,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickStatCard(
+                  'الفئات',
+                  '${_cardsByProfile.length}',
+                  Icons.category_outlined,
+                  Colors.amberAccent,
+                  theme,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 

@@ -271,18 +271,15 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
             Text(
               'جاري تحميل الإحصائيات...',
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontSize: 16),
             ),
           ],
         ),
@@ -296,7 +293,7 @@ class _StatsScreenState extends State<StatsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 64,
                 color: Colors.redAccent,
@@ -327,9 +324,9 @@ class _StatsScreenState extends State<StatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildPieChart(),
+          RepaintBoundary(child: _buildPieChart()),
           const SizedBox(height: 24),
-          _buildStatsGrid(),
+          RepaintBoundary(child: _buildStatsGrid()),
         ],
       ),
     );
@@ -365,6 +362,7 @@ class _StatsScreenState extends State<StatsScreen> {
       );
     }
 
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -382,9 +380,10 @@ class _StatsScreenState extends State<StatsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              height: 200,
-              child: PieChart(
+            RepaintBoundary(
+              child: SizedBox(
+                height: 200,
+                child: PieChart(
                 PieChartData(
                   sections: [
                     PieChartSectionData(
@@ -415,6 +414,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 ),
               ),
             ),
+            ),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -430,37 +430,39 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Widget _buildLegendItem(String label, Color color, double value) {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
+    return RepaintBoundary(
+      child: Row(
+        children: [
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontSize: 12,
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  fontSize: 12,
+                ),
               ),
-            ),
-            Text(
-              '${value.toStringAsFixed(2)} MB',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+              Text(
+                '$value MB',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -520,93 +522,106 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
+    // alpha 0.2 ≈ 0x33
+    final iconBgColor = Color.fromRGBO(
+      (color.r * 255).round(),
+      (color.g * 255).round(),
+      (color.b * 255).round(),
+      0.2,
+    );
+    return RepaintBoundary(
+      child: Card(
+        elevation: 2,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: iconBgColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: color, size: 24),
                   ),
-                  child: Icon(icon, color: color, size: 24),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  fontSize: 12,
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontSize: 12,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildUptimeCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue[400]!.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
+    // Colors.blue[400] = #1E88E5, opacity 0.2 -> alpha 0x33
+    const iconBgColor = Color(0x331E88E5);
+    return RepaintBoundary(
+      child: Card(
+        elevation: 2,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.access_time, color: Color(0xFF1E88E5), size: 28),
               ),
-              child: Icon(Icons.access_time, color: Colors.blue[400], size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'وقت التشغيل',
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                      fontSize: 14,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'وقت التشغيل',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatUptime(_stats['uptime']),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatUptime(_stats['uptime']),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

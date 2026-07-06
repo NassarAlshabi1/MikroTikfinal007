@@ -11,6 +11,9 @@ import 'package:path_provider/path_provider.dart';
 import 'mqtt_service.dart';
 import 'snackbar_helpers.dart';
 
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
+
 class CardListScreen extends StatefulWidget {
   final List<String> cardList;
   final bool isNetworkLinked;
@@ -50,7 +53,6 @@ class _CardListScreenState extends State<CardListScreen> {
 
     await Share.shareXFiles([XFile(filePath)], text: 'الكروت المضافة حديثاً');
   }
-
   void _setupMqttListener() {
     _mqttSubscription?.cancel();
     _mqttSubscription = _mqttService.messages.listen((message) {
@@ -105,7 +107,18 @@ class _CardListScreenState extends State<CardListScreen> {
 
   void _showAddCardsToQahtaniDialog() {
     String? selectedUnitId;
-    final units = (widget.linkedData['network_details']?['units'] as List?) ?? [];
+    final units = (widget.linkedData['network_details']?['units'] as List?) ?? const [];
+
+    // بناء عناصر القائمة المنسدلة بـ for loop بدلاً من map.toList()
+    final List<DropdownMenuItem<String>> unitItems = [
+      for (final unit in units)
+        DropdownMenuItem<String>(
+          value: unit['id'],
+          child: Text(unit['name'],
+              style: const TextStyle(
+                  color: Colors.black, fontWeight: FontWeight.bold)),
+        )
+    ];
 
     showDialog(
       context: context,
@@ -116,12 +129,7 @@ class _CardListScreenState extends State<CardListScreen> {
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             dropdownColor: Colors.white,
             hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-            items: units.map((unit) {
-              return DropdownMenuItem<String>(
-                value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              );
-            }).toList(),
+            items: unitItems,
             onChanged: (value) => selectedUnitId = value,
             validator: (value) => value == null ? 'الرجاء اختيار فئة' : null,
           ),
@@ -152,8 +160,11 @@ class _CardListScreenState extends State<CardListScreen> {
 
       _addCardsTimer?.cancel();
       _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
-      
-      final List<String> cardUsernamesOnly = widget.cardList.map(_extractUsername).toList();
+
+      // بناء القائمة بـ for loop بدلاً من map.toList()
+      final List<String> cardUsernamesOnly = [
+        for (final cardLine in widget.cardList) _extractUsername(cardLine),
+      ];
       final String cardsAsString = cardUsernamesOnly.join('\n');
 
       _mqttService.publish({
@@ -198,7 +209,7 @@ class _CardListScreenState extends State<CardListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> bottomButtons = [
+    final List<Widget> bottomButtons = [
       Expanded(
         child: ElevatedButton.icon(
           onPressed: () {
@@ -240,20 +251,25 @@ class _CardListScreenState extends State<CardListScreen> {
         title: const Text('الكروت المضافة حديثاً'),
         backgroundColor: Theme.of(context).cardColor,
       ),
-      body: ListView.builder(
-        itemCount: widget.cardList.length,
-        itemBuilder: (context, index) {
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: ListTile(
-              title: Text(widget.cardList[index]),
-              trailing: IconButton(
-                icon: const Icon(Icons.copy),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: widget.cardList[index]));
-                  showSuccessSnackBar(context, 'تم نسخ الكرت!');
-                },
-                tooltip: 'نسخ',
+      body: PerfListView<String>(
+        items: widget.cardList,
+        itemExtent: 72,
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        itemBuilder: (context, cardLine, index) {
+          return RepaintBoundary(
+            child: Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: ListTile(
+                dense: DeviceCapability.instance.isLowEnd,
+                title: Text(cardLine),
+                trailing: IconButton(
+                  icon: const Icon(Icons.copy),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: cardLine));
+                    showSuccessSnackBar(context, 'تم نسخ الكرت!');
+                  },
+                  tooltip: 'نسخ',
+                ),
               ),
             ),
           );

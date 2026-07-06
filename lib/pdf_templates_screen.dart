@@ -5,6 +5,9 @@ import 'snackbar_helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_pdf_template_screen.dart';
 
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
+
 // موديل بسيط لتسهيل التعامل مع بيانات القالب
 class PdfTemplate {
   final String profileName;
@@ -79,14 +82,17 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
   }
 
   Future<void> _loadTemplates() async {
-    setState(() => _isLoading = true);
+    if (mounted) setState(() => _isLoading = true);
     final prefs = await SharedPreferences.getInstance();
-    final templatesJson = prefs.getStringList('pdf_templates') ?? [];
+    final templatesJson = prefs.getStringList('pdf_templates') ?? const [];
+    // بناء القائمة بـ for loop بدلاً من map.toList()
+    final List<PdfTemplate> loaded = [
+      for (final jsonString in templatesJson)
+        PdfTemplate.fromJson(jsonDecode(jsonString) as Map<String, dynamic>),
+    ];
     if (!mounted) return;
     setState(() {
-      _templates = templatesJson
-          .map((jsonString) => PdfTemplate.fromJson(jsonDecode(jsonString)))
-          .toList();
+      _templates = loaded;
       _isLoading = false;
     });
   }
@@ -123,8 +129,10 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
 
     _templates.removeWhere((t) => t.profileName == templateToDelete.profileName);
     final prefs = await SharedPreferences.getInstance();
-    final updatedTemplatesJson =
-        _templates.map((t) => jsonEncode(t.toJson())).toList();
+    // بناء قائمة JSON بـ for loop بدلاً من map.toList()
+    final List<String> updatedTemplatesJson = [
+      for (final t in _templates) jsonEncode(t.toJson()),
+    ];
     await prefs.setStringList('pdf_templates', updatedTemplatesJson);
     if (mounted) {
       setState(() {});
@@ -151,11 +159,11 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               ? _buildEmptyView()
               : RefreshIndicator(
                   onRefresh: _loadTemplates,
-                  child: ListView.builder(
+                  child: PerfListView<PdfTemplate>(
+                    items: _templates,
+                    itemExtent: 320,
                     padding: const EdgeInsets.all(12),
-                    itemCount: _templates.length,
-                    itemBuilder: (context, index) {
-                      final template = _templates[index];
+                    itemBuilder: (context, template, index) {
                       return _buildTemplateCard(template);
                     },
                   ),
@@ -171,69 +179,72 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
 
   // --- виджет جديد لبناء بطاقة القالب ---
   Widget _buildTemplateCard(PdfTemplate template) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- معاينة الصورة ---
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                color: Colors.grey.shade800,
-                child: Image.file(
-                  File(template.imagePath),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                        child: Icon(Icons.image_not_supported,
-                            color: Colors.grey, size: 40));
-                  },
+    return RepaintBoundary(
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- معاينة الصورة ---
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  color: const Color(0xFF424242),
+                  child: Image.file(
+                    File(template.imagePath),
+                    fit: BoxFit.cover,
+                    cacheWidth: DeviceCapability.instance.isLowEnd ? 300 : null,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                          child: Icon(Icons.image_not_supported,
+                              color: Colors.grey, size: 40));
+                    },
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            // --- اسم الفئة ---
-            Text(
-              'قالب فئة: ${template.profileName}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            // --- عدد الكروت ---
-            Text(
-              'عدد الكروت بالصفحة: ${template.cardsPerPage}',
-              style: const TextStyle(fontSize: 15, color: Colors.white),
-            ),
-            const Divider(height: 24),
-            // --- أزرار الإجراءات ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () => _deleteTemplate(template),
-                  icon: const Icon(Icons.delete_outline,
-                      color: Colors.redAccent, size: 20),
-                  label: const Text('حذف',
-                      style: TextStyle(color: Colors.redAccent)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () => _navigateAndReload(EditPdfTemplateScreen(
-                    profiles: widget.profiles,
-                    existingTemplate: template,
-                  )),
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                  label: const Text('تعديل'),
-                ),
-              ],
-            )
-          ],
+              const SizedBox(height: 12),
+              // --- اسم الفئة ---
+              Text(
+                'قالب فئة: ${template.profileName}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              // --- عدد الكروت ---
+              Text(
+                'عدد الكروت بالصفحة: ${template.cardsPerPage}',
+                style: const TextStyle(fontSize: 15, color: Colors.white),
+              ),
+              const Divider(height: 24),
+              // --- أزرار الإجراءات ---
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _deleteTemplate(template),
+                    icon: const Icon(Icons.delete_outline,
+                        color: Colors.redAccent, size: 20),
+                    label: const Text('حذف',
+                        style: TextStyle(color: Colors.redAccent)),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => _navigateAndReload(EditPdfTemplateScreen(
+                      profiles: widget.profiles,
+                      existingTemplate: template,
+                    )),
+                    icon: const Icon(Icons.edit_outlined, size: 20),
+                    label: const Text('تعديل'),
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -241,23 +252,23 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
 
   // --- виджет لعرض الشاشة الفارغة ---
   Widget _buildEmptyView() {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        padding: EdgeInsets.symmetric(horizontal: 24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.style_outlined, size: 80, color: Colors.grey.shade600),
-            const SizedBox(height: 20),
-            const Text(
+            Icon(Icons.style_outlined, size: 80, color: Color(0xFF757575)),
+            SizedBox(height: 20),
+            Text(
               'لا توجد قوالب محفوظة',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               'اضغط على زر الإضافة (+) في الأسفل لإنشاء قالب PDF جديد خاص بك.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.white),
+              style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ],
         ),

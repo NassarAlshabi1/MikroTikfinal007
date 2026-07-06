@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class RouterService {
   RouterOSClient? _client;
-  final _lock = AsyncMemoizer<void>();
+  // AsyncMemoizer غير قابل لإعادة التعيين (final) — نستخدم آلية إعادة اتصال مختلفة
+  // نحتفظ بـ memoizer للاتصال الأول فقط
+  AsyncMemoizer<void>? _lock = AsyncMemoizer<void>();
   int port = 8728;
 
   static final RouterService _instance = RouterService._internal();
@@ -12,7 +14,12 @@ class RouterService {
   factory RouterService() => _instance;
 
   Future<void> ensureConnected() async {
-    await _lock.runOnce(() async {
+    // إذا كان العميل موجوداً، لا حاجة لإعادة الاتصال
+    if (_client != null) return;
+
+    // خذ نسخة محلية من _lock لتفادي التداخل
+    final lock = _lock!;
+    await lock.runOnce(() async {
       if (_client != null) return;
       final prefs = await SharedPreferences.getInstance();
       final ip = prefs.getString('ip');
@@ -23,7 +30,8 @@ class RouterService {
       if (ip == null || user == null || pass == null) {
         throw Exception('Credentials missing');
       }
-      final c = RouterOSClient(address: ip, user: user, password: pass, port: port, verbose: false);
+      final c = RouterOSClient(
+          address: ip, user: user, password: pass, port: port, verbose: false);
       final ok = await c.login().timeout(const Duration(seconds: 5));
       if (!ok) {
         throw Exception('Login failed');
@@ -54,7 +62,7 @@ class RouterService {
 
   Future<void> reconnect() async {
     await close();
-    _lock.future.catchError((_) {});
+    // أنشئ memoizer جديد للسماح بإعادة الاتصال
     _lock = AsyncMemoizer<void>();
     await ensureConnected();
   }

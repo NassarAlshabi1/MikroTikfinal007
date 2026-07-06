@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
+import 'perf/perf_widgets.dart';
+import 'perf/device_capability.dart';
 
 class BackupSystemScreen extends StatefulWidget {
   const BackupSystemScreen({super.key});
@@ -29,20 +31,20 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       final response = await client.talk(['/file/print']);
       
       if (mounted) {
+        final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
+        for (final file in response) {
+          final type = file['type']?.toString() ?? '';
+          if (type == 'backup' || type == 'user manager database') {
+            parsed.add(Map<String, dynamic>.from(file));
+          }
+        }
+        parsed.sort((a, b) {
+          final timeA = a['creation-time']?.toString() ?? '';
+          final timeB = b['creation-time']?.toString() ?? '';
+          return timeB.compareTo(timeA);
+        });
         setState(() {
-          _backups = response
-              .where((file) {
-                final type = file['type']?.toString() ?? '';
-                return type == 'backup' || type == 'user manager database';
-              })
-              .map((file) => Map<String, dynamic>.from(file))
-              .toList();
-          
-          _backups.sort((a, b) {
-            final timeA = a['creation-time']?.toString() ?? '';
-            final timeB = b['creation-time']?.toString() ?? '';
-            return timeB.compareTo(timeA);
-          });
+          _backups = parsed;
         });
       }
     } catch (e) {
@@ -489,7 +491,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFB39DDB).withOpacity(0.3),
+                            // Color(0xFFB39DDB) @ opacity 0.3 -> alpha 0x4D
+                            color: const Color(0x4DB39DDB),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -550,18 +553,18 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
 
     if (_backups.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.backup, size: 80, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'لا توجد نسخ احتياطية',
               style: TextStyle(fontSize: 20, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'اضغط على الزر أدناه لإنشاء نسخة جديدة',
               style: TextStyle(color: Colors.grey),
             ),
@@ -575,9 +578,11 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: _backups.length,
+        cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+        addAutomaticKeepAlives: false,
         itemBuilder: (context, index) {
           final backup = _backups[index];
-          return _buildBackupCard(backup);
+          return RepaintBoundary(child: _buildBackupCard(backup));
         },
       ),
     );
@@ -599,15 +604,15 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ),
       body: _buildBody(),
       floatingActionButton: _isCreatingBackup
-          ? FloatingActionButton(
+          ? const FloatingActionButton(
               onPressed: null,
               backgroundColor: Colors.grey,
-              child: const SizedBox(
+              child: SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
             )

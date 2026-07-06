@@ -12,6 +12,8 @@ import 'dart:io';
 import 'process_image_screen.dart';
 import 'mqtt_service.dart';
 
+import 'perf/device_capability.dart';
+
 class ExtractCardsScreen extends StatefulWidget {
   const ExtractCardsScreen({super.key});
 
@@ -148,7 +150,18 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
     }
 
     String? selectedUnitId;
-    final units = (_linkedData['network_details']?['units'] as List?) ?? [];
+    final units = (_linkedData['network_details']?['units'] as List?) ?? const [];
+
+    // بناء عناصر القائمة المنسدلة بـ for loop بدلاً من map.toList()
+    final List<DropdownMenuItem<String>> unitItems = [
+      for (final unit in units)
+        DropdownMenuItem<String>(
+          value: unit['id'],
+          child: Text(unit['name'],
+              style: const TextStyle(
+                  color: Colors.black, fontWeight: FontWeight.bold)),
+        )
+    ];
 
     showDialog(
       context: context,
@@ -159,12 +172,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             dropdownColor: Colors.white,
             hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-            items: units.map((unit) {
-              return DropdownMenuItem<String>(
-                value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              );
-            }).toList(),
+            items: unitItems,
             onChanged: (value) {
               selectedUnitId = value;
             },
@@ -301,8 +309,12 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       final text = PdfTextExtractor(document).extractText();
       document.dispose();
       final RegExp codeRegExp = RegExp(r'[a-zA-Z0-9]{6,}');
-      final Set<String> cardNumbers =
-          codeRegExp.allMatches(text).map((m) => m.group(0)!).toSet();
+      // بناء Set بـ for loop بدلاً من map.toSet()
+      final Set<String> cardNumbers = {};
+      for (final m in codeRegExp.allMatches(text)) {
+        cardNumbers.add(m.group(0)!);
+      }
+      if (!mounted) return;
       setState(() {
         _extractedCardNumbers = cardNumbers.toList();
       });
@@ -323,7 +335,8 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       ),
       body: Center(
         child: _extractedCardNumbers.isNotEmpty
-            ? Column( // --- RESULTS VIEW ---
+            ? RepaintBoundary(
+                child: Column( // --- RESULTS VIEW ---
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -333,39 +346,45 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                     ),
                   ),
                   Expanded(
-                    child: GridView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        childAspectRatio: 2.8,
-                        crossAxisSpacing: 6,
-                        mainAxisSpacing: 6,
-                      ),
-                      itemCount: _extractedCardNumbers.length,
-                      itemBuilder: (context, index) {
-                        final cardNumber = _extractedCardNumbers[index];
-                        return Card(
-                          elevation: 2,
-                          margin: EdgeInsets.zero,
-                          child: InkWell(
-                            onTap: () => _copyToClipboard(cardNumber, 'تم نسخ الرقم: $cardNumber'),
-                            child: Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: Text(
-                                  cardNumber,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
+                    child: RepaintBoundary(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 2.8,
+                          crossAxisSpacing: 6,
+                          mainAxisSpacing: 6,
+                        ),
+                        itemCount: _extractedCardNumbers.length,
+                        cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+                        addAutomaticKeepAlives: false,
+                        itemBuilder: (context, index) {
+                          final cardNumber = _extractedCardNumbers[index];
+                          return RepaintBoundary(
+                            child: Card(
+                              elevation: 2,
+                              margin: EdgeInsets.zero,
+                              child: InkWell(
+                                onTap: () => _copyToClipboard(cardNumber, 'تم نسخ الرقم: $cardNumber'),
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Text(
+                                      cardNumber,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                   Padding(
@@ -417,29 +436,38 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                     ),
                   )
                 ],
-              )
+              ),
+            )
             : _imagePaths.isNotEmpty
-                ? Column( // --- IMAGE PREVIEW VIEW ---
+                ? RepaintBoundary(
+                    child: Column( // --- IMAGE PREVIEW VIEW ---
                     children: [
                       Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(8),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 4,
-                            mainAxisSpacing: 4,
+                        child: RepaintBoundary(
+                          child: GridView.builder(
+                            padding: const EdgeInsets.all(8),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 4,
+                              mainAxisSpacing: 4,
+                            ),
+                            itemCount: _imagePaths.length,
+                            cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+                            addAutomaticKeepAlives: false,
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  File(_imagePaths[index]),
+                                  fit: BoxFit.cover,
+                                  cacheWidth: DeviceCapability.instance.isLowEnd
+                                      ? 200
+                                      : null,
+                                ),
+                              );
+                            },
                           ),
-                          itemCount: _imagePaths.length,
-                          itemBuilder: (context, index) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                File(_imagePaths[index]),
-                                fit: BoxFit.cover,
-                              ),
-                            );
-                          },
                         ),
                       ),
                       Padding(
@@ -482,7 +510,8 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                         ),
                       ),
                     ],
-                  )
+                  ),
+                )
                 : SingleChildScrollView( // --- INITIAL FORM VIEW ---
                     padding: const EdgeInsets.all(24.0),
                     child: Form(
@@ -497,7 +526,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           const Text(
                             'أدخل شروط المسح الضوئي للكروت',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 18, color: Colors.white),
+                            style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                           const SizedBox(height: 32),
                           TextFormField(
