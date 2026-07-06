@@ -64,9 +64,11 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
   }
 
   Future<void> _loadInitialData() async {
+    if (!mounted) return;
     setState(() { _isLoading = true; });
     await _loadLinkStatus(); // تحميل حالة الربط
     await _loadSavedFiles(); // تحميل الملفات
+    if (!mounted) return;
     setState(() { _isLoading = false; });
   }
 
@@ -93,7 +95,8 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     final isLinked = prefs.getBool('is_network_linked') ?? false;
     if (isLinked) {
       final dataString = prefs.getString('qahtani_linked_data');
-      if (dataString != null && mounted) {
+      if (dataString != null) {
+        if (!mounted) return;
         setState(() {
           _isNetworkLinked = true;
           _linkedData = jsonDecode(dataString);
@@ -129,6 +132,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       updatedFilesJson.add(jsonEncode(file.toJson()));
     }
     await prefs.setStringList('saved_files', updatedFilesJson);
+    if (!mounted) return;
     setState(() {});
   }
 

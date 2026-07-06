@@ -84,6 +84,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   }
 
   Future<void> _fetchDevices() async {
+    if (!mounted) return;
     setState(() { _isLoading = true; });
     try {
       final neighborResponse = await widget.client.talk(['/ip/neighbor/print']);
@@ -270,8 +271,8 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   }
 
   Future<void> _checkSingleDevice(Device device) async {
-    setState(() { _isLoading = true; });
     if (!mounted) return;
+    setState(() { _isLoading = true; });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('جاري فحص ${device.name}...')),
     );

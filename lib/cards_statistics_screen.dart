@@ -121,6 +121,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   }
 
   Future<void> _fetchStatistics() async {
+    if (!mounted) return;
     // التحقق من الـ cache
     if (_lastFetchTime != null && 
         DateTime.now().difference(_lastFetchTime!) < _cacheDuration &&
@@ -129,6 +130,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -410,6 +412,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     );
 
     if (picked != null) {
+      if (!mounted) return;
       setState(() {
         _customStartDate = picked.start;
         _customEndDate = picked.end;

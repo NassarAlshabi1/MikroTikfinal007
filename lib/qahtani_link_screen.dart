@@ -77,6 +77,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
   }
 
   void _resetStateForNewVerification() {
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
       _isAwaitingCode = false;
@@ -242,6 +243,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     await prefs.remove('is_network_linked');
     await prefs.remove('qahtani_linked_data');
     _resetStateForNewVerification();
+    if (!mounted) return;
     setState(() {
       _isLinked = false;
       _linkedData = {};

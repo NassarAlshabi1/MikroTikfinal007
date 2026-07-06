@@ -45,6 +45,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   }
 
   void _scheduleNextFetch([Duration? delay]) {
+    if (!mounted) return;
     _refreshTimer?.cancel();
     final d = delay ?? _baseInterval;
     _refreshTimer = Timer(d, () {
@@ -57,12 +58,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     if (!mounted) return;
     
     if (!force && _lastActiveFetch != null && DateTime.now().difference(_lastActiveFetch!) < _minRefreshGap) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = '';

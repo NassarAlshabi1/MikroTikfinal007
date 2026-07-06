@@ -28,12 +28,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (isLinked) {
       final dataString = prefs.getString('qahtani_linked_data');
       if (dataString != null) {
+        if (!mounted) return;
         setState(() {
           _profileData = jsonDecode(dataString);
           _isLinked = true;
         });
       }
     }
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });

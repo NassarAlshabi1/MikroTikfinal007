@@ -39,6 +39,7 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Future<void> _fetchMikrotikStats() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -123,16 +124,19 @@ class _StatsScreenState extends State<StatsScreen> {
       await prefs.setString('mikrotik_version', resourceData['version']?.toString() ?? '6');
 
     } on MikrotikCredentialsMissingException catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'خطأ في بيانات الدخول: ${e.message}';
         _isLoading = false;
       });
     } on MikrotikConnectionException catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'خطأ في الاتصال: ${e.message}';
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'حدث خطأ أثناء جلب البيانات: ${e.toString()}';
         _isLoading = false;

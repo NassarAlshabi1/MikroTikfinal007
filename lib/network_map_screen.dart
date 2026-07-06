@@ -196,6 +196,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   }
   
   Future<void> _performCheck(DeviceNode nodeToCheck) async {
+    if (!mounted) return;
     setState(() { _isCheckingStatus = true; });
 
     RouterOSClient? client;
@@ -413,6 +414,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         );
         
         if (confirm == true) {
+          if (!mounted) return;
           setState(() {
             _rootNode = DeviceNode.fromJson(jsonDecode(content));
           });

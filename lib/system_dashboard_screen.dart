@@ -75,9 +75,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
     // تحديث تلقائي كل 10 ثواني
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted) {
-        _fetchData();
+      if (!mounted) {
+        timer.cancel();
+        return;
       }
+      _fetchData();
     });
   }
 
