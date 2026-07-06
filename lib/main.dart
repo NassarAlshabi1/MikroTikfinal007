@@ -262,7 +262,7 @@ class MyApp extends StatelessWidget {
       vertical: 16,
     ),
   ),
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     color: const Color(0xFF2d213f),
     elevation: 2,
     shadowColor: const Color(0x33000000),
@@ -309,7 +309,7 @@ class MyApp extends StatelessWidget {
     behavior: SnackBarBehavior.floating,
     elevation: 4,
   ),
-  dialogTheme: DialogTheme(
+  dialogTheme: DialogThemeData(
     backgroundColor: const Color(0xFF2d213f),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(20),
