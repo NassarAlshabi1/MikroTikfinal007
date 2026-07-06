@@ -341,7 +341,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                             context,
                             cardUsernames: usernamesOnly,
                             template: relevantTemplate!,
-                            documentTitle: 'كروت Wi-Fi - $_selectedProfile',
+                            category: _selectedProfile ?? 'general',
                           );
                         },
                       ),
@@ -356,11 +356,12 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           final List<String> usernamesOnly = [
                             for (final u in users) u['username']!,
                           ];
-                          await PdfGenerator.savePdf(
+                          // استخدام sharePdf لأن savePdf لم يعد متاحاً في الـ API الجديد
+                          await PdfGenerator.sharePdf(
                             context,
                             cardUsernames: usernamesOnly,
                             template: relevantTemplate!,
-                            documentTitle: 'كروت Wi-Fi - $_selectedProfile',
+                            category: _selectedProfile ?? 'general',
                           );
                         },
                       ),

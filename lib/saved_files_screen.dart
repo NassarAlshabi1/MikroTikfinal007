@@ -180,8 +180,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
         context,
         cardUsernames: cardUsernames,
         template: relevantTemplate,
-        documentTitle: 'كروت Wi-Fi - ${savedFile.profileName}',
-        exportDate: DateFormat('yyyy-MM-dd  hh:mm a').format(savedFile.date),
+        category: savedFile.profileName,
       );
 
     } on StateError { // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
