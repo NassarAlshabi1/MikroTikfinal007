@@ -55,9 +55,11 @@ android {
         // تجاهل حزم اللغات غير المستخدمة (Fluter يدعم 78 لغة افتراضياً)
         // نُبقي العربية والإنجليزية فقط
         resConfigs 'ar', 'en'
+    }
 
-        // تقليل حجم الـ dex
-        // dxFlags '--multi-dex' — ليس ضرورياً هنا لأن methods < 64K
+    // ===== تفعيل buildConfig (مطلوب لـ buildConfigField) =====
+    buildFeatures {
+        buildConfig true
     }
 
     // ===== فصل APK لكل معمارية =====
