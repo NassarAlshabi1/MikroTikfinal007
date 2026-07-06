@@ -40,6 +40,9 @@ dependencies:
   google_mlkit_document_scanner: ^0.4.0
   network_info_plus: ^5.0.3
   fl_chart: ^0.69.0
+  # --- ✨ caching لطلبات HTTP ---
+  dio_cache_interceptor: ^3.5.0
+  dio_cache_interceptor_db_store: ^5.1.0
 
 dev_dependencies:
   flutter_test:

@@ -26,6 +26,7 @@ import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
 import 'snackbar_helpers.dart';
 import 'perf/device_capability.dart';
+import 'perf/dio_cache_service.dart';
 // -----------------------------------------
 
 /// إقلاع محسّن:
@@ -410,7 +411,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   // --- جميع الدوال والوظائف الأصلية تبقى كما هي ---
   Future<void> _sendTelegramMessage(String message) async {
-    final dio = Dio();
+    // استخدام Dio مع cache لتقليل استهلاك الشبكة والبطارية
+    final dio = await createCachedDio(
+      maxAge: const Duration(minutes: 5),
+      maxStale: const Duration(hours: 1),
+    );
     final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
     try {
       await dio.post(url, data: {'chat_id': telegramChatId, 'text': message});
