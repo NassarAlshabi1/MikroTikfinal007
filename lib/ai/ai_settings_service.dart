@@ -3,7 +3,6 @@
 //  يستخدم flutter_secure_storage (لا تُكتب في SharedPreferences)
 // ============================================================
 
-import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
 
@@ -18,7 +17,6 @@ class AiSettingsService {
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 
-  static const _keySettings = 'ai_settings';
   static const _keyApiKey = 'ai_api_key';
   static const _keyProvider = 'ai_provider';
   static const _keyModel = 'ai_model';

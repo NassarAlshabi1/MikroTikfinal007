@@ -18,7 +18,6 @@ class DeviceCapability {
   DeviceTier _tier = DeviceTier.mid;
   bool _initialized = false;
   int? _androidSdk;
-  int? _cores;
 
   DeviceTier get tier => _tier;
   bool get isLowEnd => _tier == DeviceTier.low;

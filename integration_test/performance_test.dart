@@ -9,7 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/main.dart' as app;
 import 'package:mikrotik_manager/active_users_screen.dart';
@@ -115,8 +114,8 @@ Future<ScreenPerfResult> measureScreen(
     settleStopwatch.stop();
     settleMs = settleStopwatch.elapsedMilliseconds;
   } catch (e) {
-    if (buildMs == null) buildMs = buildStopwatch.elapsedMilliseconds;
-    if (settleMs == null) settleMs = 0;
+    buildMs ??= buildStopwatch.elapsedMilliseconds;
+    settleMs ??= 0;
     error = e.toString();
   }
 
@@ -173,7 +172,7 @@ void main() {
       final result = await measureScreen(
         tester,
         'HomeScreen',
-        app.HomeScreen(isVersion7OrNewer: true, username: 'admin'),
+        const app.HomeScreen(isVersion7OrNewer: true, username: 'admin'),
         wrapWithProvider: true,
       );
       _results.add(result);
@@ -359,12 +358,12 @@ void main() {
   //  تقرير ملخص بعد كل الاختبارات
   // ============================================================
   tearDownAll(() {
-    print('\n');
-    print('=' * 80);
-    print('  📊 PERFORMANCE TEST REPORT');
-    print('=' * 80);
-    print('${'Screen'.padRight(30)} | ${'Build'.padLeft(8)} | ${'Settle'.padLeft(8)} | ${'Total'.padLeft(8)} | Status');
-    print('-' * 80);
+    debugPrint('\n');
+    debugPrint('=' * 80);
+    debugPrint('  📊 PERFORMANCE TEST REPORT');
+    debugPrint('=' * 80);
+    debugPrint('${'Screen'.padRight(30)} | ${'Build'.padLeft(8)} | ${'Settle'.padLeft(8)} | ${'Total'.padLeft(8)} | Status');
+    debugPrint('-' * 80);
 
     int passCount = 0, warnCount = 0, failCount = 0;
     int totalBuildMs = 0;
@@ -377,7 +376,7 @@ void main() {
           : r.status == 'WARN'
               ? '⚠️'
               : '❌';
-      print('${r.screenName.padRight(30)} | '
+      debugPrint('${r.screenName.padRight(30)} | '
           '${r.buildTimeMs.toString().padLeft(6)}ms | '
           '${r.settleTimeMs.toString().padLeft(6)}ms | '
           '${r.totalTimeMs.toString().padLeft(6)}ms | '
@@ -396,24 +395,24 @@ void main() {
       }
 
       if (r.error != null) {
-        print('    └─ Error: ${r.error}');
+        debugPrint('    └─ Error: ${r.error}');
       }
     }
 
-    print('-' * 80);
-    print('${'TOTAL'.padRight(30)} | '
+    debugPrint('-' * 80);
+    debugPrint('${'TOTAL'.padRight(30)} | '
         '${totalBuildMs.toString().padLeft(6)}ms | '
         '${totalSettleMs.toString().padLeft(6)}ms | '
         '${totalMs.toString().padLeft(6)}ms |');
-    print('-' * 80);
-    print('Summary: ✅ $passCount PASS | ⚠️ $warnCount WARN | ❌ $failCount FAIL');
-    print('Average build time per screen: ${(totalMs / _results.length).round()}ms');
-    print('Thresholds: PASS < ${_thresholdPass}ms | WARN < ${_thresholdWarn}ms | FAIL >= ${_thresholdWarn}ms');
-    print('=' * 80);
+    debugPrint('-' * 80);
+    debugPrint('Summary: ✅ $passCount PASS | ⚠️ $warnCount WARN | ❌ $failCount FAIL');
+    debugPrint('Average build time per screen: ${(totalMs / _results.length).round()}ms');
+    debugPrint('Thresholds: PASS < ${_thresholdPass}ms | WARN < ${_thresholdWarn}ms | FAIL >= ${_thresholdWarn}ms');
+    debugPrint('=' * 80);
 
     // JSON report for CI parsing
-    print('\n=== JSON REPORT ===');
-    print(jsonEncode({
+    debugPrint('\n=== JSON REPORT ===');
+    debugPrint(jsonEncode({
       'summary': {
         'total_screens': _results.length,
         'pass': passCount,
@@ -426,7 +425,7 @@ void main() {
       },
       'screens': _results.map((r) => r.toJson()).toList(),
     }));
-    print('=== END JSON REPORT ===\n');
+    debugPrint('=== END JSON REPORT ===\n');
   });
 }
 

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 class ProfileScreen extends StatefulWidget {

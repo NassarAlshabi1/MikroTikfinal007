@@ -79,7 +79,6 @@ class MikrotikDataCollector {
     try {
       final result = await client.execute(command);
       // result قد يكون Object أو String حسب الإصدار — نحوّل بأمان
-      if (result == null) return '';
       return result.toString();
     } catch (e) {
       return 'ERROR executing "$command": $e';

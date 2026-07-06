@@ -376,9 +376,13 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       await file.writeAsString(mapJson);
 
       final xFile = XFile(file.path);
-      await Share.shareXFiles([xFile], text: 'ملف النسخ الاحتياطي لخريطة الشبكة');
+      await SharePlus.instance.share(ShareParams(
+        files: [xFile],
+        text: 'ملف النسخ الاحتياطي لخريطة الشبكة',
+      ));
 
     } catch (e) {
+      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشلت عملية التصدير.');
     }
   }
@@ -394,7 +398,9 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         final file = File(result.files.single.path!);
         final content = await file.readAsString();
         
+        // ignore: use_build_context_synchronously
         final confirm = await showDialog<bool>(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('تأكيد الاستيراد'),
@@ -413,8 +419,10 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           _rebuildGraph();
           await _saveMap();
         }
+      // ignore: use_build_context_synchronously
       }
     } catch (e) {
+      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشل الاستيراد: ملف غير صالح أو خطأ في القراءة.');
     }
   }
@@ -520,7 +528,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white54, width: 1),
         boxShadow: [
-          BoxShadow(color: nodeColor.withOpacity(0.5), blurRadius: 8)
+          BoxShadow(color: nodeColor.withValues(alpha: 0.5), blurRadius: 8)
         ],
       ),
       child: Column(
@@ -591,23 +599,23 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         offset.dy,
       ),
       items: [
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'add',
-          child: const ListTile(
+          child: ListTile(
             leading: Icon(Icons.add_circle_outline),
             title: Text('إضافة جهاز فرعي', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'edit',
-          child: const ListTile(
+          child: ListTile(
             leading: Icon(Icons.edit_outlined),
             title: Text('تعديل الجهاز', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'delete',
-          child: const ListTile(
+          child: ListTile(
             leading: Icon(Icons.delete_outline, color: Colors.redAccent),
             title: Text('حذف الجهاز', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),

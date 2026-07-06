@@ -51,7 +51,10 @@ class _CardListScreenState extends State<CardListScreen> {
     final file = File(filePath);
     await file.writeAsString(fileContent);
 
-    await Share.shareXFiles([XFile(filePath)], text: 'الكروت المضافة حديثاً');
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(filePath)],
+      text: 'الكروت المضافة حديثاً',
+    ));
   }
   void _setupMqttListener() {
     _mqttSubscription?.cancel();

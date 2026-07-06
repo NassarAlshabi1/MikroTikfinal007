@@ -3,7 +3,6 @@
 //  يدعم استخراج الأوامر المقترحة من رد الـ AI
 // ============================================================
 
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 

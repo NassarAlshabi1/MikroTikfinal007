@@ -12,7 +12,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/profile_screen.dart';
 import 'package:mikrotik_manager/qahtani_link_screen.dart';
@@ -264,7 +263,6 @@ final ThemeData _testTheme = ThemeData(
     primary: Color(0xFF6b3fa0),
     secondary: Color(0xFFB39DDB),
     surface: Color(0xFF2d213f),
-    background: Color(0xFF1a1329),
   ),
   appBarTheme: const AppBarTheme(
     backgroundColor: Color(0xFF2d213f),

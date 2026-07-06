@@ -3,7 +3,6 @@
 //  كل prompt مُصمّم لسيناريو محدد
 // ============================================================
 
-import 'package:flutter/material.dart' show IconData, Icons;
 import 'diagnostics_models.dart';
 
 // DiagnosticMode و DiagnosticModeExtension مُعرّفان في diagnostics_models.dart
@@ -109,9 +108,9 @@ class SystemPrompts {
 ### 🔴 مشكلة حرجة: [اسم المشكلة]
 **السبب**: [شرح مختصر]
 **الحل**:
-\`\`\`
+```
 [أوامر RouterOS]
-\`\`\`
+```
 **التحقق**: [أمر للتحقق]
 
 ### 🟡 تحذير: [اسم المشكلة]
@@ -122,9 +121,9 @@ class SystemPrompts {
 - [تحسين 2]
 
 ## 🔍 أوامر تشخيص إضافية
-\`\`\`
+```
 [أوامر لجمع بيانات أكثر]
-\`\`\`
+```
 ```
 
 تذكير دائم: المستخدم يعتمد على نصيحتك لتشغيل شبكة حقيقية. كن دقيقاً ومسؤولاً.
@@ -190,9 +189,9 @@ class SystemPrompts {
 **الخطر**: [وصف المخاطر]
 **التأثير**: [ماذا يمكن أن يحدث]
 **الإصلاح**:
-\`\`\`
+```
 [أوامر RouterOS]
-\`\`\`
+```
 
 ### 🟠 ثغرات عالية الخطورة
 [نفس التنسيق]
@@ -201,7 +200,7 @@ class SystemPrompts {
 [نفس التنسيق]
 
 ## 🔒 Firewall Hardening Script (انسخه بالكامل)
-\`\`\`
+```
 # Drop invalid connections
 /ip firewall filter add chain=forward connection-state=invalid action=drop comment="Drop invalid"
 
@@ -209,7 +208,7 @@ class SystemPrompts {
 /ip firewall filter add chain=forward connection-state=established,related action=accept comment="Accept established"
 
 # ... المزيد
-\`\`\`
+```
 
 ## 📋 Checklist بعد الإصلاح
 - [ ] اختبر الاتصال قبل الحفظ
@@ -282,23 +281,23 @@ class SystemPrompts {
 #### 1. تفعيل Fasttrack (RouterOS v7)
 **الفائدة**: زيادة throughput بـ 2-3x
 **الحل**:
-\`\`\`
+```
 /ip firewall filter add chain=forward action=fasttrack-connection connection-state=established,related
 /ip firewall filter add chain=forward action=accept connection-state=established,related
-\`\`\`
+```
 **التحقق**: `/interface print stats` بعد التطبيق
 
 ### 🔧 تحسينات متقدمة (Impact عالي، Risk متوسط)
 [نفس التنسيق]
 
 ### 📈 قياس الأداء (قبل/بعد)
-\`\`\`
+```
 # قبل التطبيق
 /interface monitor-traffic ether1,ether2 duration=10
 
 # بعد التطبيق
 /interface monitor-traffic ether1,ether2 duration=10
-\`\`\`
+```
 
 ### 💡 توصيات HW (إن وجدت)
 - [إذا كان الجهاز ضعيفاً للمهمة]
@@ -377,7 +376,7 @@ class SystemPrompts {
 [مشاكل queue و rate-limit]
 
 ### 🔧 أوامر مفيدة للتشخيص
-\`\`\`
+```
 # عرض المستخدمين النشطين
 /ip hotspot active print
 
@@ -386,7 +385,7 @@ class SystemPrompts {
 
 # عرض queues ديناميكية
 /queue simple print where dynamic
-\`\`\`
+```
 ```
 ''';
 
@@ -462,15 +461,15 @@ class SystemPrompts {
 ### 🔧 إعدادات موصى بها لكل بروتوكول
 
 #### WireGuard (الأفضل لـ v7)
-\`\`\`
+```
 /wireguard add name=wg1 listen-port=13231 private-key="..."
 /wireguard peer add interface=wg1 public-key="..." endpoint-address=X.X.X.X endpoint-port=13231 allowed-address=10.0.0.0/24 persistent-keepalive=25
-\`\`\`
+```
 
 #### IPSec (Site-to-Site)
-\`\`\`
+```
 [commands]
-\`\`\`
+```
 
 ### ⚡ تحسينات الأداء
 - استخدم WireGuard بدل IPSec (إن أمكن)
@@ -548,21 +547,21 @@ class SystemPrompts {
 [تنسيق قياسي]
 
 ### 🔧 BGP Optimization
-\`\`\`
+```
 # Next-hop-self for iBGP
 /routing bgp peer set ibgp-peers next-hop-self=yes
 
 # BFD for fast failure detection
 /routing bgp peer set peers use-bfd=yes
-\`\`\`
+```
 
 ### 🔍 Debug Commands
-\`\`\`
+```
 /routing bgp peer print status
 /routing bgp advertisements print
 /routing ospf neighbor print detail
 /routing route print where bgp
-\`\`\`
+```
 ```
 ''';
 
@@ -643,20 +642,20 @@ class SystemPrompts {
 | AP3 | 11 | 44 |
 
 ### 🔧 إعدادات موصى بها
-\`\`\`
+```
 # CAPsMAN configuration
 /caps-man manager enable
 /caps-man channel add name=ch-2.4ghz frequency=2412 band=2ghz-b/g/n
 /caps-man datapath add name=dp-bridge client-to-client-forwarding=no local-forwarding=yes
 /caps-man security add name=sec-wpa2 authentication-types=wpa2-psk
-\`\`\`
+```
 
 ### 🔍 أوامر المسح
-\`\`\`
+```
 /interface wireless scan wlan1 duration=30
 /interface wireless monitor wlan1 once
 /caps-man interface print detail
-\`\`\`
+```
 ```
 ''';
 }

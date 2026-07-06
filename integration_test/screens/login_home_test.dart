@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/main.dart' as app;
 import 'package:mikrotik_manager/mqtt_service.dart';
@@ -98,7 +97,7 @@ void main() {
   group('HomeScreen Tests', () {
     testWidgets('يعرض HomeScreen مع شبكة الخدمات', (tester) async {
       // نحتاج لـ Pump مباشر لـ HomeScreen لأنه يتطلب حالة اتصال
-      final homeScreen = app.HomeScreen(
+      const homeScreen = app.HomeScreen(
         isVersion7OrNewer: true,
         username: 'admin',
       );
@@ -127,7 +126,7 @@ void main() {
     testWidgets('يقلع HomeScreen في زمن معقول', (tester) async {
       final stopwatch = Stopwatch()..start();
 
-      final homeScreen = app.HomeScreen(
+      const homeScreen = app.HomeScreen(
         isVersion7OrNewer: false,
         username: 'admin',
       );
