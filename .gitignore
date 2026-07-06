@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# AI API keys — لا ترفع ملف .env أبداً
+.env
+.env.local
+.env.production
+
