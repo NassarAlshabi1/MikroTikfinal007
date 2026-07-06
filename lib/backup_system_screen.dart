@@ -23,6 +23,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   }
 
   Future<void> _loadBackups() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     RouterOSClient? client;
     try {
@@ -42,6 +43,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           final timeB = b['creation-time']?.toString() ?? '';
           return timeB.compareTo(timeA);
         });
+        if (!mounted) return;
         setState(() {
           _backups = parsed;
         });
@@ -52,7 +54,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       }
     } finally {
       // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
-      if (mounted) setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
   }
 
@@ -60,6 +63,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     final backupName = await _showBackupNameDialog();
     if (backupName == null || backupName.isEmpty) return;
 
+    if (!mounted) return;
     setState(() => _isCreatingBackup = true);
 
     // ignore: use_build_context_synchronously
@@ -121,7 +125,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       }
     } finally {
       // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
-      if (mounted) setState(() => _isCreatingBackup = false);
+      if (!mounted) return;
+      setState(() => _isCreatingBackup = false);
     }
   }
 

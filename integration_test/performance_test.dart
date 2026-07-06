@@ -76,7 +76,7 @@ Future<ScreenPerfResult> measureScreen(
   WidgetTester tester,
   String screenName,
   Widget screen, {
-  Duration settleTimeout = const Duration(seconds: 3),
+  Duration settleTimeout = const Duration(seconds: 10),
   bool wrapWithProvider = false,
   bool wrapWithRiverpod = false,
 }) async {
@@ -109,17 +109,13 @@ Future<ScreenPerfResult> measureScreen(
     buildStopwatch.stop();
     buildMs = buildStopwatch.elapsedMilliseconds;
 
-    // استخدم pump(Duration) بدل pumpAndSettle لأن معظم الشاشات
-    // تحتوي على timers دورية أو network calls لا تنتهي،
-    // مما يجعل pumpAndSettle ي timeout دائماً.
-    // pump(Duration) يضخ إطار واحد بعد تقدم الوقت — كافٍ لقياس البناء.
+    // الآن بعد إصلاح الشاشات (mounted checks + timer cancellations)
+    // يمكن استخدام pumpAndSettle بأمان — سيتوقف عند الهدوء بدل timeout
     final settleStopwatch = Stopwatch()..start();
-    await tester.pump(settleTimeout);
-    // محاولة pumpAndSettle بـ timeout قصير — إن لم يهدأ، نتجاهل
     try {
-      await tester.pumpAndSettle(const Duration(seconds: 1));
+      await tester.pumpAndSettle(settleTimeout);
     } catch (_) {
-      // timeout متوقع للشاشات ذات الـ timers — لا يعد فشلاً
+      // timeout نادر الآن بعد الإصلاحات — نتجاهله إن حدث
     }
     settleStopwatch.stop();
     settleMs = settleStopwatch.elapsedMilliseconds;
@@ -166,11 +162,12 @@ void main() {
     testWidgets('LoginScreen', (tester) async {
       app.main();
       final sw = Stopwatch()..start();
-      // استخدم pump بدل pumpAndSettle (LoginScreen قد يكون بها timers)
-      await tester.pump(const Duration(seconds: 3));
+      // LoginScreen الآن آمنة (mounted checks + NetworkInfo timeout)
       try {
-        await tester.pumpAndSettle(const Duration(seconds: 1));
-      } catch (_) {}
+        await tester.pumpAndSettle(const Duration(seconds: 10));
+      } catch (_) {
+        // timeout نادر — نتجاهله
+      }
       sw.stop();
       _results.add(ScreenPerfResult(
         screenName: 'LoginScreen',

@@ -449,32 +449,38 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Future<void> _forceDiscoverGateway() async {
+    if (!mounted) return;
     setState(() {
       _isScanning = true;
       _errorMessage = 'جاري البحث عن بوابة الشبكة...';
     });
     try {
-      final gatewayIp = await NetworkInfo().getWifiGatewayIP();
+      final gatewayIp = await NetworkInfo()
+          .getWifiGatewayIP()
+          .timeout(const Duration(seconds: 5));
       if (gatewayIp != null && gatewayIp.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _ipController.text = gatewayIp;
-            _errorMessage = 'تم العثور على بوابة الشبكة!';
-          });
-        }
+        if (!mounted) return;
+        setState(() {
+          _ipController.text = gatewayIp;
+          _errorMessage = 'تم العثور على بوابة الشبكة!';
+        });
       } else {
-        if (mounted) setState(() => _errorMessage = 'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.');
+        if (!mounted) return;
+        setState(() => _errorMessage = 'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.');
       }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
+      if (!mounted) return;
+      setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
     } finally {
-      if (mounted) setState(() => _isScanning = false);
+      if (!mounted) return;
+      setState(() => _isScanning = false);
     }
   }
 
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('remember_me') ?? false) {
+      if (!mounted) return;
       setState(() {
         _ipController.text = prefs.getString('ip') ?? '';
         _userController.text = prefs.getString('user') ?? '';
@@ -489,6 +495,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final mqttUsername = prefs.getString('mqtt_username') ?? '';
     final mqttPassword = prefs.getString('mqtt_password') ?? '';
     if (mqttUsername.isNotEmpty) {
+      if (!mounted) return;
       setState(() {
         _mqttUsernameController.text = mqttUsername;
         _mqttPasswordController.text = mqttPassword;

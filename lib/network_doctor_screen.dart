@@ -102,8 +102,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
 
   Future<void> _resolveGateway() async {
     try {
-      final gw = await NetworkInfo().getWifiGatewayIP();
-      if (mounted) setState(() => _gatewayIp = gw);
+      final gw = await NetworkInfo()
+          .getWifiGatewayIP()
+          .timeout(const Duration(seconds: 5));
+      if (!mounted) return;
+      setState(() => _gatewayIp = gw);
     } catch (_) {}
   }
 
