@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - 'capy/v2-riverpod'
+      - 'main'
   workflow_dispatch:
 
 jobs:
   build-release-apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,17 +26,24 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.22.3'
           cache: true
+
+      - name: Verify Flutter version
+        run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Clean build artifacts
-        run: flutter clean
+      - name: Analyze code (non-blocking)
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
 
-      - name: Build release APK (arm64 only - modern devices)
-        run: flutter build apk --release --target-platform android-arm64
+      # لا نستخدم flutter clean لأنه يُبطئ البناء ويلغي cache الـ dependencies
+      # - name: Clean build artifacts
+      #   run: flutter clean
+
+      - name: Build release APK (arm64 + armv7 for broad device support)
+        run: flutter build apk --release --target-platform android-arm64,android-arm
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
