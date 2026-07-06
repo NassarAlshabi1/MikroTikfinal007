@@ -24,6 +24,7 @@ class AiSettingsService {
   static const _keyModel = 'ai_model';
   static const _keyConnectionMethod = 'ai_connection_method';
   static const _keyMaxTokens = 'ai_max_tokens';
+  static const _keyMode = 'ai_diagnostic_mode';
 
   /// يحمّل الإعدادات المحفوظة (أو الإعدادات الافتراضية)
   Future<AiSettings> load() async {
@@ -34,6 +35,7 @@ class AiSettingsService {
       final methodStr =
           await _storage.read(key: _keyConnectionMethod) ?? 'routerOS';
       final maxTokensStr = await _storage.read(key: _keyMaxTokens) ?? '1500';
+      final modeStr = await _storage.read(key: _keyMode) ?? 'general';
 
       return AiSettings(
         apiKey: apiKey,
@@ -47,6 +49,10 @@ class AiSettingsService {
           orElse: () => MikrotikConnectionMethod.routerOS,
         ),
         maxTokens: int.tryParse(maxTokensStr) ?? 1500,
+        mode: DiagnosticMode.values.firstWhere(
+          (m) => m.name == modeStr,
+          orElse: () => DiagnosticMode.general,
+        ),
       );
     } catch (e) {
       debugPrint('[AiSettingsService] Load error: $e');
@@ -64,7 +70,8 @@ class AiSettingsService {
           key: _keyConnectionMethod, value: settings.connectionMethod.name);
       await _storage.write(
           key: _keyMaxTokens, value: settings.maxTokens.toString());
-      debugPrint('[AiSettingsService] Settings saved');
+      await _storage.write(key: _keyMode, value: settings.mode.name);
+      debugPrint('[AiSettingsService] Settings saved (mode=${settings.mode.name})');
     } catch (e) {
       debugPrint('[AiSettingsService] Save error: $e');
       rethrow;
@@ -78,5 +85,6 @@ class AiSettingsService {
     await _storage.delete(key: _keyModel);
     await _storage.delete(key: _keyConnectionMethod);
     await _storage.delete(key: _keyMaxTokens);
+    await _storage.delete(key: _keyMode);
   }
 }

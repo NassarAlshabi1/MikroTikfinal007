@@ -8,34 +8,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import 'diagnostics_models.dart';
+import 'system_prompts.dart';
 
 class AiService {
   AiService._();
 
-  // ============================================================
-  //  System Prompt — عقل الـ AI
-  // ============================================================
-  static const String _systemPrompt = '''
-أنت خبير شبكات MikroTik مع شهادات MTCNA, MTCRE, MTCTCE. مهمتك:
-
-1. تحليل البيانات المقدمة من جهاز MikroTik (interfaces, routes, firewall, logs)
-2. تحديد المشاكل المحتملة (interfaces down, routing loops, firewall misconfig, errors in logs)
-3. اقتراح حلول عملية مع أوامر RouterOS محددة
-
-قواعد الإجابة:
-- ابدأ بتشخيص سريع للمشكلة في 2-3 جمل
-- اشرح السبب الجذري باختصار
-- اقترح أوامر RouterOS للإصلاح داخل كتل منفصلة بهذا الشكل:
-  ```
-  /command here
-  ```
-- اكتب بالعربية الفصحى الواضحة
-- كن مختصراً ودقيقاً (تجنّب التكرار)
-- إذا لم توجد مشكلة واضحة، اذكر ذلك واقترح تحسينات
-- لا تخترع أوامر غير موجودة في RouterOS v7
-
-تذكير: المستخدم يعتمد على نصيحتك لتشغيل شبكة حقيقية. كن دقيقاً.
-''';
+  // الـ System Prompt يُختار ديناميكياً حسب DiagnosticMode
+  // (تم نقله إلى system_prompts.dart لدعم 7 أوضاع تشخيص)
 
   /// يرسل طلب تحليل للـ AI
   ///
@@ -83,9 +62,12 @@ class AiService {
     dio.options.connectTimeout = const Duration(seconds: 30);
     dio.options.receiveTimeout = const Duration(seconds: 60);
 
+    // اختيار الـ System Prompt المناسب للوضع المختار
+    final systemPrompt = promptForMode(settings.mode);
+
     // بناء رسائل المحادثة
     final messages = <Map<String, String>>[
-      {'role': 'system', 'content': _systemPrompt},
+      {'role': 'system', 'content': systemPrompt},
       // أضف المحادثة السابقة (آخر 10 رسائل لتوفير tokens)
       for (final msg in conversationHistory.takeLast(10))
         if (msg.type == MessageType.user || msg.type == MessageType.assistant)
@@ -143,6 +125,9 @@ class AiService {
     dio.options.connectTimeout = const Duration(seconds: 30);
     dio.options.receiveTimeout = const Duration(seconds: 60);
 
+    // اختيار الـ System Prompt المناسب للوضع المختار
+    final systemPrompt = promptForMode(settings.mode);
+
     // Gemini يستخدم تنسيق contents مختلف
     final contents = <Map<String, dynamic>>[
       // المحادثة السابقة
@@ -159,7 +144,7 @@ class AiService {
         'role': 'user',
         'parts': [
           {
-            'text': '$_systemPrompt\n\n'
+            'text': '$systemPrompt\n\n'
                 'سؤال المستخدم: $userQuery\n\n'
                 '=== بيانات جهاز MikroTik ===\n$snapshotContext',
           },
