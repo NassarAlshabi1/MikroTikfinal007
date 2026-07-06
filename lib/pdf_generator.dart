@@ -1,7 +1,6 @@
 // ملف: pdf_generator.dart
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
@@ -42,8 +41,10 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
           for (var user in pageCards) {
             gridChildren.add(
               pw.LayoutBuilder(builder: (ctx, constraints) {
-                final cellWidth = constraints!.maxWidth;
-                final cellHeight = constraints.maxHeight;
+                // constraints قد يكون nullable في بعض إصدارات pdf package
+                // نأخذ القيم بأمان
+                final cellWidth = constraints?.maxWidth ?? 0;
+                final cellHeight = constraints?.maxHeight ?? 0;
 
                 // حساب موقع النص بناءً على نسب القالب
                 final boxWidth = markerWidthRatio * cellWidth;
@@ -74,7 +75,7 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
                               pw.Text(
                                 user,
                                 textAlign: pw.TextAlign.center,
-                                style: const pw.TextStyle(
+                                style: pw.TextStyle(
                                   color: PdfColors.black,
                                   fontSize: 10,
                                   fontWeight: pw.FontWeight.bold,
@@ -180,7 +181,7 @@ class PdfGenerator {
       if (context.mounted) Navigator.of(context).pop();
 
       // اسم الملف: wifi-cards_فئة_تاريخ.pdf
-      final filename = 'cards_${category}_$dateForFilename.pdf';
+      final filename = 'wifi-cards_${category}_$dateForFilename.pdf';
       await Printing.sharePdf(bytes: pdfBytes, filename: filename);
     } catch (e) {
       // إغلاق مؤشر التحميل وإظهار رسالة خطأ
