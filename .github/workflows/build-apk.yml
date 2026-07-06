@@ -52,10 +52,10 @@ jobs:
         run: flutter clean
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Build release AAB (Android App Bundle)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --target-platform android-arm64
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4

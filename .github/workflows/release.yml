@@ -43,10 +43,10 @@ jobs:
         run: flutter pub run flutter_launcher_icons
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Build release AAB
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --target-platform android-arm64
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4

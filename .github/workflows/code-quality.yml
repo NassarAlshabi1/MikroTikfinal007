@@ -153,7 +153,7 @@ jobs:
         run: flutter pub run flutter_launcher_icons || echo "Icon generation skipped"
 
       - name: Test Android build
-        run: flutter build apk --debug
+        run: flutter build apk --debug --target-platform android-arm64
 
       - name: Test Web build
         run: flutter build web --debug
