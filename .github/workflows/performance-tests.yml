@@ -37,15 +37,8 @@ jobs:
         run: flutter pub get
 
       # ============================================================
-      #  اختبارات اللوجيك — تحتاج جهاز (IntegrationTestWidgetsFlutterBinding)
-      #  نستخدم -d chrome لأنه متاح على ubuntu دون محاكي
-      # ============================================================
-      - name: Run Logic Tests (validation, business rules)
-        run: flutter test integration_test/logic_test.dart -d chrome
-        continue-on-error: true  # قد تفشل بعض الاختبارات لأنها تتطلب UI حقيقي
-
-      # ============================================================
-      #  اختبارات الأداء — تحتاج محاكي لتشغيل IntegrationTestWidgetsFlutterBinding
+      #  اختبارات اللوجيك + الأداء — تحتاج محاكي (IntegrationTestWidgetsFlutterBinding)
+      #  ننفذها معاً داخل محاكي Android واحد لتقليل الوقت
       # ============================================================
       - name: Enable KVM for Hardware Acceleration
         run: |
@@ -53,7 +46,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run Performance Tests on Android Emulator
+      - name: Run Logic + Performance Tests on Android Emulator
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
           api-level: 33
@@ -62,7 +55,12 @@ jobs:
           profile: pixel_5
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: flutter test integration_test/performance_test.dart
+          script: |
+            echo "=== Running Logic Tests ==="
+            flutter test integration_test/logic_test.dart || echo "Logic tests had failures (non-blocking)"
+            echo ""
+            echo "=== Running Performance Tests ==="
+            flutter test integration_test/performance_test.dart
 
       # ============================================================
       #  استخراج التقرير من السجلات وحفظه كـ artifact
