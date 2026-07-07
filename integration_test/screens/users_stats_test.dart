@@ -97,6 +97,7 @@ void main() {
       await pumpScreen(
         tester,
         CardListScreen(cardList: mockCardList),
+        wrapWithProvider: true,
       );
 
       // يجب أن يوجد على الأقل زر نسخ واحد (Icons.copy)
@@ -112,6 +113,7 @@ void main() {
           isNetworkLinked: true,
           linkedData: mockLinkedData,
         ),
+        wrapWithProvider: true,
       );
 
       // تحقق من ظهور اسم العميل المرتبط
@@ -207,6 +209,7 @@ void main() {
           isVersion7OrNewer: true,
           username: 'admin',
         ),
+        wrapWithProvider: true,
       );
 
       expect(find.byType(Scaffold), findsOneWidget);
@@ -221,6 +224,7 @@ void main() {
           isVersion7OrNewer: false,
           username: 'admin',
         ),
+        wrapWithProvider: true,
       );
 
       expect(find.byType(ElevatedButton), findsWidgets);
