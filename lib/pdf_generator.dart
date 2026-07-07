@@ -3,7 +3,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -265,24 +265,47 @@ class PdfGenerator {
 
       if (context.mounted) Navigator.of(context).pop();
 
-      // حفظ في مجلد التطبيق
-      final directory = await getApplicationDocumentsDirectory();
-      final filename = 'wifi-cards_${category}_$dateForFilename.pdf';
-      final filePath = '${directory.path}/$filename';
-      final file = File(filePath);
+      // فتح منتقي الملفات ليختار المستخدم مسار الحفظ
+      final defaultFilename = 'wifi-cards_${category}_$dateForFilename.pdf';
+
+      // FilePicker.saveFile يفتح نافذة حفظ (يعمل على Android 11+, Windows, macOS, Linux)
+      // على Android القديم قد لا يعمل — نستخدم fallback لمجلد التحميل
+      String? savedPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'اختر مكان حفظ ملف PDF',
+        fileName: defaultFilename,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (savedPath == null) {
+        // المستخدم ألغى الحفظ
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم إلغاء الحفظ.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return null;
+      }
+
+      // كتابة الملف في المسار الذي اختاره المستخدم
+      final file = File(savedPath);
       await file.writeAsBytes(pdfBytes);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم حفظ PDF: $filename'),
+            content: Text('تم حفظ PDF: ${file.path.split('/').last}'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
         );
       }
 
-      return filePath;
+      return savedPath;
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop();
