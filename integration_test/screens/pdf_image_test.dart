@@ -125,23 +125,24 @@ void main() {
 
   group('ProcessImageScreen Tests', () {
     testWidgets('يقلع ويعرض شاشة معالجة الصورة', (tester) async {
-      // ProcessImageScreen يتطلب imagePath — نمرر مسار وهمي
+      // إنشاء صورة اختبار حقيقية (يمنع PathNotFoundException)
+      final imagePath = await ensureTestImageExists();
       await pumpScreen(
         tester,
-        const ProcessImageScreen(
-          imagePath: '/tmp/test_image.png',
+        ProcessImageScreen(
+          imagePath: imagePath,  // مسار حقيقي
           prefix: 'user',
           length: 6,
           total: 10,
         ),
       );
 
-      await tester.pumpAndSettle(const Duration(seconds: 3));
+      await tester.pump(const Duration(seconds: 2));
 
       expect(find.byType(Scaffold), findsOneWidget);
     });
 
-    testWidgets('لا يسبب crash عند مسار صورة وهمي', (tester) async {
+    testWidgets('لا يسبب crash عند مسار صورة غير موجود', (tester) async {
       await pumpScreen(
         tester,
         const ProcessImageScreen(
@@ -152,8 +153,8 @@ void main() {
         ),
       );
 
-      // يجب أن يقلع بدون crash (قد يعرض خطأ لكن لا crash)
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      // يجب أن يقلع بدون crash — الشاشة الآن تعرض SnackBar خطأ بدل crash
+      await tester.pump(const Duration(seconds: 2));
       expect(find.byType(Scaffold), findsOneWidget);
     });
   });
