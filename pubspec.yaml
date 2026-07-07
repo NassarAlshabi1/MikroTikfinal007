@@ -48,6 +48,11 @@ dependencies:
   dartssh2: ^2.9.5                # اتصال SSH بـ MikroTik
   flutter_secure_storage: ^9.2.2  # تخزين آمن لمفاتيح API
   flutter_dotenv: ^5.1.0          # تحميل إعدادات من .env
+  # --- ✨ SQLite Database (drift) ---
+  drift: ^2.16.0                  # ORM type-safe لـ SQLite
+  sqlite3_flutter_libs: ^0.5.0    # Native SQLite binaries
+  path_provider: ^2.1.5           # (موجود مسبقاً) مسار الـ DB
+  path: ^1.9.0                    # (موجود مسبقاً) بناء المسارات
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +63,9 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.1
   integration_test:
     sdk: flutter
+  # --- drift code generation ---
+  drift_dev: ^2.16.0
+  build_runner: ^2.4.0
 
 flutter:
   uses-material-design: true

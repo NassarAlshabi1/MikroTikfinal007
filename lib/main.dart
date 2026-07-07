@@ -26,15 +26,26 @@ import 'active_users_screen.dart';
 import 'perf/device_capability.dart';
 import 'perf/dio_cache_service.dart';
 import 'ai_diagnostics_screen.dart';
+import 'database/app_database.dart';
+import 'ai/diagnostics_history.dart';
 // -----------------------------------------
+
+/// قاعدة البيانات العامة (Singleton — تُستخدم عبر كل التطبيق)
+late final AppDatabase appDatabase;
 
 /// إقلاع محسّن:
 /// 1) تهيئة قدرة الجهاز (low/mid/high) قبل runApp
-/// 2) تمرير MqttService عبر Provider كالمعتاد
+/// 2) تهيئة قاعدة بيانات SQLite (drift)
+/// 3) تمرير MqttService عبر Provider كالمعتاد
 void main() async {
-  // لا نحتاج WidgetsFlutterBinding هنا لأن DeviceCapability.init تستخدم device_info_plus
-  // الذي يُهيّئ binding داخلياً
+  // تهيئة Flutter binding (مطلوبة لـ SharedPreferences و path_provider)
+  WidgetsFlutterBinding.ensureInitialized();
+
   await DeviceCapability.instance.init();
+
+  // تهيئة قاعدة البيانات
+  appDatabase = AppDatabase();
+  DiagnosticsHistoryService.instance.setDao(appDatabase.aiDiagnosticsDao);
 
   runApp(
     ChangeNotifierProvider(
