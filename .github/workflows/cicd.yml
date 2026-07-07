@@ -63,7 +63,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       - name: Analyze code
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
@@ -122,7 +122,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       - name: Download APK artifact
         uses: actions/download-artifact@v4
@@ -226,7 +226,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       - name: Run performance tests
         id: perf

@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       # ============================================================
       #  اختبارات اللوجيك + الأداء — تحتاج محاكي (IntegrationTestWidgetsFlutterBinding)

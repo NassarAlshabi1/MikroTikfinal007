@@ -4,9 +4,11 @@ targets:
     builders:
       drift_dev:
         options:
-          # توليد كود type-safe
+          # تخزين DateTime كـ TEXT (أوضح في SQLite)
           store_date_time_values_as_text: true
           # استخدام named_parameters للوضوح
           named_parameters: true
-          # توليد new_query_api لـ drift 2.x
-          new_query_api: true
+          # توليد تحذيرات قاتلة للأخطاء الحرجة
+          fatal_warnings: true
+          # تخطي التحقق من الكود المُولّد (أسرع)
+          skip_verification_code: false
