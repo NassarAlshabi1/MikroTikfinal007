@@ -46,6 +46,8 @@ jobs:
       # 5. تحميل مكاتب وحزم المشروع
       - name: Install Dependencies
         run: flutter pub get
+      - name: Generate drift code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       # 6. فحص جودة الكود (سريع — قبل تشغيل المحاكي)
       - name: Analyze Code

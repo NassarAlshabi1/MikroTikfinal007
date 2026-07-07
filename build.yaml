@@ -1,0 +1,12 @@
+# تكوين build_runner لتوليد كود drift
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # توليد كود type-safe
+          store_date_time_values_as_text: true
+          # استخدام named_parameters للوضوح
+          named_parameters: true
+          # توليد new_query_api لـ drift 2.x
+          new_query_api: true
