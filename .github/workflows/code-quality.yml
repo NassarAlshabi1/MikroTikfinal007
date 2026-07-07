@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       - name: Format code
         run: dart format .
@@ -73,7 +73,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       - name: Run tests
         run: |
@@ -128,7 +128,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       - name: Run pub audit
         run: |
@@ -155,7 +155,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --force
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons || echo "Icon generation skipped"
