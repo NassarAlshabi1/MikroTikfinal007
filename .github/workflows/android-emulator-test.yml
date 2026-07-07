@@ -47,7 +47,7 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build --force
+        run: dart run build_runner build
 
       # 6. فحص جودة الكود (سريع — قبل تشغيل المحاكي)
       - name: Analyze Code
