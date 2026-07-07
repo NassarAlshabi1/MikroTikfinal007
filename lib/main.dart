@@ -26,7 +26,7 @@ import 'active_users_screen.dart';
 import 'perf/device_capability.dart';
 import 'perf/dio_cache_service.dart';
 import 'ai_diagnostics_screen.dart';
-import 'database/app_database.dart';
+import 'database/app_database.dart' as db;
 import 'database/sync_service.dart';
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
@@ -34,7 +34,7 @@ import 'ai/diagnostics_history.dart';
 // -----------------------------------------
 
 /// قاعدة البيانات العامة (Singleton — تُستخدم عبر كل التطبيق)
-late final AppDatabase appDatabase;
+late final db.AppDatabase appDatabase;
 
 /// إقلاع محسّن:
 /// 1) تهيئة قدرة الجهاز (low/mid/high) قبل runApp
@@ -47,7 +47,7 @@ void main() async {
   await DeviceCapability.instance.init();
 
   // تهيئة قاعدة البيانات
-  appDatabase = AppDatabase();
+  appDatabase = db.AppDatabase();
   DiagnosticsHistoryService.instance.setDao(appDatabase.aiDiagnosticsDao);
   SyncService.setDatabase(appDatabase);
 

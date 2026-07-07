@@ -6,8 +6,8 @@
 
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../database/app_database.dart';
-import '../main.dart';
+import 'database/app_database.dart' as db;
+import 'main.dart';
 
 class CardSearchScreen extends StatefulWidget {
   const CardSearchScreen({super.key});
@@ -18,7 +18,7 @@ class CardSearchScreen extends StatefulWidget {
 
 class _CardSearchScreenState extends State<CardSearchScreen> {
   final _searchController = TextEditingController();
-  List<Card> _results = [];
+  List<db.Card> _results = [];
   bool _isSearching = false;
   String? _error;
 
@@ -187,7 +187,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
     );
   }
 
-  Widget _buildCardTile(Card card) {
+  Widget _buildCardTile(db.Card card) {
     final statusColor = card.status == 'active'
         ? Colors.green
         : card.status == 'disabled'
@@ -269,7 +269,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
     return '${value.toStringAsFixed(1)} ${units[unitIndex]}';
   }
 
-  void _confirmDelete(Card card) {
+  void _confirmDelete(db.Card card) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(

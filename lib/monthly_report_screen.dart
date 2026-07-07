@@ -4,8 +4,10 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
-import '../database/app_database.dart';
-import '../main.dart';
+import 'database/daos/executed_commands_dao.dart';
+import 'database/daos/cards_dao.dart';
+import 'database/daos/ai_diagnostics_dao.dart';
+import 'main.dart';
 
 class MonthlyReportScreen extends StatefulWidget {
   const MonthlyReportScreen({super.key});
