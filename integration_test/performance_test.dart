@@ -315,11 +315,13 @@ void main() {
     });
 
     testWidgets('ProcessImageScreen', (tester) async {
+      // إنشاء صورة اختبار وهمية (يمنع PathNotFoundException)
+      final imagePath = await ensureTestImageExists();
       final result = await measureScreen(
         tester,
         'ProcessImageScreen',
-        const ProcessImageScreen(
-          imagePath: '/tmp/test.png',
+        ProcessImageScreen(
+          imagePath: imagePath,  // مسار حقيقي الآن
           prefix: 'u',
           length: 6,
           total: 10,

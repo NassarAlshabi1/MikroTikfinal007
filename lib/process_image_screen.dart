@@ -47,13 +47,20 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
 
   Future<void> _processImage() async {
     try {
+      // التحقق من وجود الملف قبل محاولة قراءته
+      // (يمنع PathNotFoundException ويعطي رسالة واضحة للمستخدم)
+      final imageFile = File(widget.imagePath);
+      if (!await imageFile.exists()) {
+        throw Exception('ملف الصورة غير موجود: ${widget.imagePath}');
+      }
+
       // Image is already cropped and rectified by the document scanner.
       // Read image from file
-      final imageBytes = await File(widget.imagePath).readAsBytes();
+      final imageBytes = await imageFile.readAsBytes();
       final originalImage = img.decodeImage(imageBytes);
 
       if (originalImage == null) {
-        throw Exception("Failed to decode image");
+        throw Exception('فشل فك تشفير الصورة — الملف تالف أو غير مدعوم');
       }
 
       // 1. Convert to grayscale
@@ -62,7 +69,7 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
         _status = 'تحويل الصورة إلى أبيض وأسود...';
       });
       final grayscaleImage = img.grayscale(originalImage);
-      
+
       // 2. Adjust contrast
       if (!mounted) return;
       setState(() {
@@ -111,10 +118,36 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
 
       if (!mounted) return;
       Navigator.pop(context, cardNumbers.toList());
+    } on PathNotFoundException catch (e) {
+      // خطأ محدد: الملف غير موجود (قد يحدث لو حُذف بعد اختياره)
+      debugPrint('PathNotFoundException: $e');
+      if (mounted) {
+        _showErrorAndPop('ملف الصورة غير موجود. قد يكون تم حذفه أو نقله.');
+      }
+    } on FormatException catch (e) {
+      debugPrint('FormatException: $e');
+      if (mounted) {
+        _showErrorAndPop('صيغة الصورة غير مدعومة. استخدم PNG أو JPG.');
+      }
     } catch (e) {
-      debugPrint("Error processing image: $e");
-      if (mounted) Navigator.pop(context, []);
+      debugPrint('Error processing image: $e');
+      if (mounted) {
+        _showErrorAndPop('فشل معالجة الصورة: $e');
+      }
     }
+  }
+
+  /// يعرض رسالة خطأ للمستخدم ثم يعود بنتيجة فارغة
+  void _showErrorAndPop(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+    Navigator.pop(context, []);
   }
 
   @override

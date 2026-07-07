@@ -3,6 +3,7 @@
 //  يوفر mocks و pump helpers لاختبار كل شاشة بمعزل عن الشبكة
 // ============================================================
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -177,4 +178,30 @@ Future<void> waitFor(
   await tester.pumpAndSettle(timeout);
   expect(finder, findsWidgets,
       reason: 'العنصر المطلوب لم يظهر خلال ${timeout.inSeconds} ثانية');
+}
+
+/// ينشئ صورة اختبار وهمية في مسار مؤقت
+/// (يمنع PathNotFoundException في ProcessImageScreen test)
+/// تُرجع المسار الكامل للصورة المنشأة
+Future<String> ensureTestImageExists() async {
+  // إنشاء صورة PNG صغيرة (1x1 بكسل أحمر) كـ base64
+  // (لا نحتاج image package — نستخدم PNG bytes جاهزة)
+  const pngBytes = [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+    0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, // IHDR chunk
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, // 1x1
+    0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE, // 8-bit RGB
+    0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54, // IDAT chunk
+    0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00, 0x00,
+    0x00, 0x02, 0x00, 0x01, 0xE2, 0x21, 0xBC, 0x33,
+    0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, // IEND chunk
+    0xAE, 0x42, 0x60, 0x82,
+  ];
+
+  // إنشاء ملف في مجلد مؤقت
+  // (نستخدم /tmp على Linux/Mac، وenv TEMP على Windows)
+  final dir = Directory.systemTemp;
+  final file = File('${dir.path}/test_image.png');
+  await file.writeAsBytes(pngBytes);
+  return file.path;
 }
