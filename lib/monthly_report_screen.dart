@@ -260,7 +260,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     value: report.total > 0
                         ? report.successful / report.total
                         : 0,
-                    backgroundColor: Colors.red.withOpacity(0.3),
+                    backgroundColor: Colors.red.withValues(alpha: 0.3),
                     color: Colors.green,
                     minHeight: 8,
                   ),
@@ -323,7 +323,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: total > 0 ? count / total : 0,
-              backgroundColor: Colors.white.withOpacity(0.1),
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
               color: color,
               minHeight: 6,
             ),

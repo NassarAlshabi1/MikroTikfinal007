@@ -105,27 +105,26 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
 
   /// إحصائيات شاملة في استعلام واحد
   Future<CardsStatistics> getStatistics() async {
-    final totalCards = await cards.count().get();
+    final totalCards = await cards.count().getSingle();
 
-    // عدد الكروت النشطة (selectOnly + where لأن count() يُعيد Selectable<int>
-    // بدون where في drift 2.31+)
+    // عدد الكروت النشطة
     final activeResult = await (selectOnly(cards)
-          ..addColumns([cards.count()])
+          ..addColumns([cards.id.count()])
           ..where(cards.status.equals('active')))
         .getSingle();
-    final activeCount = activeResult.read(cards.count()) ?? 0;
+    final activeCount = activeResult.read(cards.id.count()) ?? 0;
 
     final disabledResult = await (selectOnly(cards)
-          ..addColumns([cards.count()])
+          ..addColumns([cards.id.count()])
           ..where(cards.status.equals('disabled')))
         .getSingle();
-    final disabledCount = disabledResult.read(cards.count()) ?? 0;
+    final disabledCount = disabledResult.read(cards.id.count()) ?? 0;
 
     final expiredResult = await (selectOnly(cards)
-          ..addColumns([cards.count()])
+          ..addColumns([cards.id.count()])
           ..where(cards.status.equals('expired')))
         .getSingle();
-    final expiredCount = expiredResult.read(cards.count()) ?? 0;
+    final expiredCount = expiredResult.read(cards.id.count()) ?? 0;
 
     // مجموع bytes الرفع والتنزيل عبر aggregate expressions
     final uploadResult = await (selectOnly(cards)
@@ -179,7 +178,7 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
     await batch((b) => b.update(
           cards,
           CardsCompanion(status: Value(newStatus)),
-          (c) => c.id.isIn(ids),
+          where: (c) => c.id.isIn(ids),
         ));
   }
 

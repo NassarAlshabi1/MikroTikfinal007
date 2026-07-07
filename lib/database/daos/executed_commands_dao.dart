@@ -88,15 +88,15 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
 
   /// إحصائيات الأوامر المنفّذة
   Future<CommandsStatistics> getStatistics() async {
-    final total = await executedCommands.count().get();
+    final total = await executedCommands.count().getSingle();
 
     // عدد الأوامر الناجحة (selectOnly + where لأن count() يُعيد
     // Selectable<int> بدون where في drift 2.31+)
     final successResult = await (selectOnly(executedCommands)
-          ..addColumns([executedCommands.count()])
+          ..addColumns([executedCommands.id.count()])
           ..where(executedCommands.success.equals(true)))
         .getSingle();
-    final successful = successResult.read(executedCommands.count()) ?? 0;
+    final successful = successResult.read(executedCommands.id.count()) ?? 0;
     final failed = total - successful;
 
     // متوسط زمن التنفيذ
@@ -107,13 +107,13 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
 
     // إحصائيات حسب مستوى الخطورة
     final byRiskQuery = selectOnly(executedCommands)
-      ..addColumns([executedCommands.riskLevel, executedCommands.count()])
+      ..addColumns([executedCommands.riskLevel, executedCommands.id.count()])
       ..groupBy([executedCommands.riskLevel]);
     final byRiskResults = await byRiskQuery.get();
     final byRisk = <String, int>{};
     for (final row in byRiskResults) {
       final risk = row.read(executedCommands.riskLevel) as String? ?? 'unknown';
-      final count = row.read(executedCommands.count()) as int;
+      final count = row.read(executedCommands.id.count()) ?? 0;
       byRisk[risk] = count;
     }
 
