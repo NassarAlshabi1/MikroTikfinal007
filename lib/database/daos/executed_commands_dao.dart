@@ -89,14 +89,19 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
   /// إحصائيات الأوامر المنفّذة
   Future<CommandsStatistics> getStatistics() async {
     final total = await executedCommands.count().get();
-    final successful = await (executedCommands.count()
-          ..where((c) => c.success.equals(true)))
-        .get();
+
+    // عدد الأوامر الناجحة (selectOnly + where لأن count() يُعيد
+    // Selectable<int> بدون where في drift 2.31+)
+    final successResult = await (selectOnly(executedCommands)
+          ..addColumns([executedCommands.count()])
+          ..where(executedCommands.success.equals(true)))
+        .getSingle();
+    final successful = successResult.read(executedCommands.count()) ?? 0;
     final failed = total - successful;
 
     // متوسط زمن التنفيذ
-    final avgResult = await selectOnly(executedCommands)
-          ..addColumns([executedCommands.durationMs.avg()])
+    final avgResult = await (selectOnly(executedCommands)
+          ..addColumns([executedCommands.durationMs.avg()]))
         .getSingle();
     final avgDuration = avgResult.read(executedCommands.durationMs.avg());
 

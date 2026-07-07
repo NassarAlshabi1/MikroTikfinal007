@@ -15,6 +15,14 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+// DAOs — يجب استيرادها هنا حتى يتعرّف الـ @DriftDatabase(daos: [...]) عليها.
+// الاستيراد المتقاطع (DAOs تستورد هذا الملف) آمن لأن ملفات *.g.dart
+// المُولّدة تحلّ الرموز في زمن التشغيل.
+import 'daos/cards_dao.dart';
+import 'daos/profiles_dao.dart';
+import 'daos/ai_diagnostics_dao.dart';
+import 'daos/executed_commands_dao.dart';
+
 part 'app_database.g.dart';
 
 // ============================================================

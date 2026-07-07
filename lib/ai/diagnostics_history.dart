@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import '../database/daos/ai_diagnostics_dao.dart';
 import '../database/database_provider.dart';
 import 'command_executor.dart';
 import 'diagnostics_models.dart';
