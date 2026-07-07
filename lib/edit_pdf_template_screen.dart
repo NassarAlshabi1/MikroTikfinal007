@@ -151,7 +151,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       );
 
       final prefs = await SharedPreferences.getInstance();
-      final templatesJson = prefs.getStringList('pdf_templates') ?? const [];
+      // نستخدم <String>[] (قائمة قابلة للتعديل) بدل const [] (ثابتة)
+      // لأننا سنضيف ونعيد تعديل العناصر لاحقاً
+      final templatesJson = <String>[...prefs.getStringList('pdf_templates') ?? const []];
       templatesJson.removeWhere((jsonString) {
         final t = PdfTemplate.fromJson(jsonDecode(jsonString) as Map<String, dynamic>);
         return t.profileName == newTemplate.profileName;
@@ -164,8 +166,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
         Navigator.of(context).pop();
       }
     } catch (e) {
+      debugPrint('Error saving PDF template: $e');
       if (mounted) {
-        showErrorSnackBar(context, 'فشل حفظ القالب.');
+        showErrorSnackBar(context, 'فشل حفظ القالب: $e');
       }
     } finally {
       if (mounted) {
