@@ -113,9 +113,14 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
   /// إحصائيات التشخيصات
   Future<DiagnosticsStatistics> getStatistics() async {
     final total = await aiDiagnostics.count().get();
-    final favorites = await (aiDiagnostics.count()
-          ..where((d) => d.isFavorite.equals(true)))
-        .get();
+
+    // عدد المفضّلة (selectOnly + where لأن count() يُعيد Selectable<int>
+    // بدون where في drift 2.31+)
+    final favResult = await (selectOnly(aiDiagnostics)
+          ..addColumns([aiDiagnostics.count()])
+          ..where(aiDiagnostics.isFavorite.equals(true)))
+        .getSingle();
+    final favorites = favResult.read(aiDiagnostics.count()) ?? 0;
 
     // إحصائيات حسب الـ mode
     final byModeQuery = selectOnly(aiDiagnostics)
@@ -138,8 +143,8 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
 
   /// إجمالي tokens المستخدمة
   Future<int> getTotalTokensUsed() async {
-    final result = await selectOnly(aiDiagnostics)
-          ..addColumns([aiDiagnostics.tokensUsed.sum()])
+    final result = await (selectOnly(aiDiagnostics)
+          ..addColumns([aiDiagnostics.tokensUsed.sum()]))
         .getSingle();
     return result.read(aiDiagnostics.tokensUsed.sum()) ?? 0;
   }

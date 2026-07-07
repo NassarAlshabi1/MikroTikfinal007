@@ -20,8 +20,8 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
   Future<int> insertCard(CardsCompanion card) => into(cards).insert(card);
 
   /// إضافة عدة كروت في transaction واحد (atomic)
-  Future<List<int>> insertCards(List<CardsCompanion> newCards) async {
-    return await batch((b) => b.insertAll(cards, newCards));
+  Future<void> insertCards(List<CardsCompanion> newCards) async {
+    await batch((b) => b.insertAll(cards, newCards));
   }
 
   /// تحديث كرت
@@ -105,35 +105,47 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
 
   /// إحصائيات شاملة في استعلام واحد
   Future<CardsStatistics> getStatistics() async {
-    final count = await cards.count().get();
-    final activeCount =
-        await (cards.count()..where((c) => c.status.equals('active'))).get();
-    final disabledCount = await (cards.count()
-          ..where((c) => c.status.equals('disabled')))
-        .get();
-    final expiredCount = await (cards.count()
-          ..where((c) => c.status.equals('expired')))
-        .get();
+    final totalCards = await cards.count().get();
 
-    final totalUpload = await totalSumExpression().getSingle();
-    final totalDownload = await (selectOnly(cards)
+    // عدد الكروت النشطة (selectOnly + where لأن count() يُعيد Selectable<int>
+    // بدون where في drift 2.31+)
+    final activeResult = await (selectOnly(cards)
+          ..addColumns([cards.count()])
+          ..where(cards.status.equals('active')))
+        .getSingle();
+    final activeCount = activeResult.read(cards.count()) ?? 0;
+
+    final disabledResult = await (selectOnly(cards)
+          ..addColumns([cards.count()])
+          ..where(cards.status.equals('disabled')))
+        .getSingle();
+    final disabledCount = disabledResult.read(cards.count()) ?? 0;
+
+    final expiredResult = await (selectOnly(cards)
+          ..addColumns([cards.count()])
+          ..where(cards.status.equals('expired')))
+        .getSingle();
+    final expiredCount = expiredResult.read(cards.count()) ?? 0;
+
+    // مجموع bytes الرفع والتنزيل عبر aggregate expressions
+    final uploadResult = await (selectOnly(cards)
+          ..addColumns([cards.uploadBytes.sum()]))
+        .getSingle();
+    final totalUpload = uploadResult.read(cards.uploadBytes.sum()) ?? 0;
+
+    final downloadResult = await (selectOnly(cards)
           ..addColumns([cards.downloadBytes.sum()]))
         .getSingle();
+    final totalDownload = downloadResult.read(cards.downloadBytes.sum()) ?? 0;
 
     return CardsStatistics(
-      totalCards: count,
+      totalCards: totalCards,
       activeCards: activeCount,
       disabledCards: disabledCount,
       expiredCards: expiredCount,
-      totalUploadBytes: totalUpload.read(cards.uploadBytes.sum()) ?? 0,
-      totalDownloadBytes:
-          totalDownload.read(cards.downloadBytes.sum()) ?? 0,
+      totalUploadBytes: totalUpload,
+      totalDownloadBytes: totalDownload,
     );
-  }
-
-  /// Helper لاستعلام مجموع الـ upload
-  Selectable<int> totalSumExpression() {
-    return selectOnly(cards)..addColumns([cards.uploadBytes.sum()]);
   }
 
   // ============================================================
