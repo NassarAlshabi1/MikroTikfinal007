@@ -112,25 +112,25 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
 
   /// إحصائيات التشخيصات
   Future<DiagnosticsStatistics> getStatistics() async {
-    final total = await aiDiagnostics.count().get();
+    final total = await aiDiagnostics.count().getSingle();
 
     // عدد المفضّلة (selectOnly + where لأن count() يُعيد Selectable<int>
     // بدون where في drift 2.31+)
     final favResult = await (selectOnly(aiDiagnostics)
-          ..addColumns([aiDiagnostics.count()])
+          ..addColumns([aiDiagnostics.id.count()])
           ..where(aiDiagnostics.isFavorite.equals(true)))
         .getSingle();
-    final favorites = favResult.read(aiDiagnostics.count()) ?? 0;
+    final favorites = favResult.read(aiDiagnostics.id.count()) ?? 0;
 
     // إحصائيات حسب الـ mode
     final byModeQuery = selectOnly(aiDiagnostics)
-      ..addColumns([aiDiagnostics.mode, aiDiagnostics.count()])
+      ..addColumns([aiDiagnostics.mode, aiDiagnostics.id.count()])
       ..groupBy([aiDiagnostics.mode]);
     final byModeResults = await byModeQuery.get();
     final byMode = <String, int>{};
     for (final row in byModeResults) {
       final mode = row.read(aiDiagnostics.mode) as String;
-      final count = row.read(aiDiagnostics.count()) as int;
+      final count = row.read(aiDiagnostics.id.count()) ?? 0;
       byMode[mode] = count;
     }
 

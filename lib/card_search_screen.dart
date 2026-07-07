@@ -168,7 +168,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                 ? Icons.search
                 : Icons.search_off,
             size: 64,
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
