@@ -74,7 +74,6 @@ final List<ScreenPerfResult> _results = [];
 
 /// يقيس زمن بناء شاشة معينة
 ///
-/// ملاحظة: نستخدم pump(Duration) بدل pumpAndSettle لأن:
 /// - الشاشات تحتوي على network calls للـ MikroTik (تفشل في CI بدون router حقيقي)
 /// - هذه الـ calls تأخذ timeout طويل (10-30s) حتى مع mounted checks
 /// - الهدف هو قياس زمن البناء (build)، وليس انتظار اكتمال الـ network
@@ -91,7 +90,6 @@ Future<ScreenPerfResult> measureScreen(
   String? error;
 
   final buildStopwatch = Stopwatch()..start();
-  try {
     if (wrapWithRiverpod) {
       await tester.pumpWidget(
         ProviderScope(
@@ -119,11 +117,6 @@ Future<ScreenPerfResult> measureScreen(
     // لا ننتظر اكتمال الـ network calls (قد تأخذ 10-30s في CI)
     final settleStopwatch = Stopwatch()..start();
     await tester.pump(settleTimeout);
-    // محاولة pumpAndSettle بـ timeout قصير جداً — إن لم يكتمل، نتجاهل
-    try {
-      await tester.pumpAndSettle(const Duration(milliseconds: 500));
-    } catch (_) {
-      // timeout متوقع للشاشات ذات الـ network calls — لا يعد فشلاً
     }
     settleStopwatch.stop();
     settleMs = settleStopwatch.elapsedMilliseconds;
@@ -171,11 +164,7 @@ void main() {
       app.main();
       final sw = Stopwatch()..start();
       // LoginScreen تحتوي على NetworkInfo().getWifiGatewayIP() (async)
-      // نستخدم pump(Duration) بدل pumpAndSettle لتفادي timeout
       await tester.pump(const Duration(seconds: 2));
-      try {
-        await tester.pumpAndSettle(const Duration(milliseconds: 500));
-      } catch (_) {}
       sw.stop();
       _results.add(ScreenPerfResult(
         screenName: 'LoginScreen',

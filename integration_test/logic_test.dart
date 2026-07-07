@@ -230,6 +230,7 @@ void main() {
           isVersion7OrNewer: true,
           username: 'admin',
         ),
+        wrapWithProvider: true, // BulkAddScreen تحتاج MqttService
       );
 
       expect(find.byType(Form), findsWidgets);
@@ -243,6 +244,7 @@ void main() {
           isVersion7OrNewer: true,
           username: 'admin',
         ),
+        wrapWithProvider: true,
       );
 
       // ابحث عن زر الإضافة واضغطه بدون إدخال بيانات
@@ -264,6 +266,7 @@ void main() {
           isVersion7OrNewer: true,
           username: 'admin',
         ),
+        wrapWithProvider: true,
       );
 
       // أدخل قيم في حقول النص
@@ -285,21 +288,21 @@ void main() {
     });
 
     testWidgets('يقلع ويعرض النموذج', (tester) async {
-      await pumpScreen(tester, const ExtractCardsScreen());
+      await pumpScreen(tester, const ExtractCardsScreen(), wrapWithProvider: true);
 
       // يحتوي على Form
       expect(find.byType(Form), findsWidgets);
     });
 
     testWidgets('يعرض حقول prefix, length, total', (tester) async {
-      await pumpScreen(tester, const ExtractCardsScreen());
+      await pumpScreen(tester, const ExtractCardsScreen(), wrapWithProvider: true);
 
       // ابحث عن حقول إدخال متعددة
       expect(find.byType(TextFormField), findsWidgets);
     });
 
     testWidgets('يعرض خطأ عند ترك الحقول فارغة', (tester) async {
-      await pumpScreen(tester, const ExtractCardsScreen());
+      await pumpScreen(tester, const ExtractCardsScreen(), wrapWithProvider: true);
 
       // ابحث عن زر استخراج واضغطه
       final buttons = find.byType(ElevatedButton);
@@ -316,6 +319,7 @@ void main() {
       await pumpScreen(
         tester,
         CardListScreen(cardList: mockCardList),
+        wrapWithProvider: true,
       );
 
       for (final card in mockCardList) {
@@ -328,6 +332,7 @@ void main() {
       await pumpScreen(
         tester,
         const CardListScreen(cardList: []),
+        wrapWithProvider: true,
       );
 
       // يجب أن تظهر حالة فارغة
@@ -338,6 +343,7 @@ void main() {
       await pumpScreen(
         tester,
         CardListScreen(cardList: mockCardList),
+        wrapWithProvider: true,
       );
 
       // يجب أن يوجد عدد من أزرار النسخ = عدد الكروت
@@ -349,6 +355,7 @@ void main() {
       await pumpScreen(
         tester,
         const CardListScreen(cardList: ['test_card_001']),
+        wrapWithProvider: true,
       );
 
       // اضغط أول زر نسخ
