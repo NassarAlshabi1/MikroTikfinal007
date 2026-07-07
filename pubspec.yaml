@@ -51,8 +51,7 @@ dependencies:
   # --- ✨ SQLite Database (drift) ---
   drift: ^2.16.0                  # ORM type-safe لـ SQLite
   sqlite3_flutter_libs: ^0.5.0    # Native SQLite binaries
-  path_provider: ^2.1.5           # (موجود مسبقاً) مسار الـ DB
-  path: ^1.9.0                    # (موجود مسبقاً) بناء المسارات
+  # path_provider و path موجودان مسبقاً في الـ dependencies أعلاه
 
 dev_dependencies:
   flutter_test:
