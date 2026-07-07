@@ -270,7 +270,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
           profileName: _selectedProfile!,
           userCount: users.length,
           date: DateTime.now());
-      final existingFiles = prefs.getStringList('saved_files') ?? const [];
+      final existingFiles = <String>[...prefs.getStringList('saved_files') ?? const []];
       existingFiles.add(jsonEncode(savedFile.toJson()));
       await prefs.setStringList('saved_files', existingFiles);
 
@@ -284,7 +284,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
           );
           relevantTemplate = PdfTemplate.fromJson(jsonDecode(templateJson) as Map<String, dynamic>);
         } catch (e) {
-          // No template found
+          // لم يوجد قالب مطابق — سنظهر رسالة للمستخدم
+          debugPrint('No PDF template found for profile "$_selectedProfile": $e');
         }
       }
 
@@ -367,6 +368,30 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           );
                         },
                       ),
+                  ] else ...[
+                    // لا يوجد قالب PDF مطابق — اعرض رسالة تنبيه
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'لا يوجد قالب PDF للفئة "$_selectedProfile". '
+                              'يمكنك إنشاء قالب من شاشة "إدارة قوالب PDF".',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
 
                   if (_isNetworkLinked) ...[
