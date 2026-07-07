@@ -41,7 +41,7 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
 
   /// كل الكروت (مرتبة بالأحدث)
   Future<List<Card>> getAllCards() =>
-      (select(cards)..orderBy((c) => OrderingTerm.desc(c.createdAt))).get();
+      (select(cards)..orderBy([(c) => OrderingTerm.desc(c.createdAt)])).get();
 
   /// كرت واحد بالـ ID
   Future<Card?> getCardById(int id) =>
@@ -75,8 +75,8 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
   Future<List<Card>> getTopConsumers(int limit) =>
       (select(cards)
             ..where((c) => c.status.equals('active'))
-            ..orderBy((c) => OrderingTerm.desc(
-                c.uploadBytes + c.downloadBytes))
+            ..orderBy([(c) => OrderingTerm.desc(
+                c.uploadBytes + c.downloadBytes)])
             ..limit(limit))
           .get();
 
@@ -86,7 +86,7 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
 
   /// Stream لكل الكروت (للـ reactive UI)
   Stream<List<Card>> watchAllCards() =>
-      (select(cards)..orderBy((c) => OrderingTerm.desc(c.createdAt)))
+      (select(cards)..orderBy([(c) => OrderingTerm.desc(c.createdAt)]))
           .watch();
 
   /// Stream للكروت النشطة

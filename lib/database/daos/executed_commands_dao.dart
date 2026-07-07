@@ -29,13 +29,13 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
   /// كل الأوامر (مرتبة بالأحدث)
   Future<List<ExecutedCommand>> getAllCommands() =>
       (select(executedCommands)
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt)))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
           .get();
 
   /// آخر N أمر
   Future<List<ExecutedCommand>> getRecentCommands(int limit) =>
       (select(executedCommands)
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)])
             ..limit(limit))
           .get();
 
@@ -43,28 +43,28 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
   Future<List<ExecutedCommand>> getSuccessfulCommands() =>
       (select(executedCommands)
             ..where((c) => c.success.equals(true))
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt)))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
           .get();
 
   /// الأوامر الفاشلة فقط
   Future<List<ExecutedCommand>> getFailedCommands() =>
       (select(executedCommands)
             ..where((c) => c.success.equals(false))
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt)))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
           .get();
 
   /// الأوامر حسب مستوى الخطورة
   Future<List<ExecutedCommand>> getCommandsByRisk(String riskLevel) =>
       (select(executedCommands)
             ..where((c) => c.riskLevel.equals(riskLevel))
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt)))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
           .get();
 
   /// أوامر جلسة تشخيص محددة
   Future<List<ExecutedCommand>> getCommandsByDiagnostic(int diagnosticId) =>
       (select(executedCommands)
             ..where((c) => c.diagnosticId.equals(diagnosticId))
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt)))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
           .get();
 
   // ============================================================
@@ -73,12 +73,12 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
 
   Stream<List<ExecutedCommand>> watchAllCommands() =>
       (select(executedCommands)
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt)))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
           .watch();
 
   Stream<List<ExecutedCommand>> watchRecentCommands(int limit) =>
       (select(executedCommands)
-            ..orderBy((c) => OrderingTerm.desc(c.executedAt))
+            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)])
             ..limit(limit))
           .watch();
 

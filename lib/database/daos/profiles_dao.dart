@@ -29,7 +29,7 @@ class ProfilesDao extends DatabaseAccessor<AppDatabase> with _$ProfilesDaoMixin 
   // ============================================================
 
   Future<List<Profile>> getAllProfiles() =>
-      (select(profiles)..orderBy((p) => OrderingTerm.asc(p.name))).get();
+      (select(profiles)..orderBy([(p) => OrderingTerm.asc(p.name)])).get();
 
   Future<Profile?> getProfileById(int id) =>
       (select(profiles)..where((p) => p.id.equals(id)))
@@ -41,7 +41,7 @@ class ProfilesDao extends DatabaseAccessor<AppDatabase> with _$ProfilesDaoMixin 
 
   /// Stream للملفات الشخصية (للـ reactive UI)
   Stream<List<Profile>> watchAllProfiles() =>
-      (select(profiles)..orderBy((p) => OrderingTerm.asc(p.name)))
+      (select(profiles)..orderBy([(p) => OrderingTerm.asc(p.name)]))
           .watch();
 
   /// مزامنة الملفات الشخصية من MikroTik (upsert)

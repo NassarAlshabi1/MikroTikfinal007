@@ -39,7 +39,7 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
   /// كل الجلسات (مرتبة بالأحدث)
   Future<List<AiDiagnostic>> getAllDiagnostics() =>
       (select(aiDiagnostics)
-            ..orderBy((d) => OrderingTerm.desc(d.startedAt)))
+            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .get();
 
   /// جلسة واحدة بالـ ID
@@ -51,20 +51,20 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
   Future<List<AiDiagnostic>> getFavoriteDiagnostics() =>
       (select(aiDiagnostics)
             ..where((d) => d.isFavorite.equals(true))
-            ..orderBy((d) => OrderingTerm.desc(d.startedAt)))
+            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .get();
 
   /// الجلسات حسب الـ mode
   Future<List<AiDiagnostic>> getDiagnosticsByMode(String mode) =>
       (select(aiDiagnostics)
             ..where((d) => d.mode.equals(mode))
-            ..orderBy((d) => OrderingTerm.desc(d.startedAt)))
+            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .get();
 
   /// آخر N جلسة
   Future<List<AiDiagnostic>> getRecentDiagnostics(int limit) =>
       (select(aiDiagnostics)
-            ..orderBy((d) => OrderingTerm.desc(d.startedAt))
+            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)])
             ..limit(limit))
           .get();
 
@@ -74,7 +74,7 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
             ..where((d) =>
                 d.userQuery.like('%$query%') |
                 d.aiResponse.like('%$query%'))
-            ..orderBy((d) => OrderingTerm.desc(d.startedAt)))
+            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .get();
 
   // ============================================================
@@ -83,13 +83,13 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
 
   Stream<List<AiDiagnostic>> watchAllDiagnostics() =>
       (select(aiDiagnostics)
-            ..orderBy((d) => OrderingTerm.desc(d.startedAt)))
+            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .watch();
 
   Stream<List<AiDiagnostic>> watchFavoriteDiagnostics() =>
       (select(aiDiagnostics)
             ..where((d) => d.isFavorite.equals(true))
-            ..orderBy((d) => OrderingTerm.desc(d.startedAt)))
+            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .watch();
 
   // ============================================================
