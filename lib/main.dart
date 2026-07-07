@@ -27,6 +27,9 @@ import 'perf/device_capability.dart';
 import 'perf/dio_cache_service.dart';
 import 'ai_diagnostics_screen.dart';
 import 'database/app_database.dart';
+import 'database/sync_service.dart';
+import 'monthly_report_screen.dart';
+import 'card_search_screen.dart';
 import 'ai/diagnostics_history.dart';
 // -----------------------------------------
 
@@ -46,6 +49,7 @@ void main() async {
   // تهيئة قاعدة البيانات
   appDatabase = AppDatabase();
   DiagnosticsHistoryService.instance.setDao(appDatabase.aiDiagnosticsDao);
+  SyncService.setDatabase(appDatabase);
 
   runApp(
     ChangeNotifierProvider(
@@ -1220,6 +1224,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const AiDiagnosticsScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'بحث الكروت',
+        icon: Icons.search,
+        color: const Color(0xFF4CAF50), // Green
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const CardSearchScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'التقارير',
+        icon: Icons.assessment,
+        color: const Color(0xFFFF9800), // Orange
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const MonthlyReportScreen()));
         },
       ),
       ServiceItem(
