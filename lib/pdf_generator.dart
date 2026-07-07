@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -23,10 +24,22 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   final printDate = data['printDate'] as String;   // تاريخ الطباعة (يظهر في البطاقة)
   final category = data['category'] as String;     // فئة الكارت (يظهر في البطاقة واسم الملف)
 
+  // حماية من cardsPerPage = 0 أو سالب (يسبب infinite loop)
+  // الحد الأدنى 1، الحد الأقصى 9 (يتناسب مع A4)
+  final safeCardsPerPage = cardsPerPage.clamp(1, 9);
+  // حماية من قائمة فارغة
+  if (cardUsernames.isEmpty) {
+    throw Exception('قائمة الكروت فارغة — لا يمكن توليد PDF');
+  }
+  // حماية من أبعاد صورة غير صحيحة
+  if (imageWidth <= 0 || imageHeight <= 0) {
+    throw Exception('أبعاد صورة القالب غير صحيحة: ${imageWidth}x$imageHeight');
+  }
+
   final doc = pw.Document();
   final imageProvider = pw.MemoryImage(imageBytes);
 
-  int step = cardsPerPage;
+  int step = safeCardsPerPage;
   for (var i = 0; i < cardUsernames.length; i += step) {
     final pageCards = cardUsernames.sublist(
         i, i + step > cardUsernames.length ? cardUsernames.length : i + step);
@@ -149,8 +162,14 @@ class PdfGenerator {
     );
 
     try {
+      // التحقق من وجود ملف الصورة قبل القراءة
+      final imageFile = File(template.imagePath);
+      if (!await imageFile.exists()) {
+        throw Exception('ملف صورة القالب غير موجود: ${template.imagePath}');
+      }
+
       // قراءة الصورة في الواجهة الرئيسية (لضمان التوافق مع Web)
-      final imageBytes = await File(template.imagePath).readAsBytes();
+      final imageBytes = await imageFile.readAsBytes();
 
       // تحضير التاريخ
       final now = DateTime.now();
@@ -188,14 +207,95 @@ class PdfGenerator {
       if (context.mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فشل إنشاء ملف PDF. الرجاء التأكد من وجود القالب وصلاحية الصورة.'),
+          SnackBar(
+            content: Text('فشل إنشاء ملف PDF: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
-      // يمكنك أيضاً طباعة الخطأ للتشخيص
       debugPrint('Error generating PDF: $e');
+    }
+  }
+
+  /// حفظ ملف PDF في مجلد التطبيق (بدل مشاركته)
+  /// يُرجع مسار الملف المحفوظ
+  static Future<String?> savePdf(
+    BuildContext context, {
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+    String category = 'general',
+  }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // التحقق من وجود ملف الصورة
+      final imageFile = File(template.imagePath);
+      if (!await imageFile.exists()) {
+        throw Exception('ملف صورة القالب غير موجود: ${template.imagePath}');
+      }
+
+      final imageBytes = await imageFile.readAsBytes();
+
+      final now = DateTime.now();
+      final dateForFilename =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}';
+      final dateForCard =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      final Map<String, dynamic> generationData = {
+        'cardUsernames': cardUsernames,
+        'imageBytes': imageBytes,
+        'textXRatio': template.textXRatio,
+        'textYRatio': template.textYRatio,
+        'cardsPerPage': template.cardsPerPage,
+        'imageWidth': template.imageWidth,
+        'imageHeight': template.imageHeight,
+        'markerWidthRatio': template.markerWidthRatio,
+        'markerHeightRatio': template.markerHeightRatio,
+        'printDate': dateForCard,
+        'category': category,
+      };
+
+      final pdfBytes = await compute(_generatePdfInBackground, generationData);
+
+      if (context.mounted) Navigator.of(context).pop();
+
+      // حفظ في مجلد التطبيق
+      final directory = await getApplicationDocumentsDirectory();
+      final filename = 'wifi-cards_${category}_$dateForFilename.pdf';
+      final filePath = '${directory.path}/$filename';
+      final file = File(filePath);
+      await file.writeAsBytes(pdfBytes);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تم حفظ PDF: $filename'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
+      return filePath;
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل حفظ PDF: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      debugPrint('Error saving PDF: $e');
+      return null;
     }
   }
 }
