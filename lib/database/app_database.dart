@@ -26,7 +26,7 @@ class Cards extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get username => text().withLength(min: 1, max: 100)();
   TextColumn get password => text().nullable()();
-  IntColumn get profileId => integer().customConstraint('REFERENCES profiles(id)')();
+  IntColumn get profileId => integer().customConstraint('NOT NULL REFERENCES profiles(id)')();
   IntColumn get sharedUsers => integer().withDefault(const Constant(1))();
   TextColumn get status => text().withDefault(const Constant('active'))();
   DateTimeColumn get createdAt => dateTime()();
@@ -66,7 +66,7 @@ class Profiles extends Table {
 /// جدول جلسات الاتصال (Sessions) — للمراقبة التاريخية
 class Sessions extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get cardId => integer().customConstraint('REFERENCES cards(id) ON DELETE CASCADE')();
+  IntColumn get cardId => integer().customConstraint('NOT NULL REFERENCES cards(id) ON DELETE CASCADE')();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get endedAt => dateTime().nullable()();
   IntColumn get uploadBytes => integer().withDefault(const Constant(0))();
@@ -101,8 +101,9 @@ class ExecutedCommands extends Table {
   TextColumn get error => text().nullable()();
   IntColumn get durationMs => integer().nullable()();
   DateTimeColumn get executedAt => dateTime()();
-  IntColumn get diagnosticId => integer().nullable()().customConstraint(
-        'REFERENCES ai_diagnostics(id) ON DELETE SET NULL')();
+  IntColumn get diagnosticId => integer()
+      .nullable()
+      .customConstraint('REFERENCES ai_diagnostics(id) ON DELETE SET NULL')();
 }
 
 /// جدول النسخ الاحتياطية

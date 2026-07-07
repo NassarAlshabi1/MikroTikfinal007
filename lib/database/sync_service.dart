@@ -207,7 +207,7 @@ class SyncService {
             ..where((c) => c.username.equals(username)))
           .getSingleOrNull();
 
-      final isDisabled = u['disabled'] as String? == 'true';
+      final isDisabled = (u['disabled'] as String?) == 'true';
       final companion = CardsCompanion(
         username: Value(username),
         password: Value(u['password'] as String?),
