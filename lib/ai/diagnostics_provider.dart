@@ -5,7 +5,6 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'diagnostics_models.dart';
 import 'mikrotik_data_collector.dart';
@@ -158,7 +157,7 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
     try {
       final result = await CommandExecutor.execute(
         command: command,
-        method: state.settings.connectionMethod,
+        method: MikrotikConnectionMethod.routerOS, // تنفيذ عبر API حصراً
       );
 
       // أضف رسالة بنتيجة الأمر للمحادثة
@@ -224,25 +223,9 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
     );
 
     try {
-      // 1) جمع البيانات
+      // 1) جمع البيانات — عبر RouterOS API حصراً
       final settings = state.settings;
-      MikrotikSnapshot snapshot;
-
-      if (settings.connectionMethod == MikrotikConnectionMethod.ssh) {
-        // SSH: نحتاج بيانات اعتماد من SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        final ip = prefs.getString('ip') ?? '';
-        final user = prefs.getString('user') ?? '';
-        final pass = prefs.getString('pass') ?? '';
-        snapshot = await MikrotikDataCollector.collectViaSSH(
-          host: ip,
-          username: user,
-          password: pass,
-        );
-      } else {
-        // RouterOS API
-        snapshot = await MikrotikDataCollector.collectViaRouterOS();
-      }
+      final snapshot = await MikrotikDataCollector.collectViaRouterOS();
 
       state = state.copyWith(
         lastSnapshot: snapshot,
@@ -274,12 +257,18 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
       state = state.copyWith(
         messages: [
           ...state.messages,
-          DiagnosticMessage.error('فشل التشخيص: $e'),
+          DiagnosticMessage.error(_friendlyError(e, 'فشل التشخيص')),
         ],
         isLoading: false,
         clearLoadingStage: true,
       );
     }
+  }
+
+  /// يحوّل الاستثناء إلى رسالة عربية مفهومة (يعرض رسالة AiServiceException كما هي)
+  String _friendlyError(Object e, String prefix) {
+    if (e is AiServiceException) return e.message;
+    return '$prefix: $e';
   }
 
   /// يرسل سؤال متابعة بدون جمع بيانات جديدة (يستخدم آخر snapshot)
@@ -320,7 +309,7 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
       state = state.copyWith(
         messages: [
           ...state.messages,
-          DiagnosticMessage.error('فشل التحليل: $e'),
+          DiagnosticMessage.error(_friendlyError(e, 'فشل التحليل')),
         ],
         isLoading: false,
         clearLoadingStage: true,
