@@ -291,6 +291,28 @@ class AiSettings {
       );
 
   bool get isConfigured => apiKey.isNotEmpty;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AiSettings &&
+          runtimeType == other.runtimeType &&
+          provider == other.provider &&
+          model == other.model &&
+          apiKey == other.apiKey &&
+          connectionMethod == other.connectionMethod &&
+          maxTokens == other.maxTokens &&
+          mode == other.mode;
+
+  @override
+  int get hashCode => Object.hash(
+        provider,
+        model,
+        apiKey,
+        connectionMethod,
+        maxTokens,
+        mode,
+      );
 }
 
 /// حالة التشخيص الكاملة
