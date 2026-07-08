@@ -82,6 +82,9 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       int maxRecords = 2000,
     }) async {
     final List<Map<String, dynamic>> all = [];
+    // إزالة التكرار عبر .id: بعض إصدارات RouterOS لا تدعم .skip فتعيد نفس
+    // الصفحة في كل مرة → تضخيم الأرقام. نتتبّع المعرّفات ونتوقف عند عدم وجود جديد.
+    final Set<String> seenIds = {};
     int skip = 0;
     bool serverPaged = true;
     while (all.length < maxRecords) {
@@ -99,7 +102,21 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           for (final e in res) Map<String, dynamic>.from(e),
         ];
         if (page.isEmpty) break;
-        all.addAll(page);
+
+        int added = 0;
+        for (final row in page) {
+          final id = row['.id']?.toString();
+          if (id == null || id.isEmpty) {
+            all.add(row); // لا يوجد .id — نُبقيه كما هو
+            added++;
+          } else if (seenIds.add(id)) {
+            all.add(row);
+            added++;
+          }
+        }
+
+        // لم تُضف الصفحة أي سجل جديد ⇒ الراوتر يتجاهل .skip → أوقف لتفادي التكرار
+        if (added == 0) break;
         if (page.length < chunk) break;
         skip += chunk;
       } catch (_) {
