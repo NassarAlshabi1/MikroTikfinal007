@@ -3,7 +3,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// نقتصر على ProviderScope لتجنّب تعارض ChangeNotifierProvider مع حزمة provider
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:router_os_client/router_os_client.dart';
