@@ -7,6 +7,7 @@
 // ============================================================
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:router_os_client/router_os_client.dart';
@@ -77,9 +78,11 @@ class MikrotikDataCollector {
   /// ينفذ أمراً واحداً عبر SSH ويتحمل الأخطاء
   static Future<String> _executeSafely(SSHClient client, String command) async {
     try {
-      final result = await client.execute(command);
-      // result قد يكون Object أو String حسب الإصدار — نحوّل بأمان
-      return result.toString();
+      // client.run() يُرجع Uint8List للمخرجات (stdout+stderr).
+      // (سابقاً كان يُستخدم client.execute().toString() الذي يُرجع
+      //  "Instance of 'SSHSession'" بدل النص الفعلي.)
+      final result = await client.run(command);
+      return utf8.decode(result, allowMalformed: true).trim();
     } catch (e) {
       return 'ERROR executing "$command": $e';
     }
