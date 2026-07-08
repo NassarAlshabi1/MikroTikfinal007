@@ -15,7 +15,6 @@ import 'add_user_screen.dart';
 import 'bulk_add_screen.dart';
 import 'saved_files_screen.dart';
 import 'mqtt_service.dart';
-import 'qahtani_link_screen.dart';
 import 'profile_screen.dart';
 import 'pdf_templates_screen.dart';
 import 'network_doctor_screen.dart';
@@ -1138,15 +1137,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             builder: (context) =>
                 BulkAddScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, username: widget.username),
           ));
-        },
-      ),
-      ServiceItem(
-        title: 'ربط الشبكة',
-        icon: Icons.link,
-        color: const Color(0xFF42A5F5), // Blue
-        onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen()));
         },
       ),
       ServiceItem(

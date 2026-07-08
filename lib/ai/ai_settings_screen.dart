@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'diagnostics_models.dart';
 import 'diagnostics_provider.dart';
@@ -200,8 +201,17 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             // رابط الحصول على المفتاح
             InkWell(
               onTap: () async {
-                // فتح رابط الحصول على مفتاح API
-                // يُترك للمستخدم (url_launcher)
+                final url = settings.provider == AiProvider.openAI
+                    ? 'https://platform.openai.com/api-keys'
+                    : 'https://aistudio.google.com/app/apikey';
+                final uri = Uri.parse(url);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('تعذّر فتح الرابط: $url')),
+                  );
+                }
               },
               child: Text(
                 settings.provider == AiProvider.openAI
@@ -217,54 +227,27 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             const SizedBox(height: 24),
 
             // ===== طريقة الاتصال بـ MikroTik =====
-            const Text(
-              'طريقة الاتصال بـ MikroTik',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<MikrotikConnectionMethod>(
-              value: settings.connectionMethod,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // التشخيص والتنفيذ يتمّان عبر RouterOS API حصراً (منفذ 8728/8729)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
-              items: MikrotikConnectionMethod.values
-                  .map((m) => DropdownMenuItem(
-                        value: m,
-                        child: Text(m.displayName),
-                      ))
-                  .toList(),
-              onChanged: (method) {
-                if (method != null) {
-                  ref
-                      .read(aiSettingsNotifierProvider.notifier)
-                      .setConnectionMethod(method);
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-            if (settings.connectionMethod == MikrotikConnectionMethod.ssh)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.warning_amber, color: Colors.orange, size: 18),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'يتطلب SSH تفعيل خدمة SSH على MikroTik (منفذ 22). '
-                        'استخدم نفس بيانات الدخول الحالية.',
-                        style: TextStyle(fontSize: 12),
-                      ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blueAccent, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'الاتصال والتنفيذ يتمّان عبر RouterOS API (منفذ 8728/8729) '
+                      'باستخدام بيانات الدخول الحالية.',
+                      style: TextStyle(fontSize: 12),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
 
             const SizedBox(height: 32),
 

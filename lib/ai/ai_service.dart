@@ -27,24 +27,64 @@ class AiService {
     List<DiagnosticMessage> conversationHistory = const [],
   }) async {
     if (!settings.isConfigured) {
-      throw Exception('مفتاح API غير مُعد. افتح الإعدادات وأدخل المفتاح.');
+      throw const AiServiceException(
+          'مفتاح API غير مُعد. افتح الإعدادات وأدخل المفتاح.');
     }
 
-    switch (settings.provider) {
-      case AiProvider.openAI:
-        return _analyzeWithOpenAI(
-          settings: settings,
-          userQuery: userQuery,
-          snapshotContext: snapshotContext,
-          conversationHistory: conversationHistory,
-        );
-      case AiProvider.gemini:
-        return _analyzeWithGemini(
-          settings: settings,
-          userQuery: userQuery,
-          snapshotContext: snapshotContext,
-          conversationHistory: conversationHistory,
-        );
+    try {
+      switch (settings.provider) {
+        case AiProvider.openAI:
+          return await _analyzeWithOpenAI(
+            settings: settings,
+            userQuery: userQuery,
+            snapshotContext: snapshotContext,
+            conversationHistory: conversationHistory,
+          );
+        case AiProvider.gemini:
+          return await _analyzeWithGemini(
+            settings: settings,
+            userQuery: userQuery,
+            snapshotContext: snapshotContext,
+            conversationHistory: conversationHistory,
+          );
+      }
+    } on DioException catch (e) {
+      throw AiServiceException(_mapDioError(e));
+    } on AiServiceException {
+      rethrow;
+    } catch (e) {
+      throw AiServiceException('تعذّر الحصول على رد من الـ AI: $e');
+    }
+  }
+
+  /// يحوّل أخطاء الشبكة/الخادم إلى رسائل عربية مفهومة
+  static String _mapDioError(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'انتهت مهلة الاتصال بمزوّد الـ AI. تحقّق من الإنترنت وحاول مجدداً.';
+      case DioExceptionType.connectionError:
+        return 'تعذّر الاتصال بمزوّد الـ AI. تحقّق من اتصال الإنترنت.';
+      case DioExceptionType.cancel:
+        return 'أُلغي الطلب.';
+      default:
+        final code = e.response?.statusCode;
+        switch (code) {
+          case 401:
+            return 'مفتاح API غير صالح أو منتهي. تحقّق من المفتاح في الإعدادات.';
+          case 403:
+            return 'الوصول مرفوض (403). تأكّد من صلاحيات المفتاح.';
+          case 429:
+            return 'تجاوزت حد الطلبات (429). انتظر قليلاً ثم أعد المحاولة.';
+          case 400:
+            return 'طلب غير صالح (400). قد يكون الموديل غير مدعوم أو المدخلات كبيرة.';
+          default:
+            if (code != null && code >= 500) {
+              return 'خطأ مؤقت في خادم المزوّد ($code). حاول لاحقاً.';
+            }
+            return 'فشل الاتصال بمزوّد الـ AI${code != null ? " ($code)" : ""}.';
+        }
     }
   }
 
@@ -208,6 +248,15 @@ class AiService {
 
     return commands;
   }
+}
+
+/// استثناء برسالة عربية جاهزة للعرض للمستخدم
+class AiServiceException implements Exception {
+  final String message;
+  const AiServiceException(this.message);
+
+  @override
+  String toString() => message;
 }
 
 /// نتيجة تحليل الـ AI
