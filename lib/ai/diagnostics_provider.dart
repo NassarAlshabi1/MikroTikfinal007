@@ -344,6 +344,8 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
 
   /// يحدّث الإعدادات (عند تغييرها من شاشة الإعدادات)
   void updateSettings(AiSettings settings) {
+    // لا تُطلق تحديث حالة إن لم تتغيّر الإعدادات فعلياً (يمنع إعادة بناء زائدة)
+    if (state.settings == settings) return;
     state = state.copyWith(settings: settings);
     // DiagnosticSession.copyWith لا يقبل mode أو mikrotikIp بشكل منفصل
     // نُنشئ جلسة جديدة بالـ mode الجديد عند الحاجة (يحدث في clearChat)
