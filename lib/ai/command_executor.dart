@@ -301,15 +301,21 @@ class CommandExecutor {
     if (tokens.isEmpty) return const [];
 
     final words = <String>[]; // مكوّنات المسار + الفعل
-    final params = <String>[]; // وسائط key=value
+    final params = <String>[]; // وسائط بصيغة API (=attr=val أو ?query=val)
     var inParams = false;
 
     for (final token in tokens) {
-      if (!inParams && !token.contains('=')) {
+      final isQuery = token.startsWith('?'); // مُرشِّح استعلام RouterOS
+      if (!inParams && !token.contains('=') && !isQuery) {
         words.add(token);
       } else {
         inParams = true;
-        params.add(token.startsWith('=') ? token : '=$token');
+        // البروتوكول يميّز ?query عن =attribute؛ نُبقي البادئات كما هي
+        if (token.startsWith('=') || isQuery) {
+          params.add(token);
+        } else {
+          params.add('=$token');
+        }
       }
     }
 
