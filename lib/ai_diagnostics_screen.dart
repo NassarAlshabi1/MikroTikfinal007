@@ -185,11 +185,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(diagnosticsProvider);
-    final settingsAsync = ref.watch(aiSettingsNotifierProvider);
 
-    // تحديث الإعدادات في الـ diagnostics notifier عند تغييرها
-    settingsAsync.whenData((settings) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    // مزامنة الإعدادات مع الـ diagnostics notifier فقط عند تغيّرها فعلياً.
+    // (سابقاً كان هذا يتم داخل build عبر whenData + addPostFrameCallback مما
+    //  يسبّب حلقة إعادة بناء مستمرة كل إطار — تستنزف البطارية والأداء.)
+    ref.listen(aiSettingsNotifierProvider, (previous, next) {
+      next.whenData((settings) {
         ref.read(diagnosticsProvider.notifier).updateSettings(settings);
       });
     });

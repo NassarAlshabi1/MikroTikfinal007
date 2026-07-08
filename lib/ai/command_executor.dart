@@ -7,6 +7,8 @@
 //  - تصنيف الأوامر آمنة/خطرة
 // ============================================================
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -87,7 +89,7 @@ class CommandExecutor {
         lower.contains('factory-reset') ||
         lower.contains('remove ') ||
         lower.contains('unset ') ||
-        lower.contains('disable ') && lower.contains('ether1')) {
+        (lower.contains('disable ') && lower.contains('ether1'))) {
       return CommandRiskLevel.dangerous;
     }
 
@@ -105,7 +107,7 @@ class CommandExecutor {
     if (lower.contains('print') ||
         lower.contains('monitor') ||
         lower.contains('export') ||
-        lower.contains('find ') && !lower.contains('remove')) {
+        (lower.contains('find ') && !lower.contains('remove'))) {
       return CommandRiskLevel.safe;
     }
 
@@ -231,8 +233,10 @@ class CommandExecutor {
       final ok = await client.login().timeout(const Duration(seconds: 10));
       if (!ok) throw Exception('فشل تسجيل الدخول');
 
-      // تحويل الأمر النصي إلى args (مقسوم بمسافات، مع احترام علامات الاقتباس)
-      final args = _parseCommand(command);
+      // تحويل الأمر النصي (بصيغة CLI) إلى صيغة RouterOS API.
+      // مثال: "/interface print" → ["/interface/print"]
+      //        "/ip address print" → ["/ip/address/print"]
+      final args = _toApiSentence(command);
       debugPrint('[CommandExecutor] RouterOS executing: $args');
 
       final response = await client.talk(args).timeout(timeout);
@@ -273,12 +277,48 @@ class CommandExecutor {
 
     try {
       debugPrint('[CommandExecutor] SSH executing: $command');
-      final result = await client.execute(command).timeout(timeout);
-      // dartssh2 يرجع String مباشرة (non-nullable)
-      return result.toString();
+      // client.run() يُرجع Uint8List للمخرجات الفعلية.
+      // (client.execute() يُرجع SSHSession وليس النص — كان .toString()
+      //  يعطي "Instance of 'SSHSession'".)
+      final result = await client.run(command).timeout(timeout);
+      return utf8.decode(result, allowMalformed: true).trim();
     } finally {
       client.close();
     }
+  }
+
+  /// يحوّل أمر RouterOS بصيغة CLI إلى صيغة API التي يقبلها `talk`.
+  ///
+  /// - المسار والفعل (الكلمات التي لا تحتوي على `=`) تُدمج بشرطة مائلة:
+  ///   "/interface print" → "/interface/print"
+  /// - الوسائط بصيغة key=value تُمرّر مسبوقة بـ `=`:
+  ///   "/ip dns set servers=8.8.8.8" → ["/ip/dns/set", "=servers=8.8.8.8"]
+  ///
+  /// ملاحظة: الأوامر ذات الوسائط الموضعية (مثل تحديد اسم واجهة بدون key=)
+  /// أدق تنفيذاً عبر SSH؛ صيغة API مناسبة أساساً لأوامر القراءة والإعداد بالمفاتيح.
+  static List<String> _toApiSentence(String command) {
+    final tokens = _parseCommand(command);
+    if (tokens.isEmpty) return const [];
+
+    final words = <String>[]; // مكوّنات المسار + الفعل
+    final params = <String>[]; // وسائط key=value
+    var inParams = false;
+
+    for (final token in tokens) {
+      if (!inParams && !token.contains('=')) {
+        words.add(token);
+      } else {
+        inParams = true;
+        params.add(token.startsWith('=') ? token : '=$token');
+      }
+    }
+
+    // دمج الكلمات بشرطة مائلة مع ضمان بادئة واحدة "/"
+    var sentence = words.join('/');
+    if (!sentence.startsWith('/')) sentence = '/$sentence';
+    sentence = sentence.replaceAll(RegExp(r'/{2,}'), '/');
+
+    return [sentence, ...params];
   }
 
   /// يحوّل أمر نصي إلى List<String> (احترام علامات الاقتباس)
