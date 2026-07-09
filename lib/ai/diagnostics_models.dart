@@ -88,7 +88,7 @@ extension DiagnosticModeExtension on DiagnosticMode {
 /// مزود خدمة الـ AI
 enum AiProvider {
   openAI,    // GPT-4o, GPT-4o-mini
-  gemini,    // gemini-1.5-flash, gemini-1.5-pro
+  gemini,    // gemini-2.5-flash, gemini-2.5-pro
 }
 
 extension AiProviderExtension on AiProvider {
@@ -106,7 +106,7 @@ extension AiProviderExtension on AiProvider {
       case AiProvider.openAI:
         return 'gpt-4o-mini';
       case AiProvider.gemini:
-        return 'gemini-1.5-flash';
+        return 'gemini-2.5-flash';
     }
   }
 
@@ -115,7 +115,7 @@ extension AiProviderExtension on AiProvider {
       case AiProvider.openAI:
         return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'];
       case AiProvider.gemini:
-        return ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
+        return ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     }
   }
 }
