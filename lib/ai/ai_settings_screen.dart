@@ -18,6 +18,7 @@ class AiSettingsScreen extends ConsumerStatefulWidget {
 
 class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   late TextEditingController _apiKeyController;
+  late TextEditingController _baseUrlController;
   bool _obscureApiKey = true;
   bool _isSaving = false;
 
@@ -27,11 +28,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     final settings = ref.read(aiSettingsNotifierProvider).valueOrNull ??
         AiSettings.default_;
     _apiKeyController = TextEditingController(text: settings.apiKey);
+    _baseUrlController = TextEditingController(text: settings.baseUrl ?? '');
   }
 
   @override
   void dispose() {
     _apiKeyController.dispose();
+    _baseUrlController.dispose();
     super.dispose();
   }
 
@@ -40,6 +43,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     try {
       final notifier = ref.read(aiSettingsNotifierProvider.notifier);
       await notifier.setApiKey(_apiKeyController.text.trim());
+      await notifier.setBaseUrl(_baseUrlController.text.trim());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -167,6 +171,36 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                       .setModel(model);
                 }
               },
+            ),
+            const SizedBox(height: 16),
+
+            // ===== Custom Base URL (اختياري) =====
+            const Text(
+              'API Endpoint مخصص (اختياري)',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _baseUrlController,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                hintText: 'https://api.openai.com/v1 (اتركه فارغاً للافتراضي)',
+                hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
+                prefixIcon: const Icon(Icons.link, size: 18, color: Colors.white54),
+              ),
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'استخدم هذا للمزودين المتوافقين مع OpenAI API:\n'
+              '• OpenRouter: https://openrouter.ai/api/v1\n'
+              '• Azure OpenAI: https://{resource}.openai.azure.com/openai/deployments/{deployment}\n'
+              '• Ollama (محلي): http://localhost:11434/v1\n'
+              '• LocalAI: http://localhost:8080/v1\n'
+              '• Together AI: https://api.together.xyz/v1',
+              style: TextStyle(fontSize: 11, color: Colors.white38),
             ),
             const SizedBox(height: 16),
 

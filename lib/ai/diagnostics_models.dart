@@ -252,6 +252,7 @@ class AiSettings {
   final AiProvider provider;
   final String model;
   final String apiKey;
+  final String? baseUrl;  // عنوان API مخصص (OpenRouter, Azure, Ollama, إلخ)
   final MikrotikConnectionMethod connectionMethod;
   final int maxTokens;
   final DiagnosticMode mode;  // نوع/وضع التشخيص
@@ -260,15 +261,28 @@ class AiSettings {
     required this.provider,
     required this.model,
     required this.apiKey,
+    this.baseUrl,
     required this.connectionMethod,
     required this.mode,
     this.maxTokens = 1500,
   });
 
+  /// يعيد الـ baseUrl الافتراضي للمزود إذا لم يُحدَّد مخصص
+  String get effectiveBaseUrl {
+    if (baseUrl != null && baseUrl!.isNotEmpty) return baseUrl!;
+    switch (provider) {
+      case AiProvider.openAI:
+        return 'https://api.openai.com/v1';
+      case AiProvider.gemini:
+        return 'https://generativelanguage.googleapis.com/v1beta';
+    }
+  }
+
   static AiSettings get default_ => const AiSettings(
         provider: AiProvider.openAI,
         model: 'gpt-4o-mini',
         apiKey: '',
+        baseUrl: null,
         connectionMethod: MikrotikConnectionMethod.routerOS,
         mode: DiagnosticMode.general,
       );
@@ -277,6 +291,7 @@ class AiSettings {
     AiProvider? provider,
     String? model,
     String? apiKey,
+    String? baseUrl,
     MikrotikConnectionMethod? connectionMethod,
     int? maxTokens,
     DiagnosticMode? mode,
@@ -285,6 +300,7 @@ class AiSettings {
         provider: provider ?? this.provider,
         model: model ?? this.model,
         apiKey: apiKey ?? this.apiKey,
+        baseUrl: baseUrl ?? this.baseUrl,
         connectionMethod: connectionMethod ?? this.connectionMethod,
         maxTokens: maxTokens ?? this.maxTokens,
         mode: mode ?? this.mode,
@@ -300,6 +316,7 @@ class AiSettings {
           provider == other.provider &&
           model == other.model &&
           apiKey == other.apiKey &&
+          baseUrl == other.baseUrl &&
           connectionMethod == other.connectionMethod &&
           maxTokens == other.maxTokens &&
           mode == other.mode;
@@ -309,6 +326,7 @@ class AiSettings {
         provider,
         model,
         apiKey,
+        baseUrl,
         connectionMethod,
         maxTokens,
         mode,
