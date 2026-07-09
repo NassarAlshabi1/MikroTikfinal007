@@ -62,6 +62,13 @@ class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
     await AiSettingsService.instance.save(newSettings);
   }
 
+  Future<void> setBaseUrl(String baseUrl) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(baseUrl: baseUrl.isEmpty ? null : baseUrl);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+  }
+
   Future<void> setConnectionMethod(MikrotikConnectionMethod method) async {
     final current = state.valueOrNull ?? AiSettings.default_;
     final newSettings = current.copyWith(connectionMethod: method);

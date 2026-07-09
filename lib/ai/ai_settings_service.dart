@@ -20,6 +20,7 @@ class AiSettingsService {
   static const _keyApiKey = 'ai_api_key';
   static const _keyProvider = 'ai_provider';
   static const _keyModel = 'ai_model';
+  static const _keyBaseUrl = 'ai_base_url';
   static const _keyConnectionMethod = 'ai_connection_method';
   static const _keyMaxTokens = 'ai_max_tokens';
   static const _keyMode = 'ai_diagnostic_mode';
@@ -30,6 +31,7 @@ class AiSettingsService {
       final apiKey = await _storage.read(key: _keyApiKey) ?? '';
       final providerStr = await _storage.read(key: _keyProvider) ?? 'openAI';
       final model = await _storage.read(key: _keyModel) ?? 'gpt-4o-mini';
+      final baseUrl = await _storage.read(key: _keyBaseUrl);
       final methodStr =
           await _storage.read(key: _keyConnectionMethod) ?? 'routerOS';
       final maxTokensStr = await _storage.read(key: _keyMaxTokens) ?? '1500';
@@ -42,6 +44,7 @@ class AiSettingsService {
           orElse: () => AiProvider.openAI,
         ),
         model: model,
+        baseUrl: baseUrl,
         connectionMethod: MikrotikConnectionMethod.values.firstWhere(
           (m) => m.name == methodStr,
           orElse: () => MikrotikConnectionMethod.routerOS,
@@ -64,6 +67,7 @@ class AiSettingsService {
       await _storage.write(key: _keyApiKey, value: settings.apiKey);
       await _storage.write(key: _keyProvider, value: settings.provider.name);
       await _storage.write(key: _keyModel, value: settings.model);
+      await _storage.write(key: _keyBaseUrl, value: settings.baseUrl ?? '');
       await _storage.write(
           key: _keyConnectionMethod, value: settings.connectionMethod.name);
       await _storage.write(
@@ -81,6 +85,7 @@ class AiSettingsService {
     await _storage.delete(key: _keyApiKey);
     await _storage.delete(key: _keyProvider);
     await _storage.delete(key: _keyModel);
+    await _storage.delete(key: _keyBaseUrl);
     await _storage.delete(key: _keyConnectionMethod);
     await _storage.delete(key: _keyMaxTokens);
     await _storage.delete(key: _keyMode);
