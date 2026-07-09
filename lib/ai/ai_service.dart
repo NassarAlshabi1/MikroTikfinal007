@@ -89,7 +89,7 @@ class AiService {
   }
 
   // ============================================================
-  //  OpenAI (ChatGPT)
+  //  OpenAI (ChatGPT) & OpenAI-compatible APIs
   // ============================================================
   static Future<AiAnalysisResult> _analyzeWithOpenAI({
     required AiSettings settings,
@@ -100,6 +100,10 @@ class AiService {
     final dio = Dio();
     dio.options.connectTimeout = const Duration(seconds: 30);
     dio.options.receiveTimeout = const Duration(seconds: 60);
+
+    // استخدام baseUrl مخصص (OpenRouter, Azure, Ollama, إلخ) أو الافتراضي
+    final baseUrl = settings.effectiveBaseUrl.replaceAll(RegExp(r'\/+$'), '');
+    final endpoint = '$baseUrl/chat/completions';
 
     // اختيار الـ System Prompt المناسب للوضع المختار
     final systemPrompt = promptForMode(settings.mode);
@@ -123,10 +127,10 @@ class AiService {
     ];
 
     debugPrint('[AiService] OpenAI request: ${messages.length} messages, '
-        'model=${settings.model}, maxTokens=${settings.maxTokens}');
+        'model=${settings.model}, maxTokens=${settings.maxTokens}, endpoint=$endpoint');
 
     final response = await dio.post(
-      'https://api.openai.com/v1/chat/completions',
+      endpoint,
       options: Options(
         headers: {
           'Authorization': 'Bearer ${settings.apiKey}',
@@ -164,6 +168,12 @@ class AiService {
     dio.options.connectTimeout = const Duration(seconds: 30);
     dio.options.receiveTimeout = const Duration(seconds: 60);
 
+    // استخدام baseUrl مخصص إن وُجد (للأسباب المتوافقة مع Gemini API)
+    final baseUrl = settings.baseUrl != null && settings.baseUrl!.isNotEmpty
+        ? settings.baseUrl!.replaceAll(RegExp(r'\/+$'), '')
+        : 'https://generativelanguage.googleapis.com/v1beta';
+    final endpoint = '$baseUrl/models/${settings.model}:generateContent';
+
     // اختيار الـ System Prompt المناسب للوضع المختار
     final systemPrompt = promptForMode(settings.mode);
 
@@ -192,11 +202,11 @@ class AiService {
     ];
 
     debugPrint('[AiService] Gemini request: ${contents.length} messages, '
-        'model=${settings.model}');
+        'model=${settings.model}, endpoint=$endpoint');
 
     final response = await dio.post(
-      'https://generativelanguage.googleapis.com/v1beta/models/'
-      '${settings.model}:generateContent?key=${settings.apiKey}',
+      endpoint,
+      queryParameters: {'key': settings.apiKey},
       options: Options(headers: {'Content-Type': 'application/json'}),
       data: {
         'contents': contents,
