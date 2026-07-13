@@ -1359,7 +1359,6 @@ class _MessageBubble extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // نبني سكربت من الأوامر المقترحة
                             final script = RouterOsScript.fromText(
                               title: 'سكربت AI',
                               description:
@@ -1383,6 +1382,15 @@ class _MessageBubble extends StatelessWidget {
                       ),
                     ],
                   ],
+                  // ===== استخراج السكربتات من محتوى الرسالة نفسها =====
+                  // للرسائل التي لا تحتوي على suggestedCommands لكنها تحتوي
+                  // على سكربتات داخل كتل ```...``` أو أسطر تبدأ بـ /
+                  if (onExecuteScript != null &&
+                      (message.suggestedCommands == null ||
+                          message.suggestedCommands!.isEmpty) &&
+                      message.type == MessageType.assistant) ...[
+                    ..._buildExtractedScripts(message, onExecuteScript!),
+                  ],
                 ],
               ),
             ),
@@ -1391,6 +1399,48 @@ class _MessageBubble extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// يبني أزرار السكربتات المستخرجة من رسالة الـ AI
+  /// يستخدم ScriptExecutor.extractScriptsFromAiResponse لاستخراج
+  /// السكربتات من كتل ```...``` أو من أسطر تبدأ بـ / مباشرة
+  List<Widget> _buildExtractedScripts(
+    DiagnosticMessage message,
+    void Function(RouterOsScript) onExecuteScript,
+  ) {
+    final scripts = ScriptExecutor.extractScriptsFromAiResponse(
+      aiResponse: message.content,
+    );
+
+    if (scripts.isEmpty) return const [];
+
+    return [
+      const SizedBox(height: 12),
+      const Divider(height: 1, color: Colors.white24),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          const Icon(Icons.code, size: 14, color: Colors.amber),
+          const SizedBox(width: 4),
+          Text(
+            'سكربتات جاهزة للتنفيذ (${scripts.length})',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.amber,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      for (var i = 0; i < scripts.length; i++) ...[
+        _ScriptCard(
+          script: scripts[i],
+          onExecute: () => onExecuteScript(scripts[i]),
+        ),
+        if (i < scripts.length - 1) const SizedBox(height: 8),
+      ],
+    ];
   }
 
   Widget _buildAvatar(BuildContext context) {
@@ -1531,6 +1581,156 @@ class _CommandChip extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+//  بطاقة عرض سكربت قابل للتنفيذ (مستخرج من رد الـ AI)
+// ============================================================
+class _ScriptCard extends StatelessWidget {
+  final RouterOsScript script;
+  final VoidCallback onExecute;
+
+  const _ScriptCard({
+    required this.script,
+    required this.onExecute,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final riskColor = script.isDangerous
+        ? Colors.red
+        : script.hasModerate
+            ? Colors.orange
+            : Colors.green;
+
+    final riskIcon = script.isDangerous
+        ? Icons.dangerous
+        : script.hasModerate
+            ? Icons.warning
+            : Icons.check_circle;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: riskColor.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ===== رأس البطاقة: العنوان + الخطورة =====
+          Row(
+            children: [
+              Icon(riskIcon, size: 16, color: riskColor),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  script.title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: riskColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: riskColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  script.overallRisk.displayName,
+                  style: TextStyle(fontSize: 10, color: riskColor),
+                ),
+              ),
+            ],
+          ),
+          if (script.description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              script.description,
+              style: const TextStyle(fontSize: 11, color: Colors.white54),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: 8),
+          // ===== معاينة الأوامر (أول 5) =====
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < script.commands.length && i < 5; i++)
+                  Text(
+                    '${i + 1}. ${script.commands[i]}',
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      color: Colors.greenAccent,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                if (script.commands.length > 5)
+                  Text(
+                    '... و ${script.commands.length - 5} أوامر أخرى',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white38,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // ===== أزرار الإجراءات =====
+          Row(
+            children: [
+              Text(
+                '${script.commands.length} أوامر',
+                style: const TextStyle(fontSize: 11, color: Colors.white54),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () {
+                  final commandsText = script.commands.join('\n');
+                  Clipboard.setData(ClipboardData(text: commandsText));
+                },
+                icon: const Icon(Icons.copy, size: 14),
+                label: const Text('نسخ', style: TextStyle(fontSize: 11)),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  minimumSize: const Size(0, 28),
+                  foregroundColor: Colors.white70,
+                ),
+              ),
+              const SizedBox(width: 4),
+              ElevatedButton.icon(
+                onPressed: onExecute,
+                icon: const Icon(Icons.play_arrow, size: 14, color: Colors.white),
+                label: const Text('تنفيذ', style: TextStyle(fontSize: 11, color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: riskColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  minimumSize: const Size(0, 28),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

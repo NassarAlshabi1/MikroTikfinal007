@@ -152,7 +152,11 @@ class ScriptExecutor {
   ScriptExecutor._();
 
   /// يحلل نص الـ AI ويستخرج السكربتات منه
-  /// يبحث عن كتل الكود ```...``` ويعتبر كل واحدة سكربت منفصل
+  ///
+  /// الاستراتيجية:
+  /// 1. يبحث عن كتل الكود ```...``` التي تحتوي على أوامر RouterOS
+  /// 2. إن لم يجد كتل كود، يبحث عن أسطر تبدأ بـ / مباشرة في النص
+  /// 3. يربط كل سكربت بأقرب عنوان قبله (###, ##, **)
   static List<RouterOsScript> extractScriptsFromAiResponse({
     required String aiResponse,
     String? category,
@@ -180,13 +184,19 @@ class ScriptExecutor {
       for (final line in beforeLines) {
         final trimmed = line.trim();
         if (trimmed.isEmpty) continue;
-        // عناوين Markdown: ### Title أو **Title**
+        // عناوين Markdown: ### Title أو ## Title
         if (trimmed.startsWith('###') || trimmed.startsWith('##')) {
           title = trimmed.replaceAll(RegExp(r'^#+\s*'), '');
           break;
         }
+        // **Title**
         if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
           title = trimmed.substring(2, trimmed.length - 2);
+          break;
+        }
+        // 🎬 Title (icon pattern)
+        if (trimmed.startsWith('🎬')) {
+          title = trimmed.replaceAll(RegExp(r'^🎬\s*'), '');
           break;
         }
         // أول سطر نصي غير عنوان نعتبره وصف
@@ -207,6 +217,37 @@ class ScriptExecutor {
 
       if (script.commands.isNotEmpty) {
         scripts.add(script);
+      }
+    }
+
+    // Fallback: إن لم نجد سكربتات في كتل كود، ابحث عن أسطر تبدأ بـ /
+    // مباشرة في النص (للحالات التي لا يستخدم فيها الـ AI كتل كود)
+    if (scripts.isEmpty) {
+      final inlineCommands = <String>[];
+      final lines = aiResponse.split('\n');
+      for (final line in lines) {
+        final trimmed = line.trim();
+        // تجاهل الأسطر داخل كتل ``` (لأنها قد تكون نص توضيحي)
+        // اقبل الأسطر التي تبدأ بـ / وتحتوي على أمر RouterOS
+        if (trimmed.startsWith('/') &&
+            !trimmed.startsWith('//') && // ليست تعليق
+            RegExp(r'^/\w+').hasMatch(trimmed) &&
+            // استبعد الأسطر التي تبدأ بـ /=== أو /--- (فواصل)
+            !RegExp(r'^/[=\-]+$').hasMatch(trimmed)) {
+          inlineCommands.add(trimmed);
+        }
+      }
+
+      if (inlineCommands.isNotEmpty) {
+        final script = RouterOsScript.fromText(
+          title: 'سكربت AI',
+          description: 'سكربت مُولّد من رد الـ AI (${inlineCommands.length} أوامر)',
+          text: inlineCommands.join('\n'),
+          category: category,
+        );
+        if (script.commands.isNotEmpty) {
+          scripts.add(script);
+        }
       }
     }
 
