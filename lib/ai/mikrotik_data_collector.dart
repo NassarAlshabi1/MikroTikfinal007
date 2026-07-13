@@ -25,6 +25,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'diagnostics_models.dart';
 
 /// أمر يجمع عنوان القسم وأمر RouterOS (سواء بصيغة SSH أو RouterOS API)
+///
+/// ملاحظة: التطبيق يدعم RouterOS v6 فقط. كل الأوامر هنا متوافقة مع v6.
 class _CollectorCommand {
   final String sectionName;   // يظهر كـ "=== SECTION ===" في السياق
   final String sshCommand;    // للأمر بصيغة SSH (مثلاً: "ip service print")
@@ -157,15 +159,14 @@ class MikrotikDataCollector {
     ],
 
     DiagnosticMode.vpn: [
-      _CollectorCommand(
-        sectionName: 'IP IPSEC PROFILE',
-        sshCommand: 'ip ipsec profile print',
-        apiArgs: ['/ip/ipsec/profile/print'],
-      ),
+      // ملاحظة: التطبيق يدعم RouterOS v6 فقط.
+      // الأوامر التالية متوافقة مع v6 (لا WireGuard، لا IPsec profile منفصل).
+      // في v6: IPsec peer يحوي إعدادات profile داخله (enc-algorithm, hash-algorithm, dh-group).
       _CollectorCommand(
         sectionName: 'IP IPSEC PEER',
         sshCommand: 'ip ipsec peer print',
         apiArgs: ['/ip/ipsec/peer/print'],
+        // v6: peer يحوي profile settings (enc-algorithm, lifetime, dh-group, hash-algorithm)
       ),
       _CollectorCommand(
         sectionName: 'IP IPSEC PROPOSAL',
@@ -183,16 +184,6 @@ class MikrotikDataCollector {
         apiArgs: ['/ip/ipsec/installed-sa/print'],
       ),
       _CollectorCommand(
-        sectionName: 'INTERFACE WIREGUARD',
-        sshCommand: 'interface wireguard print',
-        apiArgs: ['/interface/wireguard/print'],
-      ),
-      _CollectorCommand(
-        sectionName: 'INTERFACE WIREGUARD PEERS',
-        sshCommand: 'interface wireguard peers print',
-        apiArgs: ['/interface/wireguard/peers/print'],
-      ),
-      _CollectorCommand(
         sectionName: 'INTERFACE L2TP-SERVER',
         sshCommand: 'interface l2tp-server server print',
         apiArgs: ['/interface/l2tp-server/server/print'],
@@ -206,6 +197,12 @@ class MikrotikDataCollector {
         sectionName: 'INTERFACE OVPN-SERVER',
         sshCommand: 'interface ovpn-server server print',
         apiArgs: ['/interface/ovpn-server/server/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE PPTP-SERVER',
+        sshCommand: 'interface pptp-server server print',
+        apiArgs: ['/interface/pptp-server/server/print'],
+        // PPTP مدعوم في v6 (deprecated في v7 لكنه ما زال موجوداً)
       ),
       _CollectorCommand(
         sectionName: 'PPP SECRET',
@@ -230,23 +227,36 @@ class MikrotikDataCollector {
         sshCommand: 'interface eoip print',
         apiArgs: ['/interface/eoip/print'],
       ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE IPIP',
+        sshCommand: 'interface ipip print',
+        apiArgs: ['/interface/ipip/print'],
+      ),
     ],
 
     DiagnosticMode.routing: [
+      // ملاحظة: التطبيق يدعم RouterOS v6 فقط.
+      // BGP في v6: /routing/bgp/peer (single instance، لا connection ولا sessions).
+      // OSPF في v6: /routing/ospf/* (instance/area/neighbor/interface).
+      // BFD في v6: /routing/bfd/neighbor (لا /configuration).
+      // لا /routing/rule ولا /route/table في v6.
       _CollectorCommand(
-        sectionName: 'BGP PEERS (v7)',
-        sshCommand: 'routing bgp connection print',
-        apiArgs: ['/routing/bgp/connection/print'],
-      ),
-      _CollectorCommand(
-        sectionName: 'BGP PEERS (v6)',
+        sectionName: 'BGP PEERS',
         sshCommand: 'routing bgp peer print',
         apiArgs: ['/routing/bgp/peer/print'],
+        // v6: هذا هو الأمر الوحيد لـ BGP
       ),
       _CollectorCommand(
-        sectionName: 'BGP SESSIONS',
-        sshCommand: 'routing bgp session print',
-        apiArgs: ['/routing/bgp/session/print'],
+        sectionName: 'BGP INSTANCES',
+        sshCommand: 'routing bgp instance print',
+        apiArgs: ['/routing/bgp/instance/print'],
+        // v6: instance مفهوم v6 (في v7 يسمى connection)
+      ),
+      _CollectorCommand(
+        sectionName: 'BGP NETWORKS',
+        sshCommand: 'routing bgp network print',
+        apiArgs: ['/routing/bgp/network/print'],
+        // v6: networks تُعرَّف هنا (في v7 داخل connection)
       ),
       _CollectorCommand(
         sectionName: 'OSPF INSTANCE',
@@ -269,24 +279,16 @@ class MikrotikDataCollector {
         apiArgs: ['/routing/ospf/interface/print'],
       ),
       _CollectorCommand(
-        sectionName: 'BFD',
-        sshCommand: 'routing bfd configuration print',
-        apiArgs: ['/routing/bfd/configuration/print'],
-      ),
-      _CollectorCommand(
         sectionName: 'BFD NEIGHBOR',
         sshCommand: 'routing bfd neighbor print',
         apiArgs: ['/routing/bfd/neighbor/print'],
+        // v6: /routing/bfd/neighbor (لا /configuration في v6)
       ),
       _CollectorCommand(
-        sectionName: 'ROUTING RULES',
-        sshCommand: 'routing rule print',
-        apiArgs: ['/routing/rule/print'],
-      ),
-      _CollectorCommand(
-        sectionName: 'ROUTE TABLES',
-        sshCommand: 'route table print',
-        apiArgs: ['/route/table/print'],
+        sectionName: 'ROUTING FILTERS',
+        sshCommand: 'routing filter print',
+        apiArgs: ['/routing/filter/print'],
+        // v6: routing filters تُستخدم مع BGP/OSPF
       ),
     ],
 
@@ -399,11 +401,7 @@ class MikrotikDataCollector {
         sshCommand: 'system resource pci print',
         apiArgs: ['/system/resource/pci/print'],
       ),
-      _CollectorCommand(
-        sectionName: 'SYSTEM ROUTING STATS',
-        sshCommand: 'system routing stats print',
-        apiArgs: ['/system/routing/stats/print'],
-      ),
+      // ملاحظة: /system/routing/stats/print متاح في v7 فقط — تم حذفه (v6-only).
       _CollectorCommand(
         sectionName: 'INTERFACE ETHERNET',
         sshCommand: 'interface ethernet print',
@@ -712,11 +710,11 @@ class MikrotikDataCollector {
         _executeSafely(client, 'log print where topics~"error" or topics~"warning"'),
       ]);
 
-      // تنفيذ الأوامر الإضافية حسب الوضع
+      // تنفيذ الأوامر الإضافية حسب الوضع (كلها متوافقة مع v6)
       final extraCommands = _modeCommands[mode] ?? const <_CollectorCommand>[];
       final extraData = <String, String>{};
       if (extraCommands.isNotEmpty) {
-        debugPrint('[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name}');
+        debugPrint('[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name} (v6-only)');
         final extraResults = await Future.wait(
           extraCommands.map((cmd) => _executeSafely(client!, cmd.sshCommand)),
         );
@@ -824,11 +822,11 @@ class MikrotikDataCollector {
         _talkSafely(internalClient, ['/log/print']),
       ]);
 
-      // تنفيذ الأوامر الإضافية حسب الوضع
+      // تنفيذ الأوامر الإضافية حسب الوضع (كلها متوافقة مع v6)
       final extraCommands = _modeCommands[mode] ?? const <_CollectorCommand>[];
       final extraData = <String, String>{};
       if (extraCommands.isNotEmpty) {
-        debugPrint('[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name}');
+        debugPrint('[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name} (v6-only)');
         final extraResults = await Future.wait(
           extraCommands.map((cmd) => _talkSafely(internalClient!, cmd.apiArgs)),
         );
