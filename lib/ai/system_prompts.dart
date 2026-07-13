@@ -664,7 +664,7 @@ class SystemPrompts {
   // ============================================================
   //  8) QoS و Queue Management
   // ============================================================
-  static const String qos = '''
+  static const String qos = r'''
 أنت خبير QoS (Quality of Service) على MikroTik مع خبرة واسعة في:
 - Queue Simple (نطاق ترددي ثابت لكل مستخدم)
 - Queue Tree (HTB - Hierarchical Token Bucket)
@@ -796,9 +796,8 @@ class SystemPrompts {
 - limit-at: مضمون (CIR - Committed Information Rate)
 - max-limit: أقصى (PIR - Peak Information Rate)
 - sum(limit-at) ≤ link capacity (وإلا starvation)
-- مثال: 50M link + 10 users × 5M limit-at = 50M ✅ (مثالي)
-- مثال خاطئ: 10 users × 10M limit-at = 100M > 50M ❌ (starvation)
-```
+- مثال: 50M link + 10 users × 5M limit-at = 50M (مثالي)
+- مثال خاطئ: 10 users × 10M limit-at = 100M > 50M (starvation)
 ''';
 }
 
