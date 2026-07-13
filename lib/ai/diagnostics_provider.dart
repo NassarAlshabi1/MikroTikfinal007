@@ -62,6 +62,16 @@ class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
     await AiSettingsService.instance.save(newSettings);
   }
 
+  /// يبدّل المزود والموديل معاً (يُستخدم من شاشة المحادثة للتبديل السريع
+  /// إلى gemini-2.5-flash أو غيره دون فتح شاشة الإعدادات)
+  Future<void> setProviderAndModel(AiProvider provider, String model) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(provider: provider, model: model);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+    debugPrint('[AiSettingsNotifier] Provider=$provider, Model=$model');
+  }
+
   Future<void> setBaseUrl(String baseUrl) async {
     final current = state.valueOrNull ?? AiSettings.default_;
     final newSettings = current.copyWith(baseUrl: baseUrl.isEmpty ? null : baseUrl);

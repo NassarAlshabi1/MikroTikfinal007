@@ -324,6 +324,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   }
 
   Widget _buildStatusBar(DiagnosticsState state) {
+    final isGeminiFlash25 =
+        state.settings.provider == AiProvider.gemini &&
+        state.settings.model == 'gemini-2.5-flash';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -338,11 +342,52 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             color: Colors.white70,
           ),
           const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              '${state.settings.provider.displayName} • ${state.settings.model}',
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
-              overflow: TextOverflow.ellipsis,
+          // ===== زر تبديل المزود/الموديل السريع =====
+          InkWell(
+            onTap: () => _showQuickModelSelector(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isGeminiFlash25
+                    ? Colors.blueAccent.withValues(alpha: 0.25)
+                    : Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: isGeminiFlash25
+                    ? Border.all(color: Colors.blueAccent.withValues(alpha: 0.5))
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isGeminiFlash25 ? Icons.bolt : Icons.memory,
+                    size: 12,
+                    color: isGeminiFlash25
+                        ? Colors.blueAccent
+                        : Colors.white70,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      '${state.settings.provider.displayName} • ${state.settings.model}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isGeminiFlash25
+                            ? Colors.blueAccent
+                            : Colors.white,
+                        fontWeight: isGeminiFlash25
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.keyboard_arrow_down,
+                      size: 14, color: Colors.white54),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -371,6 +416,230 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// نافذة منبثقة لاختيار الموديل بسرعة (مع تمييز Gemini 2.5 Flash كموصى به)
+  void _showQuickModelSelector(BuildContext context) {
+    final settingsAsync = ref.read(aiSettingsNotifierProvider);
+    final settings =
+        settingsAsync.valueOrNull ?? AiSettings.default_;
+
+    // قائمة الموديلات الموصى بها (تبرز Gemini 2.5 Flash)
+    const recommendedGemini = 'gemini-2.5-flash';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ===== رأس النافذة =====
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.swap_horiz, color: Colors.blueAccent),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'اختر الموديل',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings, size: 20),
+                    tooltip: 'إعدادات متقدمة',
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AiSettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // ===== قسم: Gemini (مع تمييز gemini-2.5-flash) =====
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 14, color: Colors.blueAccent),
+                    SizedBox(width: 4),
+                    Text(
+                      'Google Gemini',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.blueAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            for (final model in AiProvider.gemini.availableModels)
+              _buildModelTile(
+                ctx: ctx,
+                provider: AiProvider.gemini,
+                model: model,
+                isSelected: settings.provider == AiProvider.gemini &&
+                    settings.model == model,
+                isRecommended: model == recommendedGemini,
+                description: _geminiModelDescription(model),
+              ),
+
+            const Divider(height: 1),
+
+            // ===== قسم: OpenAI =====
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  children: [
+                    Icon(Icons.smart_toy, size: 14, color: Colors.greenAccent),
+                    SizedBox(width: 4),
+                    Text(
+                      'OpenAI (ChatGPT)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.greenAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            for (final model in AiProvider.openAI.availableModels)
+              _buildModelTile(
+                ctx: ctx,
+                provider: AiProvider.openAI,
+                model: model,
+                isSelected: settings.provider == AiProvider.openAI &&
+                    settings.model == model,
+                isRecommended: false,
+                description: _openAiModelDescription(model),
+              ),
+
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// وصف موجز لنماذج Gemini
+  String _geminiModelDescription(String model) {
+    switch (model) {
+      case 'gemini-2.5-flash':
+        return 'سريع واقتصادي — مثالي للتشخيص اليومي ⚡';
+      case 'gemini-2.5-pro':
+        return 'الأكثر ذكاءً — للمشاكل المعقدة (أعلى تكلفة)';
+      case 'gemini-1.5-flash':
+        return 'نسخة سابقة سريعة (1.5)';
+      case 'gemini-1.5-pro':
+        return 'نسخة سابقة متقدمة (1.5)';
+      default:
+        return '';
+    }
+  }
+
+  /// وصف موجز لنماذج OpenAI
+  String _openAiModelDescription(String model) {
+    switch (model) {
+      case 'gpt-4o-mini':
+        return 'اقتصادي وسريع';
+      case 'gpt-4o':
+        return 'متقدم ومتوازن';
+      case 'gpt-4-turbo':
+        return 'قوي للمشاكل المعقدة';
+      default:
+        return '';
+    }
+  }
+
+  /// بناء عنصر موديل في القائمة
+  Widget _buildModelTile({
+    required BuildContext ctx,
+    required AiProvider provider,
+    required String model,
+    required bool isSelected,
+    required bool isRecommended,
+    required String description,
+  }) {
+    return ListTile(
+      leading: Icon(
+        isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: isSelected
+            ? Colors.blueAccent
+            : (isRecommended ? Colors.amber : Colors.white38),
+        size: 22,
+      ),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              model,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 13,
+                fontWeight:
+                    isSelected || isRecommended ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? Colors.blueAccent
+                    : (isRecommended ? Colors.amber.shade200 : Colors.white),
+              ),
+            ),
+          ),
+          if (isRecommended) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+              ),
+              child: const Text(
+                'موصى به',
+                style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ],
+      ),
+      subtitle: description.isEmpty
+          ? null
+          : Text(
+              description,
+              style: const TextStyle(fontSize: 11, color: Colors.white54),
+            ),
+      trailing: isRecommended
+          ? const Icon(Icons.bolt, color: Colors.amber, size: 18)
+          : null,
+      onTap: () async {
+        await ref
+            .read(aiSettingsNotifierProvider.notifier)
+            .setProviderAndModel(provider, model);
+        // حدّث الـ diagnostics notifier بالإعدادات الجديدة
+        final newSettings =
+            (ref.read(aiSettingsNotifierProvider).valueOrNull ??
+                AiSettings.default_)
+                .copyWith(provider: provider, model: model);
+        ref.read(diagnosticsProvider.notifier).updateSettings(newSettings);
+        if (ctx.mounted) Navigator.of(ctx).pop();
+      },
     );
   }
 
