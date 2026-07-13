@@ -26,6 +26,12 @@ String promptForMode(DiagnosticMode mode) {
       return SystemPrompts.wifi;
     case DiagnosticMode.qos:
       return SystemPrompts.qos;
+    case DiagnosticMode.dhcp:
+    case DiagnosticMode.monitoring:
+    case DiagnosticMode.infrastructure:
+      // الأوضاع الجديدة تستخدم التشخيص العام (general)
+      // لأن الـ AI يحصل على بياناتها من الـ collector مباشرة
+      return SystemPrompts.general;
   }
 }
 

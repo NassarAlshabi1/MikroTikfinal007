@@ -434,6 +434,242 @@ class MikrotikDataCollector {
       ),
     ],
 
+    // ============================================================
+    //  وضع DHCP — مستوحى من integration tools: list_dhcp_servers, list_dhcp_leases, ...
+    // ============================================================
+    DiagnosticMode.dhcp: [
+      _CollectorCommand(
+        sectionName: 'IP DHCP SERVER',
+        sshCommand: 'ip dhcp-server print',
+        apiArgs: [
+          '/ip/dhcp-server/print',
+          '=.proplist=name,interface,address-pool,lease-time,authoritative,disabled,dynamic',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP DHCP NETWORK',
+        sshCommand: 'ip dhcp-server network print',
+        apiArgs: [
+          '/ip/dhcp-server/network/print',
+          '=.proplist=address,gateway,netmask,dns-server,domain,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP DHCP LEASES',
+        sshCommand: 'ip dhcp-server lease print',
+        apiArgs: [
+          '/ip/dhcp-server/lease/print',
+          '=.proplist=address,mac-address,host-name,status,expires-after,last-seen,server,disabled,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP DHCP CLIENT',
+        sshCommand: 'ip dhcp-client print',
+        apiArgs: [
+          '/ip/dhcp-client/print',
+          '=.proplist=interface,status,address,expires-after,dhcp-server',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP POOL',
+        sshCommand: 'ip pool print',
+        apiArgs: [
+          '/ip/pool/print',
+          '=.proplist=name,ranges,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP ARP',
+        sshCommand: 'ip arp print',
+        apiArgs: [
+          '/ip/arp/print',
+          '=.proplist=ip-address,mac-address,interface,comment',
+        ],
+      ),
+    ],
+
+    // ============================================================
+    //  وضع المراقبة — مستوحى من integration: list_netwatch, list_arp_table, list_neighbors, ...
+    // ============================================================
+    DiagnosticMode.monitoring: [
+      _CollectorCommand(
+        sectionName: 'TOOL NETWATCH',
+        sshCommand: 'tool netwatch print',
+        apiArgs: [
+          '/tool/netwatch/print',
+          '=.proplist=host,timeout,interval,status,since,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP ARP TABLE',
+        sshCommand: 'ip arp print',
+        apiArgs: [
+          '/ip/arp/print',
+          '=.proplist=ip-address,mac-address,interface,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP NEIGHBOR',
+        sshCommand: 'ip neighbor print',
+        apiArgs: [
+          '/ip/neighbor/print',
+          '=.proplist=address,identity,interface,platform,version',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'SNMP',
+        sshCommand: 'snmp print',
+        apiArgs: ['/snmp/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP UPNP',
+        sshCommand: 'ip upnp print',
+        apiArgs: ['/ip/upnp/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM LOG',
+        sshCommand: 'log print where topics~"error" or topics~"warning"',
+        apiArgs: ['/log/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM HEALTH',
+        sshCommand: 'system health print',
+        apiArgs: ['/system/health/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM ROUTERBOARD',
+        sshCommand: 'system routerboard print',
+        apiArgs: ['/system/routerboard/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM CLOCK',
+        sshCommand: 'system clock print',
+        apiArgs: ['/system/clock/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM NTP CLIENT',
+        sshCommand: 'system ntp client print',
+        apiArgs: ['/system/ntp/client/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM SCHEDULER',
+        sshCommand: 'system scheduler print',
+        apiArgs: [
+          '/system/scheduler/print',
+          '=.proplist=name,on-event,start-date,start-time,interval,disabled,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM SCRIPTS',
+        sshCommand: 'system script print',
+        apiArgs: [
+          '/system/script/print',
+          '=.proplist=name,source,comment',
+        ],
+      ),
+    ],
+
+    // ============================================================
+    //  وضع البنية التحتية — مستوحى من integration: bridge, vlan, bonding, tunnels, ipv6
+    // ============================================================
+    DiagnosticMode.infrastructure: [
+      _CollectorCommand(
+        sectionName: 'INTERFACE BRIDGE',
+        sshCommand: 'interface bridge print',
+        apiArgs: [
+          '/interface/bridge/print',
+          '=.proplist=name,mtu,protocol-mode,vlan-filtering,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE BRIDGE PORT',
+        sshCommand: 'interface bridge port print',
+        apiArgs: [
+          '/interface/bridge/port/print',
+          '=.proplist=interface,bridge,pvid,path-cost,priority,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE BRIDGE VLAN',
+        sshCommand: 'interface bridge vlan print',
+        apiArgs: ['/interface/bridge/vlan/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE VLAN',
+        sshCommand: 'interface vlan print',
+        apiArgs: [
+          '/interface/vlan/print',
+          '=.proplist=name,vlan-id,interface,mtu,disabled,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE BONDING',
+        sshCommand: 'interface bonding print',
+        apiArgs: ['/interface/bonding/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE EOIP',
+        sshCommand: 'interface eoip print',
+        apiArgs: [
+          '/interface/eoip/print',
+          '=.proplist=name,local-address,remote-address,tunnel-id,mtu,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE GRE',
+        sshCommand: 'interface gre print',
+        apiArgs: [
+          '/interface/gre/print',
+          '=.proplist=name,local-address,remote-address,mtu,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE IPIP',
+        sshCommand: 'interface ipip print',
+        apiArgs: [
+          '/interface/ipip/print',
+          '=.proplist=name,local-address,remote-address,mtu,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IPV6 ADDRESS',
+        sshCommand: 'ipv6 address print',
+        apiArgs: [
+          '/ipv6/address/print',
+          '=.proplist=address,interface,advertise,disabled,comment',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IPV6 ROUTE',
+        sshCommand: 'ipv6 route print',
+        apiArgs: [
+          '/ipv6/route/print',
+          '=.proplist=dst-address,gateway,distance,active',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IPV6 DHCP SERVER',
+        sshCommand: 'ipv6 dhcp-server print',
+        apiArgs: ['/ipv6/dhcp-server/print'],
+      ),
+      _CollectorCommand(
+        sectionName: 'SYSTEM PACKAGES',
+        sshCommand: 'system package print',
+        apiArgs: [
+          '/system/package/print',
+          '=.proplist=name,version,disabled',
+        ],
+      ),
+      _CollectorCommand(
+        sectionName: 'IP ADDRESS',
+        sshCommand: 'ip address print',
+        apiArgs: [
+          '/ip/address/print',
+          '=.proplist=address,interface,network,disabled',
+        ],
+      ),
+    ],
+
     // وضع التشخيص العام لا يجمع بيانات إضافية (يكتفي بالأساسية)
     DiagnosticMode.general: [],
   };
