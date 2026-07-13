@@ -89,6 +89,24 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     }
   }
 
+  /// تشخيص وكيل عميق: يستقصي البيانات خطوة بخطوة (أوامر قراءة تلقائية)
+  /// حتى الوصول للسبب الجذري، ثم يقترح إصلاحاً لتنفيذه بموافقة المستخدم.
+  Future<void> _handleAgenticDiagnose() async {
+    final text = _inputController.text.trim();
+    _inputController.clear();
+    setState(() => _inputEnabled = false);
+    try {
+      await ref.read(diagnosticsProvider.notifier).runAgenticDiagnostics(
+            userQuery: text.isEmpty ? null : text,
+          );
+    } finally {
+      if (mounted) {
+        setState(() => _inputEnabled = true);
+        _scrollToBottom();
+      }
+    }
+  }
+
   Future<void> _copyCommand(String command) async {
     await Clipboard.setData(ClipboardData(text: command));
     if (mounted) showSuccessSnackBar(context, 'تم نسخ الأمر: $command');
@@ -1195,12 +1213,19 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         ),
         child: Row(
           children: [
-            // زر التشخيص السريع
+            // زر التشخيص السريع (لقطة واحدة)
             IconButton(
               icon: const Icon(Icons.auto_fix_high),
-              tooltip: 'تشخيص سريع',
+              tooltip: 'تشخيص سريع (لقطة واحدة)',
               onPressed: state.isLoading ? null : _handleQuickDiagnose,
               color: Theme.of(context).primaryColor,
+            ),
+            // زر التشخيص العميق الوكيل (استقصاء خطوة بخطوة)
+            IconButton(
+              icon: const Icon(Icons.psychology),
+              tooltip: 'تشخيص عميق وكيل (استقصاء خطوة بخطوة)',
+              onPressed: state.isLoading ? null : _handleAgenticDiagnose,
+              color: Colors.deepPurpleAccent,
             ),
             // حقل الإدخال
             Expanded(
