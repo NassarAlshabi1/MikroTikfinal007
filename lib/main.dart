@@ -27,6 +27,7 @@ import 'active_users_screen.dart';
 import 'perf/device_capability.dart';
 import 'perf/dio_cache_service.dart';
 import 'ai_diagnostics_screen.dart';
+import 'terminal_screen.dart';
 import 'database/app_database.dart' as db;
 import 'database/sync_service.dart';
 import 'monthly_report_screen.dart';
@@ -1218,6 +1219,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const AiDiagnosticsScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'تيرمنال',
+        icon: Icons.terminal,
+        color: const Color(0xFF37474F), // Blue Grey
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const TerminalScreen()));
         },
       ),
       ServiceItem(
