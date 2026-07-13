@@ -14,6 +14,7 @@ import 'command_executor.dart';
 import 'diagnostics_history.dart';
 import 'script_executor.dart';
 import 'auto_fix_service.dart';
+import 'agentic_service.dart';
 
 // ============================================================
 //  Providers أساسية
@@ -94,6 +95,14 @@ class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
     state = AsyncData(newSettings);
     await AiSettingsService.instance.save(newSettings);
     debugPrint('[AiSettingsNotifier] Mode changed to: ${mode.name}');
+  }
+
+  /// يضبط حد خطوات الاستقصاء في التشخيص الوكيل (1..12)
+  Future<void> setAgenticMaxSteps(int steps) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(agenticMaxSteps: steps.clamp(1, 12));
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
   }
 }
 
@@ -436,6 +445,176 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
       );
     }
   }
+
+  // ============================================================
+  //  التشخيص الوكيل (Agentic Loop)
+  //  يجمع البيانات ثم يستقصي خطوة بخطوة: الـ AI يطلب أوامر قراءة
+  //  آمنة تُنفَّذ تلقائياً، حتى يصل للسبب الجذري ويقترح إصلاحاً.
+  //  أوامر التعديل لا تُنفَّذ إطلاقاً هنا (تبقى باقتراح + موافقة يدوية).
+  // ============================================================
+  Future<void> runAgenticDiagnostics({String? userQuery}) async {
+    if (state.isLoading) return;
+
+    final query = userQuery ??
+        'حلّل حالة الجهاز بدقة، واستقصِ المشكلة حتى السبب الجذري ثم اقترح الحل.';
+    final settings = state.settings;
+
+    state = state.copyWith(
+      messages: [...state.messages, DiagnosticMessage.user(query)],
+      isLoading: true,
+      loadingStage: 'جاري جمع البيانات من MikroTik...',
+    );
+
+    try {
+      // 1) لقطة أولية
+      final snapshot =
+          await MikrotikDataCollector.collectViaRouterOS(mode: settings.mode);
+      state = state.copyWith(lastSnapshot: snapshot);
+
+      final maxSteps = settings.agenticMaxSteps.clamp(1, 12).toInt();
+      final investigationLog = <CommandResult>[];
+
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.system(
+            '🧠 بدء التشخيص الوكيل — سأستقصي البيانات خطوة بخطوة '
+            '(حد أقصى $maxSteps خطوة). أوامر القراءة تُنفَّذ تلقائياً؛ '
+            'أي إصلاح يبقى بانتظار موافقتك.',
+          ),
+        ],
+      );
+
+      var producedFinal = false;
+
+      // 2) حلقة الاستقصاء
+      for (var step = 1; step <= maxSteps; step++) {
+        final forceFinal = step == maxSteps;
+        state = state.copyWith(
+          loadingStage: 'الاستقصاء بالـ AI (خطوة $step/$maxSteps)...',
+        );
+
+        final decision = await AgenticService.decideNextStep(
+          settings: settings,
+          userQuery: query,
+          snapshotContext: snapshot.toAiContext(),
+          investigationLog: investigationLog,
+          conversationHistory: state.messages,
+          forceFinal: forceFinal,
+        );
+
+        // 2a) تقرير نهائي → أضف رد الـ AI مع أوامر الإصلاح المقترحة
+        if (decision.isFinal) {
+          state = state.copyWith(
+            messages: [
+              ...state.messages,
+              DiagnosticMessage.assistant(
+                decision.report,
+                commands: decision.fixCommands,
+              ),
+            ],
+          );
+          producedFinal = true;
+          break;
+        }
+
+        // 2b) استقصاء → اعرض التفكير ثم نفّذ أوامر القراءة الآمنة تلقائياً
+        final thought = decision.thought.trim();
+        state = state.copyWith(
+          messages: [
+            ...state.messages,
+            DiagnosticMessage.system(
+              '🔍 خطوة $step: ${thought.isEmpty ? "استقصاء إضافي" : thought}',
+            ),
+          ],
+        );
+
+        for (final cmd in decision.commands) {
+          // حاجز الأمان: لا تنفيذ تلقائي إلا لأوامر القراءة
+          if (!AgenticService.isReadOnly(cmd)) {
+            investigationLog.add(CommandResult(
+              command: cmd,
+              success: false,
+              output: '',
+              error:
+                  'رُفض التنفيذ التلقائي: ليس أمر قراءة فقط (يتطلب موافقة يدوية).',
+              elapsed: Duration.zero,
+              executedAt: DateTime.now(),
+            ));
+            state = state.copyWith(
+              messages: [
+                ...state.messages,
+                DiagnosticMessage.system(
+                  '⛔ تجاهلت أمراً غير آمن للتنفيذ التلقائي (يحتاج موافقتك):\n'
+                  '```\n$cmd\n```',
+                ),
+              ],
+            );
+            continue;
+          }
+
+          state = state.copyWith(loadingStage: 'تنفيذ أمر قراءة: $cmd');
+          final result = await CommandExecutor.execute(
+            command: cmd,
+            method: MikrotikConnectionMethod.routerOS,
+            timeout: const Duration(seconds: 20),
+          );
+          investigationLog.add(result);
+
+          final preview = result.success
+              ? (result.output.trim().isEmpty
+                  ? '(لا مخرجات)'
+                  : result.output.trim())
+              : 'فشل: ${result.error ?? "غير معروف"}';
+
+          state = state.copyWith(
+            messages: [
+              ...state.messages,
+              DiagnosticMessage.system(
+                '▶️ $cmd\n```\n${_clipOutput(preview)}\n```',
+              ),
+            ],
+          );
+
+          if (_currentSession != null) {
+            _currentSession = _currentSession!.copyWith(
+              executedCommands: [..._currentSession!.executedCommands, result],
+            );
+          }
+        }
+      }
+
+      if (!producedFinal) {
+        state = state.copyWith(
+          messages: [
+            ...state.messages,
+            DiagnosticMessage.system(
+              'انتهت خطوات الاستقصاء دون تقرير نهائي واضح. '
+              'جرّب رفع "حد خطوات الاستقصاء" من الإعدادات أو صياغة السؤال بدقة.',
+            ),
+          ],
+        );
+      }
+
+      state = state.copyWith(isLoading: false, clearLoadingStage: true);
+      await _saveSession();
+      _ref.read(historyManagerProvider.notifier).refresh();
+    } catch (e) {
+      debugPrint('[DiagnosticsNotifier] Agentic error: $e');
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.error(_friendlyError(e, 'فشل التشخيص الوكيل')),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+    }
+  }
+
+  /// يقتطع المخرجات الطويلة لعرضها في المحادثة (السجل الكامل يُرسَل للـ AI)
+  String _clipOutput(String s, {int max = 1500}) =>
+      s.length <= max ? s : '${s.substring(0, max)}\n… (اقتُطع للعرض)';
 
   /// يحوّل الاستثناء إلى رسالة عربية مفهومة (يعرض رسالة AiServiceException كما هي)
   String _friendlyError(Object e, String prefix) {

@@ -24,6 +24,7 @@ class AiSettingsService {
   static const _keyConnectionMethod = 'ai_connection_method';
   static const _keyMaxTokens = 'ai_max_tokens';
   static const _keyMode = 'ai_diagnostic_mode';
+  static const _keyAgenticMaxSteps = 'ai_agentic_max_steps';
 
   /// يحمّل الإعدادات المحفوظة (أو الإعدادات الافتراضية)
   Future<AiSettings> load() async {
@@ -36,6 +37,8 @@ class AiSettingsService {
           await _storage.read(key: _keyConnectionMethod) ?? 'routerOS';
       final maxTokensStr = await _storage.read(key: _keyMaxTokens) ?? '1500';
       final modeStr = await _storage.read(key: _keyMode) ?? 'general';
+      final agenticStepsStr =
+          await _storage.read(key: _keyAgenticMaxSteps) ?? '6';
 
       return AiSettings(
         apiKey: apiKey,
@@ -54,6 +57,7 @@ class AiSettingsService {
           (m) => m.name == modeStr,
           orElse: () => DiagnosticMode.general,
         ),
+        agenticMaxSteps: (int.tryParse(agenticStepsStr) ?? 6).clamp(1, 12),
       );
     } catch (e) {
       debugPrint('[AiSettingsService] Load error: $e');
@@ -73,6 +77,8 @@ class AiSettingsService {
       await _storage.write(
           key: _keyMaxTokens, value: settings.maxTokens.toString());
       await _storage.write(key: _keyMode, value: settings.mode.name);
+      await _storage.write(
+          key: _keyAgenticMaxSteps, value: settings.agenticMaxSteps.toString());
       debugPrint('[AiSettingsService] Settings saved (mode=${settings.mode.name})');
     } catch (e) {
       debugPrint('[AiSettingsService] Save error: $e');
@@ -89,5 +95,6 @@ class AiSettingsService {
     await _storage.delete(key: _keyConnectionMethod);
     await _storage.delete(key: _keyMaxTokens);
     await _storage.delete(key: _keyMode);
+    await _storage.delete(key: _keyAgenticMaxSteps);
   }
 }

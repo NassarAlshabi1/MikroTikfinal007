@@ -57,6 +57,127 @@ class AiService {
     }
   }
 
+  /// محادثة عامة منخفضة المستوى — تُستخدم من محرّك التشخيص الوكيل (Agentic).
+  ///
+  /// [systemPrompt] — تعليمات النظام (بروتوكول القرار)
+  /// [messages] — رسائل بصيغة {role, content} (user/assistant)
+  /// تُعيد النص الخام لرد الـ AI (بدون استخراج أوامر).
+  static Future<String> chat({
+    required AiSettings settings,
+    required String systemPrompt,
+    required List<Map<String, String>> messages,
+    double temperature = 0.3,
+  }) async {
+    if (!settings.isConfigured) {
+      throw const AiServiceException(
+          'مفتاح API غير مُعد. افتح الإعدادات وأدخل المفتاح.');
+    }
+    try {
+      switch (settings.provider) {
+        case AiProvider.openAI:
+          return await _chatOpenAI(
+            settings: settings,
+            systemPrompt: systemPrompt,
+            messages: messages,
+            temperature: temperature,
+          );
+        case AiProvider.gemini:
+          return await _chatGemini(
+            settings: settings,
+            systemPrompt: systemPrompt,
+            messages: messages,
+            temperature: temperature,
+          );
+      }
+    } on DioException catch (e) {
+      throw AiServiceException(_mapDioError(e));
+    } on AiServiceException {
+      rethrow;
+    } catch (e) {
+      throw AiServiceException('تعذّر الحصول على رد من الـ AI: $e');
+    }
+  }
+
+  static Future<String> _chatOpenAI({
+    required AiSettings settings,
+    required String systemPrompt,
+    required List<Map<String, String>> messages,
+    required double temperature,
+  }) async {
+    final dio = Dio();
+    dio.options.connectTimeout = const Duration(seconds: 30);
+    dio.options.receiveTimeout = const Duration(seconds: 90);
+
+    final baseUrl = settings.effectiveBaseUrl.replaceAll(RegExp(r'\/+$'), '');
+    final endpoint = '$baseUrl/chat/completions';
+
+    final payloadMessages = <Map<String, String>>[
+      {'role': 'system', 'content': systemPrompt},
+      ...messages,
+    ];
+
+    final response = await dio.post(
+      endpoint,
+      options: Options(headers: {
+        'Authorization': 'Bearer ${settings.apiKey}',
+        'Content-Type': 'application/json',
+      }),
+      data: {
+        'model': settings.model,
+        'messages': payloadMessages,
+        'max_tokens': settings.maxTokens,
+        'temperature': temperature,
+      },
+    );
+    return response.data['choices'][0]['message']['content'] as String;
+  }
+
+  static Future<String> _chatGemini({
+    required AiSettings settings,
+    required String systemPrompt,
+    required List<Map<String, String>> messages,
+    required double temperature,
+  }) async {
+    final dio = Dio();
+    dio.options.connectTimeout = const Duration(seconds: 30);
+    dio.options.receiveTimeout = const Duration(seconds: 90);
+
+    final baseUrl = settings.baseUrl != null && settings.baseUrl!.isNotEmpty
+        ? settings.baseUrl!.replaceAll(RegExp(r'\/+$'), '')
+        : 'https://generativelanguage.googleapis.com/v1beta';
+    final endpoint = '$baseUrl/models/${settings.model}:generateContent';
+
+    final contents = <Map<String, dynamic>>[
+      for (final msg in messages)
+        {
+          'role': msg['role'] == 'assistant' ? 'model' : 'user',
+          'parts': [
+            {'text': msg['content'] ?? ''},
+          ],
+        },
+    ];
+
+    final response = await dio.post(
+      endpoint,
+      queryParameters: {'key': settings.apiKey},
+      options: Options(headers: {'Content-Type': 'application/json'}),
+      data: {
+        'systemInstruction': {
+          'parts': [
+            {'text': systemPrompt},
+          ],
+        },
+        'contents': contents,
+        'generationConfig': {
+          'temperature': temperature,
+          'maxOutputTokens': settings.maxTokens,
+        },
+      },
+    );
+    return response.data['candidates'][0]['content']['parts'][0]['text']
+        as String;
+  }
+
   /// يحوّل أخطاء الشبكة/الخادم إلى رسائل عربية مفهومة
   static String _mapDioError(DioException e) {
     switch (e.type) {

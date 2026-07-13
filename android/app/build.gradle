@@ -144,3 +144,41 @@ flutter {
 }
 
 dependencies {}
+
+// ============================================================
+//  ترقيم تلقائي (Auto-Version)
+//  يزيد رقم البناء (+N) في pubspec.yaml تلقائياً بعد كل بناء إصدار.
+//  مثال: 1.0.0+1  →  1.0.0+2  →  1.0.0+3 ...
+//  يعمل مع: flutter build apk / appbundle (assembleRelease / bundleRelease)
+//  ملاحظة: البناء الحالي يستخدم الرقم الحالي، ثم يُرفَع الرقم للبناء التالي.
+// ============================================================
+def bumpPubspecBuildNumber = {
+    def pubspec = rootProject.file('../pubspec.yaml')
+    if (!pubspec.exists()) {
+        println "⚠️ [auto-version] لم أجد pubspec.yaml"
+        return
+    }
+    def text = pubspec.text
+    def matcher = (text =~ /(?m)^version:\s*(\d+\.\d+\.\d+)\+(\d+)\s*$/)
+    if (matcher.find()) {
+        def base = matcher.group(1)
+        def next = matcher.group(2).toInteger() + 1
+        def replacement = java.util.regex.Matcher.quoteReplacement("version: ${base}+${next}")
+        def updated = text.replaceFirst(/(?m)^version:\s*\d+\.\d+\.\d+\+\d+\s*$/, replacement)
+        pubspec.write(updated, 'UTF-8')
+        println "🔼 [auto-version] رقم البناء أصبح ${base}+${next}"
+    } else {
+        println "⚠️ [auto-version] صيغة version غير متوقعة (المطلوب: x.y.z+N)"
+    }
+}
+
+// نربط الترقيم بمهام بناء الإصدار فقط (لا يُزعج بناء debug أثناء التطوير)
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        if (task.name == 'assembleRelease' || task.name == 'bundleRelease') {
+            task.doLast {
+                bumpPubspecBuildNumber()
+            }
+        }
+    }
+}
