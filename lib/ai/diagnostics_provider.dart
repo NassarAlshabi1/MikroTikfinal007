@@ -241,8 +241,12 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
 
     try {
       // 1) جمع البيانات — عبر RouterOS API حصراً
+      //    نمرّر وضع التشخيص ليتمكن الـ collector من جمع بيانات إضافية
+      //    خاصة بالـ security/hotspot/vpn/qos/...إلخ
       final settings = state.settings;
-      final snapshot = await MikrotikDataCollector.collectViaRouterOS();
+      final snapshot = await MikrotikDataCollector.collectViaRouterOS(
+        mode: settings.mode,
+      );
 
       state = state.copyWith(
         lastSnapshot: snapshot,
