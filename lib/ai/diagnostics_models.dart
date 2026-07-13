@@ -18,6 +18,9 @@ enum DiagnosticMode {
   routing,        // مشاكل التوجيه و BGP/OSPF
   wifi,           // Wireless و CAPsMAN
   qos,            // QoS و Queue management
+  dhcp,           // DHCP و IP allocation (مستوحى من Mikrotik-AI-Cloud)
+  monitoring,     // Netwatch, SNMP, logs, health check
+  infrastructure, // Bridge, VLAN, Bonding, Tunnels, IPv6
 }
 
 extension DiagnosticModeExtension on DiagnosticMode {
@@ -39,6 +42,12 @@ extension DiagnosticModeExtension on DiagnosticMode {
         return 'Wireless و CAPsMAN';
       case DiagnosticMode.qos:
         return 'QoS و Queue Management';
+      case DiagnosticMode.dhcp:
+        return 'DHCP و IP Allocation';
+      case DiagnosticMode.monitoring:
+        return 'مراقبة و Netwatch';
+      case DiagnosticMode.infrastructure:
+        return 'بنية تحتية (Bridge/VLAN/IPv6)';
     }
   }
 
@@ -60,6 +69,12 @@ extension DiagnosticModeExtension on DiagnosticMode {
         return 'WIFI signal, CAPsMAN, roaming, channel optimization';
       case DiagnosticMode.qos:
         return 'Queues, PCQ, HTB, traffic shaping, bandwidth control';
+      case DiagnosticMode.dhcp:
+        return 'DHCP servers, leases, networks, pools, static bindings';
+      case DiagnosticMode.monitoring:
+        return 'Netwatch, SNMP, logs, ARP, neighbors, health check';
+      case DiagnosticMode.infrastructure:
+        return 'Bridge, VLAN, Bonding, EoIP/GRE/IPIP, IPv6, packages';
     }
   }
 
@@ -81,6 +96,12 @@ extension DiagnosticModeExtension on DiagnosticMode {
         return Icons.wifi;
       case DiagnosticMode.qos:
         return Icons.tune;
+      case DiagnosticMode.dhcp:
+        return Icons.dns;
+      case DiagnosticMode.monitoring:
+        return Icons.visibility;
+      case DiagnosticMode.infrastructure:
+        return Icons.hub;
     }
   }
 }

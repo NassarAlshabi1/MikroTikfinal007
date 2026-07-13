@@ -29,19 +29,25 @@ enum FixCategory {
   wifi,        // إعدادات Wireless
   hotspot,     // إعدادات Hotspot
   safety,      // نسخ احتياطي/استعادة
+  dhcp,        // إعدادات DHCP (مستوحى من Mikrotik-AI-Cloud)
+  monitoring,  // Netwatch, SNMP, NTP (مستوحى من Mikrotik-AI-Cloud)
+  infrastructure, // Bridge, VLAN, IPv6 (مستوحى من Mikrotik-AI-Cloud)
 }
 
 extension FixCategoryExtension on FixCategory {
   String get displayName {
     switch (this) {
-      case FixCategory.security:    return '🛡️ أمن';
-      case FixCategory.performance: return '⚡ أداء';
-      case FixCategory.qos:         return '📊 QoS';
-      case FixCategory.routing:     return '🗺️ توجيه';
-      case FixCategory.vpn:         return '🔐 VPN';
-      case FixCategory.wifi:        return '📶 Wireless';
-      case FixCategory.hotspot:     return '📡 Hotspot';
-      case FixCategory.safety:      return '💾 أمان البيانات';
+      case FixCategory.security:    return 'أمن';
+      case FixCategory.performance: return 'أداء';
+      case FixCategory.qos:         return 'QoS';
+      case FixCategory.routing:     return 'توجيه';
+      case FixCategory.vpn:         return 'VPN';
+      case FixCategory.wifi:        return 'Wireless';
+      case FixCategory.hotspot:     return 'Hotspot';
+      case FixCategory.safety:      return 'أمان البيانات';
+      case FixCategory.dhcp:        return 'DHCP';
+      case FixCategory.monitoring:  return 'مراقبة';
+      case FixCategory.infrastructure: return 'بنية تحتية';
     }
   }
 
@@ -55,6 +61,9 @@ extension FixCategoryExtension on FixCategory {
       case FixCategory.wifi:        return '📶';
       case FixCategory.hotspot:     return '📡';
       case FixCategory.safety:      return '💾';
+      case FixCategory.dhcp:        return '🌐';
+      case FixCategory.monitoring:  return '👁️';
+      case FixCategory.infrastructure: return '🏗️';
     }
   }
 }
@@ -100,6 +109,15 @@ class AutoFixService {
     }
     if (mode == DiagnosticMode.performance) {
       fixes.addAll(_analyzePerformance(snapshot));
+    }
+    if (mode == DiagnosticMode.dhcp) {
+      fixes.addAll(_analyzeDhcp(snapshot));
+    }
+    if (mode == DiagnosticMode.monitoring) {
+      fixes.addAll(_analyzeMonitoring(snapshot));
+    }
+    if (mode == DiagnosticMode.infrastructure) {
+      fixes.addAll(_analyzeInfrastructure(snapshot));
     }
 
     // ترتيب: الأكثر خطورة وأماناً أولاً
@@ -449,6 +467,437 @@ class AutoFixService {
           ));
         }
       }
+    }
+
+    return fixes;
+  }
+
+  // ============================================================
+  //  تحليل DHCP — مستوحى من MCP tools: list_dhcp_servers, list_dhcp_leases, ...
+  // ============================================================
+  static List<ProposedFix> _analyzeDhcp(MikrotikSnapshot snapshot) {
+    final fixes = <ProposedFix>[];
+
+    final dhcpServers = snapshot.extraData['IP DHCP SERVER'] ?? '';
+    final dhcpNetworks = snapshot.extraData['IP DHCP NETWORK'] ?? '';
+    final dhcpLeases = snapshot.extraData['IP DHCP LEASES'] ?? '';
+    final ipPools = snapshot.extraData['IP POOL'] ?? '';
+    final arpTable = snapshot.extraData['IP ARP'] ?? '';
+
+    // 1) DHCP server معطّل
+    if (dhcpServers.toLowerCase().contains('disabled=true') ||
+        dhcpServers.toLowerCase().contains('X ')) {
+      fixes.add(ProposedFix(
+        id: 'enable-dhcp-server',
+        title: 'DHCP server معطّل',
+        description: 'أحد خوادم DHCP معطّل. الأجهزة لن تحصل على IP تلقائياً.',
+        impact: 'الأجهزة الجديدة لن تستطيع الاتصال بالشبكة.',
+        category: FixCategory.dhcp,
+        risk: CommandRiskLevel.moderate,
+        autoApplySafe: false,
+        script: RouterOsScript(
+          title: 'تفعيل DHCP servers المعطّلة',
+          description: 'يفعّل كل خوادم DHCP المعطّلة',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'dhcp',
+          commands: const [
+            '/ip dhcp-server enable [find disabled=yes]',
+          ],
+        ),
+      ));
+    }
+
+    // 2) DHCP server بدون authoritative
+    if (dhcpServers.isNotEmpty &&
+        !dhcpServers.toLowerCase().contains('authoritative=yes')) {
+      fixes.add(ProposedFix(
+        id: 'set-dhcp-authoritative',
+        title: 'DHCP بدون authoritative=yes',
+        description: 'بدون authoritative=yes، قد يستجيب الجهاز بـ NAK للأجهزة التي '
+            'تطلب IP قديم، مما يسبب تأخيراً في الاتصال.',
+        impact: 'تأخر في حصول الأجهزة على IP، مشاكل تجديد الـ lease.',
+        category: FixCategory.dhcp,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'ضبط DHCP authoritative=yes',
+          description: 'يجعل كل خوادم DHCP authoritative',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'dhcp',
+          commands: const [
+            '/ip dhcp-server set [find] authoritative=yes',
+          ],
+        ),
+      ));
+    }
+
+    // 3) DHCP leases كثيرة مع حالة "waiting" أو "offered"
+    if (dhcpLeases.isNotEmpty) {
+      final waitingCount = 'waiting'.allMatches(dhcpLeases.toLowerCase()).length;
+      if (waitingCount > 5) {
+        fixes.add(ProposedFix(
+          id: 'cleanup-dhcp-waiting',
+          title: '$waitingCount DHCP leases في حالة waiting',
+          description: 'وجود عدد كبير من leases في حالة waiting يدل على أجهزة '
+              'طلبت IP ولم تكمل الطلب، أو pool ممتلئ.',
+          impact: 'استنزاف الـ IP pool، تأخر في توزيع الـ IPs.',
+          category: FixCategory.dhcp,
+          risk: CommandRiskLevel.moderate,
+          script: RouterOsScript(
+            title: 'تنظيف DHCP leases المعلّقة',
+            description: 'يحذف الـ leases في حالة waiting',
+            overallRisk: CommandRiskLevel.moderate,
+            category: 'dhcp',
+            commands: const [
+              '/ip dhcp-server lease remove [find status=waiting]',
+            ],
+          ),
+        ));
+      }
+    }
+
+    // 4) DHCP lease time قصير جداً
+    if (dhcpServers.toLowerCase().contains('lease-time=00:0') ||
+        dhcpServers.toLowerCase().contains('lease-time=00:1')) {
+      fixes.add(ProposedFix(
+        id: 'fix-short-lease-time',
+        title: 'DHCP lease time قصير جداً',
+        description: 'lease time أقل من 10 دقائق يسبب تجديدات متكررة وحمل زائد '
+            'على الشبكة. الموصى به: 10:00:00 (10 ساعات) على الأقل.',
+        impact: 'حمل زائد على الـ router، انقطاع مؤقت للأجهزة عند التجديد.',
+        category: FixCategory.dhcp,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'ضبط DHCP lease time لـ 10 ساعات',
+          description: 'يضبط lease-time على 10:00:00 لكل خوادم DHCP',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'dhcp',
+          commands: const [
+            '/ip dhcp-server set [find] lease-time=10:00:00',
+          ],
+        ),
+      ));
+    }
+
+    // 5) Pool ممتلئ (نسبة الإشغال > 90%)
+    if (dhcpLeases.isNotEmpty && ipPools.isNotEmpty) {
+      // عدّ الـ leases النشطة
+      final activeLeases = 'bound'.allMatches(dhcpLeases.toLowerCase()).length;
+      // تقدير حجم pool بناءً على ranges
+      if (activeLeases > 250) {
+        fixes.add(ProposedFix(
+          id: 'expand-dhcp-pool',
+          title: 'DHCP pool ممتلئ ($activeLeases lease نشط)',
+          description: 'عدد كبير من الـ leases النشطة قد يقترب من حدود الـ pool. '
+            'وسّع الـ pool أو استخدم subnet أصغر.',
+          impact: 'أجهزة جديدة لن تحصل على IP، انقطاع الاتصال.',
+          category: FixCategory.dhcp,
+          risk: CommandRiskLevel.moderate,
+          script: RouterOsScript(
+            title: 'فحص إشغال DHCP pool',
+            description: 'يجمع بيانات إشعار الـ pool لاتخاذ قرار التوسعة',
+            overallRisk: CommandRiskLevel.safe,
+            category: 'dhcp',
+            commands: const [
+              '/ip pool print',
+              '/ip dhcp-server lease print count-only',
+              '/ip dhcp-server lease print count-only where status=bound',
+            ],
+          ),
+        ));
+      }
+    }
+
+    return fixes;
+  }
+
+  // ============================================================
+  //  تحليل المراقبة — مستوحى من MCP: list_netwatch, list_snmp, ntp_client, ...
+  // ============================================================
+  static List<ProposedFix> _analyzeMonitoring(MikrotikSnapshot snapshot) {
+    final fixes = <ProposedFix>[];
+
+    final ntpClient = snapshot.extraData['SYSTEM NTP CLIENT'] ?? '';
+    final clock = snapshot.extraData['SYSTEM CLOCK'] ?? '';
+    final netwatch = snapshot.extraData['TOOL NETWATCH'] ?? '';
+    final snmp = snapshot.extraData['SNMP'] ?? '';
+    final scheduler = snapshot.extraData['SYSTEM SCHEDULER'] ?? '';
+
+    // 1) NTP client غير مُفعّل أو بدون خادم
+    if (ntpClient.toLowerCase().contains('enabled=no') ||
+        ntpClient.toLowerCase().contains('disabled=true') ||
+        !ntpClient.toLowerCase().contains('server')) {
+      fixes.add(ProposedFix(
+        id: 'enable-ntp-client',
+        title: 'NTP client غير مُفعّل',
+        description: 'بدون NTP، ساعة الجهاز قد تنحرف، مما يسبب مشاكل في: '
+            'SSL certificates، scheduling، logs غير متسقة زمنياً.',
+        impact: 'انحراف الوقت، مشاكل TLS، logs غير متسقة، فشل scheduled tasks.',
+        category: FixCategory.monitoring,
+        risk: CommandRiskLevel.moderate,
+        autoApplySafe: true,
+        script: RouterOsScript(
+          title: 'تفعيل NTP client مع خوادم عامة',
+          description: 'يضبط NTP على pool.ntp.org (مجاني وموثوق)',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'monitoring',
+          commands: const [
+            '/system ntp client set enabled=yes servers=0.pool.ntp.org,1.pool.ntp.org,2.pool.ntp.org',
+          ],
+        ),
+      ));
+    }
+
+    // 2) الوقت غير متزامن (time-zone خاطئ)
+    if (clock.toLowerCase().contains('time-zone-autodetect=false') &&
+        clock.toLowerCase().contains('time-zone=')) {
+      // check if time-zone is +00:00 (UTC) which might be wrong
+      final tzMatch = RegExp(r'time-zone=([+-]\d{2}:\d{2})').firstMatch(clock);
+      if (tzMatch != null && tzMatch.group(1) == '+00:00') {
+        fixes.add(ProposedFix(
+          id: 'set-time-zone',
+          title: 'الوقت UTC (+00:00) — قد يكون خاطئاً',
+          description: 'ضبط الوقت على UTC قد يسبب ارتباكاً في قراءة الـ logs. '
+              'فعّل time-zone-autodetect أو اضبط التوقيت يدوياً.',
+          impact: 'صعوبة تتبع الـ logs، توقيت خاطئ في الـ scheduled tasks.',
+          category: FixCategory.monitoring,
+          risk: CommandRiskLevel.moderate,
+          autoApplySafe: true,
+          script: RouterOsScript(
+            title: 'تفعيل time-zone-autodetect',
+            description: 'يضبط التوقيت تلقائياً',
+            overallRisk: CommandRiskLevel.moderate,
+            category: 'monitoring',
+            commands: const [
+              '/system clock set time-zone-autodetect=yes',
+            ],
+          ),
+        ));
+      }
+    }
+
+    // 3) SNMP مُفعّل بدون community قوي
+    if (snmp.toLowerCase().contains('enabled=yes') &&
+        (snmp.toLowerCase().contains('community=public') ||
+         snmp.toLowerCase().contains('community=private'))) {
+      fixes.add(ProposedFix(
+        id: 'snmp-weak-community',
+        title: 'SNMP مُفعّل بـ community ضعيف (public/private)',
+        description: 'استخدام public أو private كـ SNMP community يسمح لأي شخص '
+            'على الشبكة بقراءة بيانات الجهاز.',
+        impact: 'كشف معلومات الجهاز، هجمات enumeration، ثغرة أمنية.',
+        category: FixCategory.security,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'تغيير SNMP community لقيمة قوية',
+          description: 'يغيّر community من public لقيمة قوية. عدّل الـ community الجديد.',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'monitoring',
+          commands: const [
+            '/snmp community set [find name=public] name=CHANGE_ME_STRONG_COMMUNITY read-access=yes write-access=no',
+          ],
+        ),
+      ));
+    }
+
+    // 4) لا يوجد Netwatch — ينصح بإضافته للمراقبة
+    if (netwatch.isEmpty || netwatch == '(empty)') {
+      fixes.add(ProposedFix(
+        id: 'add-netwatch-gateway',
+        title: 'لا يوجد Netwatch — مراقبة الـ gateway مفقودة',
+        description: 'Netwatch يراقب توفر الـ gateway وينفّذ scripts عند انقطاعه. '
+            'مفيد للـ failover التلقائي.',
+        impact: 'لا يوجد تنبيه عند انقطاع الإنترنت، لا failover تلقائي.',
+        category: FixCategory.monitoring,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'إضافة Netwatch لمراقبة gateway',
+          description: 'يراقب الـ gateway كل 10 ثواني. عدّل IP الـ gateway.',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'monitoring',
+          commands: const [
+            '/tool netwatch add host=YOUR_GATEWAY_IP interval=10s timeout=1s comment="gateway-monitor"',
+          ],
+        ),
+      ));
+    }
+
+    // 5) لا يوجد scheduler للنسخ الاحتياطي التلقائي
+    if (!scheduler.toLowerCase().contains('backup')) {
+      fixes.add(ProposedFix(
+        id: 'add-auto-backup-scheduler',
+        title: 'لا يوجد نسخ احتياطي تلقائي مجدول',
+        description: 'بدون backup مجدول، ستفقد الإعدادات عند فشل الجهاز. '
+            'يُنصح بـ backup أسبوعي تلقائي.',
+        impact: 'فقدان الإعدادات عند فشل الجهاز، استرجاع بطيء.',
+        category: FixCategory.safety,
+        risk: CommandRiskLevel.moderate,
+        autoApplySafe: true,
+        script: RouterOsScript(
+          title: 'إضافة scheduler للنسخ الاحتياطي الأسبوعي',
+          description: 'ينشئ backup كل يوم أحد الساعة 3 صباحاً',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'monitoring',
+          commands: const [
+            '/system scheduler add name=auto-backup interval=7d start-time=03:00:00 on-event="/system backup save name=auto-weekly"',
+          ],
+        ),
+      ));
+    }
+
+    return fixes;
+  }
+
+  // ============================================================
+  //  تحليل البنية التحتية — مستوحى من MCP: bridge, vlan, bonding, ipv6, ...
+  // ============================================================
+  static List<ProposedFix> _analyzeInfrastructure(MikrotikSnapshot snapshot) {
+    final fixes = <ProposedFix>[];
+
+    final bridge = snapshot.extraData['INTERFACE BRIDGE'] ?? '';
+    final bridgePorts = snapshot.extraData['INTERFACE BRIDGE PORT'] ?? '';
+    final vlans = snapshot.extraData['INTERFACE VLAN'] ?? '';
+    final packages = snapshot.extraData['SYSTEM PACKAGES'] ?? '';
+    final ipv6Addresses = snapshot.extraData['IPV6 ADDRESS'] ?? '';
+    final eoip = snapshot.extraData['INTERFACE EOIP'] ?? '';
+    final gre = snapshot.extraData['INTERFACE GRE'] ?? '';
+
+    // 1) Bridge بدون vlan-filtering (إن كان يستخدم VLANs)
+    if (bridge.isNotEmpty && !bridge.toLowerCase().contains('vlan-filtering=true') &&
+        vlans.isNotEmpty && vlans != '(empty)') {
+      fixes.add(ProposedFix(
+        id: 'enable-bridge-vlan-filtering',
+        title: 'Bridge بدون vlan-filtering بالرغم من وجود VLANs',
+        description: 'عند استخدام VLANs مع bridge، يجب تفعيل vlan-filtering لمنع '
+            'تسريب VLAN tags بين المنافذ.',
+        impact: 'تسريب VLANs، مشاكل أمنية، عزل شبكي ضعيف.',
+        category: FixCategory.infrastructure,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'تفعيل vlan-filtering على الـ bridges',
+          description: 'يفعّل vlan-filtering على كل الـ bridges',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'infrastructure',
+          commands: const [
+            '/interface bridge set [find] vlan-filtering=yes',
+          ],
+        ),
+      ));
+    }
+
+    // 2) Bridge port بدون PVID محدد
+    if (bridgePorts.isNotEmpty &&
+        !bridgePorts.toLowerCase().contains('pvid=') &&
+        bridge.toLowerCase().contains('vlan-filtering=true')) {
+      fixes.add(ProposedFix(
+        id: 'set-bridge-port-pvid',
+        title: 'Bridge ports بدون PVID',
+        description: 'عند تفعيل vlan-filtering، كل منفذ يجب أن يكون له PVID '
+            '(native VLAN). بدون PVID قد تُرفض الحزم غير المُوسومة.',
+        impact: 'فقدان الاتصال للأجهزة غير المُوسومة بـ VLAN.',
+        category: FixCategory.infrastructure,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'فحص bridge port PVIDs',
+          description: 'يجمع بيانات الـ ports لاتخاذ قرار PVID',
+          overallRisk: CommandRiskLevel.safe,
+          category: 'infrastructure',
+          commands: const [
+            '/interface bridge port print detail',
+            '/interface bridge port print where pvid=1',
+          ],
+        ),
+      ));
+    }
+
+    // 3) IPv6 مُفعّل بدون عنوان (قد يسبب مشاكل)
+    if (ipv6Addresses.isEmpty ||
+        ipv6Addresses == '(empty)' &&
+        packages.toLowerCase().contains('ipv6') &&
+        !packages.toLowerCase().contains('ipv6.*disabled')) {
+      fixes.add(ProposedFix(
+        id: 'disable-ipv6-if-unused',
+        title: 'IPv6 مُفعّل لكن غير مُستخدم',
+        description: 'تفعيل IPv6 بدون إعداد عناوين قد يسبب مشاكل routing غريبة '
+            'وقد يكشف الجهاز لهجمات IPv6. عطّله إن لم يكن مطلوباً.',
+        impact: 'مشاكل routing غامضة، سطح هجوم إضافي.',
+        category: FixCategory.infrastructure,
+        risk: CommandRiskLevel.moderate,
+        autoApplySafe: true,
+        script: RouterOsScript(
+          title: 'تعطيل IPv6 package إن لم يُستخدم',
+          description: 'يعطّل حزمة IPv6 بالكامل',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'infrastructure',
+          commands: const [
+            '/system package disable ipv6',
+          ],
+        ),
+      ));
+    }
+
+    // 4) EoIP/GRE tunnels بدون keepalive (zombie tunnels)
+    if (eoip.isNotEmpty && !eoip.toLowerCase().contains('keepalive')) {
+      fixes.add(ProposedFix(
+        id: 'eoip-keepalive',
+        title: 'EoIP tunnels بدون keepalive',
+        description: 'بدون keepalive، تبقى tunnels في حالة "up" حتى لو كان الطرف '
+            'الآخر غير متاح، مما يسبب black holes.',
+        impact: 'حركة مرور تُرسل لنفق ميت، مشاكل routing.',
+        category: FixCategory.infrastructure,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'تفعيل keepalive على EoIP tunnels',
+          description: 'يضبط keepalive=10s على كل EoIP tunnels',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'infrastructure',
+          commands: const [
+            '/interface eoip set [find] keepalive=10s,3',
+          ],
+        ),
+      ));
+    }
+
+    if (gre.isNotEmpty && !gre.toLowerCase().contains('keepalive')) {
+      fixes.add(ProposedFix(
+        id: 'gre-keepalive',
+        title: 'GRE tunnels بدون keepalive',
+        description: 'بدون keepalive، تبقى GRE tunnels في حالة "up" حتى لو كان '
+            'الطرف الآخر غير متاح.',
+        impact: 'black holes routing، حركة مرور مهدرة.',
+        category: FixCategory.infrastructure,
+        risk: CommandRiskLevel.moderate,
+        script: RouterOsScript(
+          title: 'تفعيل keepalive على GRE tunnels',
+          description: 'يضبط keepalive=10s على كل GRE tunnels',
+          overallRisk: CommandRiskLevel.moderate,
+          category: 'infrastructure',
+          commands: const [
+            '/interface gre set [find] keepalive=10s,3',
+          ],
+        ),
+      ));
+    }
+
+    // 5) حزمة معطّلة من الحزم الأساسية
+    if (packages.toLowerCase().contains('disabled=true')) {
+      fixes.add(ProposedFix(
+        id: 'review-disabled-packages',
+        title: 'بعض حزم RouterOS معطّلة',
+        description: 'وجود حزم معطّلة قد يكون مقصوداً (لتقليل الهجوم) أو غير مقصود. '
+            'راجع القائمة لاتخاذ قرار.',
+        impact: 'ميزات غير متاحة، مشاكل غير متوقعة.',
+        category: FixCategory.infrastructure,
+        risk: CommandRiskLevel.safe,
+        script: RouterOsScript(
+          title: 'عرض الحزم المعطّلة',
+          description: 'يجمع قائمة بالحزم المعطّلة للمراجعة',
+          overallRisk: CommandRiskLevel.safe,
+          category: 'infrastructure',
+          commands: const [
+            '/system package print where disabled=yes',
+          ],
+        ),
+      ));
     }
 
     return fixes;
