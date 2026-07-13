@@ -1,6 +1,8 @@
 name: mikrotik_manager
 description: "A new Flutter project."
 publish_to: 'none'
+# رقم البناء (+N) يُحدَّد تلقائياً من GitHub Actions (build-release.yml)
+# لا تعدّله يدوياً — استخدم bump-version.yml لزيادة الإصدار.
 version: 1.0.0+1
 
 environment:

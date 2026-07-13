@@ -135,6 +135,49 @@
 
 ---
 
-**🏗️ Built with Flutter 3.22.3**  
+## 📦 Build and Release (مع زيادة تلقائية لرقم البناء)
+
+**الملف:** `build-release.yml`
+
+**التشغيل:**
+- عند دفع tag بصيغة `v*.*.*` (مثل `v1.0.0`)
+- يدوياً عبر workflow_dispatch
+
+**المميزات الجديدة:**
+- ✅ **زيادة تلقائية لرقم البناء** (build number) باستخدام `github.run_number`
+- ✅ صيغة الإصدار: `version+buildNumber` (مثل `1.0.0+142`)
+- ✅ إعادة تسمية الـ artifacts باسم الإصدار الكامل
+- ✅ إنشاء GitHub Release تلقائياً مع release notes
+- ✅ تمرير رقم الإصدار إلى `pubspec.yaml` قبل البناء
+
+**كيف يُحسب رقم البناء؟**
+```
+BUILD_NUMBER = github.run_number + (عدد الـ tags السابقة × 1000)
+```
+مثال: run_number=42, tags=3 → BUILD_NUMBER=3042
+
+### 🔼 Bump Version (زيادة الإصدار)
+
+**الملف:** `bump-version.yml`
+
+**التشغيل:** يدوياً فقط (workflow_dispatch)
+
+**الأنواع المدعومة:**
+| النوع | مثال |
+|------|------|
+| `patch` | 1.0.0 → 1.0.1 |
+| `minor` | 1.0.0 → 1.1.0 |
+| `major` | 1.0.0 → 2.0.0 |
+
+**ما يحدث:**
+1. يقرأ الإصدار الحالي من `pubspec.yaml`
+2. يزيد الإصدار حسب النوع المختار
+3. يحدّث `pubspec.yaml` ويعمل commit
+4. يُنشئ tag `v{NEW_VERSION}` ويدفعه
+5. الـ tag يُطلق `build-release.yml` تلقائياً لبناء الـ APK/AAB وإنشاء Release
+
+---
+
+**🏗️ Built with Flutter 3.35.7**  
 **✨ Features Qahtani Logo Integration**  
 **🚀 Ready for Production Deployment**
