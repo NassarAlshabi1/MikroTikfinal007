@@ -264,6 +264,9 @@ class MikrotikSnapshot {
 === SYSTEM ===
 $system
 
+=== ROUTEROS VERSION ===
+RouterOS v6.x (التطبيق يدعم v6 فقط — استخدم أوامر v6 syntax)
+
 === INTERFACES ===
 $interfaces
 
