@@ -202,6 +202,11 @@ class MikrotikSnapshot {
   final String ipAddress;
   final DateTime collectedAt;
 
+  /// بيانات إضافية مجمّعة حسب وضع التشخيص (security, vpn, qos, إلخ)
+  /// المفتاح = اسم القسم (مثلاً "IP SERVICES")
+  /// القيمة = مخرجات الأمر كنص
+  final Map<String, String> extraData;
+
   const MikrotikSnapshot({
     required this.interfaces,
     required this.routes,
@@ -210,6 +215,7 @@ class MikrotikSnapshot {
     required this.system,
     required this.ipAddress,
     required this.collectedAt,
+    this.extraData = const {},
   });
 
   /// يحوّل البيانات إلى نص مضغوط لإرساله للـ AI
@@ -220,6 +226,18 @@ class MikrotikSnapshot {
     final trimmedLogs = logLines.length > maxLogLines
         ? logLines.sublist(logLines.length - maxLogLines).join('\n')
         : logs;
+
+    // بناء أقسام البيانات الإضافية (extraData) ديناميكياً
+    final extraSections = StringBuffer();
+    if (extraData.isNotEmpty) {
+      for (final entry in extraData.entries) {
+        final value = entry.value.trim().isEmpty
+            ? '(empty)'
+            : entry.value.trim();
+        extraSections.writeln('\n=== ${entry.key} ===');
+        extraSections.writeln(value);
+      }
+    }
 
     return '''
 === SYSTEM ===
@@ -241,8 +259,7 @@ $trimmedLogs
 $ipAddress
 
 === SNAPSHOT TIME ===
-${collectedAt.toIso8601String()}
-''';
+${collectedAt.toIso8601String()}$extraSections''';
   }
 }
 
