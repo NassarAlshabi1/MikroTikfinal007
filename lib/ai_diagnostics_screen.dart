@@ -3,6 +3,8 @@
 //  - محادثة تفاعلية مع الـ AI
 //  - زر تشخيص سريع يجمع بيانات MikroTik
 //  - عرض الأوامر المقترحة مع زر نسخ
+//  - تنفيذ سكربتات متعددة الأوامر (Script execution)
+//  - إصلاح تلقائي (Auto-Fix) بدون AI
 // ============================================================
 
 import 'package:flutter/material.dart';
@@ -14,6 +16,8 @@ import 'ai/diagnostics_provider.dart';
 import 'ai/ai_settings_screen.dart';
 import 'ai/diagnostics_history_screen.dart';
 import 'ai/command_executor.dart';
+import 'ai/script_executor.dart';
+import 'ai/auto_fix_service.dart';
 import 'snackbar_helpers.dart';
 
 class AiDiagnosticsScreen extends ConsumerStatefulWidget {
@@ -206,6 +210,14 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       appBar: AppBar(
         title: const Text('تشخيص بالذكاء الاصطناعي'),
         actions: [
+          // زر الإصلاح التلقائي (Auto-Fix)
+          IconButton(
+            icon: const Icon(Icons.auto_fix_high, color: Colors.amber),
+            tooltip: 'إصلاح تلقائي (بدون AI)',
+            onPressed: state.isLoading
+                ? null
+                : () => _showAutoFixPanel(context),
+          ),
           IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'سجل التشخيصات',
@@ -261,6 +273,16 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     message: msg,
                     onCopyCommand: _copyCommand,
                     onExecuteCommand: _handleExecuteCommand,
+                    onExecuteScript: _handleExecuteScript,
+                    onCopyAllCommands: (commands) async {
+                      await Clipboard.setData(
+                        ClipboardData(text: commands.join('\n')),
+                      );
+                      if (context.mounted) {
+                        showSuccessSnackBar(
+                            context, 'تم نسخ ${commands.length} أمر');
+                      }
+                    },
                   );
                 },
               ),
@@ -295,6 +317,470 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         ],
       ),
     );
+  }
+
+  /// ينفذ سكربت RouterOS كامل (عدة أوامر بالتسلسل)
+  Future<void> _handleExecuteScript(RouterOsScript script) async {
+    // أولاً: اعرض معاينة السكربت واطلب تأكيد المستخدم
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              script.isDangerous ? Icons.dangerous : Icons.movie,
+              color: script.isDangerous
+                  ? Colors.red
+                  : (script.hasModerate ? Colors.orange : Colors.green),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'تنفيذ سكربت: ${script.title}',
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  script.description,
+                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: SelectableText(
+                    ScriptExecutor.previewScript(script),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color: Colors.greenAccent,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (script.isDangerous)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.warning, color: Colors.red, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'هذا السكربت يحتوي على أوامر خطرة. سيتم عمل backup تلقائياً قبل التنفيذ.',
+                            style: TextStyle(fontSize: 12, color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (script.hasModerate)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.orange, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'سيتم عمل backup تلقائياً قبل التنفيذ.',
+                            style: TextStyle(fontSize: 12, color: Colors.orange),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: script.isDangerous
+                  ? Colors.red
+                  : Theme.of(context).primaryColor,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            icon: const Icon(Icons.play_arrow, color: Colors.white),
+            label: const Text('تنفيذ', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // تنفيذ السكربت عبر الـ provider
+    setState(() => _inputEnabled = false);
+    try {
+      final result = await ref
+          .read(diagnosticsProvider.notifier)
+          .executeScript(script);
+      if (mounted) {
+        if (result.overallSuccess) {
+          showSuccessSnackBar(
+            context,
+            '✅ تم تنفيذ السكربت بنجاح (${result.successCount}/${result.script.commands.length})',
+          );
+        } else {
+          showErrorSnackBar(
+            context,
+            '⚠️ اكتمل مع ${result.failureCount} خطأ',
+          );
+        }
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'خطأ: $e');
+    } finally {
+      if (mounted) setState(() => _inputEnabled = true);
+    }
+  }
+
+  /// يعرض لوحة الإصلاحات التلقائية المقترحة
+  void _showAutoFixPanel(BuildContext context) {
+    final fixes = ref.read(diagnosticsProvider.notifier).getProposedAutoFixes();
+    final hasSnapshot = ref.read(diagnosticsProvider).lastSnapshot != null;
+
+    if (fixes.isEmpty) {
+      // لا توجد إصلاحات — اعرض رسالة
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 8),
+              Text('لا توجد إصلاحات'),
+            ],
+          ),
+          content: Text(
+            !hasSnapshot
+                ? 'لم يتم جمع بيانات من MikroTik بعد. اضغط زر "تشخيص سريع" أولاً.'
+                : 'لم يتم اكتشاف مشاكل تتطلب إصلاحاً تلقائياً. كل شيء يبدو جيداً!',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('حسناً'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ===== رأس اللوحة =====
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_fix_high, color: Colors.amber, size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'الإصلاحات التلقائية المقترحة',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${fixes.length} إصلاح مقترح — بدون الحاجة للـ AI',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // ===== قائمة الإصلاحات =====
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: fixes.length,
+                itemBuilder: (ctx, index) {
+                  final fix = fixes[index];
+                  return _buildAutoFixTile(fix);
+                },
+              ),
+            ),
+
+            const Divider(height: 1),
+            // ===== زر تطبيق كل الإصلاحات الآمنة =====
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    _applyAllSafeFixes(fixes);
+                  },
+                  icon: const Icon(Icons.bolt, color: Colors.white),
+                  label: const Text(
+                    'تطبيق كل الإصلاحات الآمنة فقط',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// بناء عنصر إصلاح في القائمة
+  Widget _buildAutoFixTile(ProposedFix fix) {
+    final riskColor = fix.risk == CommandRiskLevel.dangerous
+        ? Colors.red
+        : fix.risk == CommandRiskLevel.moderate
+            ? Colors.orange
+            : Colors.green;
+
+    return ExpansionTile(
+      leading: CircleAvatar(
+        backgroundColor: riskColor.withValues(alpha: 0.2),
+        child: Text(
+          fix.category.icon,
+          style: const TextStyle(fontSize: 18),
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              fix.title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
+          if (fix.autoApplySafe)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'تلقائي',
+                style: TextStyle(fontSize: 10, color: Colors.green),
+              ),
+            ),
+        ],
+      ),
+      subtitle: Text(
+        '${fix.category.displayName} • ${fix.risk.displayName}',
+        style: TextStyle(fontSize: 11, color: riskColor),
+      ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '📝 الوصف:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                fix.description,
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '⚠️ الأثر:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                fix.impact,
+                style: TextStyle(
+                    fontSize: 12, color: Colors.orange.shade200),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '🔧 الأوامر:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: SelectableText(
+                  fix.script.commands.join('\n'),
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    color: Colors.greenAccent,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      // نسخ الأوامر فقط
+                      final commands = fix.script.commands.join('\n');
+                      Clipboard.setData(ClipboardData(text: commands));
+                      if (mounted) {
+                        showSuccessSnackBar(context, 'تم نسخ ${fix.script.commands.length} أمر');
+                      }
+                    },
+                    icon: const Icon(Icons.copy, size: 16),
+                    label: const Text('نسخ'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _handleExecuteScript(fix.script);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: riskColor,
+                    ),
+                    icon: const Icon(Icons.play_arrow, size: 16, color: Colors.white),
+                    label: const Text('تنفيذ', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// يطبّق كل الإصلاحات الآمنة (safe) بالتسلسل
+  Future<void> _applyAllSafeFixes(List<ProposedFix> fixes) async {
+    final safeFixes = fixes.where((f) => f.autoApplySafe).toList();
+
+    if (safeFixes.isEmpty) {
+      showSuccessSnackBar(
+          context, 'لا توجد إصلاحات آمنة للتطبيق التلقائي. راجع الإصلاحات يدوياً.');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.bolt, color: Colors.green),
+            SizedBox(width: 8),
+            Text('تطبيق الإصلاحات الآمنة'),
+          ],
+        ),
+        content: Text(
+          'سيتم تطبيق ${safeFixes.length} إصلاح آمن بالتسلسل:\n\n'
+          '${safeFixes.map((f) => "✅ ${f.title}").join('\n')}\n\n'
+          'هل تريد المتابعة؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('تطبيق', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // تنفيذ كل إصلاح آمن بالتسلسل
+    setState(() => _inputEnabled = false);
+    var successCount = 0;
+    var failureCount = 0;
+
+    for (final fix in safeFixes) {
+      try {
+        final result = await ref
+            .read(diagnosticsProvider.notifier)
+            .applyAutoFix(fix);
+        if (result.overallSuccess) {
+          successCount++;
+        } else {
+          failureCount++;
+        }
+      } catch (e) {
+        failureCount++;
+        debugPrint('AutoFix failed: $e');
+      }
+    }
+
+    if (mounted) {
+      showSuccessSnackBar(
+        context,
+        '✅ $successCount نجح، $failureCount فشل من ${safeFixes.length} إصلاح',
+      );
+      _scrollToBottom();
+      setState(() => _inputEnabled = true);
+    }
   }
 
   Widget _buildNotConfiguredBanner() {
@@ -763,11 +1249,15 @@ class _MessageBubble extends StatelessWidget {
   final DiagnosticMessage message;
   final void Function(String) onCopyCommand;
   final void Function(String) onExecuteCommand;
+  final void Function(RouterOsScript)? onExecuteScript;
+  final void Function(List<String>)? onCopyAllCommands;
 
   const _MessageBubble({
     required this.message,
     required this.onCopyCommand,
     required this.onExecuteCommand,
+    this.onExecuteScript,
+    this.onCopyAllCommands,
   });
 
   @override
@@ -825,13 +1315,34 @@ class _MessageBubble extends StatelessWidget {
                     const SizedBox(height: 12),
                     const Divider(height: 1, color: Colors.white24),
                     const SizedBox(height: 8),
-                    const Text(
-                      'أوامر مقترحة (اضغط للنسخ):',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white54,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'أوامر مقترحة (اضغط للنسخ):',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white54,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        // ===== زر نسخ الكل =====
+                        if (onCopyAllCommands != null)
+                          TextButton.icon(
+                            onPressed: () =>
+                                onCopyAllCommands!(message.suggestedCommands!),
+                            icon: const Icon(Icons.copy_all,
+                                size: 14, color: Colors.white70),
+                            label: const Text('نسخ الكل',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.white70)),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              minimumSize: const Size(0, 28),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     for (final cmd in message.suggestedCommands!)
@@ -840,6 +1351,37 @@ class _MessageBubble extends StatelessWidget {
                         onCopy: () => onCopyCommand(cmd),
                         onExecute: () => onExecuteCommand(cmd),
                       ),
+                    // ===== زر تنفيذ السكربت كاملاً =====
+                    if (onExecuteScript != null &&
+                        message.suggestedCommands!.length > 1) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // نبني سكربت من الأوامر المقترحة
+                            final script = RouterOsScript.fromText(
+                              title: 'سكربت AI',
+                              description:
+                                  'سكربت مُولّد من اقتراحات الـ AI (${message.suggestedCommands!.length} أوامر)',
+                              text: message.suggestedCommands!.join('\n'),
+                            );
+                            onExecuteScript!(script);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          icon: const Icon(Icons.play_circle_fill,
+                              color: Colors.white, size: 18),
+                          label: Text(
+                            'تنفيذ السكربت كاملاً (${message.suggestedCommands!.length} أوامر)',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),

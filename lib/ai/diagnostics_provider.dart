@@ -12,6 +12,8 @@ import 'ai_service.dart';
 import 'ai_settings_service.dart';
 import 'command_executor.dart';
 import 'diagnostics_history.dart';
+import 'script_executor.dart';
+import 'auto_fix_service.dart';
 
 // ============================================================
 //  Providers أساسية
@@ -141,13 +143,15 @@ class HistoryManager extends StateNotifier<AsyncValue<List<DiagnosticSession>>> 
 final diagnosticsProvider =
     StateNotifierProvider<DiagnosticsNotifier, DiagnosticsState>((ref) {
   final settings = ref.watch(aiSettingsProvider).valueOrNull ?? AiSettings.default_;
-  return DiagnosticsNotifier(settings);
+  // نمرّر ref للـ notifier لكي يستطيع تحديث الـ historyManagerProvider
+  return DiagnosticsNotifier(settings, ref);
 });
 
 class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
   DiagnosticSession? _currentSession;
+  final Ref _ref;
 
-  DiagnosticsNotifier(AiSettings settings)
+  DiagnosticsNotifier(AiSettings settings, this._ref)
       : super(DiagnosticsState.initial(settings)) {
     // ابدأ جلسة جديدة عند الإنشاء
     _currentSession = DiagnosticSession.start(
@@ -214,6 +218,153 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
       );
       rethrow;
     }
+  }
+
+  // ============================================================
+  //  تنفيذ السكربتات (متعددة الأوامر)
+  // ============================================================
+
+  /// ينفذ سكربت كامل (عدة أوامر RouterOS بالتسلسل)
+  ///
+  /// يُحدّث الـ UI برسالة لكل أمر + رسالة نهائية بالنتيجة
+  Future<ScriptExecutionResult> executeScript(
+    RouterOsScript script, {
+    bool stopOnError = false,
+    bool makeBackupFirst = true,
+  }) async {
+    if (state.isLoading) {
+      throw Exception('جاري تنفيذ عملية أخرى. انتظر...');
+    }
+
+    // 1) رسالة بداية التنفيذ
+    state = state.copyWith(
+      isLoading: true,
+      loadingStage: 'جاري تنفيذ السكربت: ${script.title}...',
+    );
+
+    // أضف رسالة نظامية تبدا التنفيذ
+    state = state.copyWith(
+      messages: [
+        ...state.messages,
+        DiagnosticMessage.system(
+          '🎬 بدء تنفيذ السكربت: ${script.title}\n'
+          '📦 عدد الأوامر: ${script.commands.length}\n'
+          '⚠️ مستوى الخطورة: ${script.overallRisk.displayName}',
+        ),
+      ],
+    );
+
+    try {
+      // 2) عمل backup قبل التنفيذ (إن طُلب والسكربت ليس آمناً)
+      if (makeBackupFirst && script.overallRisk != CommandRiskLevel.safe) {
+        state = state.copyWith(
+          loadingStage: 'جاري عمل backup قبل التنفيذ...',
+        );
+        final backupScript = ScriptExecutor.createBackupScript(
+          label: 'before-${script.category ?? "fix"}-${DateTime.now().millisecondsSinceEpoch}',
+        );
+        for (final cmd in backupScript.commands) {
+          try {
+            await CommandExecutor.execute(
+              command: cmd,
+              method: MikrotikConnectionMethod.routerOS,
+              timeout: const Duration(seconds: 30),
+            );
+          } catch (e) {
+            debugPrint('[executeScript] Backup command failed: $cmd → $e');
+          }
+        }
+      }
+
+      // 3) تنفيذ السكربت
+      state = state.copyWith(
+        loadingStage: 'جاري تنفيذ أوامر السكربت...',
+      );
+
+      final result = await ScriptExecutor.execute(
+        script: script,
+        method: MikrotikConnectionMethod.routerOS,
+        stopOnError: stopOnError,
+        onProgress: (currentIndex, total, cmdResult) {
+          // حدّث رسالة التحميل
+          state = state.copyWith(
+            loadingStage:
+                'تنفيذ ${currentIndex + 1}/$total: ${cmdResult.success ? "✅" : "❌"} ${cmdResult.command.substring(0, cmdResult.command.length > 60 ? 60 : cmdResult.command.length)}...',
+          );
+        },
+      );
+
+      // 4) أضف رسالة بالنتيجة النهائية
+      final resultMessage = result.overallSuccess
+          ? DiagnosticMessage.assistant(
+              '✅ تم تنفيذ السكربت بنجاح كامل!\n\n'
+              '🎬 **${script.title}**\n'
+              '📦 الأوامر: ${result.successCount}/${script.commands.length} ناجحة\n'
+              '⏱️ الزمن: ${result.totalElapsed.inMilliseconds}ms\n\n'
+              '```\n${script.commands.join('\n')}\n```',
+              commands: script.commands,
+            )
+          : DiagnosticMessage.error(
+              '⚠️ اكتمل تنفيذ السكربت مع بعض الأخطاء\n\n'
+              '🎬 **${script.title}**\n'
+              '✅ ناجحة: ${result.successCount}\n'
+              '❌ فاشلة: ${result.failureCount}\n'
+              '⏱️ الزمن: ${result.totalElapsed.inMilliseconds}ms\n\n'
+              '**الأوامر الفاشلة:**\n'
+              '${result.results.where((r) => !r.success).map((r) => "• ${r.command}\n  └─ ${r.error ?? 'خطأ غير معروف'}").join('\n')}',
+            );
+
+      state = state.copyWith(
+        messages: [...state.messages, resultMessage],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+
+      // حدّث السجل
+      if (_currentSession != null) {
+        for (final r in result.results) {
+          _currentSession = _currentSession!.copyWith(
+            executedCommands: [..._currentSession!.executedCommands, r],
+          );
+        }
+        await _saveSession();
+      }
+
+      // حدّث قائمة السجل في الـ UI
+      _ref.read(historyManagerProvider.notifier).refresh();
+
+      return result;
+    } catch (e) {
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.error('فشل تنفيذ السكربت: $e'),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  //  Auto-Fix (إصلاح تلقائي بدون AI)
+  // ============================================================
+
+  /// يحلل الـ snapshot الحالي ويُرجع إصلاحات مقترحة محلياً (بدون AI)
+  /// يستخدم AutoFixService الذي يحتوي على قاعدة معرفة RouterOS
+  List<ProposedFix> getProposedAutoFixes() {
+    final snapshot = state.lastSnapshot;
+    if (snapshot == null) return [];
+    return AutoFixService.analyze(snapshot, mode: state.settings.mode);
+  }
+
+  /// يطبّق إصلاحاً تلقائياً واحداً (يستدعي executeScript)
+  Future<ScriptExecutionResult> applyAutoFix(ProposedFix fix) async {
+    return executeScript(
+      fix.script,
+      makeBackupFirst: fix.risk != CommandRiskLevel.safe,
+    );
   }
 
   /// يحفظ الجلسة الحالية
