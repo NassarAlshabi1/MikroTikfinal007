@@ -298,6 +298,10 @@ class AiSettings {
   final int maxTokens;
   final DiagnosticMode mode;  // نوع/وضع التشخيص
 
+  /// أقصى عدد خطوات استقصاء في التشخيص الوكيل (Agentic Loop).
+  /// كل خطوة = طلب الـ AI أوامر قراءة آمنة + تنفيذها تلقائياً + إعادة النتائج إليه.
+  final int agenticMaxSteps;
+
   const AiSettings({
     required this.provider,
     required this.model,
@@ -306,6 +310,7 @@ class AiSettings {
     required this.connectionMethod,
     required this.mode,
     this.maxTokens = 1500,
+    this.agenticMaxSteps = 6,
   });
 
   /// يعيد الـ baseUrl الافتراضي للمزود إذا لم يُحدَّد مخصص
@@ -336,6 +341,7 @@ class AiSettings {
     MikrotikConnectionMethod? connectionMethod,
     int? maxTokens,
     DiagnosticMode? mode,
+    int? agenticMaxSteps,
   }) =>
       AiSettings(
         provider: provider ?? this.provider,
@@ -345,6 +351,7 @@ class AiSettings {
         connectionMethod: connectionMethod ?? this.connectionMethod,
         maxTokens: maxTokens ?? this.maxTokens,
         mode: mode ?? this.mode,
+        agenticMaxSteps: agenticMaxSteps ?? this.agenticMaxSteps,
       );
 
   bool get isConfigured => apiKey.isNotEmpty;
@@ -360,7 +367,8 @@ class AiSettings {
           baseUrl == other.baseUrl &&
           connectionMethod == other.connectionMethod &&
           maxTokens == other.maxTokens &&
-          mode == other.mode;
+          mode == other.mode &&
+          agenticMaxSteps == other.agenticMaxSteps;
 
   @override
   int get hashCode => Object.hash(
@@ -371,7 +379,49 @@ class AiSettings {
         connectionMethod,
         maxTokens,
         mode,
+        agenticMaxSteps,
       );
+}
+
+// ============================================================
+//  التشخيص الوكيل (Agentic Loop) — هياكل القرار
+// ============================================================
+
+/// نوع القرار الذي يتخذه الـ AI في كل خطوة استقصاء
+enum AgentActionType {
+  /// يطلب تنفيذ أوامر قراءة آمنة لجمع مزيد من المعلومات
+  investigate,
+
+  /// وصل للسبب الجذري وقدّم التقرير النهائي + إصلاح مقترح
+  finalAnswer,
+}
+
+/// قرار خطوة واحدة في حلقة التشخيص الوكيلة
+@immutable
+class AgentDecision {
+  final AgentActionType action;
+
+  /// ملخص تفكير الـ AI في هذه الخطوة (يُعرض للمستخدم للشفافية)
+  final String thought;
+
+  /// أوامر القراءة المطلوبة (عند action == investigate)
+  final List<String> commands;
+
+  /// التقرير النهائي بصيغة Markdown (عند action == finalAnswer)
+  final String report;
+
+  /// أوامر الإصلاح المقترحة لتنفيذها بموافقة المستخدم (عند action == finalAnswer)
+  final List<String> fixCommands;
+
+  const AgentDecision({
+    required this.action,
+    this.thought = '',
+    this.commands = const [],
+    this.report = '',
+    this.fixCommands = const [],
+  });
+
+  bool get isFinal => action == AgentActionType.finalAnswer;
 }
 
 /// حالة التشخيص الكاملة
