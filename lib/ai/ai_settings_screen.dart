@@ -174,6 +174,46 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ),
             const SizedBox(height: 16),
 
+            // ===== حد خطوات الاستقصاء (التشخيص الوكيل) =====
+            Row(
+              children: [
+                const Icon(Icons.psychology,
+                    size: 18, color: Colors.deepPurpleAccent),
+                const SizedBox(width: 6),
+                const Text(
+                  'حد خطوات الاستقصاء (التشخيص الوكيل)',
+                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                ),
+                const Spacer(),
+                Text(
+                  '${settings.agenticMaxSteps}',
+                  style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.deepPurpleAccent,
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            Slider(
+              value: settings.agenticMaxSteps.toDouble(),
+              min: 1,
+              max: 12,
+              divisions: 11,
+              label: '${settings.agenticMaxSteps}',
+              activeColor: Colors.deepPurpleAccent,
+              onChanged: (v) {
+                ref
+                    .read(aiSettingsNotifierProvider.notifier)
+                    .setAgenticMaxSteps(v.round());
+              },
+            ),
+            const Text(
+              'كلما زاد العدد، استقصى الـ AI أعمق (أوامر قراءة تلقائية أكثر) '
+              'مقابل استهلاك أكبر للـ tokens. الافتراضي 6.',
+              style: TextStyle(fontSize: 11, color: Colors.white38),
+            ),
+            const SizedBox(height: 16),
+
             // ===== Custom Base URL (اختياري) =====
             const Text(
               'API Endpoint مخصص (اختياري)',
