@@ -112,6 +112,33 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     if (mounted) showSuccessSnackBar(context, 'تم نسخ الأمر: $command');
   }
 
+  Future<void> _copyAllDiagnostics() async {
+    final state = ref.read(diagnosticsProvider);
+    if (state.messages.isEmpty) return;
+    final buffer = StringBuffer();
+    for (final msg in state.messages) {
+      final prefix = msg.type == MessageType.user
+          ? '👤 أنت'
+          : msg.type == MessageType.error
+              ? '❌ خطأ'
+              : msg.type == MessageType.system
+                  ? 'ℹ️ نظام'
+                  : '🤖 AI';
+      buffer.writeln('[$prefix]');
+      buffer.writeln(msg.content);
+      buffer.writeln('');
+    }
+    await Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
+    if (mounted) {
+      showSuccessSnackBar(context, 'تم نسخ ${state.messages.length} رسالة من التشخيص');
+    }
+  }
+
+  Future<void> _copyMessage(String content) async {
+    await Clipboard.setData(ClipboardData(text: content));
+    if (mounted) showSuccessSnackBar(context, 'تم نسخ نص الرسالة');
+  }
+
   /// ينفذ أمر RouterOS مباشرة (مع تأكيد المستخدم حسب الخطورة)
   Future<void> _handleExecuteCommand(String command) async {
     final riskLevel = CommandExecutor.classifyRisk(command);
@@ -252,9 +279,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             tooltip: 'مسح المحادثة',
             onPressed: () async {
               await ref.read(diagnosticsProvider.notifier).clearChat();
-              // حدّث قائمة السجل
               ref.read(historyManagerProvider.notifier).refresh();
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy_all),
+            tooltip: 'نسخ كل التشخيص',
+            onPressed: state.messages.isEmpty ? null : _copyAllDiagnostics,
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -301,6 +332,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                             context, 'تم نسخ ${commands.length} أمر');
                       }
                     },
+                    onCopyMessage: _copyMessage,
                   );
                 },
               ),
@@ -326,12 +358,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
-
-          // صندوق الإدخال + زر التشخيص السريع
-          _buildInputBar(state),
+          ),
+          if (isUser) _buildAvatar(context),
         ],
       ),
     );
@@ -1283,6 +1315,7 @@ class _MessageBubble extends StatelessWidget {
     required this.onExecuteCommand,
     this.onExecuteScript,
     this.onCopyAllCommands,
+    this.onCopyMessage,
   });
 
   @override
@@ -1304,27 +1337,29 @@ class _MessageBubble extends StatelessWidget {
         children: [
           if (!isUser) _buildAvatar(context),
           Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.85,
-              ),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isError
-                    ? Colors.red.withValues(alpha: 0.1)
-                    : isUser
-                        ? Theme.of(context).primaryColor
-                        : Theme.of(context).cardColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isUser ? 16 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 16),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: Stack(
+              children: [
+                Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.85,
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isError
+                        ? Colors.red.withValues(alpha: 0.1)
+                        : isUser
+                            ? Theme.of(context).primaryColor
+                            : Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(isUser ? 16 : 4),
+                      bottomRight: Radius.circular(isUser ? 4 : 16),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   // محتوى الرسالة
                   SelectableText(
                     message.content,
@@ -1419,6 +1454,23 @@ class _MessageBubble extends StatelessWidget {
                 ],
               ),
             ),
+            if (onCopyMessage != null && !isUser)
+              Positioned(
+                top: 4,
+                left: 4,
+                child: Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                    onPressed: () => onCopyMessage!(message.content),
+                    icon: Icon(Icons.copy,
+                        size: 16,
+                        color: Colors.white.withValues(alpha: 0.5)),
+                    tooltip: 'نسخ نص الرسالة',
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+              ),
           ),
           if (isUser) _buildAvatar(context),
         ],
