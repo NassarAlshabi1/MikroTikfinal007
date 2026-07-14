@@ -358,12 +358,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
-                  ],
-                ),
+                ],
               ),
             ),
-          ),
-          if (isUser) _buildAvatar(context),
         ],
       ),
     );
@@ -1308,6 +1305,7 @@ class _MessageBubble extends StatelessWidget {
   final void Function(String) onExecuteCommand;
   final void Function(RouterOsScript)? onExecuteScript;
   final void Function(List<String>)? onCopyAllCommands;
+  final void Function(String)? onCopyMessage;
 
   const _MessageBubble({
     required this.message,
@@ -1471,6 +1469,8 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 ),
               ),
+              ],
+            ),
           ),
           if (isUser) _buildAvatar(context),
         ],
