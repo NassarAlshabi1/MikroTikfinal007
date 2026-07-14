@@ -12,8 +12,6 @@ import 'dart:io';
 import 'process_image_screen.dart';
 import 'mqtt_service.dart';
 
-import 'perf/device_capability.dart';
-
 class ExtractCardsScreen extends StatefulWidget {
   const ExtractCardsScreen({super.key});
 
@@ -150,18 +148,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
     }
 
     String? selectedUnitId;
-    final units = (_linkedData['network_details']?['units'] as List?) ?? const [];
-
-    // بناء عناصر القائمة المنسدلة بـ for loop بدلاً من map.toList()
-    final List<DropdownMenuItem<String>> unitItems = [
-      for (final unit in units)
-        DropdownMenuItem<String>(
-          value: unit['id'],
-          child: Text(unit['name'],
-              style: const TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.bold)),
-        )
-    ];
+    final units = (_linkedData['network_details']?['units'] as List?) ?? [];
 
     showDialog(
       context: context,
@@ -172,7 +159,12 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             dropdownColor: Colors.white,
             hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-            items: unitItems,
+            items: units.map((unit) {
+              return DropdownMenuItem<String>(
+                value: unit['id'],
+                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              );
+            }).toList(),
             onChanged: (value) {
               selectedUnitId = value;
             },
@@ -303,18 +295,12 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
     if (result != null) {
       final path = result.files.single.path!;
       final file = File(path);
-      // قراءة الملف بشكل غير متزامن لعدم تجميد واجهة المستخدم
-      final bytes = await file.readAsBytes();
-      final document = PdfDocument(inputBytes: bytes);
+      final document = PdfDocument(inputBytes: file.readAsBytesSync());
       final text = PdfTextExtractor(document).extractText();
       document.dispose();
       final RegExp codeRegExp = RegExp(r'[a-zA-Z0-9]{6,}');
-      // بناء Set بـ for loop بدلاً من map.toSet()
-      final Set<String> cardNumbers = {};
-      for (final m in codeRegExp.allMatches(text)) {
-        cardNumbers.add(m.group(0)!);
-      }
-      if (!mounted) return;
+      final Set<String> cardNumbers =
+          codeRegExp.allMatches(text).map((m) => m.group(0)!).toSet();
       setState(() {
         _extractedCardNumbers = cardNumbers.toList();
       });
@@ -335,8 +321,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       ),
       body: Center(
         child: _extractedCardNumbers.isNotEmpty
-            ? RepaintBoundary(
-                child: Column( // --- RESULTS VIEW ---
+            ? Column( // --- RESULTS VIEW ---
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -346,45 +331,39 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                     ),
                   ),
                   Expanded(
-                    child: RepaintBoundary(
-                      child: GridView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 2.8,
-                          crossAxisSpacing: 6,
-                          mainAxisSpacing: 6,
-                        ),
-                        itemCount: _extractedCardNumbers.length,
-                        cacheExtent: DeviceCapability.instance.listViewCacheExtent,
-                        addAutomaticKeepAlives: false,
-                        itemBuilder: (context, index) {
-                          final cardNumber = _extractedCardNumbers[index];
-                          return RepaintBoundary(
-                            child: Card(
-                              elevation: 2,
-                              margin: EdgeInsets.zero,
-                              child: InkWell(
-                                onTap: () => _copyToClipboard(cardNumber, 'تم نسخ الرقم: $cardNumber'),
-                                child: Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Text(
-                                      cardNumber,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                    child: GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        childAspectRatio: 2.8,
+                        crossAxisSpacing: 6,
+                        mainAxisSpacing: 6,
+                      ),
+                      itemCount: _extractedCardNumbers.length,
+                      itemBuilder: (context, index) {
+                        final cardNumber = _extractedCardNumbers[index];
+                        return Card(
+                          elevation: 2,
+                          margin: EdgeInsets.zero,
+                          child: InkWell(
+                            onTap: () => _copyToClipboard(cardNumber, 'تم نسخ الرقم: $cardNumber'),
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Text(
+                                  cardNumber,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   Padding(
@@ -436,38 +415,29 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                     ),
                   )
                 ],
-              ),
-            )
+              )
             : _imagePaths.isNotEmpty
-                ? RepaintBoundary(
-                    child: Column( // --- IMAGE PREVIEW VIEW ---
+                ? Column( // --- IMAGE PREVIEW VIEW ---
                     children: [
                       Expanded(
-                        child: RepaintBoundary(
-                          child: GridView.builder(
-                            padding: const EdgeInsets.all(8),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 4,
-                              mainAxisSpacing: 4,
-                            ),
-                            itemCount: _imagePaths.length,
-                            cacheExtent: DeviceCapability.instance.listViewCacheExtent,
-                            addAutomaticKeepAlives: false,
-                            itemBuilder: (context, index) {
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  File(_imagePaths[index]),
-                                  fit: BoxFit.cover,
-                                  cacheWidth: DeviceCapability.instance.isLowEnd
-                                      ? 200
-                                      : null,
-                                ),
-                              );
-                            },
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(8),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 4,
+                            mainAxisSpacing: 4,
                           ),
+                          itemCount: _imagePaths.length,
+                          itemBuilder: (context, index) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                File(_imagePaths[index]),
+                                fit: BoxFit.cover,
+                              ),
+                            );
+                          },
                         ),
                       ),
                       Padding(
@@ -510,8 +480,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                         ),
                       ),
                     ],
-                  ),
-                )
+                  )
                 : SingleChildScrollView( // --- INITIAL FORM VIEW ---
                     padding: const EdgeInsets.all(24.0),
                     child: Form(
@@ -521,12 +490,12 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Icon(Icons.camera_alt_outlined,
-                              size: 80, color: Color(0xFF6b3fa0)),
+                              size: 80, color: context.theme.appColors.primary),
                           const SizedBox(height: 20),
-                          const Text(
+                          Text(
                             'أدخل شروط المسح الضوئي للكروت',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, color: Colors.white),
+                            style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87),
                           ),
                           const SizedBox(height: 32),
                           TextFormField(
@@ -535,7 +504,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'بادئة الكرت (بماذا يبدأ الرقم)',
                               prefixIcon: Icon(Icons.looks_one_outlined),
                             ),
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -551,7 +520,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'طول رقم الكرت (عدد الأرقام)',
                               prefixIcon: Icon(Icons.format_list_numbered),
                             ),
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -570,7 +539,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               labelText: 'العدد الإجمالي للكروت في الورقة',
                               prefixIcon: Icon(Icons.calculate_outlined),
                             ),
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {

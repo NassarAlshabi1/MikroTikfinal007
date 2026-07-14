@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:router_os_client/router_os_client.dart';
+import 'theme/app_theme.dart';
 import 'mikrotik_connector.dart';
-
-import 'perf/device_capability.dart';
 
 enum TimeRange { all, today, week, month, custom }
 
@@ -28,7 +28,17 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
 
   double _totalUploadGB = 0.0;
   double _totalDownloadGB = 0.0;
-  final Map<String, int> _cardsByProfile = {};
+  Map<String, int> _cardsByProfile = {};
+
+  int _usersTotalPages = 0;
+  int _usersFetchedPages = 0;
+  int _sessionsTotalPages = 0;
+  int _sessionsFetchedPages = 0;
+
+  DateTime? _fetchStartTime;
+  Duration? _fetchDuration;
+  int _fetchedBytes = 0;
+  double _pagesPerSecond = 0.0;
 
   TimeRange _selectedRange = TimeRange.all;
   CardStatusFilter _statusFilter = CardStatusFilter.all;
@@ -40,7 +50,6 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   List<Map<String, dynamic>> _usersRaw = [];
   List<Map<String, dynamic>> _sessionsRaw = [];
   List<Map<String, dynamic>> _filteredUsers = [];
-  List<Map<String, dynamic>> _expiredUsersList = [];
   
   // Cache للبيانات لتحسين الأداء
   DateTime? _lastFetchTime;
@@ -56,16 +65,13 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: DeviceCapability.instance.animationDuration,
+      duration: const Duration(milliseconds: 800),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    // أجّل الجلب الثقيل حتى نهاية الإطار لتفادي jank في الـ build الأولي
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fetchStatistics();
-    });
+    _fetchStatistics();
   }
 
   @override
@@ -77,68 +83,51 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Future<List<Map<String, dynamic>>> _fetchPaginated(
       RouterOSClient client,
       String path,
-      String proplist, {
+      String fields, {
       int chunk = 200,
       int maxRecords = 2000,
+      void Function(int fetchedPages, int totalPages)? onProgress,
     }) async {
-    final List<Map<String, dynamic>> all = [];
-    // إزالة التكرار عبر .id: بعض إصدارات RouterOS لا تدعم .skip فتعيد نفس
-    // الصفحة في كل مرة → تضخيم الأرقام. نتتبّع المعرّفات ونتوقف عند عدم وجود جديد.
-    final Set<String> seenIds = {};
-    int skip = 0;
-    bool serverPaged = true;
-    while (all.length < maxRecords) {
-      try {
-        final res = await client
-            .talk([
-              path,
-              '=.proplist=$proplist',
-              '=.limit=$chunk',
-              '=.skip=$skip',
-            ])
-            .timeout(const Duration(seconds: 10));
-        // بناء القائمة بـ for loop بدلاً من map.toList()
-        final List<Map<String, dynamic>> page = [
-          for (final e in res) Map<String, dynamic>.from(e),
-        ];
-        if (page.isEmpty) break;
+      final totalPages = (maxRecords / chunk).ceil();
+      const parallel = 4;
+      final all = <Map<String, dynamic>>[];
+      int fetched = 0;
 
-        int added = 0;
-        for (final row in page) {
-          final id = row['.id']?.toString();
-          if (id == null || id.isEmpty) {
-            all.add(row); // لا يوجد .id — نُبقيه كما هو
-            added++;
-          } else if (seenIds.add(id)) {
-            all.add(row);
-            added++;
-          }
+      for (int start = 0; start < totalPages; start += parallel) {
+        final end = (start + parallel) > totalPages ? totalPages : (start + parallel);
+        final futures = <Future<List<dynamic>>>[];
+        for (int i = start; i < end; i++) {
+          final offset = i * chunk;
+          futures.add(
+            client
+                .talk([
+                  path,
+                  '=.proplist=$fields',
+                  '=.skip=$offset',
+                  '=.limit=$chunk',
+                ])
+                .timeout(const Duration(seconds: 5)),
+          );
         }
 
-        // لم تُضف الصفحة أي سجل جديد ⇒ الراوتر يتجاهل .skip → أوقف لتفادي التكرار
-        if (added == 0) break;
-        if (page.length < chunk) break;
-        skip += chunk;
-      } catch (_) {
-        serverPaged = false;
-        break;
+        final pages = await Future.wait(futures);
+        for (final page in pages) {
+          for (final e in page) {
+            all.add(Map<String, dynamic>.from(e));
+            if (all.length >= maxRecords) {
+              onProgress?.call(totalPages, totalPages);
+              return all.sublist(0, maxRecords);
+            }
+          }
+        }
+        fetched += (end - start);
+        onProgress?.call(fetched, totalPages);
       }
+
+      return all;
     }
-    if (!serverPaged && all.isEmpty) {
-      final res = await client
-          .talk([
-            path,
-            '=.proplist=$proplist',
-          ])
-          .timeout(const Duration(seconds: 10));
-      // بناء القائمة بـ for loop بدلاً من map.toList()
-      return [for (final e in res) Map<String, dynamic>.from(e)];
-    }
-    return all;
-  }
 
   Future<void> _fetchStatistics() async {
-    if (!mounted) return;
     // التحقق من الـ cache
     if (_lastFetchTime != null && 
         DateTime.now().difference(_lastFetchTime!) < _cacheDuration &&
@@ -147,7 +136,6 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       return;
     }
 
-    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -157,30 +145,71 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     try {
       client = await MikrotikConnector.connect();
 
-      final usersResponse = await _fetchPaginated(
-        client,
-        '/tool/user-manager/user/print',
-        'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used,last-seen',
-        chunk: 500,
-        maxRecords: 5000,
-      );
+      final usersChunk = 20;
+      final usersMax = 50;
+      final sessionsChunk = 20;
+      final sessionsMax = 50;
 
-      final sessionsResponse = await _fetchPaginated(
-        client,
-        '/tool/user-manager/session/print',
-        'user,upload,download,uptime,start-time',
-        chunk: 500,
-        maxRecords: 5000,
-      );
+      setState(() {
+        _fetchStartTime = DateTime.now();
+        _fetchDuration = null;
+        _fetchedBytes = 0;
+        _pagesPerSecond = 0.0;
+        _usersTotalPages = (usersMax / usersChunk).ceil();
+        _usersFetchedPages = 0;
+        _sessionsTotalPages = (sessionsMax / sessionsChunk).ceil();
+        _sessionsFetchedPages = 0;
+      });
 
-      _usersRaw = usersResponse;
-      _sessionsRaw = sessionsResponse;
-      _lastFetchTime = DateTime.now(); // حفظ وقت آخر fetch
+      final results = await Future.wait<List<Map<String, dynamic>>>([
+        _fetchPaginated(
+          client!,
+          '/tool/user-manager/user/print',
+          'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
+          chunk: usersChunk,
+          maxRecords: usersMax,
+          onProgress: (f, t) {
+            if (!mounted) return;
+            setState(() {
+              _usersFetchedPages = f;
+              _usersTotalPages = t;
+            });
+          },
+        ),
+        _fetchPaginated(
+          client!,
+          '/tool/user-manager/session/print',
+          'user,upload,download,uptime,start-time',
+          chunk: sessionsChunk,
+          maxRecords: sessionsMax,
+          onProgress: (f, t) {
+            if (!mounted) return;
+            setState(() {
+              _sessionsFetchedPages = f;
+              _sessionsTotalPages = t;
+            });
+          },
+        ),
+      ]);
+
+      _usersRaw = results[0];
+      _sessionsRaw = results[1];
+      _lastFetchTime = DateTime.now();
 
       _applyFilters();
 
+      final duration = _fetchStartTime != null ? DateTime.now().difference(_fetchStartTime!) : const Duration();
+      final totalPages = _usersTotalPages + _sessionsTotalPages;
+      final pps = totalPages > 0 && duration.inMilliseconds > 0
+          ? totalPages / (duration.inMilliseconds / 1000.0)
+          : 0.0;
+      final fetchedBytes = utf8.encode(jsonEncode(_usersRaw)).length + utf8.encode(jsonEncode(_sessionsRaw)).length;
+
       if (mounted) {
         setState(() {
+          _fetchDuration = duration;
+          _pagesPerSecond = pps;
+          _fetchedBytes = fetchedBytes;
           _isLoading = false;
         });
         _animationController.forward(from: 0);
@@ -193,7 +222,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         });
       }
     } finally {
-      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
+      client?.close();
     }
   }
 
@@ -221,17 +250,13 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         break;
     }
 
-    // فلترة حسب الحالة
-    List<Map<String, dynamic>> filtered = List.from(_usersRaw);
-    if (_statusFilter != CardStatusFilter.all) {
-      // بناء Set بـ for loop بدلاً من map.whereType.toSet()
-      final Set<String> usersWithSessions = {};
-      for (final s in _sessionsRaw) {
-        final u = s['user'];
-        if (u is String) usersWithSessions.add(u);
-      }
+    _filteredUsers = List.from(_usersRaw);
 
-      filtered = filtered.where((user) {
+    // Filter by status
+    if (_statusFilter != CardStatusFilter.all) {
+      final Set<String> usersWithSessions = _sessionsRaw.map((s) => s['user'] as String?).whereType<String>().toSet();
+      
+      _filteredUsers = _filteredUsers.where((user) {
         switch (_statusFilter) {
           case CardStatusFilter.active:
             return user['disabled'] != 'true';
@@ -247,14 +272,12 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       }).toList();
     }
 
-    // فلترة حسب الفئة
+    // Filter by profile
     if (_selectedProfile != null && _selectedProfile!.isNotEmpty) {
-      filtered = filtered.where((user) {
+      _filteredUsers = _filteredUsers.where((user) {
         return user['actual-profile'] == _selectedProfile;
       }).toList();
     }
-
-    _filteredUsers = filtered;
 
     _calculateStatistics(startDate, endDate);
   }
@@ -280,13 +303,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     _activeCards = 0;
     _disabledCards = 0;
     _expiredCards = 0;
-    _expiredUsersList = const [];
     _cardsByProfile.clear();
 
     double allTimeUploadBytes = 0.0;
     double allTimeDownloadBytes = 0.0;
-
-    final List<Map<String, dynamic>> expiredList = [];
 
     for (final user in _filteredUsers) {
       final disabled = user['disabled'] == 'true';
@@ -298,7 +318,6 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       
       if (_isCardExpired(user)) {
         _expiredCards++;
-        expiredList.add(user);
       }
 
       final uploadUsed = double.tryParse(user['upload-used'] ?? '0') ?? 0.0;
@@ -309,7 +328,6 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       final profile = user['actual-profile'] ?? 'غير محدد';
       _cardsByProfile[profile] = (_cardsByProfile[profile] ?? 0) + 1;
     }
-    _expiredUsersList = expiredList;
 
     // Filter sessions by date and users
     List<Map<String, dynamic>> filteredSessions = _sessionsRaw;
@@ -323,12 +341,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     }
     
     // Filter sessions by filtered users
-    // بناء Set بـ for loop بدلاً من map.whereType.toSet()
-    final Set<String> filteredUsernames = {};
-    for (final u in _filteredUsers) {
-      final un = u['username'];
-      if (un is String) filteredUsernames.add(un);
-    }
+    final filteredUsernames = _filteredUsers.map((u) => u['username'] as String?).whereType<String>().toSet();
     filteredSessions = filteredSessions.where((s) => filteredUsernames.contains(s['user'])).toList();
 
     final Set<String> usersWithSessions = {};
@@ -374,11 +387,9 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Duration _parseRosDuration(String s) {
     int weeks = 0, days = 0, hours = 0, minutes = 0, seconds = 0;
     String num = '';
-    // إعادة استخدام RegExp بدلاً من إنشائه في كل تكرار
-    final digitRegExp = RegExp(r'\d');
     for (int i = 0; i < s.length; i++) {
       final ch = s[i];
-      if (digitRegExp.hasMatch(ch)) {
+      if (RegExp(r'\d').hasMatch(ch)) {
         num += ch;
       } else {
         final v = int.tryParse(num) ?? 0;
@@ -418,9 +429,9 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
               primary: Theme.of(context).primaryColor,
-              onPrimary: Colors.white,
+              onPrimary: context.theme.appColors.onPrimary,
               surface: Theme.of(context).cardColor,
-              onSurface: Colors.white,
+              onSurface: context.theme.appColors.onSurface,
             ),
           ),
           child: child!,
@@ -429,7 +440,6 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     );
 
     if (picked != null) {
-      if (!mounted) return;
       setState(() {
         _customStartDate = picked.start;
         _customEndDate = picked.end;
@@ -474,7 +484,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 children: [
                   CircularProgressIndicator(color: theme.primaryColor),
                   const SizedBox(height: 16),
-                  const Text('جاري تحميل الإحصائيات...', style: TextStyle(color: Colors.white70)),
+                  Text(
+                    'جاري تحميل الإحصائيات...',
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? context.theme.appColors.muted),
+                  ),
                 ],
               ),
             )
@@ -485,13 +498,12 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline,
-                            size: 80, color: Color(0xCCF44336)),
+                        Icon(Icons.error_outline, size: 80, color: context.theme.appColors.error.withOpacity(0.8)),
                         const SizedBox(height: 24),
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface, fontSize: 16),
                         ),
                         const SizedBox(height: 32),
                         ElevatedButton.icon(
@@ -514,347 +526,189 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16),
-                      child: RepaintBoundary(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (_showFilters) ...[
-                              _buildFiltersSection(theme),
-                              const SizedBox(height: 20),
-                            ],
-                            _buildActiveFiltersChips(theme),
-                            const SizedBox(height: 16),
-                            _buildRangeSelector(theme),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (_showFilters) ...[
+                            _buildFiltersSection(theme),
                             const SizedBox(height: 20),
-                            _buildMainStatCard(theme),
-                            const SizedBox(height: 16),
-                            _buildStatusCardsGrid(theme),
-                            const SizedBox(height: 16),
-                            _buildDataUsageCard(theme),
-                            const SizedBox(height: 16),
-                            _buildProfilesCard(theme),
-                            const SizedBox(height: 16),
-                            _buildQuickStatsGrid(theme),
-                            const SizedBox(height: 16),
-                            _buildExpiredCardsSection(theme),
                           ],
-                        ),
+                          _buildActiveFiltersChips(theme),
+                          const SizedBox(height: 16),
+                          _buildRangeSelector(theme),
+                          const SizedBox(height: 20),
+                          if (_fetchDuration != null) ...[
+                            _buildFetchMetricsCard(theme),
+                            const SizedBox(height: 16),
+                          ],
+                          _buildMainStatCard(theme),
+                          const SizedBox(height: 16),
+                          _buildStatusCardsGrid(theme),
+                          const SizedBox(height: 16),
+                          _buildDataUsageCard(theme),
+                          const SizedBox(height: 16),
+                          _buildProfilesCard(theme),
+                          const SizedBox(height: 16),
+                          _buildQuickStatsGrid(theme),
+                        ],
                       ),
                     ),
                   ),
                 ),
-    );
-  }
-
-  Widget _buildExpiredCardsSection(ThemeData theme) {
-    if (_expiredUsersList.isEmpty) return const SizedBox.shrink();
-
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0x4DFFAB40), width: 1.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0x26FFAB40),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.hourglass_empty, color: Colors.orangeAccent, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'الكروت المنتهية الصلاحية',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      Text(
-                        '$_expiredCards كرت منتهي',
-                        style: const TextStyle(fontSize: 13, color: Colors.orangeAccent),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0x08FFFFFF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0x1AFFFFFF)),
-              ),
-              child: Column(
-                children: [
-                  // رأس الجدول
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: const BoxDecoration(
-                      color: Color(0x1AFFAB40),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
-                    ),
-                    child: const Row(
-                      children: [
-                        Expanded(flex: 3, child: Text('اسم المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
-                        Expanded(flex: 3, child: Text('الفئة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
-                        Expanded(flex: 2, child: Text('المدة', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
-                        Expanded(flex: 2, child: Text('المستخدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12))),
-                      ],
-                    ),
-                  ),
-                  // القائمة - استخدم for loop بدلاً من asMap().entries.map()
-                  for (int i = 0; i < _expiredUsersList.length; i++)
-                    _buildExpiredRow(_expiredUsersList[i], i == _expiredUsersList.length - 1),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExpiredRow(Map<String, dynamic> user, bool isLast) {
-    final username = user['username']?.toString() ?? '—';
-    final profile = user['actual-profile']?.toString() ?? '—';
-    final limit = user['uptime-limit']?.toString() ?? '';
-    final disabled = user['disabled'] == 'true';
-
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: isLast
-                ? BorderSide.none
-                : const BorderSide(color: Color(0x0DFFFFFF)),
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Text(
-                username,
-                style: const TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Text(
-                profile,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                limit,
-                style: const TextStyle(color: Colors.white60, fontSize: 11),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: disabled ? const Color(0x33F44336) : const Color(0x0DFFFFFF),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  disabled ? 'معطل' : 'منتهي',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: disabled ? Colors.redAccent : Colors.orangeAccent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildFiltersSection(ThemeData theme) {
-    // بناء Set بـ for loop بدلاً من map.toSet().toList()
-    final Set<String> profilesSet = {};
-    for (final u in _usersRaw) {
-      profilesSet.add(u['actual-profile'] as String? ?? 'غير محدد');
-    }
-    final allProfiles = profilesSet.toList()..sort();
+    final allProfiles = _usersRaw.map((u) => u['actual-profile'] as String? ?? 'غير محدد').toSet().toList()..sort();
     
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.primaryColor.withValues(alpha: 0.3), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.tune, color: theme.primaryColor, size: 24),
-                const SizedBox(width: 12),
-                const Text(
-                  'فلترة متقدمة',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            
-            // Status Filter
-            const Text('حالة الكرت', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final filter in CardStatusFilter.values)
-                  _buildFilterChip(theme, filter),
-              ],
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Profile Filter
-            const Text('الفئة', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0x0DFFFFFF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white30),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.primaryColor.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.tune, color: theme.primaryColor, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'فلترة متقدمة',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: _selectedProfile,
-                  hint: const Text('اختر الفئة', style: TextStyle(color: Colors.white60)),
-                  dropdownColor: theme.cardColor,
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
-                  items: [
-                    const DropdownMenuItem<String>(
-                      value: null,
-                      child: Text('جميع الفئات', style: TextStyle(color: Colors.white)),
-                    ),
-                    for (final profile in allProfiles)
-                      DropdownMenuItem<String>(
-                        value: profile,
-                        child: Text(profile, style: const TextStyle(color: Colors.white)),
-                      ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Status Filter
+          Text('حالة الكرت', style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? context.theme.appColors.muted, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: CardStatusFilter.values.map((filter) {
+              final selected = _statusFilter == filter;
+              String label;
+              IconData icon;
+              
+              switch (filter) {
+                case CardStatusFilter.all:
+                  label = 'الكل';
+                  icon = Icons.select_all;
+                  break;
+                case CardStatusFilter.active:
+                  label = 'مفعل';
+                  icon = Icons.check_circle;
+                  break;
+                case CardStatusFilter.disabled:
+                  label = 'معطل';
+                  icon = Icons.cancel;
+                  break;
+                case CardStatusFilter.expired:
+                  label = 'منتهي';
+                  icon = Icons.hourglass_empty;
+                  break;
+                case CardStatusFilter.withSessions:
+                  label = 'نشط الآن';
+                  icon = Icons.wifi;
+                  break;
+              }
+              
+              return FilterChip(
+                selected: selected,
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 16, color: selected ? context.theme.appColors.onPrimary : context.theme.appColors.onSurface.withOpacity(0.6)),
+                    const SizedBox(width: 6),
+                    Text(label),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedProfile = value;
-                      _applyFilters();
-                    });
-                  },
                 ),
-              ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Reset Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('إعادة تعيين الفلاتر'),
-                onPressed: () {
+                onSelected: (value) {
                   setState(() {
-                    _statusFilter = CardStatusFilter.all;
-                    _selectedProfile = null;
-                    _selectedRange = TimeRange.all;
-                    _customStartDate = null;
-                    _customEndDate = null;
+                    _statusFilter = filter;
                     _applyFilters();
                   });
                 },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white70,
-                  side: const BorderSide(color: Colors.white30),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                backgroundColor: theme.cardColor,
+                selectedColor: theme.primaryColor,
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface),
+                side: BorderSide(color: selected ? theme.primaryColor : context.theme.appColors.border),
+              );
+            }).toList(),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Profile Filter
+          Text('الفئة', style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.theme.appColors.border),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _selectedProfile,
+                hint: Text('اختر الفئة', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? context.theme.appColors.muted)),
+                dropdownColor: theme.cardColor,
+                icon: Icon(Icons.arrow_drop_down, color: context.theme.appColors.onSurface.withOpacity(0.7)),
+                items: [
+                  DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('جميع الفئات', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface)),
+                  ),
+                  ...allProfiles.map((profile) {
+                    return DropdownMenuItem<String>(
+                      value: profile,
+                      child: Text(profile, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface)),
+                    );
+                  }).toList(),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedProfile = value;
+                    _applyFilters();
+                  });
+                },
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(ThemeData theme, CardStatusFilter filter) {
-    final selected = _statusFilter == filter;
-    String label;
-    IconData icon;
-    switch (filter) {
-      case CardStatusFilter.all:
-        label = 'الكل';
-        icon = Icons.select_all;
-        break;
-      case CardStatusFilter.active:
-        label = 'مفعل';
-        icon = Icons.check_circle;
-        break;
-      case CardStatusFilter.disabled:
-        label = 'معطل';
-        icon = Icons.cancel;
-        break;
-      case CardStatusFilter.expired:
-        label = 'منتهي';
-        icon = Icons.hourglass_empty;
-        break;
-      case CardStatusFilter.withSessions:
-        label = 'نشط الآن';
-        icon = Icons.wifi;
-        break;
-    }
-    return FilterChip(
-      selected: selected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: selected ? Colors.white : Colors.white60),
-          const SizedBox(width: 6),
-          Text(label),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Reset Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('إعادة تعيين الفلاتر'),
+              onPressed: () {
+                setState(() {
+                  _statusFilter = CardStatusFilter.all;
+                  _selectedProfile = null;
+                  _selectedRange = TimeRange.all;
+                  _customStartDate = null;
+                  _customEndDate = null;
+                  _applyFilters();
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.theme.appColors.onSurface.withOpacity(0.7),
+                side: BorderSide(color: context.theme.appColors.border),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
         ],
       ),
-      onSelected: (value) {
-        setState(() {
-          _statusFilter = filter;
-          _applyFilters();
-        });
-      },
-      backgroundColor: theme.cardColor,
-      selectedColor: theme.primaryColor,
-      labelStyle: TextStyle(color: selected ? Colors.white : Colors.white60),
-      side: BorderSide(color: selected ? theme.primaryColor : Colors.white30),
     );
   }
 
@@ -890,7 +744,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               _applyFilters();
             });
           },
-          backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
+          backgroundColor: theme.primaryColor.withOpacity(0.2),
           side: BorderSide(color: theme.primaryColor),
         ),
       );
@@ -907,7 +761,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               _applyFilters();
             });
           },
-          backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
+          backgroundColor: theme.primaryColor.withOpacity(0.2),
           side: BorderSide(color: theme.primaryColor),
         ),
       );
@@ -929,7 +783,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               _applyFilters();
             });
           },
-          backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
+          backgroundColor: theme.primaryColor.withOpacity(0.2),
           side: BorderSide(color: theme.primaryColor),
         ),
       );
@@ -940,7 +794,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('الفلاتر النشطة:', style: TextStyle(fontSize: 12, color: Colors.white60)),
+        Text('الفلاتر النشطة:', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color ?? context.theme.appColors.muted)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -971,132 +825,188 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       }
     }
 
-    const items = TimeRange.values;
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            for (final r in items)
-              _buildRangeItem(theme, r, label),
-          ],
-        ),
+    final items = TimeRange.values;
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: items.map((r) {
+          final selected = _selectedRange == r;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (r == TimeRange.custom) {
+                  _pickDateRange();
+                } else {
+                  setState(() {
+                    _selectedRange = r;
+                    _customStartDate = null;
+                    _customEndDate = null;
+                    _applyFilters();
+                  });
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.all(4),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: selected ? theme.primaryColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    if (r == TimeRange.custom)
+                      Icon(
+                        Icons.date_range,
+                        size: 16,
+                        color: selected ? Colors.white : Colors.white60,
+                      ),
+                    if (r == TimeRange.custom) const SizedBox(height: 4),
+                    Text(
+                      label(r),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: selected ? Colors.white : Colors.white60,
+                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildRangeItem(ThemeData theme, TimeRange r, String Function(TimeRange) label) {
-    final selected = _selectedRange == r;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (r == TimeRange.custom) {
-            _pickDateRange();
-          } else {
-            setState(() {
-              _selectedRange = r;
-              _customStartDate = null;
-              _customEndDate = null;
-              _applyFilters();
-            });
-          }
-        },
-        child: AnimatedContainer(
-          duration: DeviceCapability.instance.animationDuration,
-          margin: const EdgeInsets.all(4),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected ? theme.primaryColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildFetchMetricsCard(ThemeData theme) {
+    final elapsed = _fetchDuration != null ? _formatDuration(_fetchDuration!) : '--';
+    final ppsStr = _pagesPerSecond > 0 ? _pagesPerSecond.toStringAsFixed(1) : '--';
+    final dataSize = _formatBytes(_fetchedBytes);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('الوقت المستغرق', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text(elapsed, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
           ),
-          child: Column(
-            children: [
-              if (r == TimeRange.custom)
-                Icon(
-                  Icons.date_range,
-                  size: 16,
-                  color: selected ? Colors.white : Colors.white60,
-                ),
-              if (r == TimeRange.custom) const SizedBox(height: 4),
-              Text(
-                label(r),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: selected ? Colors.white : Colors.white60,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 13,
-                ),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text('الصفحات/ثانية', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text(ppsStr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
           ),
-        ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text('حجم البيانات', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text(dataSize, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  String _formatDuration(Duration d) {
+    final s = d.inMilliseconds / 1000.0;
+    return '${s.toStringAsFixed(2)} s';
+  }
+
+  String _formatBytes(int bytes) {
+    const k = 1024;
+    if (bytes < k) return '$bytes B';
+    final kb = bytes / k;
+    if (kb < k) return '${kb.toStringAsFixed(2)} KB';
+    final mb = kb / k;
+    if (mb < k) return '${mb.toStringAsFixed(2)} MB';
+    final gb = mb / k;
+    return '${gb.toStringAsFixed(2)} GB';
   }
 
   Widget _buildMainStatCard(ThemeData theme) {
-    return RepaintBoundary(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.primaryColor.withValues(alpha: 0.8),
-              theme.primaryColor.withValues(alpha: 0.4),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.primaryColor.withOpacity(0.8),
+            theme.primaryColor.withOpacity(0.4),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primaryColor.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: theme.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+        ],
+      ),
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Icon(Icons.credit_card, size: 64, color: context.theme.appColors.onPrimary),
+          const SizedBox(height: 16),
+          Text(
+            '$_totalCards',
+            style: TextStyle(
+              fontSize: 56,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+              letterSpacing: 2,
             ),
-          ],
-        ),
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            const Icon(Icons.credit_card, size: 64, color: Colors.white),
-            const SizedBox(height: 16),
-            Text(
-              '$_totalCards',
-              style: const TextStyle(
-                fontSize: 56,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 2,
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'إجمالي الكروت',
+            style: TextStyle(
+              fontSize: 20,
+              color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface,
+              fontWeight: FontWeight.w500,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'إجمالي الكروت',
-              style: TextStyle(
-                fontSize: 20,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildMiniStat('مفعل', _activeCards, Icons.check_circle, Colors.greenAccent),
-                Container(width: 1, height: 40, color: Colors.white30),
-                _buildMiniStat('معطل', _disabledCards, Icons.cancel, Colors.redAccent),
-                Container(width: 1, height: 40, color: Colors.white30),
-                _buildMiniStat('منتهي', _expiredCards, Icons.hourglass_empty, Colors.orangeAccent),
-                Container(width: 1, height: 40, color: Colors.white30),
-                _buildMiniStat('نشط', _cardsWithSessions, Icons.wifi, Colors.blueAccent),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMiniStat('مفعل', _activeCards, Icons.check_circle, context.theme.appColors.success),
+              Container(width: 1, height: 40, color: Colors.white30),
+              _buildMiniStat('معطل', _disabledCards, Icons.cancel, context.theme.appColors.error),
+              Container(width: 1, height: 40, color: Colors.white30),
+              _buildMiniStat('منتهي', _expiredCards, Icons.hourglass_empty, context.theme.appColors.warning),
+              Container(width: 1, height: 40, color: Colors.white30),
+              _buildMiniStat('نشط', _cardsWithSessions, Icons.wifi, context.theme.appColors.info),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1108,18 +1018,18 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         const SizedBox(height: 8),
         Text(
           '$value',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: Colors.white70,
+            color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
           ),
         ),
       ],
@@ -1127,32 +1037,30 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   }
 
   Widget _buildStatusCardsGrid(ThemeData theme) {
-    return RepaintBoundary(
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        childAspectRatio: 1.4,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        children: [
-          _buildSmallStatCard(
-            'الجلسات النشطة',
-            _totalSessions,
-            Icons.devices,
-            Colors.orangeAccent,
-            theme,
-          ),
-          _buildSmallStatCard(
-            'معدل النشاط',
-            _totalCards > 0 ? ((_cardsWithSessions / _totalCards) * 100).round() : 0,
-            Icons.trending_up,
-            Colors.purpleAccent,
-            theme,
-            suffix: '%',
-          ),
-        ],
-      ),
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      childAspectRatio: 1.4,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      children: [
+        _buildSmallStatCard(
+          'الجلسات النشطة',
+          _totalSessions,
+          Icons.devices,
+          context.theme.appColors.warning,
+          theme,
+        ),
+        _buildSmallStatCard(
+          'معدل النشاط',
+          _totalCards > 0 ? ((_cardsWithSessions / _totalCards) * 100).round() : 0,
+          Icons.trending_up,
+          context.theme.appColors.primary,
+          theme,
+          suffix: '%',
+        ),
+      ],
     );
   }
 
@@ -1162,7 +1070,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1173,7 +1081,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
+                  color: color.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -1183,18 +1091,18 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           const SizedBox(height: 16),
           Text(
             '$value$suffix',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Colors.white60,
+              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
             ),
           ),
         ],
@@ -1230,91 +1138,89 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     final downloadPercent = totalData > 0 ? (_totalDownloadGB / totalData) : 0.5;
     final uploadPercent = totalData > 0 ? (_totalUploadGB / totalData) : 0.5;
 
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: theme.primaryColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.data_usage, color: theme.primaryColor, size: 24),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'استهلاك البيانات$suffix',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
+                child: Icon(Icons.data_usage, color: theme.primaryColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'استهلاك البيانات$suffix',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDataColumn(
-                    'التحميل',
-                    _totalDownloadGB,
-                    Icons.download,
-                    Colors.greenAccent,
-                    downloadPercent,
-                  ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDataColumn(
+                  'التحميل',
+                  _totalDownloadGB,
+                  Icons.download,
+                  context.theme.appColors.success,
+                  downloadPercent,
                 ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: _buildDataColumn(
-                    'الرفع',
-                    _totalUploadGB,
-                    Icons.upload,
-                    Colors.blueAccent,
-                    uploadPercent,
-                  ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: _buildDataColumn(
+                  'الرفع',
+                  _totalUploadGB,
+                  Icons.upload,
+                  context.theme.appColors.info,
+                  uploadPercent,
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0x0DFFFFFF),
-                borderRadius: BorderRadius.circular(12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.storage, color: Colors.orangeAccent, size: 20),
-                    SizedBox(width: 8),
-                    Text('المجموع الكلي', style: TextStyle(color: Colors.white70)),
+                    Icon(Icons.storage, color: context.theme.appColors.warning, size: 20),
+                    const SizedBox(width: 8),
+                    Text('المجموع الكلي', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54)),
                   ],
                 ),
                 Text(
                   '${totalData.toStringAsFixed(2)} GB',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.orangeAccent,
+                    color: context.theme.appColors.warning,
                   ),
                 ),
               ],
             ),
           ),
         ],
-      ),
       ),
     );
   }
@@ -1329,7 +1235,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(fontSize: 13, color: Colors.white70),
+              style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54),
             ),
           ],
         ),
@@ -1347,7 +1253,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: percent,
-            backgroundColor: const Color(0x1AFFFFFF),
+            backgroundColor: Colors.white.withOpacity(0.1),
             color: color,
             minHeight: 6,
           ),
@@ -1355,7 +1261,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         const SizedBox(height: 4),
         Text(
           '${(percent * 100).toStringAsFixed(0)}%',
-          style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7)),
+          style: TextStyle(fontSize: 11, color: color.withOpacity(0.7)),
         ),
       ],
     );
@@ -1369,90 +1275,87 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     final sortedProfiles = _cardsByProfile.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0x26BA68C8),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.category, color: Colors.purpleAccent, size: 24),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'توزيع الكروت حسب الفئة',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // بناء العناصر بـ for loop بدلاً من asMap().entries.map().toList()
-            for (int i = 0; i < sortedProfiles.length; i++)
-              _buildProfileRow(sortedProfiles[i], i),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
       ),
-    );
-  }
-
-  Widget _buildProfileRow(MapEntry<String, int> profileEntry, int index) {
-    final percentage = (_totalCards > 0 ? (profileEntry.value / _totalCards) : 0.0);
-    const colors = [
-      Colors.purpleAccent,
-      Colors.blueAccent,
-      Colors.greenAccent,
-      Colors.orangeAccent,
-      Colors.pinkAccent,
-      Colors.cyanAccent,
-    ];
-    final color = colors[index % colors.length];
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  profileEntry.key,
-                  style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
-                  overflow: TextOverflow.ellipsis,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: context.theme.appColors.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Icon(Icons.category, color: context.theme.appColors.primary, size: 24),
               ),
+              const SizedBox(width: 12),
               Text(
-                '${profileEntry.value} (${(percentage * 100).toStringAsFixed(1)}%)',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: color,
-                ),
+                'توزيع الكروت حسب الفئة',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: percentage,
-              backgroundColor: const Color(0x1AFFFFFF),
-              color: color,
-              minHeight: 8,
-            ),
-          ),
+          const SizedBox(height: 24),
+          ...sortedProfiles.asMap().entries.map((entry) {
+            final index = entry.key;
+            final profileEntry = entry.value;
+            final percentage = (_totalCards > 0 ? (profileEntry.value / _totalCards) : 0.0);
+            
+            final colors = [
+              context.theme.appColors.primary,
+              context.theme.appColors.info,
+              context.theme.appColors.success,
+              context.theme.appColors.warning,
+              context.theme.appColors.secondary,
+              context.theme.appColors.info,
+            ];
+            final color = colors[index % colors.length];
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          profileEntry.key,
+                          style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87, fontWeight: FontWeight.w500),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '${profileEntry.value} (${(percentage * 100).toStringAsFixed(1)}%)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: percentage,
+                      backgroundColor: Colors.white.withOpacity(0.1),
+                      color: color,
+                      minHeight: 8,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
         ],
       ),
     );
@@ -1463,67 +1366,65 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
     final activePercentage = _totalCards > 0 ? ((_activeCards / _totalCards) * 100).round() : 0;
     final expiredPercentage = _totalCards > 0 ? ((_expiredCards / _totalCards) * 100).round() : 0;
 
-    return RepaintBoundary(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: Text(
-              'إحصائيات سريعة',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'إحصائيات سريعة',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickStatCard(
+                'متوسط الجلسات',
+                avgSessionsPerCard,
+                Icons.analytics,
+                context.theme.appColors.success,
+                theme,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickStatCard(
-                  'متوسط الجلسات',
-                  avgSessionsPerCard,
-                  Icons.analytics,
-                  Colors.tealAccent,
-                  theme,
-                ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildQuickStatCard(
+                'نسبة التفعيل',
+                '$activePercentage%',
+                Icons.check_circle_outline,
+                context.theme.appColors.info,
+                theme,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickStatCard(
-                  'نسبة التفعيل',
-                  '$activePercentage%',
-                  Icons.check_circle_outline,
-                  Colors.indigoAccent,
-                  theme,
-                ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickStatCard(
+                'نسبة المنتهي',
+                '$expiredPercentage%',
+                Icons.hourglass_bottom,
+                context.theme.appColors.warning,
+                theme,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickStatCard(
-                  'نسبة المنتهي',
-                  '$expiredPercentage%',
-                  Icons.hourglass_bottom,
-                  Colors.deepOrangeAccent,
-                  theme,
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildQuickStatCard(
+                'الفئات',
+                '${_cardsByProfile.length}',
+                Icons.category_outlined,
+                context.theme.appColors.secondary,
+                theme,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickStatCard(
-                  'الفئات',
-                  '${_cardsByProfile.length}',
-                  Icons.category_outlined,
-                  Colors.amberAccent,
-                  theme,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1533,7 +1434,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Column(
         children: [
@@ -1541,19 +1442,19 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.white60,
+              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
             ),
           ),
         ],

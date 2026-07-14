@@ -3,7 +3,7 @@ import 'package:router_os_client/router_os_client.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'mikrotik_connector.dart';
-import 'perf/device_capability.dart';
+import 'theme/app_theme.dart';
 
 class ActiveUsersScreen extends StatefulWidget {
   const ActiveUsersScreen({super.key});
@@ -16,12 +16,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   List<Map<String, dynamic>> _activeUsers = [];
   DateTime? _lastActiveFetch;
   static const Duration _minRefreshGap = Duration(seconds: 20);
+  static const Duration _cacheDuration = Duration(minutes: 2);
   int _page = 0;
-  static const int _pageSize = 20;
-  bool _serverPaging = false;
-  int _backoffExp = 0;
-  static const Duration _baseInterval = Duration(seconds: 20);
-  static const Duration _maxInterval = Duration(minutes: 2);
+  static const int _pageSize = 50;
   bool _isLoading = true;
   String _errorMessage = '';
   int _totalUsers = 0;
@@ -34,38 +31,27 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   void initState() {
     super.initState();
     _fetchActiveUsers();
-    _scheduleNextFetch();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
+      if (mounted) _fetchActiveUsers();
+    });
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
-    _refreshTimer = null;
     super.dispose();
-  }
-
-  void _scheduleNextFetch([Duration? delay]) {
-    if (!mounted) return;
-    _refreshTimer?.cancel();
-    final d = delay ?? _baseInterval;
-    _refreshTimer = Timer(d, () {
-      if (!mounted) return;
-      _fetchActiveUsers();
-    });
   }
 
   Future<void> _fetchActiveUsers({bool force = false}) async {
     if (!mounted) return;
     
     if (!force && _lastActiveFetch != null && DateTime.now().difference(_lastActiveFetch!) < _minRefreshGap) {
-      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
       return;
     }
 
-    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -75,58 +61,26 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     try {
       client = await MikrotikConnector.connect();
       
-      // محاولة سريعة: أمر واحد مع تمرير الصفحة (اتصال TCP واحد فقط)
       try {
-        final args = [
+        final hotspotResponse = await client.talk([
           '/ip/hotspot/active/print',
           '=.proplist=user,address,uptime',
-          '=.limit=$_pageSize',
-          '=.skip=${_page * _pageSize}',
-        ];
-        final hotspotResponse = await client.talk(args);
-        _serverPaging = true;
-        final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
-        for (final e in hotspotResponse) {
-          parsed.add(Map<String, dynamic>.from(e));
-        }
-        _activeUsers = parsed;
+        ]);
+        _activeUsers = hotspotResponse.map((e) => Map<String, dynamic>.from(e)).toList();
         _activeCount = _activeUsers.length;
         _isHotspotMode = true;
       } catch (e) {
-        // إذا فشل مع الصفحة، حاول بدون صفحة (نفس الاتصال)
         try {
-          _serverPaging = false;
-          final hotspotResponse = await client.talk([
-            '/ip/hotspot/active/print',
-            '=.proplist=user,address,uptime',
+          final userManagerResponse = await client.talk([
+            '/tool/user-manager/session/print',
+            '=.proplist=user,session-time-left,framed-ip-address,uptime',
           ]);
-          final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
-          for (final e in hotspotResponse) {
-            parsed.add(Map<String, dynamic>.from(e));
-          }
-          _activeUsers = parsed;
+          _activeUsers = userManagerResponse.map((e) => Map<String, dynamic>.from(e)).toList();
           _activeCount = _activeUsers.length;
-          _isHotspotMode = true;
+          _isHotspotMode = false;
         } catch (e) {
-          // ليس hotspot، جرب user-manager (نفس الاتصال)
-          try {
-            final argsUm = [
-              '/tool/user-manager/session/print',
-              '=.proplist=user,session-time-left,framed-ip-address,uptime',
-            ];
-            final userManagerResponse = await client.talk(argsUm);
-            _serverPaging = false;
-            final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
-            for (final e in userManagerResponse) {
-              parsed.add(Map<String, dynamic>.from(e));
-            }
-            _activeUsers = parsed;
-            _activeCount = _activeUsers.length;
-            _isHotspotMode = false;
-          } catch (e) {
-            _activeUsers = [];
-            _activeCount = 0;
-          }
+          _activeUsers = [];
+          _activeCount = 0;
         }
       }
 
@@ -144,11 +98,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       }
 
       _lastActiveFetch = DateTime.now();
-      _backoffExp = 0;
       if (mounted) {
         setState(() => _isLoading = false);
       }
-      _scheduleNextFetch();
     } on MikrotikCredentialsMissingException catch (e) {
       if (mounted) {
         setState(() {
@@ -156,11 +108,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           _isLoading = false;
         });
       }
-      _backoffExp = math.min(_backoffExp + 1, 5);
-      final factor = math.pow(2, _backoffExp).toInt();
-      final secs = (_baseInterval.inSeconds * factor).clamp(0, _maxInterval.inSeconds);
-      final next = Duration(seconds: secs);
-      _scheduleNextFetch(next);
     } on MikrotikConnectionException catch (e) {
       if (mounted) {
         setState(() {
@@ -168,11 +115,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           _isLoading = false;
         });
       }
-      _backoffExp = math.min(_backoffExp + 1, 5);
-      final factor = math.pow(2, _backoffExp).toInt();
-      final secs = (_baseInterval.inSeconds * factor).clamp(0, _maxInterval.inSeconds);
-      final next = Duration(seconds: secs);
-      _scheduleNextFetch(next);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -180,13 +122,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           _isLoading = false;
         });
       }
-      _backoffExp = math.min(_backoffExp + 1, 5);
-      final factor = math.pow(2, _backoffExp).toInt();
-      final secs = (_baseInterval.inSeconds * factor).clamp(0, _maxInterval.inSeconds);
-      final next = Duration(seconds: secs);
-      _scheduleNextFetch(next);
     } finally {
-      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
+      client?.close();
     }
   }
 
@@ -196,9 +133,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final minutes = RegExp(r'(\d+)m').firstMatch(uptime)?.group(1);
     final seconds = RegExp(r'(\d+)s').firstMatch(uptime)?.group(1);
     final parts = <String>[];
-    if (hours != null && int.parse(hours) > 0) parts.add('$hoursس');
-    if (minutes != null && int.parse(minutes) > 0) parts.add('$minutesد');
-    if (seconds != null && int.parse(seconds) > 0) parts.add('$secondsث');
+    if (hours != null && int.parse(hours) > 0) parts.add('${hours}س');
+    if (minutes != null && int.parse(minutes) > 0) parts.add('${minutes}د');
+    if (seconds != null && int.parse(seconds) > 0) parts.add('${seconds}ث');
     return parts.isEmpty ? uptime : parts.join(' ');
   }
 
@@ -206,7 +143,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: context.theme.appColors.primary,
         elevation: 0,
         title: const Text('المستخدمين النشطين', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
@@ -233,12 +170,12 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+              Icon(Icons.error_outline, size: 64, color: context.theme.appColors.error),
               const SizedBox(height: 16),
               Text(
                 _errorMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.redAccent, fontSize: 16),
+                style: TextStyle(color: context.theme.appColors.error, fontSize: 12),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -273,67 +210,47 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   }
 
   Widget _buildStatsCard() {
-    final primaryColor = Theme.of(context).primaryColor;
-    // Precompute variants to avoid withOpacity allocations on each rebuild
-    final primary80 = Color.fromRGBO(
-      (primaryColor.r * 255).round(),
-      (primaryColor.g * 255).round(),
-      (primaryColor.b * 255).round(),
-      0.8,
-    );
-    final primary50 = Color.fromRGBO(
-      (primaryColor.r * 255).round(),
-      (primaryColor.g * 255).round(),
-      (primaryColor.b * 255).round(),
-      0.5,
-    );
-    final primary30 = Color.fromRGBO(
-      (primaryColor.r * 255).round(),
-      (primaryColor.g * 255).round(),
-      (primaryColor.b * 255).round(),
-      0.3,
-    );
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primary80, primary50],
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            context.theme.appColors.primary.withOpacity(0.8),
+            context.theme.appColors.primary.withOpacity(0.5),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: context.theme.appColors.primary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: primary30,
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem(
-              icon: Icons.people,
-              label: 'النشطين الآن',
-              value: '$_activeCount',
-              color: Colors.white,
-            ),
-            Container(
-              width: 1,
-              height: 60,
-              // Colors.white @ 0.3 -> alpha 0x4D
-              color: const Color(0x4DFFFFFF),
-            ),
-            _buildStatItem(
-              icon: Icons.group,
-              label: 'إجمالي المستخدمين',
-              value: '$_totalUsers',
-              color: Colors.white,
-            ),
-          ],
-        ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem(
+            icon: Icons.people,
+            label: 'النشطين الآن',
+            value: '$_activeCount',
+            color: context.theme.appColors.onPrimary,
+          ),
+          Container(
+            width: 1,
+            height: 60,
+            color: context.theme.appColors.onSurface.withOpacity(0.3),
+          ),
+          _buildStatItem(
+            icon: Icons.group,
+            label: 'إجمالي المستخدمين',
+            value: '$_totalUsers',
+            color: context.theme.appColors.onPrimary,
+          ),
+        ],
       ),
     );
   }
@@ -344,13 +261,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     required String value,
     required Color color,
   }) {
-    // Precompute to avoid withOpacity allocation per build
-    final labelColor = Color.fromRGBO(
-      (color.r * 255).round(),
-      (color.g * 255).round(),
-      (color.b * 255).round(),
-      0.9,
-    );
     return Column(
       children: [
         Icon(icon, color: color, size: 40),
@@ -358,7 +268,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         Text(
           label,
           style: TextStyle(
-            color: labelColor,
+            color: color.withOpacity(0.9),
             fontSize: 14,
           ),
           textAlign: TextAlign.center,
@@ -378,23 +288,21 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Widget _buildUsersList() {
     if (_activeUsers.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(48.0),
+          padding: const EdgeInsets.all(48.0),
           child: Column(
             children: [
               Icon(
                 Icons.people_outline,
                 size: 80,
-                // Colors.white @ 0.3 -> alpha 0x4D
-                color: Color(0x4DFFFFFF),
+                color: context.theme.appColors.onSurface.withOpacity(0.3),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'لا توجد مستخدمين نشطين حالياً',
                 style: TextStyle(
-                  // Colors.white @ 0.6 -> alpha 0x99
-                  color: Color(0x99FFFFFF),
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.black54,
                   fontSize: 16,
                 ),
               ),
@@ -410,14 +318,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final end = math.min(start + _pageSize, _activeUsers.length);
     final current = _activeUsers.sublist(start, end);
 
-    final primaryColor = Theme.of(context).primaryColor;
-    final primary20 = Color.fromRGBO(
-      (primaryColor.r * 255).round(),
-      (primaryColor.g * 255).round(),
-      (primaryColor.b * 255).round(),
-      0.2,
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -425,25 +325,25 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           padding: const EdgeInsets.only(bottom: 12.0),
           child: Row(
             children: [
-              const Text(
+              Text(
                 'المتصلين حالياً',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: context.theme.appColors.onSurface,
                 ),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: primary20,
+                  color: context.theme.appColors.primary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   _isHotspotMode ? 'Hotspot' : 'User Manager',
                   style: TextStyle(
-                    color: primaryColor,
+                    color: Theme.of(context).primaryColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -456,11 +356,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: current.length,
-          cacheExtent: DeviceCapability.instance.listViewCacheExtent,
-          addAutomaticKeepAlives: false,
           itemBuilder: (context, idx) {
             final user = current[idx];
-            return RepaintBoundary(child: _buildUserCard(user, start + idx));
+            return _buildUserCard(user, start + idx);
           },
         ),
       ],
@@ -469,93 +367,43 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Widget _buildPager() {
     if (_activeUsers.isEmpty) return const SizedBox.shrink();
+    final totalPages = (_activeUsers.length + _pageSize - 1) ~/ _pageSize;
+    if (totalPages <= 1) return const SizedBox.shrink();
 
-    if (_serverPaging) {
-      final isLast = _activeUsers.length < _pageSize;
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          OutlinedButton(
-            onPressed: _page > 0
-                ? () {
-                    setState(() => _page = _page - 1);
-                    _fetchActiveUsers(force: true);
-                  }
-                : null,
-            child: const Text('السابق'),
-          ),
-          const SizedBox(width: 12),
-          Text('صفحة ${_page + 1}', style: const TextStyle(color: Colors.white70)),
-          const SizedBox(width: 12),
-          OutlinedButton(
-            onPressed: isLast
-                ? null
-                : () {
-                    setState(() => _page = _page + 1);
-                    _fetchActiveUsers(force: true);
-                  },
-            child: const Text('التالي'),
-          ),
-        ],
-      );
-    } else {
-      final totalPages = (_activeUsers.length + _pageSize - 1) ~/ _pageSize;
-      if (totalPages <= 1) return const SizedBox.shrink();
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          OutlinedButton(
-            onPressed: _page > 0
-                ? () => setState(() => _page = _page - 1)
-                : null,
-            child: const Text('السابق'),
-          ),
-          const SizedBox(width: 12),
-          Text('صفحة ${_page + 1} من $totalPages', style: const TextStyle(color: Colors.white70)),
-          const SizedBox(width: 12),
-          OutlinedButton(
-            onPressed: (_page + 1) < totalPages
-                ? () => setState(() => _page = _page + 1)
-                : null,
-            child: const Text('التالي'),
-          ),
-        ],
-      );
-    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        OutlinedButton(
+          onPressed: _page > 0
+              ? () => setState(() => _page = _page - 1)
+              : null,
+          child: const Text('السابق'),
+        ),
+        const SizedBox(width: 12),
+        Text('صفحة ${_page + 1} من $totalPages', style: const TextStyle(color: Colors.white70)),
+        const SizedBox(width: 12),
+        OutlinedButton(
+          onPressed: (_page + 1) < totalPages
+              ? () => setState(() => _page = _page + 1)
+              : null,
+          child: const Text('التالي'),
+        ),
+      ],
+    );
   }
 
   Widget _buildUserCard(Map<String, dynamic> user, int index) {
     final username = user['user'] ?? user['name'] ?? 'غير محدد';
     final ipAddress = user['address'] ?? user['framed-ip-address'] ?? 'غير متاح';
     final uptime = user['uptime'] ?? user['session-time-left'] ?? '';
-
-    final primaryColor = Theme.of(context).primaryColor;
-    final primary80 = Color.fromRGBO(
-      (primaryColor.r * 255).round(),
-      (primaryColor.g * 255).round(),
-      (primaryColor.b * 255).round(),
-      0.8,
-    );
-    final primary40 = Color.fromRGBO(
-      (primaryColor.r * 255).round(),
-      (primaryColor.g * 255).round(),
-      (primaryColor.b * 255).round(),
-      0.4,
-    );
-    final primary20 = Color.fromRGBO(
-      (primaryColor.r * 255).round(),
-      (primaryColor.g * 255).round(),
-      (primaryColor.b * 255).round(),
-      0.2,
-    );
-
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: primary20,
+          color: context.theme.appColors.primary.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -575,13 +423,16 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                   height: 50,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [primary80, primary40],
+                      colors: [
+                        Theme.of(context).primaryColor.withOpacity(0.8),
+                        Theme.of(context).primaryColor.withOpacity(0.4),
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person,
-                    color: Colors.white,
+                    color: context.theme.appColors.onPrimary,
                     size: 28,
                   ),
                 ),
@@ -592,10 +443,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     children: [
                       Text(
                         username,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: context.theme.appColors.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -603,18 +454,18 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.location_on,
                             size: 14,
-                            color: Color(0xFFB39DDB),
+                            color: context.theme.appColors.secondary,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               ipAddress,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFFB39DDB),
+                                color: context.theme.appColors.secondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -625,17 +476,17 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.access_time,
                             size: 14,
-                            color: Color(0xFF81C784),
+                            color: context.theme.appColors.success,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             _formatUptime(uptime),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF81C784),
+                              color: context.theme.appColors.success,
                             ),
                           ),
                         ],
@@ -643,10 +494,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ],
                   ),
                 ),
-                // Colors.white @ 0.3 -> alpha 0x4D
-                const Icon(
+                Icon(
                   Icons.chevron_right,
-                  color: Color(0x4DFFFFFF),
+                  color: context.theme.appColors.onSurface.withOpacity(0.3),
                 ),
               ],
             ),
@@ -678,12 +528,12 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'تفاصيل المستخدم',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: context.theme.appColors.onSurface,
                     ),
                   ),
                 ],
@@ -699,9 +549,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                         flex: 2,
                         child: Text(
                           entry.key,
-                          style: const TextStyle(
-                            // Colors.white @ 0.6 -> alpha 0x99
-                            color: Color(0x99FFFFFF),
+                          style: TextStyle(
+                            color: context.theme.appColors.onSurface.withOpacity(0.6),
                             fontSize: 14,
                           ),
                         ),
@@ -710,8 +559,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                         flex: 3,
                         child: Text(
                           entry.value.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.theme.appColors.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -720,7 +569,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ],
                   ),
                 );
-              }),
+              }).toList(),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

@@ -118,7 +118,6 @@ jobs:
         with:
           flutter-version: '3.35.7'
           channel: 'stable'
-          cache: true
 
       - name: Show Flutter version
         run: flutter --version
