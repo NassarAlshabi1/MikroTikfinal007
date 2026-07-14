@@ -1,4 +1,4 @@
-package com.example.mikrotik_manager
+package com.mikrotik.manager
 
 import io.flutter.embedding.android.FlutterActivity
 
