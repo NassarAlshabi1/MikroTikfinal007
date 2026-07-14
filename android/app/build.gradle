@@ -66,6 +66,27 @@ android {
     // بدلاً من ذلك نستخدم --target-platform + --split-per-abi في flutter build
     // هذا يعطي نفس النتيجة (APK منفصل لكل معمارية) بدون تعارض
 
+    // ============================================================
+    //  تكوين توقيع Release للاستخدام الشخصي (APK updates)
+    //  - يقرأ بيانات الاعتماد من android/key.properties
+    //  - keystore مُخزّن في android/app/release-keystore.jks
+    //  - مُخصّص للاستخدام الشخصي (ليس لـ Google Play)
+    // ============================================================
+    def keystoreProperties = new Properties()
+    def keystorePropertiesFile = rootProject.file('key.properties')
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -73,6 +94,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
             buildConfigField "Boolean", "DEBUG_MODE", "false"
+
+            // ===== تفعيل التوقيع لـ release builds =====
+            signingConfig signingConfigs.release
         }
 
         debug {
