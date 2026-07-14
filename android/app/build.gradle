@@ -66,32 +66,8 @@ android {
     // بدلاً من ذلك نستخدم --target-platform + --split-per-abi في flutter build
     // هذا يعطي نفس النتيجة (APK منفصل لكل معمارية) بدون تعارض
 
-    signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-        release {
-            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
-                storeFile file(MYAPP_RELEASE_STORE_FILE)
-                storePassword MYAPP_RELEASE_STORE_PASSWORD
-                keyAlias MYAPP_RELEASE_KEY_ALIAS
-                keyPassword MYAPP_RELEASE_KEY_PASSWORD
-            } else {
-                storeFile file('debug.keystore')
-                storePassword 'android'
-                keyAlias 'androiddebugkey'
-                keyPassword 'android'
-            }
-        }
-    }
-
     buildTypes {
         release {
-            signingConfig signingConfigs.release
-
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -100,14 +76,12 @@ android {
         }
 
         debug {
-            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
             buildConfigField "Boolean", "DEBUG_MODE", "true"
         }
 
         profile {
-            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
             buildConfigField "Boolean", "DEBUG_MODE", "false"
