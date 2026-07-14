@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'snackbar_helpers.dart';
+import 'theme/app_theme.dart';
 import 'package:uuid/uuid.dart';
-import 'perf/device_capability.dart';
 
 enum DeviceStatus { online, offline }
 
@@ -55,36 +55,28 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDevices());
+    _loadDevices();
   }
 
   Future<void> _loadDevices() async {
-    if (!mounted) return;
     setState(() { _isLoading = true; });
     final prefs = await SharedPreferences.getInstance();
     final String? devicesJson = prefs.getString('monitored_devices');
     if (devicesJson != null) {
       final List<dynamic> decodedData = jsonDecode(devicesJson);
-      _allDevices = [
-        for (final json in decodedData) Device.fromJson(json as Map<String, dynamic>),
-      ];
+      _allDevices = decodedData.map((json) => Device.fromJson(json)).toList();
     }
     _displayedDevices = List.from(_allDevices); // Initially display all loaded devices
-    if (!mounted) return;
     setState(() { _isLoading = false; });
   }
 
   Future<void> _saveDevices() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<Map<String, dynamic>> encoded = [
-      for (final device in _allDevices) device.toJson(),
-    ];
-    final String devicesJson = jsonEncode(encoded);
+    final String devicesJson = jsonEncode(_allDevices.map((device) => device.toJson()).toList());
     await prefs.setString('monitored_devices', devicesJson);
   }
 
   Future<void> _fetchDevices() async {
-    if (!mounted) return;
     setState(() { _isLoading = true; });
     try {
       final neighborResponse = await widget.client.talk(['/ip/neighbor/print']);
@@ -199,7 +191,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
               // Removed 'disconnected' option
               const PopupMenuItem<String>(
                 value: 'all',
-                child: ListTile(leading: Icon(Icons.devices), title: Text('جميع الأجهزة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                child: ListTile(leading: Icon(Icons.devices), title: Text('جميع الأجهزة', style: TextStyle(color: context.theme.appColors.onSurface, fontWeight: FontWeight.bold))),
               ),
             ],
           ),
@@ -208,71 +200,80 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _displayedDevices.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.devices_other, size: 80, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text('لا توجد أجهزة للمراقبة', style: TextStyle(fontSize: 22, color: Colors.white)),
-                      SizedBox(height: 8),
-                      Text('اضغط على زر التحديث لجلب الأجهزة', style: TextStyle(color: Colors.white)),
+                      Icon(Icons.devices_other, size: 80, color: context.theme.appColors.muted),
+                      const SizedBox(height: 16),
+                      Text(
+                        'لا توجد أجهزة للمراقبة',
+                        style: TextStyle(
+                          fontSize: 22,
+                          color: Theme.of(context).textTheme.titleLarge?.color ?? context.theme.appColors.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'اضغط على زر التحديث لجلب الأجهزة',
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface,
+                        ),
+                      ),
                     ],
                   ),
                 )
-              : RepaintBoundary(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(8.0),
-                    itemCount: _displayedDevices.length,
-                    cacheExtent: DeviceCapability.instance.listViewCacheExtent,
-                    addAutomaticKeepAlives: false,
-                    itemBuilder: (context, index) {
-                      final device = _displayedDevices[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
-                        color: device.status == DeviceStatus.online ? const Color(0xCC2E7D32) : const Color(0xCC616161),
-                        child: ListTile(
-                          leading: Icon(
-                            device.status == DeviceStatus.online ? Icons.circle : Icons.circle_outlined,
-                            color: device.status == DeviceStatus.online ? Colors.greenAccent : Colors.grey,
-                          ),
-                          title: Text(
-                            device.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                          subtitle: Text(
-                            device.ip,
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                device.status == DeviceStatus.online ? 'متصل' : 'غير متصل',
-                                style: TextStyle(
-                                  color: device.status == DeviceStatus.online ? Colors.greenAccent : Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              if (device.status == DeviceStatus.offline)
-                                IconButton(
-                                  icon: const Icon(Icons.refresh, color: Colors.orange),
-                                  onPressed: () => _checkSingleDevice(device),
-                                  tooltip: 'فحص الجهاز',
-                                ),
-                            ],
-                          ),
+              : ListView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  itemCount: _displayedDevices.length,
+                  itemBuilder: (context, index) {
+                    final device = _displayedDevices[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      color: device.status == DeviceStatus.online 
+                          ? context.theme.appColors.success.withOpacity(0.8) 
+                          : context.theme.appColors.muted.withOpacity(0.8),
+                      child: ListTile(
+                        leading: Icon(
+                          device.status == DeviceStatus.online ? Icons.circle : Icons.circle_outlined,
+                          color: device.status == DeviceStatus.online ? context.theme.appColors.success : context.theme.appColors.muted,
                         ),
-                      );
-                    },
-                  ),
+                        title: Text(
+                          device.name,
+                          style: TextStyle(fontWeight: FontWeight.bold, color: context.theme.appColors.onSurface),
+                        ),
+                        subtitle: Text(
+                          device.ip,
+                          style: TextStyle(color: context.theme.appColors.onSurface.withOpacity(0.8), fontSize: 12),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              device.status == DeviceStatus.online ? 'متصل' : 'غير متصل',
+                              style: TextStyle(
+                                color: device.status == DeviceStatus.online ? context.theme.appColors.success : context.theme.appColors.muted,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (device.status == DeviceStatus.offline)
+                              IconButton(
+                                icon: Icon(Icons.refresh, color: context.theme.appColors.warning),
+                                onPressed: () => _checkSingleDevice(device),
+                                tooltip: 'فحص الجهاز',
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
     );
   }
 
   Future<void> _checkSingleDevice(Device device) async {
-    if (!mounted) return;
     setState(() { _isLoading = true; });
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('جاري فحص ${device.name}...')),
     );

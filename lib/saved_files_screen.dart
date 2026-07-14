@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'snackbar_helpers.dart';
-import 'perf/device_capability.dart';
 
 import 'card_list_screen.dart';
 import 'pdf_generator.dart';      // <-- ١. استيراد جديد
@@ -64,11 +63,9 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    if (!mounted) return;
     setState(() { _isLoading = true; });
     await _loadLinkStatus(); // تحميل حالة الربط
     await _loadSavedFiles(); // تحميل الملفات
-    if (!mounted) return;
     setState(() { _isLoading = false; });
   }
 
@@ -76,16 +73,10 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     final prefs = await SharedPreferences.getInstance();
     final filesJson = prefs.getStringList('saved_files') ?? [];
     if (mounted) {
-      final List<SavedFile> parsed = <SavedFile>[];
-      for (final jsonString in filesJson) {
-        try {
-          parsed.add(SavedFile.fromJson(jsonDecode(jsonString)));
-        } catch (_) {
-          // skip corrupt entries
-        }
-      }
-      parsed.sort((a, b) => b.date.compareTo(a.date));
-      _savedFiles = parsed;
+       _savedFiles = filesJson
+        .map((jsonString) => SavedFile.fromJson(jsonDecode(jsonString)))
+        .toList();
+      _savedFiles.sort((a, b) => b.date.compareTo(a.date));
     }
   }
   
@@ -95,8 +86,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     final isLinked = prefs.getBool('is_network_linked') ?? false;
     if (isLinked) {
       final dataString = prefs.getString('qahtani_linked_data');
-      if (dataString != null) {
-        if (!mounted) return;
+      if (dataString != null && mounted) {
         setState(() {
           _isNetworkLinked = true;
           _linkedData = jsonDecode(dataString);
@@ -108,9 +98,8 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
 
   Future<void> _shareFile(String path) async {
     try {
-      await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
+      await Share.shareXFiles([XFile(path)]);
     } catch (e) {
-      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشلت عملية المشاركة.');
     }
   }
@@ -127,12 +116,9 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
 
     _savedFiles.remove(fileToDelete);
     final prefs = await SharedPreferences.getInstance();
-    final updatedFilesJson = <String>[];
-    for (final file in _savedFiles) {
-      updatedFilesJson.add(jsonEncode(file.toJson()));
-    }
+    final updatedFilesJson =
+        _savedFiles.map((file) => jsonEncode(file.toJson())).toList();
     await prefs.setStringList('saved_files', updatedFilesJson);
-    if (!mounted) return;
     setState(() {});
   }
 
@@ -156,9 +142,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
           ),
         );
       }
-    // ignore: use_build_context_synchronously
     } catch (e) {
-      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشل عرض الملف.');
     }
   }
@@ -181,24 +165,16 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       final fileContent = await file.readAsString();
       final cardUsernames = fileContent.split('\n').where((line) => line.trim().isNotEmpty).toList();
 
-      // ignore: use_build_context_synchronously
       // استدعاء دالة إنشاء ومشاركة الـ PDF
       await PdfGenerator.sharePdf(
-        // ignore: use_build_context_synchronously
         context,
         cardUsernames: cardUsernames,
         template: relevantTemplate,
-        category: savedFile.profileName,
-      // ignore: use_build_context_synchronously
       );
 
-// ignore: use_build_context_synchronously
-
     } on StateError { // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
-       // ignore: use_build_context_synchronously
        showErrorSnackBar(context, 'لم يتم العثور على قالب PDF للفئة "${savedFile.profileName}".');
     } catch (e) {
-      // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشل إنشاء ملف PDF.');
     }
   }
@@ -214,55 +190,51 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _savedFiles.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     'لا توجد ملفات محفوظة.',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87),
                   ),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(8.0),
                   itemCount: _savedFiles.length,
-                  cacheExtent: DeviceCapability.instance.listViewCacheExtent,
-                  addAutomaticKeepAlives: false,
                   itemBuilder: (context, index) {
                     final file = _savedFiles[index];
                     final formattedDate = DateFormat('yyyy-MM-dd – hh:mm a').format(file.date);
-                    return RepaintBoundary(
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        child: ListTile(
-                          leading: const Icon(Icons.description, color: Colors.cyan, size: 30),
-                          title: Text('فئة: ${file.profileName}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('العدد: ${file.userCount} كرت\nالتاريخ: $formattedDate'),
-                          isThreeLine: true,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.visibility, color: Colors.blueAccent),
-                                onPressed: () => _viewFile(file.path),
-                                tooltip: 'عرض',
-                              ),
-                              // --- ٧. زر المشاركة كـ PDF الجديد ---
-                               IconButton(
-                                icon: const Icon(Icons.picture_as_pdf, color: Colors.orangeAccent),
-                                onPressed: () => _shareAsPdf(file),
-                                tooltip: 'مشاركة كـ PDF',
-                              ),
-                              // ----------------------------------
-                              IconButton(
-                                icon: const Icon(Icons.share, color: Colors.greenAccent),
-                                onPressed: () => _shareFile(file.path),
-                                tooltip: 'مشاركة كملف نصي',
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                onPressed: () => _deleteFile(file),
-                                tooltip: 'حذف',
-                              ),
-                            ],
-                          ),
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      child: ListTile(
+                        leading: const Icon(Icons.description, color: Colors.cyan, size: 30),
+                        title: Text('فئة: ${file.profileName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('العدد: ${file.userCount} كرت\nالتاريخ: $formattedDate'),
+                        isThreeLine: true,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.visibility, color: Colors.blueAccent),
+                              onPressed: () => _viewFile(file.path),
+                              tooltip: 'عرض',
+                            ),
+                            // --- ٧. زر المشاركة كـ PDF الجديد ---
+                             IconButton(
+                              icon: const Icon(Icons.picture_as_pdf, color: Colors.orangeAccent),
+                              onPressed: () => _shareAsPdf(file),
+                              tooltip: 'مشاركة كـ PDF',
+                            ),
+                            // ----------------------------------
+                            IconButton(
+                              icon: const Icon(Icons.share, color: Colors.greenAccent),
+                              onPressed: () => _shareFile(file.path),
+                              tooltip: 'مشاركة كملف نصي',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                              onPressed: () => _deleteFile(file),
+                              tooltip: 'حذف',
+                            ),
+                          ],
                         ),
                       ),
                     );

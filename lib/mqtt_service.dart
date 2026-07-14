@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'main.dart' show scaffoldMessengerKey;
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -12,33 +13,25 @@ class MqttService with ChangeNotifier {
   String? _deviceId;
   final String _broker = 'ue1f6bff.ala.us-east-1.emqxsl.com';
   final int _port = 8883;
-  String _username = '';
-  String _password = '';
+  final String _username = '777042661';
+  final String _password = 'mohammed77#7042661';
   final String _mainTopic = 'MyChatApp/ali/inbox';
   String? _responseTopic;
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
   final StreamController<Map<String, dynamic>> _messageStreamController =
       StreamController.broadcast();
   Stream<Map<String, dynamic>> get messages => _messageStreamController.stream;
 
-  MqttService({required this.scaffoldMessengerKey}) {
-    _initializeDeviceId();
+  MqttService() {
+    _initialize();
   }
 
-  /// تهيئة معرف الجهاز فقط بدون اتصال (بيانات الاعتماد ستُمرّر لاحقاً)
-  Future<void> _initializeDeviceId() async {
+  Future<void> _initialize() async {
     _deviceId = await _getDeviceId();
     if (_deviceId != null) {
       _responseTopic = 'MyChatApp/client/$_deviceId/response';
+      _connect();
     }
-  }
-
-  /// تعيين بيانات اعتماد MQTT والاتصال
-  void configure(String username, String password) {
-    _username = username;
-    _password = password;
-    _connect();
   }
 
   Future<String?> _getDeviceId() async {
@@ -51,18 +44,15 @@ class MqttService with ChangeNotifier {
         final iosInfo = await deviceInfo.iosInfo;
         return iosInfo.identifierForVendor;
       }
-    } catch (_) {
-      // ignore — device id unavailable
+    } catch (e) {
+      
     }
     return null;
   }
 
   void _connect() async {
     if (_deviceId == null) {
-      return;
-    }
-
-    if (_username.isEmpty || _password.isEmpty) {
+      
       return;
     }
 
@@ -92,14 +82,11 @@ class MqttService with ChangeNotifier {
     _client!.connectionMessage = connMessage;
 
     try {
-      await _client!.connect().timeout(const Duration(seconds: 10));
-      debugPrint('MQTT: Connected successfully');
-    } on TimeoutException {
-      debugPrint('MQTT: Connection timed out (10s)');
-      _client?.disconnect();
+      
+      await _client!.connect();
     } catch (e) {
-      debugPrint('MQTT: Connection error: $e');
-      _client?.disconnect();
+      
+      _client!.disconnect();
     }
   }
   
@@ -124,8 +111,8 @@ class MqttService with ChangeNotifier {
       try {
         final messageJson = jsonDecode(pt) as Map<String, dynamic>;
         _messageStreamController.add(messageJson);
-      } catch (_) {
-        // ignore — invalid JSON
+      } catch (e) {
+        
       }
     });
   }
@@ -176,3 +163,4 @@ class MqttService with ChangeNotifier {
     super.dispose();
   }
 }
+

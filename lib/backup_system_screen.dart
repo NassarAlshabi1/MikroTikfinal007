@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
+import 'theme/app_theme.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
-import 'perf/device_capability.dart';
 
 class BackupSystemScreen extends StatefulWidget {
   const BackupSystemScreen({super.key});
@@ -23,7 +23,6 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   }
 
   Future<void> _loadBackups() async {
-    if (!mounted) return;
     setState(() => _isLoading = true);
     RouterOSClient? client;
     try {
@@ -31,21 +30,20 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       final response = await client.talk(['/file/print']);
       
       if (mounted) {
-        final List<Map<String, dynamic>> parsed = <Map<String, dynamic>>[];
-        for (final file in response) {
-          final type = file['type']?.toString() ?? '';
-          if (type == 'backup' || type == 'user manager database') {
-            parsed.add(Map<String, dynamic>.from(file));
-          }
-        }
-        parsed.sort((a, b) {
-          final timeA = a['creation-time']?.toString() ?? '';
-          final timeB = b['creation-time']?.toString() ?? '';
-          return timeB.compareTo(timeA);
-        });
-        if (!mounted) return;
         setState(() {
-          _backups = parsed;
+          _backups = response
+              .where((file) {
+                final type = file['type']?.toString() ?? '';
+                return type == 'backup' || type == 'user manager database';
+              })
+              .map((file) => Map<String, dynamic>.from(file))
+              .toList();
+          
+          _backups.sort((a, b) {
+            final timeA = a['creation-time']?.toString() ?? '';
+            final timeB = b['creation-time']?.toString() ?? '';
+            return timeB.compareTo(timeA);
+          });
         });
       }
     } catch (e) {
@@ -53,9 +51,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل تحميل النسخ الاحتياطية.');
       }
     } finally {
-      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+      client?.close();
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -63,10 +60,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     final backupName = await _showBackupNameDialog();
     if (backupName == null || backupName.isEmpty) return;
 
-    if (!mounted) return;
     setState(() => _isCreatingBackup = true);
 
-    // ignore: use_build_context_synchronously
     final snackBar = ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Row(
@@ -76,7 +71,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(Colors.white),
+                valueColor: AlwaysStoppedAnimation(context.theme.appColors.onPrimary),
               ),
             ),
             SizedBox(width: 16),
@@ -97,20 +92,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         '=dont-encrypt=yes',
       ]);
 
-      // انتظار ذكي - التحقق من اكتمال النسخة الاحتياطية بدل انتظار أعمى
-      for (int i = 0; i < 10; i++) {
-        await Future.delayed(const Duration(seconds: 1));
-        try {
-          final check = await client.talk([
-            '/file/print',
-            '=.proplist=name',
-            '?name=$backupName',
-          ]);
-          if (check.isNotEmpty) break;
-        } catch (_) {
-          break; // اتصال مغلق، خرج
-        }
-      }
+      await Future.delayed(const Duration(seconds: 3));
 
       await _loadBackups();
 
@@ -124,9 +106,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل إنشاء النسخة.');
       }
     } finally {
-      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
-      if (!mounted) return;
-      setState(() => _isCreatingBackup = false);
+      client?.close();
+      if (mounted) setState(() => _isCreatingBackup = false);
     }
   }
 
@@ -176,13 +157,13 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey,
+                color: context.theme.appColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.info_outline, color: Colors.blue),
+              leading: Icon(Icons.info_outline, color: context.theme.appColors.info),
               title: const Text('معلومات النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -190,7 +171,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.restore, color: Colors.orange),
+              leading: Icon(Icons.restore, color: context.theme.appColors.warning),
               title: const Text('استعادة النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -198,7 +179,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
+              leading: Icon(Icons.delete, color: context.theme.appColors.error),
               title: const Text('حذف النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -261,7 +242,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.warning, color: Colors.orange),
+            Icon(Icons.warning, color: context.theme.appColors.warning),
             SizedBox(width: 8),
             Text('تحذير'),
           ],
@@ -277,7 +258,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
+              backgroundColor: context.theme.appColors.warning,
+              foregroundColor: context.theme.appColors.onWarning,
             ),
             child: const Text('استعادة'),
           ),
@@ -305,7 +287,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشلت عملية الاستعادة.');
       }
     } finally {
-      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
+      client?.close();
     }
   }
 
@@ -323,7 +305,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: context.theme.appColors.error,
+              foregroundColor: context.theme.appColors.onError,
             ),
             child: const Text('حذف'),
           ),
@@ -352,7 +335,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل حذف النسخة الاحتياطية.');
       }
     } finally {
-      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
+      client?.close();
     }
   }
 
@@ -414,7 +397,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
     final isUserManager = type == 'user manager database';
     final backupType = isUserManager ? 'يوزر متجر' : 'ويوكس';
-    final typeColor = isUserManager ? Colors.green : Colors.purple;
+    final typeColor = isUserManager ? context.theme.appColors.success : context.theme.appColors.secondary;
 
     final timeAgo = _calculateTimeAgo(creationTime);
 
@@ -449,13 +432,13 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                   children: [
                     Icon(
                       isUserManager ? Icons.group : Icons.router,
-                      color: Colors.white,
+                      color: context.theme.appColors.onPrimary,
                       size: 28,
                     ),
                     Text(
                       backupType,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black87,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -472,13 +455,13 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFB39DDB),
+                        color: context.theme.appColors.secondary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         name,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -490,20 +473,19 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                     Row(
                       children: [
                         const Icon(Icons.data_usage,
-                            size: 16, color: Colors.grey),
+                            size: 16, color: null), // استخدام اللون الافتراضي
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            // Color(0xFFB39DDB) @ opacity 0.3 -> alpha 0x4D
-                            color: const Color(0x4DB39DDB),
+                            color: context.theme.appColors.secondary.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             sizeText,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                               fontSize: 12,
                             ),
                           ),
@@ -514,12 +496,12 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                     Row(
                       children: [
                         const Icon(Icons.access_time,
-                            size: 16, color: Colors.grey),
+                            size: 16, color: null), // استخدام اللون الافتراضي
                         const SizedBox(width: 4),
                         Text(
                           timeAgo,
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Colors.black54,
                             fontSize: 12,
                           ),
                         ),
@@ -529,7 +511,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
+                icon: Icon(Icons.more_vert, color: Theme.of(context).iconTheme.color),
                 onPressed: () => _showBackupOptions(backup),
               ),
             ],
@@ -558,20 +540,20 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
 
     if (_backups.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.backup, size: 80, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
+            Icon(Icons.backup, size: 80, color: context.theme.appColors.muted),
+            const SizedBox(height: 16),
+            const Text(
               'لا توجد نسخ احتياطية',
-              style: TextStyle(fontSize: 20, color: Colors.grey),
+              style: TextStyle(fontSize: 20, color: context.theme.appColors.muted),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'اضغط على الزر أدناه لإنشاء نسخة جديدة',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: context.theme.appColors.muted),
             ),
           ],
         ),
@@ -583,11 +565,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: _backups.length,
-        cacheExtent: DeviceCapability.instance.listViewCacheExtent,
-        addAutomaticKeepAlives: false,
         itemBuilder: (context, index) {
           final backup = _backups[index];
-          return RepaintBoundary(child: _buildBackupCard(backup));
+          return _buildBackupCard(backup);
         },
       ),
     );
@@ -609,15 +589,15 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ),
       body: _buildBody(),
       floatingActionButton: _isCreatingBackup
-          ? const FloatingActionButton(
+          ? FloatingActionButton(
               onPressed: null,
-              backgroundColor: Colors.grey,
-              child: SizedBox(
+              backgroundColor: context.theme.appColors.muted,
+              child: const SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation(context.theme.appColors.onSurface),
                 ),
               ),
             )

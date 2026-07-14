@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'network_map_screen.dart';
 import 'rogue_dhcp_detector_screen.dart';
+import 'theme/app_palette.dart';
 
 enum DiagnosticStatus { pending, running, success, warning, error }
 
@@ -33,8 +34,8 @@ class _NetworkDiagnostic {
   final String id;
   final String title;
   final String description;
-  DiagnosticStatus status = DiagnosticStatus.pending;
-  String message = 'لم يتم الفحص بعد';
+  DiagnosticStatus status;
+  String message;
   double? latencyMs;
   double? downloadSpeedMbps;
   double? uploadSpeedMbps;
@@ -43,6 +44,11 @@ class _NetworkDiagnostic {
     required this.id,
     required this.title,
     required this.description,
+    this.status = DiagnosticStatus.pending,
+    this.message = 'لم يتم الفحص بعد',
+    this.latencyMs,
+    this.downloadSpeedMbps,
+    this.uploadSpeedMbps,
   });
 }
 
@@ -97,16 +103,13 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         sendTimeout: const Duration(seconds: 15),
       ),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) => _resolveGateway());
+    _resolveGateway();
   }
 
   Future<void> _resolveGateway() async {
     try {
-      final gw = await NetworkInfo()
-          .getWifiGatewayIP()
-          .timeout(const Duration(seconds: 5));
-      if (!mounted) return;
-      setState(() => _gatewayIp = gw);
+      final gw = await NetworkInfo().getWifiGatewayIP();
+      if (mounted) setState(() => _gatewayIp = gw);
     } catch (_) {}
   }
 
@@ -425,6 +428,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   int get _countSuccess => _tests.where((t) => t.status == DiagnosticStatus.success).length;
   int get _countWarning => _tests.where((t) => t.status == DiagnosticStatus.warning).length;
   int get _countError => _tests.where((t) => t.status == DiagnosticStatus.error).length;
+  int get _countPending => _tests.where((t) => t.status == DiagnosticStatus.pending).length;
 
   Color _statusColor(DiagnosticStatus s) {
     switch (s) {
@@ -433,7 +437,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       case DiagnosticStatus.warning:
         return Colors.orange;
       case DiagnosticStatus.error:
-        return Colors.redAccent;
+        return AppPalette.error;
       case DiagnosticStatus.running:
         return Theme.of(context).primaryColor;
       default:
@@ -454,12 +458,6 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       case DiagnosticStatus.pending:
         return 'بالانتظار';
     }
-  }
-
-  @override
-  void dispose() {
-    _dio.close();
-    super.dispose();
   }
 
   @override
@@ -506,90 +504,88 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     final theme = Theme.of(context);
     final primary = theme.primaryColor;
     
-    return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [primary.withValues(alpha: 0.6), primary.withValues(alpha: 0.3)],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: primary.withValues(alpha: 0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primary.withOpacity(0.6), primary.withOpacity(0.3)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
         ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0x33FFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(Icons.health_and_safety, color: Colors.white, size: 36),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ملخص الفحوصات',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                child: const Icon(Icons.health_and_safety, color: Colors.white, size: 36),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ملخص الفحوصات',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'تشخيص شامل لحالة الشبكة',
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'تشخيص شامل لحالة الشبكة',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isRunningAll ? null : _runAll,
+              icon: _isRunningAll
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isRunningAll ? null : _runAll,
-                icon: _isRunningAll
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.play_arrow),
-                label: Text(
-                  _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0x33FFFFFF),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                    )
+                  : const Icon(Icons.play_arrow),
+              label: Text(
+                _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withOpacity(0.2),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -597,11 +593,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Widget _buildStatsRow() {
     return Row(
       children: [
-        Expanded(child: _buildChip('ناجحة', _countSuccess.toString(), Colors.greenAccent, Icons.check_circle)),
+        Expanded(child: _buildChip('ناجحة', _countSuccess.toString(), AppPalette.success, Icons.check_circle)),
         const SizedBox(width: 10),
         Expanded(child: _buildChip('تحذير', _countWarning.toString(), Colors.orange, Icons.warning)),
         const SizedBox(width: 10),
-        Expanded(child: _buildChip('فشل', _countError.toString(), Colors.redAccent, Icons.error)),
+        Expanded(child: _buildChip('فشل', _countError.toString(), AppPalette.error, Icons.error)),
       ],
     );
   }
@@ -614,7 +610,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
       child: Column(
         children: [
@@ -631,8 +627,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -646,19 +642,22 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'الفحوصات',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        for (final t in _tests)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: RepaintBoundary(child: _buildTestCard(t)),
-          ),
+        ..._tests.map((t) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildTestCard(t),
+        )).toList(),
       ],
     );
   }
@@ -673,7 +672,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withValues(alpha: 0.3),
+          color: color.withOpacity(0.3),
           width: 1.5,
         ),
       ),
@@ -686,7 +685,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
+                  color: color.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(Icons.network_check, color: color, size: 24),
@@ -698,8 +697,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   children: [
                     Text(
                       t.title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -707,8 +706,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     const SizedBox(height: 4),
                     Text(
                       t.description,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                         fontSize: 13,
                       ),
                     ),
@@ -719,9 +718,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
+                  color: color.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
+                  border: Border.all(color: color.withOpacity(0.5), width: 1),
                 ),
                 child: Text(
                   _statusLabel(t.status),
@@ -740,11 +739,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.timer, color: Colors.white70, size: 16),
+                  Icon(Icons.timer, color: Theme.of(context).iconTheme.color?.withOpacity(0.7) ?? Colors.black54, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'المتوسط: ${t.latencyMs!.toStringAsFixed(0)} مللي ثانية',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87, fontSize: 14),
                   ),
                 ],
               ),
@@ -754,12 +753,12 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.speed, color: Colors.white70, size: 16),
+                  Icon(Icons.speed, color: Theme.of(context).iconTheme.color?.withOpacity(0.7) ?? Colors.black54, size: 16),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'التحميل: ${t.downloadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps • الرفع: ${t.uploadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps',
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87, fontSize: 14),
                     ),
                   ),
                 ],
@@ -768,14 +767,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0x0DFFFFFF),
+              color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             width: double.infinity,
             child: Text(
               t.message,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                 fontSize: 13,
               ),
             ),
@@ -816,9 +815,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: const Color(0x26FF9800),
+                    color: Colors.orange.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0x4DFF9800)),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
                   ),
                   alignment: Alignment.center,
                   child: const Row(
@@ -848,11 +847,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'التوصيات',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -863,22 +866,22 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle, color: Colors.greenAccent, size: 24),
-                SizedBox(width: 12),
+                const Icon(Icons.check_circle, color: AppPalette.success, size: 24),
+                const SizedBox(width: 12),
                 Text(
                   'لا توجد توصيات - الشبكة في حالة جيدة!',
-                  style: TextStyle(color: Colors.white, fontSize: 15),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87, fontSize: 15),
                 ),
               ],
             ),
           ),
         ..._recommendations.map((r) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: RepaintBoundary(child: _buildRecommendationCard(r)),
-        )),
+          child: _buildRecommendationCard(r),
+        )).toList(),
       ],
     );
   }
@@ -890,7 +893,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     
     switch (r.severity) {
       case SeverityLevel.high:
-        sevColor = Colors.redAccent;
+        sevColor = AppPalette.error;
         severityLabel = 'عاجل';
         break;
       case SeverityLevel.medium:
@@ -902,7 +905,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         severityLabel = 'منخفض';
         break;
       case SeverityLevel.info:
-        sevColor = Colors.blueAccent;
+        sevColor = AppPalette.info;
         severityLabel = 'معلومة';
         break;
     }
@@ -913,7 +916,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: sevColor.withValues(alpha: 0.4),
+          color: sevColor.withOpacity(0.4),
           width: 1.5,
         ),
       ),
@@ -926,7 +929,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: sevColor.withValues(alpha: 0.2),
+                  color: sevColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(r.icon, color: sevColor, size: 26),
@@ -941,8 +944,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         Expanded(
                           child: Text(
                             r.title,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -951,7 +954,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: sevColor.withValues(alpha: 0.2),
+                            color: sevColor.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -968,8 +971,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     const SizedBox(height: 6),
                     Text(
                       r.description,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
                         fontSize: 13,
                       ),
                     ),
@@ -982,26 +985,28 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                 },
                 icon: Icon(
                   r.expanded ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.white60,
+                  color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.black54,
                 ),
               ),
             ],
           ),
           if (r.expanded) ...[
             const SizedBox(height: 16),
-            const Divider(color: Colors.white12),
+            Divider(color: Theme.of(context).dividerColor.withOpacity(0.3)),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'خطوات الحل:',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).textTheme.titleSmall?.color ?? Colors.black87,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
-            for (var i = 0; i < r.steps.length; i++)
-              Padding(
+            ...r.steps.asMap().entries.map((entry) {
+              final index = entry.key + 1;
+              final step = entry.value;
+              return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1011,11 +1016,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                       height: 24,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: sevColor.withValues(alpha: 0.2),
+                        color: sevColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '${i + 1}',
+                        '$index',
                         style: TextStyle(
                           color: sevColor,
                           fontSize: 12,
@@ -1026,16 +1031,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        r.steps[i],
-                        style: const TextStyle(
-                          color: Colors.white,
+                        step,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
                           fontSize: 13,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
+              );
+            }),
           ],
         ],
       ),
@@ -1049,97 +1055,97 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'أدوات متقدمة',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
-              child: RepaintBoundary(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const NetworkMapScreen()),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: primary.withValues(alpha: 0.3), width: 1.5),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: primary.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(Icons.hub_outlined, size: 32, color: primary),
+              child: InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const NetworkMapScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: primary.withOpacity(0.3), width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: primary.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'خريطة الشبكة',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                          textAlign: TextAlign.center,
+                        child: Icon(Icons.hub_outlined, size: 32, color: primary),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'خريطة الشبكة',
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.titleSmall?.color ?? Colors.black87,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
-                      ],
-                    ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: RepaintBoundary(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const RogueDhcpDetectorScreen()),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0x4DFF5255), width: 1.5),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0x33FF5255),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
+              child: InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const RogueDhcpDetectorScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppPalette.error.withOpacity(0.3), width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'كاشف DHCP الدخيل',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                          textAlign: TextAlign.center,
+                        child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'كاشف DHCP الدخيل',
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.titleSmall?.color ?? Colors.black87,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
-                      ],
-                    ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ),

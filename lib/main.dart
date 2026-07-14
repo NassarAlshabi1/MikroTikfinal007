@@ -3,18 +3,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-// نقتصر على ProviderScope لتجنّب تعارض ChangeNotifierProvider مع حزمة provider
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 
 // --- افترض أن هذه الملفات موجودة في مشروعك ---
 import 'add_user_screen.dart';
 import 'bulk_add_screen.dart';
 import 'saved_files_screen.dart';
 import 'mqtt_service.dart';
+import 'qahtani_link_screen.dart';
 import 'profile_screen.dart';
 import 'pdf_templates_screen.dart';
 import 'network_doctor_screen.dart';
@@ -24,6 +24,11 @@ import 'stats_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
+import 'snackbar_helpers.dart';
+import 'theme/app_theme.dart';
+import 'theme/app_palette.dart';
+import 'theme/app_gradients.dart';
+// ===== Imports من capy/v2-riverpod (AI + terminal + perf + database) =====
 import 'perf/device_capability.dart';
 import 'perf/dio_cache_service.dart';
 import 'ai_diagnostics_screen.dart';
@@ -35,30 +40,14 @@ import 'card_search_screen.dart';
 import 'ai/diagnostics_history.dart';
 // -----------------------------------------
 
-/// قاعدة البيانات العامة (Singleton — تُستخدم عبر كل التطبيق)
-late final db.AppDatabase appDatabase;
-
-/// إقلاع محسّن:
-/// 1) تهيئة قدرة الجهاز (low/mid/high) قبل runApp
-/// 2) تهيئة قاعدة بيانات SQLite (drift)
-/// 3) تمرير MqttService عبر Provider كالمعتاد
-void main() async {
-  // تهيئة Flutter binding (مطلوبة لـ SharedPreferences و path_provider)
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await DeviceCapability.instance.init();
-
-  // تهيئة قاعدة البيانات
-  appDatabase = db.AppDatabase();
-  DiagnosticsHistoryService.instance.setDao(appDatabase.aiDiagnosticsDao);
-  SyncService.setDatabase(appDatabase);
-
+void main() {
   runApp(
-    ProviderScope(
-      child: ChangeNotifierProvider(
-        create: (_) => MqttService(scaffoldMessengerKey: scaffoldMessengerKey),
-        child: const MyApp(),
-      ),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MqttService()),
+        ChangeNotifierProvider(create: (_) => AppTheme()..initialize()),
+      ],
+      child: const MyApp(),
     ),
   );
 }
@@ -83,7 +72,7 @@ void showErrorSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: Colors.redAccent,
+      backgroundColor: AppPalette.error,
       duration: const Duration(seconds: 5),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
@@ -115,7 +104,7 @@ void showSuccessSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: const Color(0xFF4CAF50),
+      backgroundColor: AppPalette.success,
       duration: const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
@@ -131,237 +120,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      scaffoldMessengerKey: scaffoldMessengerKey,
-      debugShowCheckedModeBanner: false,
-      title: 'MikroTik Manager',
-      theme: ThemeData(
-  brightness: Brightness.dark,
-  primaryColor: const Color(0xFF6b3fa0),
-  scaffoldBackgroundColor: const Color(0xFF1a1329),
-  fontFamily: 'Tajawal',
-  cardColor: const Color(0xFF2d213f),
-  colorScheme: const ColorScheme.dark(
-    primary: Color(0xFF6b3fa0),
-    secondary: Color(0xFFB39DDB),
-    surface: Color(0xFF2d213f),
-    error: Colors.redAccent,
-    onPrimary: Colors.white,
-    onSecondary: Colors.white,
-    onSurface: Colors.white,
-    onError: Colors.white,
-  ),
-  textTheme: const TextTheme(
-    displayLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 28,
-      fontWeight: FontWeight.bold,
-      height: 1.4,
-    ),
-    displayMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-      height: 1.4,
-    ),
-    displaySmall: TextStyle(
-      color: Colors.white,
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-      height: 1.4,
-    ),
-    headlineLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      height: 1.5,
-    ),
-    headlineMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-      height: 1.5,
-    ),
-    headlineSmall: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      height: 1.5,
-    ),
-    titleLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-      height: 1.5,
-    ),
-    titleMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w500,
-      height: 1.5,
-    ),
-    titleSmall: TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-      height: 1.5,
-    ),
-    bodyLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      height: 1.6,
-    ),
-    bodyMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      height: 1.6,
-    ),
-    bodySmall: TextStyle(
-      color: Colors.white,
-      fontSize: 12,
-      height: 1.6,
-    ),
-    labelLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-    ),
-    labelMedium: TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-    ),
-    labelSmall: TextStyle(
-      color: Colors.white,
-      fontSize: 12,
-      fontWeight: FontWeight.w500,
-    ),
-  ),
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF6b3fa0),
-      foregroundColor: Colors.white,
-      minimumSize: const Size(double.infinity, 52),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Consumer<AppTheme>(
+      builder: (context, themeProvider, child) => MaterialApp(
+        scaffoldMessengerKey: scaffoldMessengerKey,
+        debugShowCheckedModeBanner: false,
+        title: 'MikroTik Manager',
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        // Theme Provider يدير الوضع تلقائياً
+        themeMode: themeProvider.themeMode,
+        home: const LoginScreen(),
       ),
-      textStyle: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        height: 1.5,
-      ),
-      elevation: 2,
-      shadowColor: const Color(0x4D000000),
-    ),
-  ),
-  inputDecorationTheme: InputDecorationTheme(
-    filled: true,
-    fillColor: const Color(0xFFB39DDB),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-    labelStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      height: 1.5,
-    ),
-    hintStyle: const TextStyle(
-      color: Color(0xB3FFFFFF),
-      fontSize: 14,
-      height: 1.5,
-    ),
-    iconColor: Colors.white,
-    prefixIconColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 16,
-    ),
-  ),
-  cardTheme: CardThemeData(
-    color: const Color(0xFF2d213f),
-    elevation: 2,
-    shadowColor: const Color(0x33000000),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    margin: const EdgeInsets.all(8),
-  ),
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Color(0xFF2d213f),
-    elevation: 0,
-    centerTitle: true,
-    titleTextStyle: TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      fontFamily: 'Tajawal',
-      height: 1.5,
-    ),
-    iconTheme: IconThemeData(
-      color: Colors.white,
-    ),
-  ),
-  iconTheme: const IconThemeData(
-    color: Color(0xFFB0A8C1),
-    size: 24,
-  ),
-  dividerTheme: const DividerThemeData(
-    color: Color(0x1AFFFFFF),
-    thickness: 1,
-    space: 16,
-  ),
-  snackBarTheme: SnackBarThemeData(
-    backgroundColor: const Color(0xFF2d213f),
-    contentTextStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontFamily: 'Tajawal',
-      height: 1.5,
-    ),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-    behavior: SnackBarBehavior.floating,
-    elevation: 4,
-  ),
-  dialogTheme: DialogThemeData(
-    backgroundColor: const Color(0xFF2d213f),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-    elevation: 8,
-    titleTextStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      fontFamily: 'Tajawal',
-      height: 1.5,
-    ),
-    contentTextStyle: const TextStyle(
-      color: Colors.white,
-      fontSize: 14,
-      fontFamily: 'Tajawal',
-      height: 1.6,
-    ),
-  ),
-),
-      home: const LoginScreen(),
     );
   }
 }
 
-// صفحة انتقال مخصصة مع animation — محسّنة للأجهزة الضعيفة
+// صفحة انتقال مخصصة مع animation
 class CustomPageRoute<T> extends MaterialPageRoute<T> {
   CustomPageRoute({required super.builder, super.settings});
 
   @override
-  Duration get transitionDuration {
-    // على الأجهزة الضعيفة: انتقال فوري تقريباً (50ms)
-    // على المتوسطة: 150ms
-    // على القوية: 300ms (الأصلية)
-    return DeviceCapability.instance.animationDuration;
-  }
+  Duration get transitionDuration => const Duration(milliseconds: 300);
 
   @override
   Widget buildTransitions(
@@ -370,10 +149,6 @@ class CustomPageRoute<T> extends MaterialPageRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    // على الأجهزة الضعيفة: انتقال بسيط بدون slide (أرخص)
-    if (DeviceCapability.instance.isLowEnd) {
-      return FadeTransition(opacity: animation, child: child);
-    }
     return FadeTransition(
       opacity: animation,
       child: SlideTransition(
@@ -407,19 +182,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final _remoteServerController = TextEditingController();
   final _remotePortController = TextEditingController(text: '8728');
   final _remoteUserController = TextEditingController();
-  final _remotePassController = TextEditingController();
-  bool _remoteObscured = true;
-
-  // بيانات اعتماد MQTT
-  final _mqttUsernameController = TextEditingController();
-  final _mqttPasswordController = TextEditingController();
-  bool _showMqttSettings = false;
-  bool _mqttPasswordObscured = true;
+  final _remotePasswordController = TextEditingController();
 
   bool _isLoading = false;
   String _errorMessage = '';
   bool _rememberMe = true;
+  bool _rememberMeRemote = false;
   bool _isPasswordObscured = true;
+  bool _isRemotePasswordObscured = true;
   bool _isScanning = false;
 
   final String telegramBotToken = '';
@@ -427,11 +197,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   // --- جميع الدوال والوظائف الأصلية تبقى كما هي ---
   Future<void> _sendTelegramMessage(String message) async {
-    // استخدام Dio مع cache لتقليل استهلاك الشبكة والبطارية
-    final dio = await createCachedDio(
-      maxAge: const Duration(minutes: 5),
-      maxStale: const Duration(hours: 1),
-    );
+    final dio = Dio();
     final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
     try {
       await dio.post(url, data: {'chat_id': telegramChatId, 'text': message});
@@ -468,102 +234,80 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Future<void> _forceDiscoverGateway() async {
-    if (!mounted) return;
     setState(() {
       _isScanning = true;
       _errorMessage = 'جاري البحث عن بوابة الشبكة...';
     });
     try {
-      final gatewayIp = await NetworkInfo()
-          .getWifiGatewayIP()
-          .timeout(const Duration(seconds: 5));
+      final gatewayIp = await NetworkInfo().getWifiGatewayIP();
       if (gatewayIp != null && gatewayIp.isNotEmpty) {
-        if (!mounted) return;
-        setState(() {
-          _ipController.text = gatewayIp;
-          _errorMessage = 'تم العثور على بوابة الشبكة!';
-        });
+        if (mounted) {
+          setState(() {
+            _ipController.text = gatewayIp;
+            _errorMessage = 'تم العثور على بوابة الشبكة!';
+          });
+        }
       } else {
-        if (!mounted) return;
-        setState(() => _errorMessage = 'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.');
+        if (mounted) setState(() => _errorMessage = 'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.');
       }
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
+      if (mounted) setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
     } finally {
-      if (!mounted) return;
-      setState(() => _isScanning = false);
+      if (mounted) setState(() => _isScanning = false);
     }
   }
 
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('remember_me') ?? false) {
-      if (!mounted) return;
       setState(() {
         _ipController.text = prefs.getString('ip') ?? '';
         _userController.text = prefs.getString('user') ?? '';
         _passwordController.text = prefs.getString('pass') ?? '';
         _portController.text = prefs.getString('port') ?? '8728';
-        _remoteServerController.text = prefs.getString('remote_server') ?? '';
-        _remotePortController.text = prefs.getString('remote_port') ?? '8728';
         _rememberMe = true;
       });
     }
-    // تحميل بيانات اعتماد MQTT وتكوين الخدمة
-    final mqttUsername = prefs.getString('mqtt_username') ?? '';
-    final mqttPassword = prefs.getString('mqtt_password') ?? '';
-    if (mqttUsername.isNotEmpty) {
-      if (!mounted) return;
+    if (prefs.getBool('remember_me_remote') ?? false) {
       setState(() {
-        _mqttUsernameController.text = mqttUsername;
-        _mqttPasswordController.text = mqttPassword;
+        _remoteServerController.text = prefs.getString('remote_server') ?? '';
+        _remotePortController.text = prefs.getString('remote_port') ?? '8728';
+        _remoteUserController.text = prefs.getString('remote_user') ?? '';
+        _remotePasswordController.text = prefs.getString('remote_pass') ?? '';
+        _rememberMeRemote = true;
       });
-      if (mounted) {
-        context.read<MqttService>().configure(mqttUsername, mqttPassword);
-      }
     }
   }
 
   Future<void> _handleCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    // كتابة جميع القيم بشكل متوازي لتسريع العملية
-    final futures = <Future<void>>[
-      prefs.setBool('remember_me', _rememberMe),
-    ];
+    await prefs.setBool('remember_me', _rememberMe);
     if (_rememberMe) {
-      futures.addAll([
-        prefs.setString('ip', _ipController.text),
-        prefs.setString('user', _userController.text),
-        prefs.setString('pass', _passwordController.text),
-        prefs.setString('port', _portController.text),
-        prefs.setString('remote_server', _remoteServerController.text),
-        prefs.setString('remote_port', _remotePortController.text),
-      ]);
-      // حفظ بيانات اعتماد MQTT
-      if (_mqttUsernameController.text.isNotEmpty) {
-        futures.addAll([
-          prefs.setString('mqtt_username', _mqttUsernameController.text.trim()),
-          prefs.setString('mqtt_password', _mqttPasswordController.text.trim()),
-        ]);
-      }
-      await Future.wait(futures);
-      if (mounted && _mqttUsernameController.text.isNotEmpty) {
-        context.read<MqttService>().configure(
-          _mqttUsernameController.text.trim(),
-          _mqttPasswordController.text.trim(),
-        );
-      }
+      await prefs.setString('ip', _ipController.text);
+      await prefs.setString('user', _userController.text);
+      await prefs.setString('pass', _passwordController.text);
+      await prefs.setString('port', _portController.text);
     } else {
-      futures.addAll([
-        prefs.remove('ip'),
-        prefs.remove('user'),
-        prefs.remove('pass'),
-        prefs.remove('port'),
-        prefs.remove('remote_server'),
-        prefs.remove('remote_port'),
-      ]);
-      await Future.wait(futures);
+      await prefs.remove('ip');
+      await prefs.remove('user');
+      await prefs.remove('pass');
+      await prefs.remove('port');
+    }
+  }
+  
+  Future<void> _handleRemoteCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('remember_me_remote', _rememberMeRemote);
+    if (_rememberMeRemote) {
+      await prefs.setString('remote_server', _remoteServerController.text);
+      await prefs.setString('remote_port', _remotePortController.text);
+      await prefs.setString('remote_user', _remoteUserController.text);
+      await prefs.setString('remote_pass', _remotePasswordController.text);
+    } else {
+      await prefs.remove('remote_server');
+      await prefs.remove('remote_port');
+      await prefs.remove('remote_user');
+      await prefs.remove('remote_pass');
     }
   }
 
@@ -614,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         showErrorSnackBar(context, 'فشل الاتصال. تحقق من البيانات أو الشبكة.');
       }
     } finally {
-      // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
+      client?.close();
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -625,79 +369,156 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     _ipController.dispose();
     _userController.dispose();
     _passwordController.dispose();
-    _mqttUsernameController.dispose();
-    _mqttPasswordController.dispose();
     _portController.dispose();
     _remoteServerController.dispose();
     _remotePortController.dispose();
+    _remoteUserController.dispose();
+    _remotePasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Image.asset('assets/images/wifi_logo.png', width: 48, height: 48,
-                cacheWidth: 96,  // 2x للأجهزة عالية الدقة
-                filterQuality: DeviceCapability.instance.isLowEnd ? FilterQuality.low : FilterQuality.medium,
-                gaplessPlayback: true,
-              ),
-              const SizedBox(height: 24),
-              Text('إدارة شبكتك بسهولة وأمان', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color)),
-              const SizedBox(height: 24),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            // المحتوى الرئيسي
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                Image.asset('assets/images/wifi_logo.png', width: 48, height: 48),
+                const SizedBox(height: 24),
+                Text(
+                  'إدارة شبكتك بسهولة وأمان',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
                 ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicatorColor: Theme.of(context).primaryColor,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorWeight: 3,
-                  tabs: const [
-                    Tab(
-                      icon: Icon(Icons.lan),
-                      text: 'اتصال محلي',
+                const SizedBox(height: 24),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: context.theme.appColors.primary,
+                    labelColor: context.theme.appColors.onSurface,
+                    unselectedLabelColor: context.theme.appColors.muted,
+                    indicatorWeight: 3,
+                    tabs: const [
+                      Tab(
+                        icon: Icon(Icons.lan),
+                        text: 'اتصال محلي',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.cloud),
+                        text: 'اتصال عن بعد',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (_errorMessage.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      _errorMessage,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: context.theme.appColors.error,
+                        fontSize: 12,
+                      ),
                     ),
-                    Tab(
-                      icon: Icon(Icons.cloud),
-                      text: 'اتصال عن بعد',
+                  ),
+                SizedBox(
+                  height: 550,
+                  child: TabBarView(
+                    controller: _tabController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildLocalLoginForm(),
+                      _buildRemoteLoginForm(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+          // مفتاح تبديل الثيم في الزاوية العلوية اليسرى
+          Positioned(
+        top: 50,
+        left: 20,
+        child: Consumer<AppTheme>(
+          builder: (context, themeProvider, child) => Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  key: ValueKey(themeProvider.isDarkMode),
+                  color: themeProvider.isDarkMode ? Colors.amber[600] : Colors.indigo[600],
+                  size: 26,
+                ),
+              ),
+              tooltip: themeProvider.isDarkMode ? 'التبديل للثيم الفاتح' : 'التبديل للثيم الغامق',
+              onPressed: () async {
+                await themeProvider.toggleTheme();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            themeProvider.isDarkMode ? 'تم التبديل للثيم الغامق' : 'تم التبديل للثيم الفاتح',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      duration: const Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              if (_errorMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(_errorMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent, fontSize: 16)),
-                ),
-
-              SizedBox(
-                height: 550,
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildLocalLoginForm(),
-                    _buildRemoteLoginForm(),
-                  ],
-                ),
-              ),
-            ],
+                  );
+                }
+              },
+            ),
           ),
         ),
       ),
+        ],
+      ),
+        ),
     );
   }
 
@@ -706,8 +527,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() => _errorMessage = 'الرجاء إدخال عنوان الخادم البعيد');
       return;
     }
-    if (_remoteUserController.text.isEmpty || _remotePassController.text.isEmpty) {
-      setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور');
+
+    if (_remoteUserController.text.isEmpty || _remotePasswordController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور للاتصال البعيد');
+      return;
+    }
+    
+    final input = _remoteServerController.text.trim();
+    final ipPattern = RegExp(r'^(\d{1,3}\.){3}\d{1,3}$');
+    if (ipPattern.hasMatch(input)) {
+      setState(() => _errorMessage = 'الرجاء إدخال اسم النطاق (Domain) وليس عنوان IP');
       return;
     }
     setState(() {
@@ -716,24 +545,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     });
 
     try {
+      await _handleRemoteCredentials();
+      
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('ip', _remoteServerController.text.trim());
-      await prefs.setString('user', _remoteUserController.text.trim());
-      await prefs.setString('pass', _remotePassController.text);
-      await prefs.setString('port', _remotePortController.text.trim().isEmpty ? '8728' : _remotePortController.text.trim());
-
-      try {
-        await MikrotikConnector.connect();
-      } finally {
-        // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
-      }
-
+      await prefs.setString('ip', _remoteServerController.text);
+      await prefs.setString('port', _remotePortController.text);
+      await prefs.setString('user', _remoteUserController.text);
+      await prefs.setString('pass', _remotePasswordController.text);
+      
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
             builder: (context) => HomeScreen(
-              isVersion7OrNewer: true,
-              username: _remoteUserController.text.trim(),
+              isVersion7OrNewer: true, 
+              username: _remoteUserController.text,
             ),
           ),
         );
@@ -759,7 +584,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: TextField(
                 controller: _ipController,
                 decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
-                style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.phone,
               ),
             ),
@@ -769,7 +593,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               child: TextField(
                 controller: _portController,
                 decoration: const InputDecoration(labelText: 'Port'),
-                style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.number,
               ),
             ),
@@ -777,18 +600,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             Container(
               height: 58,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.theme.appColors.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: _isScanning
-                  ? const Padding(
-                      padding: EdgeInsets.all(12.0),
+                  ? Padding(
+                      padding: const EdgeInsets.all(12.0),
                       child: CircularProgressIndicator(
-                        color: Color(0xFF6b3fa0),
+                        color: context.theme.appColors.primary,
                       ),
                     )
                   : IconButton(
-                      icon: const Icon(Icons.search, color: Color(0xFF6b3fa0)),
+                      icon: Icon(Icons.search, color: context.theme.appColors.primary),
                       onPressed: _forceDiscoverGateway,
                       tooltip: 'بحث عن البوابة',
                     ),
@@ -799,7 +622,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         TextField(
           controller: _userController,
           decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
-          style: const TextStyle(color: Colors.white),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -813,7 +635,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
             ),
           ),
-          style: const TextStyle(color: Colors.white),
         ),
         CheckboxListTile(
           title: const Text("تذكرني"),
@@ -821,66 +642,32 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
-          activeColor: Theme.of(context).primaryColor,
+          activeColor: context.theme.appColors.primary,
         ),
-        const SizedBox(height: 8),
-        // إعدادات MQTT
-        GestureDetector(
-          onTap: () => setState(() => _showMqttSettings = !_showMqttSettings),
-          child: Row(
-            children: [
-              Icon(_showMqttSettings ? Icons.expand_less : Icons.expand_more, color: Colors.white54, size: 20),
-              const SizedBox(width: 4),
-              const Text('إعدادات MQTT', style: TextStyle(color: Colors.white54, fontSize: 13)),
-            ],
-          ),
-        ),
-        if (_showMqttSettings) ...[
-          const SizedBox(height: 12),
-          TextField(
-            controller: _mqttUsernameController,
-            decoration: const InputDecoration(labelText: 'MQTT Username', prefixIcon: Icon(Icons.cloud_outlined)),
-            style: const TextStyle(color: Colors.white),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _mqttPasswordController,
-            obscureText: _mqttPasswordObscured,
-            decoration: InputDecoration(
-              labelText: 'MQTT Password',
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(_mqttPasswordObscured ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _mqttPasswordObscured = !_mqttPasswordObscured),
-              ),
-            ),
-            style: const TextStyle(color: Colors.white),
-          ),
-        ],
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _isLoading ? null : _login,
           child: _isLoading
-              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+              ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: context.theme.appColors.onPrimary))
               : const Text('اتصال', style: TextStyle(fontSize: 18)),
         ),
         const SizedBox(height: 8),
         TextButton(
           onPressed: _launchPrivacyPolicy,
-          child: const Text(
+          child: Text(
             'سياسة الخصوصية',
             style: TextStyle(
-              color: Color(0xB3FFFFFF),
+              color: context.theme.appColors.onBackground.withOpacity(0.7),
               decoration: TextDecoration.underline,
-              decorationColor: Color(0xB3FFFFFF),
+              decorationColor: context.theme.appColors.onBackground.withOpacity(0.7),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'جميع الحقوق محفوظة © م/نصار الشعبي',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
+          style: TextStyle(color: context.theme.appColors.muted, fontSize: 12),
         ),
       ],
     );
@@ -897,7 +684,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             hintText: 'router.example.com أو 1.2.3.4',
             prefixIcon: Icon(Icons.cloud),
           ),
-          style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.url,
         ),
         const SizedBox(height: 16),
@@ -928,19 +714,52 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: _remotePassController,
-          obscureText: _remoteObscured,
+          controller: _remotePasswordController,
+          obscureText: _isRemotePasswordObscured,
           decoration: InputDecoration(
             labelText: 'Password',
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(_remoteObscured ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _remoteObscured = !_remoteObscured),
+              icon: Icon(_isRemotePasswordObscured ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _isRemotePasswordObscured = !_isRemotePasswordObscured),
             ),
           ),
-          style: const TextStyle(color: Colors.white),
+          keyboardType: TextInputType.number,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _remoteUserController,
+          decoration: const InputDecoration(
+            labelText: 'Username',
+            prefixIcon: Icon(Icons.person_outline),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _remotePasswordController,
+          obscureText: _isRemotePasswordObscured,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_isRemotePasswordObscured ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _isRemotePasswordObscured = !_isRemotePasswordObscured),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        CheckboxListTile(
+          title: Text('تذكرني', style: TextStyle(color: context.theme.appColors.onSurface)),
+          value: _rememberMeRemote,
+          onChanged: (bool? value) {
+            setState(() {
+              _rememberMeRemote = value ?? false;
+            });
+          },
+          activeColor: context.theme.appColors.primary,
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _isLoading ? null : _remoteConnect,
           child: _isLoading
@@ -955,10 +774,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               : const Text('الدخول', style: TextStyle(fontSize: 18)),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'جميع الحقوق محفوظة © م/نصار الشعبي',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF5A5278), fontSize: 12),
+          style: TextStyle(color: context.theme.appColors.muted, fontSize: 12),
         ),
       ],
     );
@@ -975,16 +794,16 @@ class CustomLoadingIndicator extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(
+          CircularProgressIndicator(
             strokeWidth: 3,
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0)),
+            valueColor: AlwaysStoppedAnimation<Color>(context.theme.appColors.primary),
           ),
           if (message != null) ...[
             const SizedBox(height: 16),
             Text(
               message!,
-              style: const TextStyle(
-                color: Color(0xB3FFFFFF),
+              style: TextStyle(
+                color: context.theme.appColors.onBackground.withOpacity(0.7),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -1036,12 +855,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isNetworkLinked = false;
   String _clientName = '';
 
+  Map<String, dynamic>? _dashboardStatus;
+  bool _isLoadingStatus = true;
+  bool _isRefreshingStatus = false;
+  String _statusError = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _fetchProfiles();
     _loadLinkStatus();
+    _loadCachedDashboardStatus();
+    _refreshDashboardStatus();
   }
 
   Future<void> _loadLinkStatus() async {
@@ -1090,6 +916,124 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _loadCachedDashboardStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString('cached_dashboard_status') ?? prefs.getString('cached_stats');
+    if (cached == null) return;
+    try {
+      final decoded = jsonDecode(cached);
+      if (decoded is! Map<String, dynamic>) return;
+      if (!mounted) return;
+      setState(() {
+        _dashboardStatus = {
+          'cpuUsage': (decoded['cpuUsage'] as num?)?.toDouble() ?? 0.0,
+          'memoryUsage': (decoded['memoryUsage'] as num?)?.toDouble() ?? 0.0,
+          'uptime': decoded['uptime']?.toString() ?? 'غير متوفر',
+          'dataDownloaded': (decoded['dataDownloaded'] as num?)?.toDouble() ?? 0.0,
+          'dataUploaded': (decoded['dataUploaded'] as num?)?.toDouble() ?? 0.0,
+          'activeUsers': (decoded['activeUsers'] as num?)?.toInt() ?? 0,
+          'version': decoded['version']?.toString() ?? 'غير معروف',
+        };
+        _isLoadingStatus = false;
+        _statusError = '';
+      });
+    } catch (_) {
+      // ignore cache parse errors
+    }
+  }
+
+  Future<void> _refreshDashboardStatus({bool silent = true}) async {
+    if (!mounted) return;
+    setState(() {
+      _statusError = '';
+      if (silent && _dashboardStatus != null) {
+        _isRefreshingStatus = true;
+      } else {
+        _isLoadingStatus = true;
+      }
+    });
+
+    RouterOSClient? client;
+    try {
+      client = await MikrotikConnector.connect();
+
+      final resourceResponse = await client.talk(['/system/resource/print']);
+      Map<String, dynamic> resourceData = {};
+      if (resourceResponse.isNotEmpty) {
+        resourceData = Map<String, dynamic>.from(resourceResponse[0]);
+      }
+
+      final interfaceResponse = await client.talk([
+        '/interface/print',
+        '=.proplist=name,rx-byte,tx-byte',
+        'stats',
+      ]);
+      double totalDownload = 0.0;
+      double totalUpload = 0.0;
+      for (var iface in interfaceResponse) {
+        final rxBytes = double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
+        final txBytes = double.tryParse(iface['tx-byte']?.toString() ?? '0') ?? 0.0;
+        totalDownload += rxBytes;
+        totalUpload += txBytes;
+      }
+
+      List<Map<String, dynamic>> activeUsers = [];
+      try {
+        final activeResponse = await client.talk(['/ip/hotspot/active/print']);
+        activeUsers = activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+      } catch (_) {
+        activeUsers = [];
+      }
+
+      final cpuLoad = double.tryParse(resourceData['cpu-load']?.toString() ?? '0') ?? 0.0;
+      final totalMemory = double.tryParse(resourceData['total-memory']?.toString() ?? '0') ?? 0.0;
+      final freeMemory = double.tryParse(resourceData['free-memory']?.toString() ?? '0') ?? 0.0;
+      final memoryUsagePercent = totalMemory <= 0
+          ? 0.0
+          : ((totalMemory - freeMemory) / totalMemory * 100);
+
+      final updatedStatus = {
+        'cpuUsage': cpuLoad,
+        'memoryUsage': memoryUsagePercent,
+        'uptime': resourceData['uptime']?.toString() ?? 'غير متوفر',
+        'dataDownloaded': totalDownload / (1024 * 1024),
+        'dataUploaded': totalUpload / (1024 * 1024),
+        'activeUsers': activeUsers.length,
+        'version': resourceData['version']?.toString() ?? 'غير معروف',
+      };
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_dashboard_status', jsonEncode(updatedStatus));
+
+      if (mounted) {
+        setState(() {
+          _dashboardStatus = updatedStatus;
+          _isLoadingStatus = false;
+          _isRefreshingStatus = false;
+          _statusError = '';
+        });
+      }
+    } on MikrotikCredentialsMissingException catch (e) {
+      _handleStatusError('بيانات الدخول غير متوفرة: ${e.message}');
+    } on MikrotikConnectionException catch (e) {
+      _handleStatusError('تعذر الاتصال بالجهاز: ${e.message}');
+    } catch (e) {
+      _handleStatusError('فشل تحديث حالة MikroTik: ${e.toString()}');
+    } finally {
+      client?.close();
+    }
+  }
+
+  void _handleStatusError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _statusError = message;
+      _isLoadingStatus = false;
+      _isRefreshingStatus = false;
+    });
+    showErrorSnackBar(context, message);
+  }
+
   Future<void> _fetchProfiles() async {
     setState(() => _isLoadingProfiles = true);
     RouterOSClient? client;
@@ -1109,7 +1053,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         showErrorSnackBar(context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
       }
     } finally {
-      // لا نغلق الاتصال يدوياً - تجمع الاتصالات يديره تلقائياً
+      client?.close();
       if (mounted) setState(() => _isLoadingProfiles = false);
     }
   }
@@ -1121,7 +1065,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إضافة كرت فردي',
         icon: Icons.person_add_alt_1,
-        color: const Color(0xFF5C6BC0), // Indigo
+        color: AppPalette.primary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) =>
@@ -1132,7 +1076,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إضافة كروت جماعية',
         icon: Icons.groups,
-        color: const Color(0xFF4CAF50), // Green
+        color: AppPalette.success,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) =>
@@ -1141,9 +1085,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
+        title: 'ربط الشبكة',
+        icon: Icons.link,
+        color: AppPalette.info,
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen()));
+        },
+      ),
+      ServiceItem(
         title: 'الإحصائيات',
         icon: Icons.bar_chart_rounded,
-        color: const Color(0xFF26A69A), // Teal
+        color: AppPalette.secondaryDark,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const StatsScreen()));
@@ -1152,7 +1105,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'طبيب الشبكة',
         icon: Icons.local_hospital_outlined,
-        color: const Color(0xFF42A5F5), // Blue
+        color: AppPalette.info,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const NetworkDoctorScreen()));
@@ -1161,7 +1114,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'الملفات المحفوظة',
         icon: Icons.folder_copy,
-        color: const Color(0xFFFFA726), // Orange
+        color: AppPalette.warning,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const SavedFilesScreen()));
@@ -1170,7 +1123,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إدارة قوالب PDF',
         icon: Icons.picture_as_pdf,
-        color: const Color(0xFF78909C), // Blue Grey
+        color: AppPalette.muted,
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => PdfTemplatesScreen(profiles: _profiles)));
@@ -1179,7 +1132,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'استخراج الكروت',
         icon: Icons.document_scanner_outlined,
-        color: const Color(0xFFEF5350), // Red
+        color: AppPalette.error,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const ExtractCardsScreen()));
@@ -1188,7 +1141,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إحصائيات الكروت',
         icon: Icons.bar_chart,
-        color: const Color(0xFF9C27B0), // Purple
+        color: AppPalette.primary,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const CardsStatisticsScreen()));
@@ -1197,7 +1150,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'المستخدمين النشطين',
         icon: Icons.people_outline,
-        color: const Color(0xFF00ACC1), // Cyan
+        color: AppPalette.secondary,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const ActiveUsersScreen()));
@@ -1206,52 +1159,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'الملف الشخصي',
         icon: Icons.account_circle,
-        color: const Color(0xFF29B6F6), // Light Blue
+        color: AppPalette.secondaryLight,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const ProfileScreen()));
         },
       ),
       ServiceItem(
-        title: 'تشخيص AI',
-        icon: Icons.psychology,
-        color: const Color(0xFF00BCD4), // Cyan
-        onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const AiDiagnosticsScreen()));
-        },
-      ),
-      ServiceItem(
-        title: 'تيرمنال',
-        icon: Icons.terminal,
-        color: const Color(0xFF37474F), // Blue Grey
-        onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const TerminalScreen()));
-        },
-      ),
-      ServiceItem(
-        title: 'بحث الكروت',
-        icon: Icons.search,
-        color: const Color(0xFF4CAF50), // Green
-        onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const CardSearchScreen()));
-        },
-      ),
-      ServiceItem(
-        title: 'التقارير',
-        icon: Icons.assessment,
-        color: const Color(0xFFFF9800), // Orange
-        onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const MonthlyReportScreen()));
-        },
-      ),
-      ServiceItem(
         title: 'النسخ الاحتياطي',
         icon: Icons.backup,
-        color: const Color(0xFF2196F3), // Blue
+        color: AppPalette.info,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const BackupSystemScreen()));
@@ -1259,121 +1176,350 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
+    return Container(
+      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('الرئيسية', style: TextStyle(fontWeight: FontWeight.bold)),
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Theme.of(context).cardColor,
-            child: const Icon(Icons.person_outline, color: Colors.white),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: null,
+          centerTitle: false,
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              backgroundColor: Theme.of(context).cardColor,
+              child: Icon(Icons.person_outline, color: context.theme.appColors.onSurface),
+            ),
           ),
+          actions: [
+            // مفتاح تبديل الثيم الفاتح/الغامق
+            Consumer<AppTheme>(
+              builder: (context, themeProvider, child) => IconButton(
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    key: ValueKey(themeProvider.isDarkMode),
+                    color: themeProvider.isDarkMode ? Colors.amber : Colors.indigo,
+                  ),
+                ),
+                tooltip: themeProvider.isDarkMode ? 'التبديل للثيم الفاتح' : 'التبديل للثيم الغامق',
+                onPressed: () async {
+                  await themeProvider.toggleTheme();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          themeProvider.isDarkMode ? 'تم التبديل للثيم الغامق' : 'تم التبديل للثيم الفاتح',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'تحديث الحالة',
+              onPressed: _isRefreshingStatus ? null : () => _refreshDashboardStatus(silent: false),
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'تسجيل الخروج',
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  CustomPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.notifications_none_rounded),
-              onPressed: () {},
-              tooltip: 'الإشعارات'),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'تسجيل الخروج',
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                CustomPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
+        body: _isLoadingProfiles
+            ? const CustomLoadingIndicator(message: 'جاري التحميل...')
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: _buildDashboardStatusCard(),
+                    ),
+                    if (_statusError.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text(
+                          _statusError,
+                          style: TextStyle(
+                            color: context.theme.appColors.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    GridView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.9,
+                      ),
+                      itemCount: services.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final service = services[index];
+                        return RepaintBoundary(
+                          child: _buildServiceGridItem(
+                            title: service.title,
+                            icon: service.icon,
+                            iconBgColor: service.color,
+                            onTap: service.onTap,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardStatusCard() {
+    if (_isLoadingStatus && _dashboardStatus == null) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white70,
+              Colors.white,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: const [
+            CircularProgressIndicator(strokeWidth: 2),
+            SizedBox(width: 16),
+            Text('جاري تحديث حالة MikroTik...'),
+          ],
+        ),
+      );
+    }
+
+    final status = _dashboardStatus ?? {
+      'cpuUsage': 0.0,
+      'memoryUsage': 0.0,
+      'uptime': 'غير متوفر',
+      'dataDownloaded': 0.0,
+      'dataUploaded': 0.0,
+      'activeUsers': 0,
+      'version': 'غير معروف',
+    };
+
+    final cpuUsage = _asDouble(status['cpuUsage']);
+    final memoryUsage = _asDouble(status['memoryUsage']);
+    final downloadMb = _asDouble(status['dataDownloaded']);
+    final uploadMb = _asDouble(status['dataUploaded']);
+    final activeUsers = (status['activeUsers'] is num)
+        ? (status['activeUsers'] as num).toInt()
+        : int.tryParse(status['activeUsers']?.toString() ?? '') ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFB6C4FF),
+            Color(0xFFD7C8FF),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
-      body: _isLoadingProfiles
-          ? const CustomLoadingIndicator(message: 'جاري التحميل...')
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- بطاقة الحالة ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x33000000),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(gradient: AppGradients.cardOverlay),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(_isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
-                              style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _isNetworkLinked && _clientName.isNotEmpty
-                                      ? _clientName
-                                      : 'لوحة تحكم MikroTik',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis, // to handle long names
-                                ),
-                              ),
-                              const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
-                            ],
+                          Text(
+                            _isNetworkLinked && _clientName.isNotEmpty ? _clientName : 'حالة MikroTik',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1F2937),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'الإصدار: ${status['version']}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF4B5563),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'وقت التشغيل: ${status['uptime']}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF4B5563),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-
-                  // --- عنوان قسم الخدمات ---
+                    Icon(
+                      Icons.router,
+                      size: 48,
+                      color: const Color(0xFF6B3FA0).withOpacity(0.8),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _buildStatusMetric(
+                      label: 'المعالج',
+                      value: '${cpuUsage.toStringAsFixed(1)}%',
+                      icon: Icons.speed,
+                      color: const Color(0xFF8254FF),
+                    ),
+                    _buildStatusMetric(
+                      label: 'الذاكرة',
+                      value: '${memoryUsage.toStringAsFixed(1)}%',
+                      icon: Icons.memory,
+                      color: const Color(0xFF00BFA5),
+                    ),
+                    _buildStatusMetric(
+                      label: 'التحميل',
+                      value: '${downloadMb.toStringAsFixed(1)} MB',
+                      icon: Icons.download_rounded,
+                      color: const Color(0xFF0288D1),
+                    ),
+                    _buildStatusMetric(
+                      label: 'الرفع',
+                      value: '${uploadMb.toStringAsFixed(1)} MB',
+                      icon: Icons.upload_rounded,
+                      color: const Color(0xFFFF7043),
+                    ),
+                    _buildStatusMetric(
+                      label: 'المستخدمون النشطون',
+                      value: '$activeUsers',
+                      icon: Icons.wifi,
+                      color: const Color(0xFF7C4DFF),
+                    ),
+                  ],
+                ),
+                if (_isRefreshingStatus)
                   const Padding(
-                    padding: EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0, bottom: 12.0),
-                    child: Text(
-                      'الخدمات الأساسية',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
+                    padding: EdgeInsets.only(top: 16.0),
+                    child: LinearProgressIndicator(minHeight: 3),
                   ),
-
-                  // --- شبكة الخدمات ---
-                  GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3, // 3 أعمدة لمظهر أفضل على معظم الشاشات
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.9, // تعديل النسبة لتناسب المحتوى
-                    ),
-                    itemCount: services.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final service = services[index];
-                      return RepaintBoundary(
-                        child: _buildServiceGridItem(
-                          title: service.title,
-                          icon: service.icon,
-                          iconBgColor: service.color,
-                          onTap: service.onTap,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+              ],
             ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildStatusMetric({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF4B5563),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  double _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
   }
 
   Widget _buildServiceGridItem({
@@ -1387,7 +1533,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       borderRadius: BorderRadius.circular(16),
       child: Card(
         // --- التغيير هنا: تم استخدام لون الأيقونة مع شفافية لخلفية الزر ---
-        color: Color.alphaBlend(iconBgColor.withValues(alpha: 0.1), Colors.transparent),
+        color: iconBgColor.withOpacity(0.1),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Column(
@@ -1397,7 +1543,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 // --- التغيير هنا: تم زيادة وضوح خلفية الأيقونة للتباين ---
-                color: Color.alphaBlend(iconBgColor.withValues(alpha: 0.25), Colors.transparent),
+                color: iconBgColor.withOpacity(0.25),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, size: 32, color: iconBgColor),

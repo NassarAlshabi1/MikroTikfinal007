@@ -1,19 +1,21 @@
 // ملف: pdf_generator.dart
 
 import 'dart:io';
+import 'dart:typed_data';
+// --- ✨ إصلاح: تم تصحيح الأخطاء الإملائية في الـ import ---
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'snackbar_helpers.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'pdf_templates_screen.dart'; // تأكد من وجود هذا الملف واستيراد PdfTemplate
+import 'package:path_provider/path_provider.dart';
+import 'pdf_templates_screen.dart';
 
-/// دالة توليد الـ PDF في الخلفية (Isolate)
+
 Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
-  // استلام البيانات
   final cardUsernames = data['cardUsernames'] as List<String>;
-  final imageBytes = data['imageBytes'] as Uint8List; // نمرر الصورة كـ Uint8List
+  final imagePath = data['imagePath'] as String;
   final textXRatio = data['textXRatio'] as double;
   final textYRatio = data['textYRatio'] as double;
   final cardsPerPage = data['cardsPerPage'] as int;
@@ -21,26 +23,16 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   final imageHeight = data['imageHeight'] as double;
   final markerWidthRatio = data['markerWidthRatio'] as double;
   final markerHeightRatio = data['markerHeightRatio'] as double;
-  final printDate = data['printDate'] as String;   // تاريخ الطباعة (يظهر في البطاقة)
-  final category = data['category'] as String;     // فئة الكارت (يظهر في البطاقة واسم الملف)
 
-  // حماية من cardsPerPage = 0 أو سالب (يسبب infinite loop)
-  // الحد الأدنى 1، الحد الأقصى 9 (يتناسب مع A4)
-  final safeCardsPerPage = cardsPerPage.clamp(1, 9);
-  // حماية من قائمة فارغة
-  if (cardUsernames.isEmpty) {
-    throw Exception('قائمة الكروت فارغة — لا يمكن توليد PDF');
-  }
-  // حماية من أبعاد صورة غير صحيحة
-  if (imageWidth <= 0 || imageHeight <= 0) {
-    throw Exception('أبعاد صورة القالب غير صحيحة: ${imageWidth}x$imageHeight');
-  }
 
   final doc = pw.Document();
+  final imageBytes = await File(imagePath).readAsBytes();
   final imageProvider = pw.MemoryImage(imageBytes);
 
-  int step = safeCardsPerPage;
-  for (var i = 0; i < cardUsernames.length; i += step) {
+  int step = cardsPerPage;
+  for (var i = 0; i < cardUsernames.length || i == 0; i += step) {
+     if (i > cardUsernames.length && i!=0) break;
+
     final pageCards = cardUsernames.sublist(
         i, i + step > cardUsernames.length ? cardUsernames.length : i + step);
 
@@ -49,17 +41,16 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
         margin: const pw.EdgeInsets.all(20),
         pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
+
           final List<pw.Widget> gridChildren = [];
 
           for (var user in pageCards) {
             gridChildren.add(
               pw.LayoutBuilder(builder: (ctx, constraints) {
-                // constraints قد يكون nullable في بعض إصدارات pdf package
-                // نأخذ القيم بأمان
-                final cellWidth = constraints?.maxWidth ?? 0;
-                final cellHeight = constraints?.maxHeight ?? 0;
+                // --- ✨ إصلاح: إضافة علامة التعجب (!) للتعامل مع Null Safety ---
+                final cellWidth = constraints!.maxWidth;
+                final cellHeight = constraints.maxHeight;
 
-                // حساب موقع النص بناءً على نسب القالب
                 final boxWidth = markerWidthRatio * cellWidth;
                 final boxHeight = markerHeightRatio * cellHeight;
                 final boxLeft = (textXRatio * cellWidth) - (boxWidth / 2);
@@ -72,44 +63,23 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
                   child: pw.Stack(
                     fit: pw.StackFit.expand,
                     children: [
-                      // صورة الخلفية
                       pw.Image(imageProvider, fit: pw.BoxFit.fill),
-                      
-                      // اسم المستخدم + الفئة + التاريخ
+                      // --- ✨ إصلاح: استخدام pw.Container داخل pw.Positioned لتحديد الأبعاد ---
                       pw.Positioned(
                         left: boxLeft,
                         top: boxTop,
                         child: pw.Container(
                           width: boxWidth,
                           height: boxHeight,
-                          child: pw.Column(
-                            mainAxisAlignment: pw.MainAxisAlignment.center,
-                            children: [
-                              pw.Text(
-                                user,
-                                textAlign: pw.TextAlign.center,
-                                style: pw.TextStyle(
-                                  color: PdfColors.black,
-                                  fontSize: 10,
-                                  fontWeight: pw.FontWeight.bold,
-                                ),
+                          child: pw.Center(
+                            child: pw.Text(
+                              user,
+                              textAlign: pw.TextAlign.center,
+                              style: const pw.TextStyle(
+                                color: PdfColors.black,
+                                fontSize: 10,
                               ),
-                              pw.SizedBox(height: 2),
-                              pw.Text(
-                                'فئة: $category',
-                                style: const pw.TextStyle(
-                                  color: PdfColors.grey,
-                                  fontSize: 8,
-                                ),
-                              ),
-                              pw.Text(
-                                'تاريخ: $printDate',
-                                style: const pw.TextStyle(
-                                  color: PdfColors.grey,
-                                  fontSize: 8,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -120,11 +90,11 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
             );
           }
 
-          // ملء الفراغات المتبقية في الشبكة
           int remainingSlots = cardsPerPage - pageCards.length;
           for (var j = 0; j < remainingSlots; j++) {
             gridChildren.add(pw.SizedBox.shrink());
           }
+
 
           return pw.GridView(
             crossAxisSpacing: 5,
@@ -141,20 +111,13 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   return doc.save();
 }
 
-/// فئة مسؤولة عن توليد ومشاركة الـ PDF
+
 class PdfGenerator {
-  /// توليد ومشاركة ملف PDF يحتوي على بطاقات Wi-Fi
-  /// 
-  /// - [cardUsernames]: قائمة بأسماء المستخدمين
-  /// - [template]: قالب البطاقة (يحتوي على مسار الصورة والنسب)
-  /// - [category]: فئة الكارت (مثلاً "500" أو "300")، تظهر في اسم الملف وداخل البطاقة
   static Future<void> sharePdf(
     BuildContext context, {
     required List<String> cardUsernames,
     required PdfTemplate template,
-    String category = 'general', // قيمة افتراضية
   }) async {
-    // إظهار مؤشر التحميل
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -162,26 +125,9 @@ class PdfGenerator {
     );
 
     try {
-      // التحقق من وجود ملف الصورة قبل القراءة
-      final imageFile = File(template.imagePath);
-      if (!await imageFile.exists()) {
-        throw Exception('ملف صورة القالب غير موجود: ${template.imagePath}');
-      }
-
-      // قراءة الصورة في الواجهة الرئيسية (لضمان التوافق مع Web)
-      final imageBytes = await imageFile.readAsBytes();
-
-      // تحضير التاريخ
-      final now = DateTime.now();
-      final dateForFilename =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}';
-      final dateForCard =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-
-      // تجهيز البيانات التي سترسل إلى Isolate
       final Map<String, dynamic> generationData = {
         'cardUsernames': cardUsernames,
-        'imageBytes': imageBytes,
+        'imagePath': template.imagePath,
         'textXRatio': template.textXRatio,
         'textYRatio': template.textYRatio,
         'cardsPerPage': template.cardsPerPage,
@@ -189,42 +135,24 @@ class PdfGenerator {
         'imageHeight': template.imageHeight,
         'markerWidthRatio': template.markerWidthRatio,
         'markerHeightRatio': template.markerHeightRatio,
-        'printDate': dateForCard,
-        'category': category,
       };
 
-      // توليد الـ PDF في الخلفية
       final pdfBytes = await compute(_generatePdfInBackground, generationData);
 
-      // إغلاق مؤشر التحميل
-      if (context.mounted) Navigator.of(context).pop();
-
-      // اسم الملف: wifi-cards_فئة_تاريخ.pdf
-      final filename = 'wifi-cards_${category}_$dateForFilename.pdf';
-      await Printing.sharePdf(bytes: pdfBytes, filename: filename);
+      if(context.mounted) Navigator.of(context).pop();
+      await Printing.sharePdf(bytes: pdfBytes, filename: 'wifi-cards.pdf');
     } catch (e) {
-      // إغلاق مؤشر التحميل وإظهار رسالة خطأ
-      if (context.mounted) {
+      if(context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل إنشاء ملف PDF: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        showErrorSnackBar(context, 'فشل إنشاء ملف PDF. تأكد من القالب وصلاحية الصورة.');
       }
-      debugPrint('Error generating PDF: $e');
     }
   }
 
-  /// حفظ ملف PDF في مجلد التطبيق (بدل مشاركته)
-  /// يُرجع مسار الملف المحفوظ
   static Future<String?> savePdf(
     BuildContext context, {
     required List<String> cardUsernames,
     required PdfTemplate template,
-    String category = 'general',
   }) async {
     showDialog(
       context: context,
@@ -233,23 +161,9 @@ class PdfGenerator {
     );
 
     try {
-      // التحقق من وجود ملف الصورة
-      final imageFile = File(template.imagePath);
-      if (!await imageFile.exists()) {
-        throw Exception('ملف صورة القالب غير موجود: ${template.imagePath}');
-      }
-
-      final imageBytes = await imageFile.readAsBytes();
-
-      final now = DateTime.now();
-      final dateForFilename =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}';
-      final dateForCard =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-
       final Map<String, dynamic> generationData = {
         'cardUsernames': cardUsernames,
-        'imageBytes': imageBytes,
+        'imagePath': template.imagePath,
         'textXRatio': template.textXRatio,
         'textYRatio': template.textYRatio,
         'cardsPerPage': template.cardsPerPage,
@@ -257,67 +171,25 @@ class PdfGenerator {
         'imageHeight': template.imageHeight,
         'markerWidthRatio': template.markerWidthRatio,
         'markerHeightRatio': template.markerHeightRatio,
-        'printDate': dateForCard,
-        'category': category,
       };
 
       final pdfBytes = await compute(_generatePdfInBackground, generationData);
 
+      final docsDir = await getApplicationDocumentsDirectory();
+      final now = DateTime.now();
+      final filename = 'wifi-cards-${now.millisecondsSinceEpoch}.pdf';
+      final savePath = '${docsDir.path}/$filename';
+      final file = File(savePath);
+      await file.writeAsBytes(pdfBytes, flush: true);
+
       if (context.mounted) Navigator.of(context).pop();
-
-      // فتح منتقي الملفات ليختار المستخدم مسار الحفظ
-      final defaultFilename = 'wifi-cards_${category}_$dateForFilename.pdf';
-
-      // FilePicker.saveFile يفتح نافذة حفظ (يعمل على Android 11+, Windows, macOS, Linux)
-      // على Android القديم قد لا يعمل — نستخدم fallback لمجلد التحميل
-      String? savedPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'اختر مكان حفظ ملف PDF',
-        fileName: defaultFilename,
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
-
-      if (savedPath == null) {
-        // المستخدم ألغى الحفظ
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم إلغاء الحفظ.'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-        return null;
-      }
-
-      // كتابة الملف في المسار الذي اختاره المستخدم
-      final file = File(savedPath);
-      await file.writeAsBytes(pdfBytes);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('تم حفظ PDF: ${file.path.split('/').last}'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-
-      return savedPath;
+      showSuccessSnackBar(context, 'تم حفظ PDF في: $savePath');
+      return savePath;
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل حفظ PDF: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        showErrorSnackBar(context, 'فشل حفظ PDF.');
       }
-      debugPrint('Error saving PDF: $e');
       return null;
     }
   }
