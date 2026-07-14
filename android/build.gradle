@@ -20,7 +20,7 @@ allprojects {
             android {
                 compileSdkVersion 36
                 if (namespace == null) {
-                    namespace = "com.example.${project.name.toLowerCase()}"
+                    namespace = "com.mikrotik.${project.name.toLowerCase()}"
                 }
             }
         }
