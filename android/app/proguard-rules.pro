@@ -97,8 +97,8 @@
 -keep class io.flutter.plugins.GeneratedPluginRegistrant { *; }
 
 # ---------- Application Class ----------
--keep class com.example.mikrotik_manager.MainActivity { *; }
--keep class com.example.mikrotik_manager.** { *; }
+-keep class com.mikrotik.manager.MainActivity { *; }
+-keep class com.mikrotik.manager.** { *; }
 
 # ---------- Optimization Passes ----------
 # Inline small methods (تسريع تنفيذ)

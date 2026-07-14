@@ -21,7 +21,7 @@ def flutterVersionCode = localProperties.getProperty('flutter.versionCode') ?: '
 def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.0'
 
 android {
-    namespace "com.example.mikrotik_manager"
+    namespace "com.mikrotik.manager"
     compileSdk 36
 
     compileOptions {
@@ -31,7 +31,6 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
-        // إزالة kotlin reflect و kotlin coroutines debug
         freeCompilerArgs += ['-Xno-param-assertions', '-Xno-call-assertions']
     }
 
@@ -40,7 +39,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.mikrotik_manager"
+        applicationId "com.mikrotik.manager"
         minSdk 21
         targetSdk 36
         versionCode flutterVersionCode.toInteger()
@@ -69,22 +68,17 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
 
-            // ===== R8 / ProGuard — أهم خطوة لتقليل الحجم =====
-            minifyEnabled true       // إزالة الكود الميت (~30% تقليل)
-            shrinkResources true     // إزالة الموارد غير المستخدمة (~10% تقليل)
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
-            // خصائص الـ Build للإصدار
             buildConfigField "Boolean", "DEBUG_MODE", "false"
-
-            // إزالة debug symbols من المكتبات الأصلية
-            // يقلل حجم libapp.so و libflutter.so بشكل كبير
-            // (الـ symbols تُحفظ في build/symbols بدل APK)
         }
 
         debug {
+            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
             buildConfigField "Boolean", "DEBUG_MODE", "true"
@@ -94,6 +88,28 @@ android {
             minifyEnabled false
             shrinkResources false
             buildConfigField "Boolean", "DEBUG_MODE", "false"
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+                storeFile file(MYAPP_RELEASE_STORE_FILE)
+                storePassword MYAPP_RELEASE_STORE_PASSWORD
+                keyAlias MYAPP_RELEASE_KEY_ALIAS
+                keyPassword MYAPP_RELEASE_KEY_PASSWORD
+            } else {
+                storeFile file('debug.keystore')
+                storePassword 'android'
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+            }
+        }
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
         }
     }
 
