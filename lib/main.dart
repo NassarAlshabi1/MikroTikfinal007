@@ -1174,6 +1174,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               .push(CustomPageRoute(builder: (context) => const BackupSystemScreen()));
         },
       ),
+      // ===== شاشات AI + Terminal + إضافات capy/v2-riverpod =====
+      ServiceItem(
+        title: 'تشخيص بالذكاء الاصطناعي',
+        icon: Icons.smart_toy,
+        color: AppPalette.secondary,
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const AiDiagnosticsScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'محطة RouterOS التفاعلية',
+        icon: Icons.terminal,
+        color: AppPalette.primary,
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const TerminalScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'بحث الكروت',
+        icon: Icons.search,
+        color: AppPalette.warning,
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const CardSearchScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'التقرير الشهري',
+        icon: Icons.calendar_month,
+        color: AppPalette.info,
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const MonthlyReportScreen()));
+        },
+      ),
     ];
 
     return Container(
