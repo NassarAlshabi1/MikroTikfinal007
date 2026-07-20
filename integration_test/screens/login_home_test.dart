@@ -105,9 +105,7 @@ void main() {
       await pumpScreen(
         tester,
         ChangeNotifierProvider<MqttService>(
-          create: (_) => MqttService(
-            scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
-          ),
+          create: (_) => MqttService(),
           child: homeScreen,
         ),
         withMqttProvider: false,
@@ -134,9 +132,7 @@ void main() {
       await pumpScreen(
         tester,
         ChangeNotifierProvider<MqttService>(
-          create: (_) => MqttService(
-            scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
-          ),
+          create: (_) => MqttService(),
           child: homeScreen,
         ),
       );

@@ -100,8 +100,12 @@ Future<void> pumpScreen(
   WidgetTester tester,
   Widget screen, {
   bool withMqttProvider = false,
+  // alias لـ withMqttProvider — للتوافق مع الكود القديم
+  bool wrapWithProvider = false,
   Size screenSize = const Size(1080, 1920),
 }) async {
+  // wrapWithProvider هو alias لـ withMqttProvider
+  final useMqtt = withMqttProvider || wrapWithProvider;
   tester.view.physicalSize = screenSize;
   tester.view.devicePixelRatio = 2.0;
   addTearDown(tester.view.resetPhysicalSize);
@@ -112,11 +116,9 @@ Future<void> pumpScreen(
     scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
   );
 
-  if (withMqttProvider) {
+  if (useMqtt) {
     child = ChangeNotifierProvider<MqttService>(
-      create: (_) => MqttService(
-        scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
-      ),
+      create: (_) => MqttService(),
       child: MaterialApp(
         theme: _testTheme,
         home: screen,
