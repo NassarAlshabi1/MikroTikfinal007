@@ -479,7 +479,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: context.theme.appColors.secondary.withOpacity(0.3),
+                            color: context.theme.appColors.secondary.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

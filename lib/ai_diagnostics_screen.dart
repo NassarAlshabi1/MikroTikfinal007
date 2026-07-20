@@ -361,6 +361,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ],
               ),
             ),
+
+          // ===== صندوق الإدخال + زر التشخيص السريع =====
+          // 🔧 إصلاح حرج: كان _buildInputBar معرّفاً لكن غير مستدعى!
+          // بدون هذا السطر، المستخدم لا يستطيع إرسال رسائل أو تشغيل التشخيص
+          _buildInputBar(state),
         ],
       ),
     );
