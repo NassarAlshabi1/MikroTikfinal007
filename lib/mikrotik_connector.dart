@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MikrotikCredentialsMissingException implements Exception {
   final String message;
-  MikrotikCredentialsMissingException(this.message);
+  const MikrotikCredentialsMissingException(this.message);
 
   @override
   String toString() => 'MikrotikCredentialsMissingException: $message';
@@ -15,7 +15,7 @@ class MikrotikCredentialsMissingException implements Exception {
 class MikrotikConnectionException implements Exception {
   final String message;
   final dynamic originalException;
-  MikrotikConnectionException(this.message, [this.originalException]);
+  const MikrotikConnectionException(this.message, [this.originalException]);
 
   @override
   String toString() => 'MikrotikConnectionException: $message';
