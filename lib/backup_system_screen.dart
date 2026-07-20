@@ -74,7 +74,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                 valueColor: AlwaysStoppedAnimation(context.theme.appColors.onPrimary),
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Text('جاري إنشاء النسخة الاحتياطية...'),
           ],
         ),
@@ -243,7 +243,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         title: Row(
           children: [
             Icon(Icons.warning, color: context.theme.appColors.warning),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text('تحذير'),
           ],
         ),

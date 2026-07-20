@@ -1253,7 +1253,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'تم الكشف عن مشكلات في الأداء',
                       style: TextStyle(

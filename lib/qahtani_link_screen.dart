@@ -331,7 +331,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
           ),
           const SizedBox(height: 16),
           const Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8.0),
             child: Text('الفئات (الباقات) المتاحة:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           ),
