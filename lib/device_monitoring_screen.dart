@@ -189,7 +189,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               // Removed 'disconnected' option
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'all',
                 child: ListTile(leading: Icon(Icons.devices), title: Text('جميع الأجهزة', style: TextStyle(color: context.theme.appColors.onSurface, fontWeight: FontWeight.bold))),
               ),
