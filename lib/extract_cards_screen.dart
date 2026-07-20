@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'theme/app_theme.dart';
 import 'snackbar_helpers.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
@@ -489,7 +490,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Icon(Icons.camera_alt_outlined,
+                          Icon(Icons.camera_alt_outlined,
                               size: 80, color: context.theme.appColors.primary),
                           const SizedBox(height: 20),
                           Text(

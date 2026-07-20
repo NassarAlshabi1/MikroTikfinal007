@@ -63,7 +63,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     setState(() => _isCreatingBackup = true);
 
     final snackBar = ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Row(
           children: [
             SizedBox(
@@ -240,7 +240,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.warning, color: context.theme.appColors.warning),
             SizedBox(width: 8),
@@ -546,12 +546,12 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           children: [
             Icon(Icons.backup, size: 80, color: context.theme.appColors.muted),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'لا توجد نسخ احتياطية',
               style: TextStyle(fontSize: 20, color: context.theme.appColors.muted),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'اضغط على الزر أدناه لإنشاء نسخة جديدة',
               style: TextStyle(color: context.theme.appColors.muted),
             ),
@@ -592,7 +592,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           ? FloatingActionButton(
               onPressed: null,
               backgroundColor: context.theme.appColors.muted,
-              child: const SizedBox(
+              child: SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(

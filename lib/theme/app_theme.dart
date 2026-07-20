@@ -124,7 +124,7 @@ class AppTheme with ChangeNotifier {
           fontWeight: FontWeight.bold,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -262,7 +262,7 @@ class AppTheme with ChangeNotifier {
           fontWeight: FontWeight.bold,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 4,  // عمق أكبر للبطاقات البيضاء
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

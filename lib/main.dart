@@ -40,7 +40,12 @@ import 'card_search_screen.dart';
 import 'ai/diagnostics_history.dart';
 // -----------------------------------------
 
+/// قاعدة البيانات العامة (Singleton — تُستخدم عبر كل التطبيق)
+late final db.AppDatabase appDatabase;
+
 void main() {
+  // تهيئة قاعدة البيانات العامة
+  appDatabase = db.AppDatabase();
   runApp(
     MultiProvider(
       providers: [
