@@ -546,7 +546,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'تشخيص شامل لحالة الشبكة',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
@@ -823,7 +823,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   child: const Row(
                     children: [
                       Icon(Icons.warning_amber, color: Colors.orange, size: 18),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         '~30MB',
                         style: TextStyle(

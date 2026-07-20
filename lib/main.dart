@@ -1360,7 +1360,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           mainAxisAlignment: MainAxisAlignment.start,
           children: const [
             CircularProgressIndicator(strokeWidth: 2),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Text('جاري تحديث حالة MikroTik...'),
           ],
         ),
@@ -1496,7 +1496,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 if (_isRefreshingStatus)
                   const Padding(
-                    padding: EdgeInsets.only(top: 16.0),
+                    padding: const EdgeInsets.only(top: 16.0),
                     child: LinearProgressIndicator(minHeight: 3),
                   ),
               ],

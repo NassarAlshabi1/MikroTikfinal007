@@ -428,7 +428,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     child: const Row(
                       children: [
                         Icon(Icons.warning, color: Colors.red, size: 18),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'هذا السكربت يحتوي على أوامر خطرة. سيتم عمل backup تلقائياً قبل التنفيذ.',
@@ -448,7 +448,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     child: const Row(
                       children: [
                         Icon(Icons.info, color: Colors.orange, size: 18),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'سيتم عمل backup تلقائياً قبل التنفيذ.',
@@ -523,7 +523,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           title: const Row(
             children: [
               Icon(Icons.check_circle, color: Colors.green),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text('لا توجد إصلاحات'),
             ],
           ),
@@ -593,13 +593,15 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
             // ===== قائمة الإصلاحات =====
             Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: fixes.length,
-                itemBuilder: (ctx, index) {
-                  final fix = fixes[index];
-                  return _buildAutoFixTile(fix);
-                },
+              child: RepaintBoundary(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: fixes.length,
+                  itemBuilder: (ctx, index) {
+                    final fix = fixes[index];
+                    return _buildAutoFixTile(fix);
+                  },
+                ),
               ),
             ),
 
@@ -774,7 +776,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         title: const Row(
           children: [
             Icon(Icons.bolt, color: Colors.green),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text('تطبيق الإصلاحات الآمنة'),
           ],
         ),
@@ -1001,13 +1003,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
             // ===== قسم: Gemini (مع تمييز gemini-2.5-flash) =====
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
                     Icon(Icons.auto_awesome, size: 14, color: Colors.blueAccent),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
                       'Google Gemini',
                       style: TextStyle(
@@ -1035,13 +1037,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
             // ===== قسم: OpenAI =====
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
                     Icon(Icons.smart_toy, size: 14, color: Colors.greenAccent),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
                       'OpenAI (ChatGPT)',
                       style: TextStyle(
@@ -1189,7 +1191,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Text(
                 'اختر نوع التشخيص',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

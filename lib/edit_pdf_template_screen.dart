@@ -203,7 +203,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text('جاري حفظ القالب...'),
               ],
             ))

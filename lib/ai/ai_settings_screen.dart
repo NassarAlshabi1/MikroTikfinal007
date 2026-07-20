@@ -127,7 +127,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: AiProvider.values
                   .map((p) => DropdownMenuItem(
@@ -156,7 +156,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: settings.provider.availableModels
                   .map((m) => DropdownMenuItem(
@@ -311,7 +311,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               child: const Row(
                 children: [
                   Icon(Icons.info_outline, color: Colors.blueAccent, size: 18),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'الاتصال والتنفيذ يتمّان عبر RouterOS API (منفذ 8728/8729) '
@@ -353,7 +353,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                   Row(
                     children: [
                       Icon(Icons.security, color: Colors.red, size: 18),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         'تنبيه أمني',
                         style: TextStyle(
@@ -363,7 +363,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     '• مفتاح الـ API يُخزّن مشفّراً في الجهاز (flutter_secure_storage)\n'
                     '• لا يتم إرساله لأي طرف ثالث\n'

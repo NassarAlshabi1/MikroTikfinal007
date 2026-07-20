@@ -153,7 +153,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
         title: const Row(
           children: [
             Icon(Icons.dangerous, color: Colors.red),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text('أمر خطير'),
           ],
         ),

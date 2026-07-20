@@ -664,7 +664,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             CircularProgressIndicator(),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text('جاري فحص حالة الأجهزة...', style: TextStyle(fontSize: 16)),
           ],
         ),
