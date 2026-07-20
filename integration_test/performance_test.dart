@@ -19,7 +19,6 @@ import 'package:mikrotik_manager/add_user_screen.dart';
 import 'package:mikrotik_manager/bulk_add_screen.dart';
 import 'package:mikrotik_manager/network_doctor_screen.dart';
 import 'package:mikrotik_manager/network_map_screen.dart';
-import 'package:mikrotik_manager/device_monitoring_screen.dart';
 import 'package:mikrotik_manager/rogue_dhcp_detector_screen.dart';
 import 'package:mikrotik_manager/system_dashboard_screen.dart';
 import 'package:mikrotik_manager/pdf_templates_screen.dart';
@@ -85,11 +84,12 @@ Future<ScreenPerfResult> measureScreen(
   bool wrapWithProvider = false,
   bool wrapWithRiverpod = false,
 }) async {
-  int? buildMs;
-  int? settleMs;
+  int buildMs = 0;
+  int settleMs = 0;
   String? error;
 
   final buildStopwatch = Stopwatch()..start();
+  try {
     if (wrapWithRiverpod) {
       await tester.pumpWidget(
         ProviderScope(
@@ -99,9 +99,7 @@ Future<ScreenPerfResult> measureScreen(
     } else if (wrapWithProvider) {
       await tester.pumpWidget(
         provider.ChangeNotifierProvider<MqttService>(
-          create: (_) => MqttService(
-            scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
-          ),
+          create: (_) => MqttService(),
           child: MaterialApp(theme: _testTheme, home: screen),
         ),
       );
@@ -114,15 +112,12 @@ Future<ScreenPerfResult> measureScreen(
     buildMs = buildStopwatch.elapsedMilliseconds;
 
     // pump(Duration) يضخ إطار واحد بعد تقدم الوقت — كافٍ لقياس البناء
-    // لا ننتظر اكتمال الـ network calls (قد تأخذ 10-30s في CI)
     final settleStopwatch = Stopwatch()..start();
     await tester.pump(settleTimeout);
-    }
     settleStopwatch.stop();
     settleMs = settleStopwatch.elapsedMilliseconds;
   } catch (e) {
-    buildMs ??= buildStopwatch.elapsedMilliseconds;
-    settleMs ??= 0;
+    buildStopwatch.stop();
     error = e.toString();
   }
 

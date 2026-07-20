@@ -51,9 +51,7 @@ void main() {
 
     testWidgets('يقلع ويعرض شاشة ربط الشبكة', (tester) async {
       // QahtaniLinkScreen تستخدم MqttService — نوفّرها
-      final mqttService = MqttService(
-        scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
-      );
+      final mqttService = MqttService();
 
       await tester.pumpWidget(
         provider.ChangeNotifierProvider<MqttService>(
@@ -71,9 +69,7 @@ void main() {
     });
 
     testWidgets('لا يسبب crash مع MQTT غير مُهيأ', (tester) async {
-      final mqttService = MqttService(
-        scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
-      );
+      final mqttService = MqttService();
 
       await tester.pumpWidget(
         provider.ChangeNotifierProvider<MqttService>(
