@@ -231,8 +231,8 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 4.0),
                       color: device.status == DeviceStatus.online 
-                          ? context.theme.appColors.success.withOpacity(0.8) 
-                          : context.theme.appColors.muted.withOpacity(0.8),
+                          ? context.theme.appColors.success.withValues(alpha: 0.8) 
+                          : context.theme.appColors.muted.withValues(alpha: 0.8),
                       child: ListTile(
                         leading: Icon(
                           device.status == DeviceStatus.online ? Icons.circle : Icons.circle_outlined,
@@ -244,7 +244,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
                         ),
                         subtitle: Text(
                           device.ip,
-                          style: TextStyle(color: context.theme.appColors.onSurface.withOpacity(0.8), fontSize: 12),
+                          style: TextStyle(color: context.theme.appColors.onSurface.withValues(alpha: 0.8), fontSize: 12),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,

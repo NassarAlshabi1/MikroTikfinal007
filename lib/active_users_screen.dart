@@ -217,14 +217,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            context.theme.appColors.primary.withOpacity(0.8),
-            context.theme.appColors.primary.withOpacity(0.5),
+            context.theme.appColors.primary.withValues(alpha: 0.8),
+            context.theme.appColors.primary.withValues(alpha: 0.5),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: context.theme.appColors.primary.withOpacity(0.3),
+            color: context.theme.appColors.primary.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -242,7 +242,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           Container(
             width: 1,
             height: 60,
-            color: context.theme.appColors.onSurface.withOpacity(0.3),
+            color: context.theme.appColors.onSurface.withValues(alpha: 0.3),
           ),
           _buildStatItem(
             icon: Icons.group,
@@ -268,7 +268,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         Text(
           label,
           style: TextStyle(
-            color: color.withOpacity(0.9),
+            color: color.withValues(alpha: 0.9),
             fontSize: 14,
           ),
           textAlign: TextAlign.center,
@@ -296,7 +296,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               Icon(
                 Icons.people_outline,
                 size: 80,
-                color: context.theme.appColors.onSurface.withOpacity(0.3),
+                color: context.theme.appColors.onSurface.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
@@ -337,7 +337,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: context.theme.appColors.primary.withOpacity(0.2),
+                  color: context.theme.appColors.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -403,7 +403,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: context.theme.appColors.primary.withOpacity(0.2),
+          color: context.theme.appColors.primary.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -424,8 +424,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Theme.of(context).primaryColor.withOpacity(0.8),
-                        Theme.of(context).primaryColor.withOpacity(0.4),
+                        Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                        Theme.of(context).primaryColor.withValues(alpha: 0.4),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -496,7 +496,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: context.theme.appColors.onSurface.withOpacity(0.3),
+                  color: context.theme.appColors.onSurface.withValues(alpha: 0.3),
                 ),
               ],
             ),
@@ -550,7 +550,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                         child: Text(
                           entry.key,
                           style: TextStyle(
-                            color: context.theme.appColors.onSurface.withOpacity(0.6),
+                            color: context.theme.appColors.onSurface.withValues(alpha: 0.6),
                             fontSize: 14,
                           ),
                         ),

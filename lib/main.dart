@@ -287,33 +287,32 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   Future<void> _handleCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('remember_me', _rememberMe);
-    if (_rememberMe) {
-      await prefs.setString('ip', _ipController.text);
-      await prefs.setString('user', _userController.text);
-      await prefs.setString('pass', _passwordController.text);
-      await prefs.setString('port', _portController.text);
+    // 🔧 إصلاح حرج: نحفظ بيانات الاتصال دائماً (مؤقتاً) لكي يستطيع
+    // MikrotikConnector.connect() قراءتها. خيار "تذكرني" يتحكم فقط
+    // في إعادة التعبئة التلقائية عند بدء التطبيق لاحقاً.
+    await prefs.setString('ip', _ipController.text);
+    await prefs.setString('user', _userController.text);
+    await prefs.setString('pass', _passwordController.text);
+    await prefs.setString('port', _portController.text);
+    // إن لم يفعّل "تذكرني"، نمسح بيانات الدخول عند تسجيل الخروج
+    // (وليس قبل الاتصال — هذا ما كان يسبب الفشل!)
+    if (!_rememberMe) {
+      // نضع علامة لمسح البيانات بعد الخروج
+      await prefs.setBool('clear_on_logout', true);
     } else {
-      await prefs.remove('ip');
-      await prefs.remove('user');
-      await prefs.remove('pass');
-      await prefs.remove('port');
+      await prefs.setBool('clear_on_logout', false);
     }
   }
   
   Future<void> _handleRemoteCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('remember_me_remote', _rememberMeRemote);
-    if (_rememberMeRemote) {
-      await prefs.setString('remote_server', _remoteServerController.text);
-      await prefs.setString('remote_port', _remotePortController.text);
-      await prefs.setString('remote_user', _remoteUserController.text);
-      await prefs.setString('remote_pass', _remotePasswordController.text);
-    } else {
-      await prefs.remove('remote_server');
-      await prefs.remove('remote_port');
-      await prefs.remove('remote_user');
-      await prefs.remove('remote_pass');
-    }
+    // 🔧 إصلاح حرج: نحفظ بيانات الاتصال البعيد دائماً
+    // لكي يستطيع MikrotikConnector.connect() قراءتها
+    await prefs.setString('remote_server', _remoteServerController.text);
+    await prefs.setString('remote_port', _remotePortController.text);
+    await prefs.setString('remote_user', _remoteUserController.text);
+    await prefs.setString('remote_pass', _remotePasswordController.text);
   }
 
   Future<void> _login() async {
@@ -325,10 +324,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       _isLoading = true;
       _errorMessage = '';
     });
-    RouterOSClient? client;
     try {
       await _handleCredentials();
-      client = await MikrotikConnector.connect();
+      final client = await MikrotikConnector.connect();
       _sendTelegramMessage('تم الدخول إلى التطبيق بنجاح عبر عنوان IP: ${_ipController.text}');
       final response = await client.talk(['/system/resource/print']);
       bool isVersion7OrNewer = false;
@@ -363,7 +361,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         showErrorSnackBar(context, 'فشل الاتصال. تحقق من البيانات أو الشبكة.');
       }
     } finally {
-      client?.close();
+      // 🔧 إصلاح حرج: لا نغلق الاتصال هنا!
+      // الاتصال مُخزّن في MikrotikConnector._cachedClient لإعادة استخدامه
+      // في كل الشاشات اللاحقة (Hotspot, Cards, Stats, AI, ...)
+      // إغلاقه هنا كان يسبب فشل كل العمليات بعد الـ login
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -467,11 +468,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         child: Consumer<AppTheme>(
           builder: (context, themeProvider, child) => Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor.withOpacity(0.9),
+              color: Theme.of(context).cardColor.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(25),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -662,9 +663,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           child: Text(
             'سياسة الخصوصية',
             style: TextStyle(
-              color: context.theme.appColors.onBackground.withOpacity(0.7),
+              color: context.theme.appColors.onBackground.withValues(alpha: 0.7),
               decoration: TextDecoration.underline,
-              decorationColor: context.theme.appColors.onBackground.withOpacity(0.7),
+              decorationColor: context.theme.appColors.onBackground.withValues(alpha: 0.7),
             ),
           ),
         ),
@@ -808,7 +809,7 @@ class CustomLoadingIndicator extends StatelessWidget {
             Text(
               message!,
               style: TextStyle(
-                color: context.theme.appColors.onBackground.withOpacity(0.7),
+                color: context.theme.appColors.onBackground.withValues(alpha: 0.7),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -1350,7 +1351,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -1398,7 +1399,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -1453,7 +1454,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Icon(
                       Icons.router,
                       size: 48,
-                      color: const Color(0xFF6B3FA0).withOpacity(0.8),
+                      color: Color(0xFF6B3FA0).withValues(alpha: 0.8),
                     ),
                   ],
                 ),
@@ -1516,7 +1517,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: Colors.white.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -1525,7 +1526,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 18, color: color),
@@ -1575,7 +1576,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       borderRadius: BorderRadius.circular(16),
       child: Card(
         // --- التغيير هنا: تم استخدام لون الأيقونة مع شفافية لخلفية الزر ---
-        color: iconBgColor.withOpacity(0.1),
+        color: iconBgColor.withValues(alpha: 0.1),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Column(
@@ -1585,7 +1586,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 // --- التغيير هنا: تم زيادة وضوح خلفية الأيقونة للتباين ---
-                color: iconBgColor.withOpacity(0.25),
+                color: iconBgColor.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, size: 32, color: iconBgColor),

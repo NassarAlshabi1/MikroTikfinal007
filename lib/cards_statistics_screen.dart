@@ -498,7 +498,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, size: 80, color: context.theme.appColors.error.withOpacity(0.8)),
+                        Icon(Icons.error_outline, size: 80, color: context.theme.appColors.error.withValues(alpha: 0.8)),
                         const SizedBox(height: 24),
                         Text(
                           _errorMessage!,
@@ -566,7 +566,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.primaryColor.withOpacity(0.3), width: 1),
+        border: Border.all(color: theme.primaryColor.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,7 +622,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 label: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 16, color: selected ? context.theme.appColors.onPrimary : context.theme.appColors.onSurface.withOpacity(0.6)),
+                    Icon(icon, size: 16, color: selected ? context.theme.appColors.onPrimary : context.theme.appColors.onSurface.withValues(alpha: 0.6)),
                     const SizedBox(width: 6),
                     Text(label),
                   ],
@@ -649,7 +649,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: context.theme.appColors.border),
             ),
@@ -659,7 +659,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 value: _selectedProfile,
                 hint: Text('اختر الفئة', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? context.theme.appColors.muted)),
                 dropdownColor: theme.cardColor,
-                icon: Icon(Icons.arrow_drop_down, color: context.theme.appColors.onSurface.withOpacity(0.7)),
+                icon: Icon(Icons.arrow_drop_down, color: context.theme.appColors.onSurface.withValues(alpha: 0.7)),
                 items: [
                   DropdownMenuItem<String>(
                     value: null,
@@ -701,7 +701,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                 });
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: context.theme.appColors.onSurface.withOpacity(0.7),
+                foregroundColor: context.theme.appColors.onSurface.withValues(alpha: 0.7),
                 side: BorderSide(color: context.theme.appColors.border),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
@@ -744,7 +744,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               _applyFilters();
             });
           },
-          backgroundColor: theme.primaryColor.withOpacity(0.2),
+          backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
           side: BorderSide(color: theme.primaryColor),
         ),
       );
@@ -761,7 +761,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               _applyFilters();
             });
           },
-          backgroundColor: theme.primaryColor.withOpacity(0.2),
+          backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
           side: BorderSide(color: theme.primaryColor),
         ),
       );
@@ -783,7 +783,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               _applyFilters();
             });
           },
-          backgroundColor: theme.primaryColor.withOpacity(0.2),
+          backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
           side: BorderSide(color: theme.primaryColor),
         ),
       );
@@ -955,8 +955,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.primaryColor.withOpacity(0.8),
-            theme.primaryColor.withOpacity(0.4),
+            theme.primaryColor.withValues(alpha: 0.8),
+            theme.primaryColor.withValues(alpha: 0.4),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -964,7 +964,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: theme.primaryColor.withOpacity(0.3),
+            color: theme.primaryColor.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1070,7 +1070,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1081,7 +1081,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -1152,7 +1152,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.15),
+                  color: theme.primaryColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.data_usage, color: theme.primaryColor, size: 24),
@@ -1196,7 +1196,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -1253,7 +1253,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: percent,
-            backgroundColor: Colors.white.withOpacity(0.1),
+            backgroundColor: Colors.white.withValues(alpha: 0.1),
             color: color,
             minHeight: 6,
           ),
@@ -1261,7 +1261,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
         const SizedBox(height: 4),
         Text(
           '${(percent * 100).toStringAsFixed(0)}%',
-          style: TextStyle(fontSize: 11, color: color.withOpacity(0.7)),
+          style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7)),
         ),
       ],
     );
@@ -1289,7 +1289,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: context.theme.appColors.primary.withOpacity(0.15),
+                  color: context.theme.appColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.category, color: context.theme.appColors.primary, size: 24),
@@ -1347,7 +1347,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
                       value: percentage,
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                       color: color,
                       minHeight: 8,
                     ),
@@ -1434,7 +1434,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         children: [
