@@ -1386,15 +1386,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ? (status['activeUsers'] as num).toInt()
         : int.tryParse(status['activeUsers']?.toString() ?? '') ?? 0;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFB6C4FF),
-            Color(0xFFD7C8FF),
-          ],
+          colors: isDark
+              ? [
+                  AppPalette.primaryLight.withValues(alpha: 0.6),
+                  AppPalette.secondaryDark.withValues(alpha: 0.4),
+                ]
+              : [
+                  const Color(0xFFB6C4FF),
+                  const Color(0xFFD7C8FF),
+                ],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -1409,7 +1416,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(gradient: AppGradients.cardOverlay),
+              decoration: BoxDecoration(
+                gradient: isDark
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppPalette.darkCard.withValues(alpha: 0.3),
+                          AppPalette.darkCard.withValues(alpha: 0.1),
+                        ],
+                      )
+                    : AppGradients.cardOverlay,
+              ),
             ),
           ),
           Padding(
@@ -1425,27 +1443,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         children: [
                           Text(
                             _isNetworkLinked && _clientName.isNotEmpty ? _clientName : 'حالة MikroTik',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1F2937),
+                              color: context.theme.appColors.onSurface,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'الإصدار: ${status['version']}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              color: Color(0xFF4B5563),
+                              color: context.theme.appColors.muted,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'وقت التشغيل: ${status['uptime']}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              color: Color(0xFF4B5563),
+                              color: context.theme.appColors.muted,
                             ),
                           ),
                         ],
@@ -1454,7 +1472,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Icon(
                       Icons.router,
                       size: 48,
-                      color: Color(0xFF6B3FA0).withValues(alpha: 0.8),
+                      color: context.theme.appColors.primary.withValues(alpha: 0.8),
                     ),
                   ],
                 ),
@@ -1514,10 +1532,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     required IconData icon,
     required Color color,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+        color: isDark
+            ? AppPalette.darkCardSecondary.withValues(alpha: 0.8)
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -1538,18 +1560,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF4B5563),
+                  color: context.theme.appColors.muted,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
+                  color: context.theme.appColors.onSurface,
                 ),
               ),
             ],
