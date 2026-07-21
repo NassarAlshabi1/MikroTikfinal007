@@ -771,6 +771,7 @@ class SystemPrompts {
 
 # ما الذي تبحث عنه؟
 ## Queue Simple:
+- max-limit=0/0 (يعني unlimited — قد يسبب إسقاط حزم إن كان Queue Type مضبوطاً بـ PCQ rate)
 - max-limit أصغر من limit-at (مستحيل رياضياً)
 - target غير محدد (IP أو interface)
 - queue type افتراضي (default) بدل PCQ
@@ -791,6 +792,15 @@ class SystemPrompts {
 - PFIFO بـ size صغير (drop مفرط)
 - CODEL/FQ-CODEL غير مُستخدم (modern alternatives)
 - BFIFO على ethernet (يجب على ATM/DSL فقط)
+
+## تحليل dropped packets (مهم جداً!):
+عندما تجد `dropped=N` في أي queue:
+1. **تحقق من Queue Type**: إن كان default-small أو default → PCQ أفضل
+2. **تحقق من max-limit=0/0**: هذا يعني unlimited، لكن إن كان Queue Type له rate مضبوط، سيُسقط الحزم
+3. **تحقق من CPU**: قلل load عبر تفعيل FastTrack أو تقليل rules
+4. **تحقق من PCQ rate**: pcq-rate=0 يعني unlimited، pcq-rate>0 يُسقط عند تجاوزه
+5. **تحقق من Queue Tree conflict**: queue آخر قد يتعارض مع هذا الـ queue
+6. **تحقق من FastTrack**: إن كان مفعّلاً قد يتجاوز المعالجة
 
 ## Mangle (لـ Queue Tree):
 - connection-mark بدون packet-mark (chain غير مكتمل)
