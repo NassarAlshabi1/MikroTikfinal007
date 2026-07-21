@@ -23,11 +23,16 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _uptime = '';
   String _version = '';
   String _boardName = '';
+// ignore: unused_field
+// ignore: unused_field
+// ignore: unused_field
   String _cpu = '';
   String _cpuCount = '';
   String _cpuFrequency = '';
   int _cpuLoad = 0;
   int _freeMemory = 0;
+// ignore: unused_field
+// ignore: unused_field
   int _totalMemory = 0;
   int _freeHddSpace = 0;
   int _totalHddSpace = 0;
@@ -35,6 +40,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _platform = '';
 
   // System Health data
+// ignore: unused_field
+// ignore: unused_field
+// ignore: unused_field
+// ignore: unused_field
+// ignore: unused_field
   String _voltage = 'غير متاح';
   String _temperature = 'غير متاح';
 
@@ -47,6 +57,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _upgradeFirmware = '';
 
   // Interface Statistics
+// ignore: unused_field
   int _rxBitsPerSecond = 0;
   int _txBitsPerSecond = 0;
 

@@ -11,7 +11,6 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import '../database/daos/ai_diagnostics_dao.dart';
-import '../database/database_provider.dart';
 import 'command_executor.dart';
 import 'diagnostics_models.dart';
 
@@ -39,6 +38,41 @@ class DiagnosticSession {
     this.tokensUsed = 0,
   });
 
+  /// 🔧 إصلاح: copyWith مطلوب من قبل DiagnosticsNotifier
+  DiagnosticSession copyWith({
+    String? id,
+    DateTime? startedAt,
+    DateTime? endedAt,
+    DiagnosticMode? mode,
+    String? mikrotikIp,
+    List<DiagnosticMessage>? messages,
+    List<CommandResult>? executedCommands,
+    int? tokensUsed,
+  }) =>
+      DiagnosticSession(
+        id: id ?? this.id,
+        startedAt: startedAt ?? this.startedAt,
+        endedAt: endedAt ?? this.endedAt,
+        mode: mode ?? this.mode,
+        mikrotikIp: mikrotikIp ?? this.mikrotikIp,
+        messages: messages ?? this.messages,
+        executedCommands: executedCommands ?? this.executedCommands,
+        tokensUsed: tokensUsed ?? this.tokensUsed,
+      );
+
+  /// 🔧 إصلاح: title getter مطلوب من قبل DiagnosticsHistoryScreen
+  String get title {
+    final dateStr = '${startedAt.day}/${startedAt.month}/${startedAt.year}';
+    final userMsg = messages.firstWhere(
+      (m) => m.type == MessageType.user,
+      orElse: () => DiagnosticMessage.system(''),
+    );
+    final preview = userMsg.content.isNotEmpty
+        ? '${userMsg.content.substring(0, userMsg.content.length > 40 ? 40 : userMsg.content.length)}...'
+        : mode.displayName;
+    return '$dateStr — $preview';
+  }
+
   factory DiagnosticSession.start({
     required DiagnosticMode mode,
     String? mikrotikIp,
@@ -52,35 +86,6 @@ class DiagnosticSession {
         executedCommands: const [],
       );
 
-  static String _generateId() =>
-      'session_${DateTime.now().millisecondsSinceEpoch}';
-
-  DiagnosticSession copyWith({
-    DateTime? endedAt,
-    List<DiagnosticMessage>? messages,
-    List<CommandResult>? executedCommands,
-    int? tokensUsed,
-  }) =>
-      DiagnosticSession(
-        id: id,
-        startedAt: startedAt,
-        endedAt: endedAt ?? this.endedAt,
-        mode: mode,
-        mikrotikIp: mikrotikIp,
-        messages: messages ?? this.messages,
-        executedCommands: executedCommands ?? this.executedCommands,
-        tokensUsed: tokensUsed ?? this.tokensUsed,
-      );
-
-  String get title {
-    if (messages.isEmpty) return 'جلسة فارغة';
-    final firstUserMsg = messages.firstWhere(
-      (m) => m.type == MessageType.user,
-      orElse: () => messages.first,
-    );
-    final text = firstUserMsg.content;
-    return text.length > 50 ? '${text.substring(0, 50)}...' : text;
-  }
 
   String get subtitle {
     final parts = <String>[];

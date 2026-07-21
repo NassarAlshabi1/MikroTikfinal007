@@ -4,7 +4,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' as provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔧 مطلوب لـ ProviderScope
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
@@ -24,20 +25,15 @@ import 'stats_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
-import 'snackbar_helpers.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_palette.dart';
 import 'theme/app_gradients.dart';
 // ===== Imports من capy/v2-riverpod (AI + terminal + perf + database) =====
-import 'perf/device_capability.dart';
-import 'perf/dio_cache_service.dart';
 import 'ai_diagnostics_screen.dart';
 import 'terminal_screen.dart';
 import 'database/app_database.dart' as db;
-import 'database/sync_service.dart';
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
-import 'ai/diagnostics_history.dart';
 // -----------------------------------------
 
 /// قاعدة البيانات العامة (Singleton — تُستخدم عبر كل التطبيق)
@@ -47,12 +43,17 @@ void main() {
   // تهيئة قاعدة البيانات العامة
   appDatabase = db.AppDatabase();
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => MqttService()),
-        ChangeNotifierProvider(create: (_) => AppTheme()..initialize()),
-      ],
-      child: const MyApp(),
+    // 🔧 إصلاح حرج: ProviderScope مطلوب لـ Riverpod (ConsumerStatefulWidget)
+    // بدونه، كل شاشة تستخدم ref.watch/ref.read ستفشل في وقت التشغيل
+    // وتظهر فارغة — هذا سبب أن شاشة AI لم تكن تعرض شيئاً
+    ProviderScope(
+      child: provider.MultiProvider(
+        providers: [
+          provider.ChangeNotifierProvider(create: (_) => MqttService()),
+          provider.ChangeNotifierProvider(create: (_) => AppTheme()..initialize()),
+        ],
+        child: const MyApp(),
+      ),
     ),
   );
 }
@@ -125,7 +126,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppTheme>(
+    return provider.Consumer<AppTheme>(
       builder: (context, themeProvider, child) => MaterialApp(
         scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
@@ -465,7 +466,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           Positioned(
         top: 50,
         left: 20,
-        child: Consumer<AppTheme>(
+        child: provider.Consumer<AppTheme>(
           builder: (context, themeProvider, child) => Container(
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor.withValues(alpha: 0.9),
@@ -1237,7 +1238,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           actions: [
             // مفتاح تبديل الثيم الفاتح/الغامق
-            Consumer<AppTheme>(
+            provider.Consumer<AppTheme>(
               builder: (context, themeProvider, child) => IconButton(
                 icon: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),

@@ -9,8 +9,6 @@ import 'package:drift/drift.dart';
 
 import '../mikrotik_connector.dart';
 import 'app_database.dart';
-import 'daos/cards_dao.dart';
-import 'daos/profiles_dao.dart';
 
 class SyncService {
   SyncService._();
@@ -308,9 +306,10 @@ class SyncService {
     for (final card in cards) {
       // لو كان uptime_used >= uptime_limit (إذا كان موجوداً)
       // نحتاج الـ uptime_limit من الـ profile
+// ignore: unnecessary_null_comparison
       if (card.profileId != null) {
         final profile = await (db.select(db.profiles)
-              ..where((p) => p.id.equals(card.profileId!)))
+              ..where((p) => p.id.equals(card.profileId)))
             .getSingleOrNull();
         if (profile?.uptimeLimitSeconds != null &&
             profile!.uptimeLimitSeconds! > 0 &&

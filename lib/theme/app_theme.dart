@@ -315,25 +315,25 @@ class AppTheme with ChangeNotifier {
 
   static final _darkAppColors = AppColorsExtension(
     primary: AppPalette.primaryLight,
-    onPrimary: Colors.black,
+    onPrimary: Colors.white,
     secondary: AppPalette.secondaryLight,
-    onSecondary: Colors.black,
-    error: AppPalette.error,  // أحمر ساطع جديد
+    onSecondary: Colors.white,
+    error: AppPalette.error,
     onError: Colors.white,
-    success: AppPalette.success,  // أخضر ساطع جديد
+    success: AppPalette.success,
     onSuccess: Colors.white,
-    warning: AppPalette.warning,  // برتقالي جديد
+    warning: AppPalette.warning,
     onWarning: Colors.black,
-    info: AppPalette.info,  // أزرق ساطع جديد
-    onInfo: Colors.white,  // تغيير للون النص على الأزرق
-    background: AppPalette.darkBackground,  // بنفسجي داكن جداً
-    onBackground: Colors.white,  // أبيض نقي على الخلفية الداكنة
+    info: AppPalette.info,
+    onInfo: Colors.white,
+    background: AppPalette.darkBackground,
+    onBackground: Colors.white,
     surface: AppPalette.darkSurface,
     onSurface: Colors.white,
-    card: AppPalette.darkCard,  // أبيض ناصع للبطاقات
-    onCard: AppPalette.textOnDarkCard,  // نص غامق على البطاقات البيضاء
+    card: AppPalette.darkCard,
+    onCard: Colors.white,  // 🔧 نص أبيض على البطاقة الداكنة (كان غامقاً)
     accent: AppPalette.accent,
-    muted: AppPalette.textSecondaryOnDark,  // نص ثانوي محدث
+    muted: AppPalette.textSecondaryOnDark,
     border: AppPalette.muted,
     inputBackground: AppPalette.darkSurface,
   );

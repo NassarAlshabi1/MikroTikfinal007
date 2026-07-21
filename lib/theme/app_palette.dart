@@ -78,13 +78,15 @@ abstract class AppPalette {
 
   // ============================================================
   //  ألوان الثيم الداكن — Dark Theme
-  //  تصميم حديث: خلفية داكنة عميقة + بطاقات بيضاء ناعمة
+  //  🔧 إصلاح: بطاقات بيضاء على خلفية سوداء = تباين صارخ يؤذي العين
+  //  الحل: بطاقات بلون داكن دافئ قريب من الخلفية لكن أفتح قليلاً
+  //  مبدأ: الفرق بين الخلفية والبطاقة لا يجب أن يتجاوز ~15-20% luminance
   // ============================================================
-  static const darkBackground = Color(0xFF0F172A);        // Slate 950
-  static const darkSurface = Color(0xFF1E293B);           // Slate 800
-  static const darkCard = Color(0xFFFFFFFF);              // بطاقات بيضاء ناصعة
-  static const darkCardSecondary = Color(0xFFF8FAFC);     // Slate 50
-  static const darkCardInteractive = Color(0xFFF1F5F9);   // Slate 100
+  static const darkBackground = Color(0xFF1a1a2e);  // كحلي داكن دافئ (ليس أسود صرف)
+  static const darkSurface = Color(0xFF16213e);     // أزرق داكن متوسط
+  static const darkCard = Color(0xFF1e2a4a);        // أزرق داكن أفتح من الخلفية (وليس أبيض!)
+  static const darkCardSecondary = Color(0xFF243559);
+  static const darkCardInteractive = Color(0xFF2a3f66);
 
   // ============================================================
   //  ألوان النصوص — Text Colors
@@ -94,8 +96,8 @@ abstract class AppPalette {
   static const textWhite = Color(0xFFFFFFFF);
   static const textMuted = Color(0xFF94A3B8);             // Slate 400
 
-  // ألوان نصوص الثيم الداكن
-  static const textOnDarkCard = Color(0xFF0F172A);        // نص غامق على البطاقات البيضاء
-  static const textSecondaryOnDark = Color(0xFFCBD5E1);   // Slate 300
-  static const textSecondaryOnCard = Color(0xFF64748B);   // Slate 500
+  // ألوان نصوص الثيم الداكن — نصوص بيضاء ناعمة على بطاقات داكنة
+  static const textOnDarkCard = Color(0xFFE0E0E0);        // نص أبيض ناعم على البطاقات الداكنة
+  static const textSecondaryOnDark = Color(0xFF9FA8B8);   // نص ثانوي رمادي مائل للأزرق
+  static const textSecondaryOnCard = Color(0xFFB0BEC5);   // نص ثانوي على البطاقات
 }

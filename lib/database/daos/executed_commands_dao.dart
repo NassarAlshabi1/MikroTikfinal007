@@ -112,7 +112,7 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
     final byRiskResults = await byRiskQuery.get();
     final byRisk = <String, int>{};
     for (final row in byRiskResults) {
-      final risk = row.read(executedCommands.riskLevel) as String? ?? 'unknown';
+      final risk = row.read(executedCommands.riskLevel) ?? 'unknown';
       final count = row.read(executedCommands.id.count()) ?? 0;
       byRisk[risk] = count;
     }

@@ -479,10 +479,8 @@ class AutoFixService {
     final fixes = <ProposedFix>[];
 
     final dhcpServers = snapshot.extraData['IP DHCP SERVER'] ?? '';
-    final dhcpNetworks = snapshot.extraData['IP DHCP NETWORK'] ?? '';
     final dhcpLeases = snapshot.extraData['IP DHCP LEASES'] ?? '';
     final ipPools = snapshot.extraData['IP POOL'] ?? '';
-    final arpTable = snapshot.extraData['IP ARP'] ?? '';
 
     // 1) DHCP server معطّل
     if (dhcpServers.toLowerCase().contains('disabled=true') ||
