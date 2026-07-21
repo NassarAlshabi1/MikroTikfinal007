@@ -118,8 +118,8 @@ class _CardListScreenState extends State<CardListScreen> {
         DropdownMenuItem<String>(
           value: unit['id'],
           child: Text(unit['name'],
-              style: const TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         )
     ];
 
@@ -127,11 +127,11 @@ class _CardListScreenState extends State<CardListScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('اختر فئة م/نصار الشعبي'),
+          title: Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            dropdownColor: Colors.white,
-            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+            dropdownColor: Theme.of(context).colorScheme.onSurface,
+            hint: Text('اختر الفئة', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold)),
             items: unitItems,
             onChanged: (value) => selectedUnitId = value,
             validator: (value) => value == null ? 'الرجاء اختيار فئة' : null,
@@ -219,8 +219,8 @@ class _CardListScreenState extends State<CardListScreen> {
             Clipboard.setData(ClipboardData(text: widget.cardList.join('\n')));
             showSuccessSnackBar(context, 'تم نسخ جميع الكروت!');
           },
-          icon: const Icon(Icons.copy_all),
-          label: const Text('نسخ الكل'),
+          icon: Icon(Icons.copy_all),
+          label: Text('نسخ الكل'),
           style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
         ),
       ),
@@ -228,8 +228,8 @@ class _CardListScreenState extends State<CardListScreen> {
       Expanded(
         child: ElevatedButton.icon(
           onPressed: _shareCardsAsTextFile,
-          icon: const Icon(Icons.share),
-          label: const Text('مشاركة الكل'),
+          icon: Icon(Icons.share),
+          label: Text('مشاركة الكل'),
           style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
         ),
       ),
@@ -241,8 +241,8 @@ class _CardListScreenState extends State<CardListScreen> {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: _showAddCardsToQahtaniDialog,
-            icon: const Icon(Icons.add_to_queue),
-            label: const Text('إضافة للقحطاني'),
+            icon: Icon(Icons.add_to_queue),
+            label: Text('إضافة للقحطاني'),
             style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
           ),
         ),
@@ -251,7 +251,7 @@ class _CardListScreenState extends State<CardListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الكروت المضافة حديثاً'),
+        title: Text('الكروت المضافة حديثاً'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: PerfListView<String>(

@@ -299,11 +299,11 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 size: 80,
                 color: context.theme.appColors.onSurface.withValues(alpha: 0.3),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 'لا توجد مستخدمين نشطين حالياً',
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.black54,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Theme.of(context).textTheme.bodySmall?.color,
                   fontSize: 16,
                 ),
               ),
@@ -378,10 +378,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           onPressed: _page > 0
               ? () => setState(() => _page = _page - 1)
               : null,
-          child: const Text('السابق'),
+          child: Text('السابق'),
         ),
-        const SizedBox(width: 12),
-        Text('صفحة ${_page + 1} من $totalPages', style: const TextStyle(color: Colors.white70)),
+        SizedBox(width: 12),
+        Text('صفحة ${_page + 1} من $totalPages', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
         const SizedBox(width: 12),
         OutlinedButton(
           onPressed: (_page + 1) < totalPages
@@ -399,7 +399,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final uptime = user['uptime'] ?? user['session-time-left'] ?? '';
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),

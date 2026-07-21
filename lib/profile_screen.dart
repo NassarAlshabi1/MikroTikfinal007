@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الملف الشخصي للشبكة'),
+        title: Text('الملف الشخصي للشبكة'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: _isLoading
@@ -102,16 +102,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildInfoCard(BuildContext context, {required String title, required String subtitle, required IconData icon}) {
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         leading: Icon(icon, color: Theme.of(context).primaryColor, size: 30),
         title: Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54),
+          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).textTheme.bodySmall?.color),
         ),
       ),
     );
@@ -131,10 +131,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               'الرجاء الذهاب إلى شاشة "ربط الشبكة بـ م/نصار الشعبي" لإكمال عملية الربط أولاً.',
-              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
               textAlign: TextAlign.center,
             ),
           ],

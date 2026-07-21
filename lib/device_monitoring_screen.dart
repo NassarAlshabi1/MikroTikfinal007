@@ -167,7 +167,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مراقبة الأجهزة'),
+        title: Text('مراقبة الأجهزة'),
         backgroundColor: Theme.of(context).cardColor,
         actions: [
           IconButton(
@@ -205,7 +205,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.devices_other, size: 80, color: context.theme.appColors.muted),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
                         'لا توجد أجهزة للمراقبة',
                         style: TextStyle(
@@ -213,7 +213,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
                           color: Theme.of(context).textTheme.titleLarge?.color ?? context.theme.appColors.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         'اضغط على زر التحديث لجلب الأجهزة',
                         style: TextStyle(

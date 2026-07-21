@@ -316,11 +316,11 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      decoration: BoxDecoration(gradient: AppGradients.softBackground),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('الإحصائيات'),
+          title: Text('الإحصائيات'),
           backgroundColor: Theme.of(context).cardColor,
           actions: [
           IconButton(
@@ -350,8 +350,8 @@ class _StatsScreenState extends State<StatsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
             Text(
               'جاري تحميل الإحصائيات...',
               style: TextStyle(
@@ -435,7 +435,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 size: 48,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 'لا توجد بيانات استخدام متاحة',
                 style: TextStyle(
@@ -476,10 +476,10 @@ class _StatsScreenState extends State<StatsScreen> {
                       title: '${(download / total * 100).toStringAsFixed(1)}%',
                       color: Colors.blue[400],
                       radius: 100,
-                      titleStyle: const TextStyle(
+                      titleStyle: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     PieChartSectionData(
@@ -487,10 +487,10 @@ class _StatsScreenState extends State<StatsScreen> {
                       title: '${(upload / total * 100).toStringAsFixed(1)}%',
                       color: Colors.green[400],
                       radius: 100,
-                      titleStyle: const TextStyle(
+                      titleStyle: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -625,7 +625,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               label,
               style: TextStyle(
@@ -641,7 +641,7 @@ class _StatsScreenState extends State<StatsScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black87,
+                color: Theme.of(context).textTheme.titleLarge?.color ?? Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -684,7 +684,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87,
+                      color: Theme.of(context).textTheme.titleMedium?.color ?? Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],

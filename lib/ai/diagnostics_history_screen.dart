@@ -52,16 +52,16 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.history,
-                      size: 64, color: Colors.white.withValues(alpha: 0.3)),
-                  const SizedBox(height: 16),
-                  const Text(
+                      size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
+                  SizedBox(height: 16),
+                  Text(
                     'لا توجد جلسات محفوظة',
-                    style: TextStyle(fontSize: 16, color: Colors.white54),
+                    style: TextStyle(fontSize: 16, color: Theme.of(context).hintColor),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     'كل جلسة تشخيص تُحفظ تلقائياً هنا',
-                    style: TextStyle(fontSize: 13, color: Colors.white38),
+                    style: TextStyle(fontSize: 13, color: Theme.of(context).disabledColor),
                   ),
                 ],
               ),
@@ -100,7 +100,7 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
               Navigator.of(ctx).pop();
               ref.read(historyManagerProvider.notifier).clearAll();
             },
-            child: const Text('حذف الكل', style: TextStyle(color: Colors.white)),
+            child: Text('حذف الكل', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -117,13 +117,13 @@ class _SessionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).primaryColor,
-          child: Icon(session.mode.icon, color: Colors.white, size: 20),
+          child: Icon(session.mode.icon, color: Theme.of(context).colorScheme.onSurface, size: 20),
         ),
         title: Text(
           session.title,
@@ -134,15 +134,15 @@ class _SessionCard extends ConsumerWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               session.subtitle,
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               _formatDate(session.startedAt),
-              style: const TextStyle(fontSize: 11, color: Colors.white38),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor),
             ),
           ],
         ),
@@ -198,7 +198,7 @@ class _SessionCard extends ConsumerWidget {
                   .read(historyManagerProvider.notifier)
                   .deleteSession(session.id);
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.white)),
+            child: Text('حذف', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -252,10 +252,10 @@ class SessionDetailScreen extends StatelessWidget {
             ),
             // تبويب الأوامر
             session.executedCommands.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'لم يتم تنفيذ أي أوامر في هذه الجلسة',
-                      style: TextStyle(color: Colors.white54),
+                      style: TextStyle(color: Theme.of(context).hintColor),
                     ),
                   )
                 : ListView.builder(
@@ -285,7 +285,7 @@ class _DetailMessageBubble extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isError
             ? Colors.red.withValues(alpha: 0.1)
@@ -306,7 +306,7 @@ class _DetailMessageBubble extends StatelessWidget {
                         ? Icons.error
                         : Icons.smart_toy,
                 size: 16,
-                color: Colors.white70,
+                color: Theme.of(context).textTheme.bodySmall?.color,
               ),
               const SizedBox(width: 8),
               Text(
@@ -315,17 +315,17 @@ class _DetailMessageBubble extends StatelessWidget {
                     : isError
                         ? 'خطأ'
                         : 'AI',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white70,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Text(
                 '${message.timestamp.hour.toString().padLeft(2, '0')}:'
                 '${message.timestamp.minute.toString().padLeft(2, '0')}',
-                style: const TextStyle(fontSize: 10, color: Colors.white38),
+                style: TextStyle(fontSize: 10, color: Theme.of(context).disabledColor),
               ),
             ],
           ),
@@ -374,18 +374,18 @@ class _CommandResultCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (result.output.isNotEmpty) ...[
-                  const Text(
+                  Text(
                     'المخرجات:',
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white70),
+                        color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black54,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: SelectableText(

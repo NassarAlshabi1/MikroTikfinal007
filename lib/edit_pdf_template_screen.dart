@@ -214,20 +214,20 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                 children: [
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: EdgeInsets.all(16.0),
                       child: Column(
                         children: [
                           DropdownButtonFormField<String>(
                             value: _selectedProfile,
-                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                            dropdownColor: Colors.white,
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+                            dropdownColor: Theme.of(context).colorScheme.onSurface,
                             decoration: const InputDecoration(
                                 labelText: 'اختر الفئة (البروفايل)',
                                 prefixIcon: Icon(Icons.category_outlined)),
                             items: widget.profiles
                                 .map((p) => DropdownMenuItem(
                                       value: p['name'] as String,
-                                      child: Text(p['name'] as String, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                                      child: Text(p['name'] as String, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
                                     ))
                                 .toList(),
                             onChanged: (v) =>
@@ -238,10 +238,10 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _cardsPerPageController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                                 labelText: 'عدد الكروت في كل صفحة',
                                 prefixIcon: Icon(Icons.view_module_outlined)),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (v) {
                               if (v == null || v.isEmpty) return 'الحقل مطلوب';
@@ -373,8 +373,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: _pickImage,
-                            icon: const Icon(Icons.image_outlined),
-                            label: const Text('اختر/غير صورة القالب'),
+                            icon: Icon(Icons.image_outlined),
+                            label: Text('اختر/غير صورة القالب'),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).primaryColor),
                           ),

@@ -142,7 +142,7 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة قوالب PDF'),
+        title: Text('إدارة قوالب PDF'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: _isLoading
@@ -204,11 +204,11 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               'قالب فئة: ${template.profileName}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             // --- عدد الكروت ---
             Text(
               'عدد الكروت بالصفحة: ${template.cardsPerPage}',
-              style: TextStyle(fontSize: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+              style: TextStyle(fontSize: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
             ),
             const Divider(height: 24),
             // --- أزرار الإجراءات ---
@@ -253,11 +253,11 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               'لا توجد قوالب محفوظة',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               'اضغط على زر الإضافة (+) في الأسفل لإنشاء قالب PDF جديد خاص بك.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
             ),
           ],
         ),

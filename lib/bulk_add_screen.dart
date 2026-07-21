@@ -306,10 +306,10 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   ),
 
                   if (relevantTemplate != null) ...[
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                      ElevatedButton.icon(
-                        icon: const Icon(Icons.picture_as_pdf),
-                        label: const Text('مشاركة PDF'),
+                        icon: Icon(Icons.picture_as_pdf),
+                        label: Text('مشاركة PDF'),
                         style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                         onPressed: () {
                           Navigator.of(context).pop();
@@ -321,10 +321,10 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           );
                         },
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       ElevatedButton.icon(
-                        icon: const Icon(Icons.save_alt),
-                        label: const Text('حفظ PDF'),
+                        icon: Icon(Icons.save_alt),
+                        label: Text('حفظ PDF'),
                         style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                         onPressed: () async {
                           Navigator.of(context).pop();
@@ -342,7 +342,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.add_to_queue),
-                      label: const Text('إضافة لـ م/نصار الشعبي'),
+                      label: Text('إضافة لـ م/نصار الشعبي'),
                       onPressed: () {
                         Navigator.of(context).pop();
                         _showAddCardsToQahtaniDialog(users);
@@ -367,10 +367,10 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('اختر فئة م/نصار الشعبي'),
+          title: Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            dropdownColor: Colors.white,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+            dropdownColor: Theme.of(context).colorScheme.onSurface,
             hint: Text('اختر الفئة', style: TextStyle(color: context.theme.appColors.muted, fontWeight: FontWeight.bold)),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
@@ -477,7 +477,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إضافة كروت جماعية'),
+        title: Text('إضافة كروت جماعية'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: _isGenerating 
@@ -508,19 +508,19 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
             children: [
               TextFormField(
                   controller: _prefixController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                       labelText: 'بادئة (اختياري)',
                       border: OutlineInputBorder()),
-                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87)),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                       child: TextFormField(
                           controller: _lengthController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                               labelText: 'الطول', border: OutlineInputBorder()),
-                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
@@ -528,19 +528,19 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                   Expanded(
                       child: TextFormField(
                           controller: _countController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                               labelText: 'العدد', border: OutlineInputBorder()),
-                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'مطلوب' : null)),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedProfile,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+                dropdownColor: Theme.of(context).colorScheme.onSurface,
                 decoration: const InputDecoration(
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
@@ -548,42 +548,42 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                 items: widget.profiles
                     .map((p) => DropdownMenuItem(
                         value: p['name'] as String,
-                        child: Text(p['name'] as String, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))))
+                        child: Text(p['name'] as String, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))))
                     .toList(),
                 onChanged: (v) => setState(() => _selectedProfile = v),
                 validator: (v) => (v == null) ? 'الرجاء اختيار فئة' : null,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _charType,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
-                decoration: const InputDecoration(
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+                dropdownColor: Theme.of(context).colorScheme.onSurface,
+                decoration: InputDecoration(
                     labelText: 'نوع أحرف المستخدم',
                     border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                items: [
+                  DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
+                  DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
+                  DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
                 ],
                 onChanged: (v) => setState(() => _charType = v!),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _cardType,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
-                decoration: const InputDecoration(
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+                dropdownColor: Theme.of(context).colorScheme.onSurface,
+                decoration: InputDecoration(
                     labelText: 'نوع الكرت', border: OutlineInputBorder()),
-                items: const [
+                items: [
                   DropdownMenuItem(
-                      value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))) ,
+                      value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))) ,
                   DropdownMenuItem(
                       value: 'username_and_password_equal',
-                      child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))) ,
+                      child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))) ,
                   DropdownMenuItem(
                       value: 'username_and_password_different',
-                      child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))) ,
+                      child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))) ,
                 ],
                 onChanged: (v) => setState(() => _cardType = v!),
               ),
@@ -620,12 +620,12 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextFormField(
                   controller: _sharedUsersController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                       labelText: 'Shared Users', border: OutlineInputBorder()),
-                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                   keyboardType: TextInputType.number,
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'مطلوب' : null),

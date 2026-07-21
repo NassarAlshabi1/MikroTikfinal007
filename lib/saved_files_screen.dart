@@ -184,16 +184,16 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ملفات الكروت المحفوظة'),
+        title: Text('ملفات الكروت المحفوظة'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : _savedFiles.isEmpty
               ? Center(
                   child: Text(
                     'لا توجد ملفات محفوظة.',
-                    style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87),
+                    style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                   ),
                 )
               : ListView.builder(

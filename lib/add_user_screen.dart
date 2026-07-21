@@ -161,7 +161,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إضافة كرت جديد'),
+        title: Text('إضافة كرت جديد'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: Form(

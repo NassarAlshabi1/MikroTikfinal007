@@ -279,14 +279,14 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             children: [
               TextFormField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                decoration: InputDecoration(labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                 validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
               ),
               TextFormField(
                 controller: ipController,
-                decoration: const InputDecoration(labelText: 'عنوان IP'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                decoration: InputDecoration(labelText: 'عنوان IP'),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                 validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
               ),
             ],
@@ -445,22 +445,22 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'export',
-                child: ListTile(leading: Icon(Icons.file_upload), title: Text('تصدير / مشاركة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                child: ListTile(leading: Icon(Icons.file_upload), title: Text('تصدير / مشاركة', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
               ),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'import',
-                child: ListTile(leading: Icon(Icons.file_download), title: Text('استيراد خريطة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                child: ListTile(leading: Icon(Icons.file_download), title: Text('استيراد خريطة', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
               ),
             ],
           ),
           if (!_isEditMode)
             IconButton(
-              icon: const Icon(Icons.sync),
+              icon: Icon(Icons.sync),
               tooltip: 'فحص حالة الأجهزة',
               onPressed: _isCheckingStatus ? null : _checkAllStatuses,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           TextButton.icon(
             icon: Icon(_isEditMode ? Icons.check_circle : Icons.edit),
@@ -473,7 +473,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
                 _isEditMode = !_isEditMode;
               });
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.onSurface),
           ),
           const SizedBox(width: 8),
         ],
@@ -524,11 +524,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     }
 
     final nodeContent = Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: nodeColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white54, width: 1),
+        border: Border.all(color: Theme.of(context).hintColor, width: 1),
         boxShadow: [
           BoxShadow(color: nodeColor.withValues(alpha: 0.5), blurRadius: 8)
         ],
@@ -540,18 +540,18 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(deviceNode.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text(deviceNode.ip, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  Text(deviceNode.name, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                  Text(deviceNode.ip, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12)),
                   if (!_isEditMode && deviceNode.status == DeviceStatus.offline)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('فحص', style: TextStyle(fontSize: 12)),
+                        icon: Icon(Icons.refresh, size: 18),
+                        label: Text('فحص', style: TextStyle(fontSize: 12)),
                         onPressed: () => _checkSpecificDeviceStatus(deviceNode),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange,
-                          foregroundColor: Colors.white,
+                          foregroundColor: Theme.of(context).colorScheme.onSurface,
                           minimumSize: Size.zero, // Set this
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // and this
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap, // and this
@@ -601,18 +601,18 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         offset.dy,
       ),
       items: [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'add',
           child: ListTile(
             leading: Icon(Icons.add_circle_outline),
-            title: Text('إضافة جهاز فرعي', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            title: Text('إضافة جهاز فرعي', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'edit',
           child: ListTile(
             leading: Icon(Icons.edit_outlined),
-            title: Text('تعديل الجهاز', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            title: Text('تعديل الجهاز', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           ),
         ),
         const PopupMenuItem(
@@ -640,11 +640,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.hub_outlined, size: 80, color: Colors.grey),
-          const SizedBox(height: 16),
-          const Text('الخريطة فارغة', style: TextStyle(fontSize: 22)),
-          const SizedBox(height: 8),
-          Text('ابدأ ببناء خريطة شبكتك الآن', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87)),
+          Icon(Icons.hub_outlined, size: 80, color: Colors.grey),
+          SizedBox(height: 16),
+          Text('الخريطة فارغة', style: TextStyle(fontSize: 22)),
+          SizedBox(height: 8),
+          Text('ابدأ ببناء خريطة شبكتك الآن', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: () => _showAddEditDialog(),

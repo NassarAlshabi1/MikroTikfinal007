@@ -205,7 +205,7 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('كاشف DHCP الدخيل'),
+        title: Text('كاشف DHCP الدخيل'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: Padding(
@@ -223,17 +223,17 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               _status,
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             
             if (_allServers.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
+                padding: EdgeInsets.only(bottom: 8.0),
                 child: Text('الخوادم المستجيبة:', style: Theme.of(context).textTheme.titleSmall),
               ),
             if (_allServers.isNotEmpty)
