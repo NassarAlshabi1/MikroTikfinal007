@@ -107,12 +107,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                       style: TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     if (_report == null || _report!.isEmpty)
-                      const Card(
+                      Card(
                         child: ListTile(
                           leading: Icon(Icons.info_outline,
-                              color: Colors.white54),
+                              color: Theme.of(context).hintColor),
                           title: Text('لا توجد أوامر منفّذة بعد'),
                         ),
                       )
@@ -191,10 +191,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
               textAlign: TextAlign.center,
             ),
           ],
@@ -275,16 +275,16 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   Widget _buildDetailRow(String label, String value, {Color? color}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70)),
+          Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: color ?? Colors.white,
+              color: color ?? Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -318,12 +318,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   style: TextStyle(color: color, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: total > 0 ? count / total : 0,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
               color: color,
               minHeight: 6,
             ),

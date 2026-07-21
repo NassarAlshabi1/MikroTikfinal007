@@ -155,15 +155,15 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('اختر فئة م/نصار الشعبي'),
+          title: Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            dropdownColor: Colors.white,
-            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+            dropdownColor: Theme.of(context).colorScheme.onSurface,
+            hint: Text('اختر الفئة', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold)),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: Text(unit['name'], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (value) {
@@ -317,7 +317,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('استخراج الكروت'),
+        title: Text('استخراج الكروت'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: Center(
@@ -325,7 +325,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
             ? Column( // --- RESULTS VIEW ---
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: EdgeInsets.all(12.0),
                     child: Text(
                       'تم العثور على ${_extractedCardNumbers.length} كرت:',
                       style: Theme.of(context).textTheme.titleMedium,
@@ -393,8 +393,8 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           ),
                         ),
                         ElevatedButton.icon(
-                          icon: const Icon(Icons.add_to_queue, size: 16),
-                          label: const Text('إضافة للقحطاني', style: TextStyle(fontSize: 11)),
+                          icon: Icon(Icons.add_to_queue, size: 16),
+                          label: Text('إضافة للقحطاني', style: TextStyle(fontSize: 11)),
                           onPressed: () => _showAddCardsToQahtaniDialog(_extractedCardNumbers),
                            style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).primaryColor,
@@ -492,20 +492,20 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                         children: [
                           Icon(Icons.camera_alt_outlined,
                               size: 80, color: context.theme.appColors.primary),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
                           Text(
                             'أدخل شروط المسح الضوئي للكروت',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87),
+                            style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                           ),
                           const SizedBox(height: 32),
                           TextFormField(
                             controller: _prefixController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'بادئة الكرت (بماذا يبدأ الرقم)',
                               prefixIcon: Icon(Icons.looks_one_outlined),
                             ),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -517,11 +517,11 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _lengthController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'طول رقم الكرت (عدد الأرقام)',
                               prefixIcon: Icon(Icons.format_list_numbered),
                             ),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -536,11 +536,11 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _totalController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'العدد الإجمالي للكروت في الورقة',
                               prefixIcon: Icon(Icons.calculate_outlined),
                             ),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {

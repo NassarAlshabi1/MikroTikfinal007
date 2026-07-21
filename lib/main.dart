@@ -67,7 +67,7 @@ void showErrorSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.white, size: 24),
+          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -83,10 +83,10 @@ void showErrorSnackBar(BuildContext context, String message) {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      margin: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(16),
       action: SnackBarAction(
         label: 'إغلاق',
-        textColor: Colors.white,
+        textColor: Theme.of(context).colorScheme.onSurface,
         onPressed: () {},
       ),
     ),
@@ -99,7 +99,7 @@ void showSuccessSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
+          Icon(Icons.check_circle_outline, color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -409,7 +409,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
@@ -472,7 +472,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               borderRadius: BorderRadius.circular(25),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -500,7 +500,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           Icon(
                             themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
                             size: 20,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -698,12 +698,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             Expanded(
               child: TextField(
                 controller: _remotePortController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Port',
                   hintText: '8728 أو 8729',
                   prefixIcon: Icon(Icons.numbers),
                 ),
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 keyboardType: TextInputType.number,
               ),
             ),
@@ -712,11 +712,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         const SizedBox(height: 16),
         TextField(
           controller: _remoteUserController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Username',
             prefixIcon: Icon(Icons.person_outline),
           ),
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -769,12 +769,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ElevatedButton(
           onPressed: _isLoading ? null : _remoteConnect,
           child: _isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 24,
                   width: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 3,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 )
               : const Text('الدخول', style: TextStyle(fontSize: 18)),
@@ -1229,7 +1229,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           title: null,
           centerTitle: false,
           leading: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(8.0),
             child: CircleAvatar(
               backgroundColor: Theme.of(context).cardColor,
               child: Icon(Icons.person_outline, color: context.theme.appColors.onSurface),
@@ -1340,18 +1340,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white70,
-              Colors.white,
+              Theme.of(context).textTheme.bodySmall!.color!,
+              Theme.of(context).colorScheme.onSurface,
             ],
           ),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -1399,7 +1399,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -1515,9 +1515,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -1591,7 +1591,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
               child: Icon(icon, size: 32, color: iconBgColor),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               title,
               textAlign: TextAlign.center,

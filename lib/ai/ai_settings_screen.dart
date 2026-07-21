@@ -103,23 +103,23 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       '1. يجمع التطبيق بيانات من MikroTik (interfaces, routes, firewall, logs)\n'
                       '2. يرسلها مع سؤالك إلى الـ AI\n'
                       '3. يحلل الـ AI المشكلة ويقترح أوامر إصلاح\n'
                       '4. تنسخ الأوامر وتنفذها يدوياً',
-                      style: TextStyle(fontSize: 13, color: Colors.white70),
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // ===== اختيار المزود =====
-            const Text(
+            Text(
               'مزود الذكاء الاصطناعي',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<AiProvider>(
@@ -143,24 +143,24 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 }
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // ===== اختيار الموديل =====
-            const Text(
+            Text(
               'الموديل',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             // للمزود المخصص: حقل نص لإدخال اسم النموذج يدوياً
             // للآخرين: قائمة منسدلة
             if (settings.provider == AiProvider.custom) ...[
               TextField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   hintText: 'مثال: gpt-4o-mini أو llama-3.1-70b',
-                  hintStyle: TextStyle(fontSize: 12, color: Colors.white38),
-                  prefixIcon: Icon(Icons.model_training, size: 18, color: Colors.white54),
+                  hintStyle: TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
+                  prefixIcon: Icon(Icons.model_training, size: 18, color: Theme.of(context).hintColor),
                 ),
                 style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 onChanged: (value) {
@@ -195,12 +195,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             // ===== حد خطوات الاستقصاء (التشخيص الوكيل) =====
             Row(
               children: [
-                const Icon(Icons.psychology,
+                Icon(Icons.psychology,
                     size: 18, color: Colors.deepPurpleAccent),
-                const SizedBox(width: 6),
-                const Text(
+                SizedBox(width: 6),
+                Text(
                   'حد خطوات الاستقصاء (التشخيص الوكيل)',
-                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                  style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
                 ),
                 const Spacer(),
                 Text(
@@ -225,10 +225,10 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                     .setAgenticMaxSteps(v.round());
               },
             ),
-            const Text(
+            Text(
               'كلما زاد العدد، استقصى الـ AI أعمق (أوامر قراءة تلقائية أكثر) '
               'مقابل استهلاك أكبر للـ tokens. الافتراضي 6.',
-              style: TextStyle(fontSize: 11, color: Colors.white38),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor),
             ),
             const SizedBox(height: 16),
 
@@ -237,7 +237,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               settings.provider == AiProvider.custom
                   ? 'API Endpoint (إلزامي للمزود المخصص)'
                   : 'API Endpoint مخصص (اختياري)',
-              style: const TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -245,12 +245,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 hintText: settings.provider == AiProvider.custom
                     ? 'https://api.xxx.com/v1 (إلزامي)'
                     : 'https://api.openai.com/v1 (اتركه فارغاً للافتراضي)',
-                hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
-                prefixIcon: const Icon(Icons.link, size: 18, color: Colors.white54),
+                hintStyle: TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
+                prefixIcon: Icon(Icons.link, size: 18, color: Theme.of(context).hintColor),
               ),
               style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
             ),
@@ -269,14 +269,14 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                     '• Ollama (محلي): http://localhost:11434/v1\n'
                     '• LocalAI: http://localhost:8080/v1\n'
                     '• Together AI: https://api.together.xyz/v1',
-              style: TextStyle(fontSize: 11, color: Colors.white38),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // ===== مفتاح API =====
-            const Text(
+            Text(
               'مفتاح API',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -376,7 +376,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -392,13 +392,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     '• مفتاح الـ API يُخزّن مشفّراً في الجهاز (flutter_secure_storage)\n'
                     '• لا يتم إرساله لأي طرف ثالث\n'
                     '• كل استدعاء للـ AI يكلّفك مالاً حسب سعر المزود\n'
                     '• اقتصر الـ logs على آخر 30 سطر لتوفير tokens',
-                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ],
               ),

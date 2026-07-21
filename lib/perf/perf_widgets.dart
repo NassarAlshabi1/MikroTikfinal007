@@ -99,10 +99,10 @@ class PerfLoadingIndicator extends StatelessWidget {
             ),
           ),
           if (message != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               message!,
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ],

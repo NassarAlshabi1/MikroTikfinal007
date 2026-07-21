@@ -154,7 +154,7 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('معالجة الصورة'),
+        title: Text('معالجة الصورة'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: RepaintBoundary(

@@ -458,7 +458,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       SnackBar(
         content: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 28),
+            Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -711,32 +711,32 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(32),
       child: Column(
         children: [
-          const Icon(Icons.router, size: 64, color: Colors.white),
+          Icon(Icons.router, size: 64, color: Theme.of(context).colorScheme.onSurface),
           const SizedBox(height: 16),
           Text(
             _boardName.isEmpty ? _model : _boardName,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             _version,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: Colors.white70,
+              color: Theme.of(context).textTheme.bodySmall?.color,
             ),
           ),
           const SizedBox(height: 24),
@@ -750,7 +750,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 Colors.yellow,
                 false,
               ),
-              Container(width: 1, height: 40, color: Colors.white30),
+              Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
               _buildMiniInfoCard(
                 'الحرارة',
                 _temperature == 'غير متاح' ? _temperature : '$_temperature°',
@@ -758,7 +758,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _temperatureAlert ? Colors.red : Colors.orange,
                 _temperatureAlert,
               ),
-              Container(width: 1, height: 40, color: Colors.white30),
+              Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
               _buildMiniInfoCard(
                 'المعالج',
                 '$_cpuLoad%',
@@ -788,20 +788,20 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.warning,
                     size: 12,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.white70,
+              color: Theme.of(context).textTheme.bodySmall?.color,
             ),
           ),
           const SizedBox(height: 4),
@@ -820,10 +820,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             ),
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -847,12 +847,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 40, color: color),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             title,
             style: TextStyle(
               fontSize: 14,
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.black54,
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Theme.of(context).textTheme.bodySmall?.color,
             ),
             textAlign: TextAlign.center,
           ),
@@ -865,10 +865,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             ),
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -882,13 +882,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Widget _buildNetworkTimeCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -897,12 +897,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.access_time, color: Colors.black54),
-          const SizedBox(width: 8),
+          Icon(Icons.access_time, color: Theme.of(context).textTheme.bodySmall?.color),
+          SizedBox(width: 8),
           Text(
             'وقت الشبكة: $_date $_time',
-            style: const TextStyle(
-              color: Colors.black87,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -1008,7 +1008,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: (isAlert ? color : Colors.black).withOpacity(0.3),
+                      color: (isAlert ? color : Theme.of(context).colorScheme.onSurface).withOpacity(0.3),
                       blurRadius: isAlert ? 6 : 4,
                       offset: const Offset(0, 2),
                     ),
@@ -1016,10 +1016,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 ),
                 child: Text(
                   '${currentValue.toStringAsFixed(1)}$unit',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -1036,7 +1036,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   horizontalInterval: 25,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                       strokeWidth: 1,
                     );
                   },
@@ -1060,7 +1060,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         return Text(
                           '${value.toInt()}$unit',
                           style: TextStyle(
-                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Colors.black45,
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Theme.of(context).disabledColor,
                             fontSize: 12,
                           ),
                         );
@@ -1094,7 +1094,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                           radius: 3,
                           color: color,
                           strokeWidth: 2,
-                          strokeColor: Colors.white,
+                          strokeColor: Theme.of(context).colorScheme.onSurface,
                         );
                       },
                     ),
@@ -1118,8 +1118,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                       return touchedBarSpots.map((barSpot) {
                         return LineTooltipItem(
                           '${barSpot.y.toStringAsFixed(1)}$unit',
-                          const TextStyle(
-                            color: Colors.white,
+                          TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -1154,7 +1154,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6) ?? Colors.black54,
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6) ?? Theme.of(context).textTheme.bodySmall?.color,
           ),
         ),
         const SizedBox(height: 4),
@@ -1240,19 +1240,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.warning_rounded,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   size: 28,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1261,15 +1261,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       'تم الكشف عن مشكلات في الأداء',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white70,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                   ],
@@ -1279,14 +1279,14 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           ),
           const SizedBox(height: 16),
           ...alerts.map((alert) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: 8),
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -1294,32 +1294,32 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 children: [
                   Icon(
                     alert['icon'] as IconData,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       alert['title'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       alert['value'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),

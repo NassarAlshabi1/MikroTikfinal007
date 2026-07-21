@@ -118,8 +118,8 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   'النتائج: ${_results.length} كرت',
-                  style: const TextStyle(
-                      fontSize: 12, color: Colors.white54),
+                  style: TextStyle(
+                      fontSize: 12, color: Theme.of(context).hintColor),
                 ),
               ),
             ),
@@ -168,19 +168,19 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                 ? Icons.search
                 : Icons.search_off,
             size: 64,
-            color: Colors.white.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             _searchController.text.isEmpty
                 ? 'ابدأ الكتابة للبحث الفوري'
                 : 'لا توجد نتائج',
-            style: const TextStyle(fontSize: 16, color: Colors.white54),
+            style: TextStyle(fontSize: 16, color: Theme.of(context).hintColor),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'البحث يستخدم FTS5 — أسرع 1000x من البحث العادي',
-            style: TextStyle(fontSize: 12, color: Colors.white38),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
           ),
         ],
       ),
@@ -201,8 +201,8 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
           backgroundColor: statusColor,
           child: Text(
             card.username.isNotEmpty ? card.username[0].toUpperCase() : '?',
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
           ),
         ),
         title: Text(
@@ -287,7 +287,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
               await appDatabase.cardsDao.deleteCard(card.id);
               _performSearch(_searchController.text);
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.white)),
+            child: Text('حذف', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),

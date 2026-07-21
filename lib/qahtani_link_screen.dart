@@ -254,7 +254,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ربط الشبكة بـ م/نصار الشعبي'),
+        title: Text('ربط الشبكة بـ م/نصار الشعبي'),
         backgroundColor: Theme.of(context).cardColor,
         actions: [
           if (_isLinked)
@@ -336,7 +336,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           ),
           if (units.isEmpty)
-            const Center(child: Text('لا توجد فئات متاحة حالياً.'))
+            Center(child: Text('لا توجد فئات متاحة حالياً.'))
           else
             for (final unit in units)
               RepaintBoundary(

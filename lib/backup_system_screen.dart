@@ -407,7 +407,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         : '${sizeKB.toStringAsFixed(2)} ك.ب';
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      margin: EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -438,7 +438,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                     Text(
                       backupType,
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black87,
+                        color: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -461,7 +461,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       child: Text(
                         name,
                         style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -485,7 +485,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                           child: Text(
                             sizeText,
                             style: TextStyle(
-                              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
+                              color: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).textTheme.bodySmall?.color,
                               fontSize: 12,
                             ),
                           ),
@@ -497,11 +497,11 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       children: [
                         const Icon(Icons.access_time,
                             size: 16, color: null), // استخدام اللون الافتراضي
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           timeAgo,
                           style: TextStyle(
-                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Colors.black54,
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Theme.of(context).textTheme.bodySmall?.color,
                             fontSize: 12,
                           ),
                         ),
@@ -577,7 +577,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('نظام النسخ الاحتياطي الكامل'),
+        title: Text('نظام النسخ الاحتياطي الكامل'),
         backgroundColor: Theme.of(context).cardColor,
         actions: [
           IconButton(
@@ -603,8 +603,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
             )
           : FloatingActionButton.extended(
               onPressed: _createNewBackup,
-              icon: const Icon(Icons.add),
-              label: const Text('إنشاء نسخة جديدة'),
+              icon: Icon(Icons.add),
+              label: Text('إنشاء نسخة جديدة'),
               backgroundColor: Theme.of(context).primaryColor,
             ),
     );

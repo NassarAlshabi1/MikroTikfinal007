@@ -75,7 +75,7 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
                             child: pw.Text(
                               user,
                               textAlign: pw.TextAlign.center,
-                              style: const pw.TextStyle(
+                              style: pw.TextStyle(
                                 color: PdfColors.black,
                                 fontSize: 10,
                               ),

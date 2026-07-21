@@ -172,11 +172,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 'الأمر:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: SelectableText(
@@ -198,7 +198,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     : Theme.of(context).primaryColor,
               ),
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('تنفيذ', style: TextStyle(color: Colors.white)),
+              child: Text('تنفيذ', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ],
         ),
@@ -342,7 +342,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           // شريط حالة التحميل
           if (state.isLoading)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               child: Row(
                 children: [
@@ -403,13 +403,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               children: [
                 Text(
                   script.description,
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                  style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black54,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: SelectableText(
@@ -479,8 +479,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   : Theme.of(context).primaryColor,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            icon: const Icon(Icons.play_arrow, color: Colors.white),
-            label: const Text('تنفيذ', style: TextStyle(color: Colors.white)),
+            icon: Icon(Icons.play_arrow, color: Theme.of(context).colorScheme.onSurface),
+            label: Text('تنفيذ', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -558,7 +558,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             // ===== رأس اللوحة =====
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 borderRadius: const BorderRadius.only(
@@ -583,9 +583,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         ),
                         Text(
                           '${fixes.length} إصلاح مقترح — بدون الحاجة للـ AI',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white54,
+                            color: Theme.of(context).hintColor,
                           ),
                         ),
                       ],
@@ -621,10 +621,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     Navigator.of(ctx).pop();
                     _applyAllSafeFixes(fixes);
                   },
-                  icon: const Icon(Icons.bolt, color: Colors.white),
-                  label: const Text(
+                  icon: Icon(Icons.bolt, color: Theme.of(context).colorScheme.onSurface),
+                  label: Text(
                     'تطبيق كل الإصلاحات الآمنة فقط',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
@@ -691,10 +691,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 '📝 الوصف:',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 fix.description,
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -712,11 +712,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 '🔧 الأوامر:',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: SelectableText(
@@ -753,8 +753,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: riskColor,
                     ),
-                    icon: const Icon(Icons.play_arrow, size: 16, color: Colors.white),
-                    label: const Text('تنفيذ', style: TextStyle(color: Colors.white)),
+                    icon: Icon(Icons.play_arrow, size: 16, color: Theme.of(context).colorScheme.onSurface),
+                    label: Text('تنفيذ', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                   ),
                 ],
               ),
@@ -793,12 +793,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('إلغاء'),
+            child: Text('إلغاء'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('تطبيق', style: TextStyle(color: Colors.white)),
+            child: Text('تطبيق', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -870,7 +870,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       color: Theme.of(context).cardColor,
       child: Row(
         children: [
@@ -879,7 +879,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ? Icons.smart_toy
                 : Icons.auto_awesome,
             size: 16,
-            color: Colors.white70,
+            color: Theme.of(context).textTheme.bodySmall?.color,
           ),
           const SizedBox(width: 8),
           // ===== زر تبديل المزود/الموديل السريع =====
@@ -887,7 +887,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             onTap: () => _showQuickModelSelector(context),
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isGeminiFlash25
                     ? Colors.blueAccent.withValues(alpha: 0.25)
@@ -905,7 +905,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     size: 12,
                     color: isGeminiFlash25
                         ? Colors.blueAccent
-                        : Colors.white70,
+                        : Theme.of(context).textTheme.bodySmall?.color,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
@@ -915,7 +915,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         fontSize: 11,
                         color: isGeminiFlash25
                             ? Colors.blueAccent
-                            : Colors.white,
+                            : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isGeminiFlash25
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -923,9 +923,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down,
-                      size: 14, color: Colors.white54),
+                  SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down,
+                      size: 14, color: Theme.of(context).hintColor),
                 ],
               ),
             ),
@@ -936,7 +936,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             onTap: () => _showModeSelector(context, state.settings.mode),
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
@@ -944,11 +944,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(state.settings.mode.icon, size: 12, color: Colors.white),
-                  const SizedBox(width: 4),
+                  Icon(state.settings.mode.icon, size: 12, color: Theme.of(context).colorScheme.onSurface),
+                  SizedBox(width: 4),
                   Text(
                     state.settings.mode.displayName,
-                    style: const TextStyle(fontSize: 11, color: Colors.white),
+                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -1123,7 +1123,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
         color: isSelected
             ? Colors.blueAccent
-            : (isRecommended ? Colors.amber : Colors.white38),
+            : (isRecommended ? Colors.amber : Theme.of(context).disabledColor),
         size: 22,
       ),
       title: Row(
@@ -1138,7 +1138,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     isSelected || isRecommended ? FontWeight.bold : FontWeight.normal,
                 color: isSelected
                     ? Colors.blueAccent
-                    : (isRecommended ? Colors.amber.shade200 : Colors.white),
+                    : (isRecommended ? Colors.amber.shade200 : Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ),
@@ -1163,7 +1163,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           ? null
           : Text(
               description,
-              style: const TextStyle(fontSize: 11, color: Colors.white54),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
             ),
       trailing: isRecommended
           ? const Icon(Icons.bolt, color: Colors.amber, size: 18)
@@ -1209,11 +1209,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 leading: Icon(mode.icon,
                     color: isSelected
                         ? Theme.of(context).primaryColor
-                        : Colors.white70),
+                        : Theme.of(context).textTheme.bodySmall?.color),
                 title: Text(mode.displayName),
                 subtitle: Text(
                   mode.description,
-                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
                 ),
                 trailing: isSelected
                     ? Icon(Icons.check_circle,
@@ -1240,18 +1240,18 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   Widget _buildInputBar(DiagnosticsState state) {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            top: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
           ),
         ),
         child: Row(
           children: [
             // زر التشخيص السريع (لقطة واحدة)
             IconButton(
-              icon: const Icon(Icons.auto_fix_high),
+              icon: Icon(Icons.auto_fix_high),
               tooltip: 'تشخيص سريع (لقطة واحدة)',
               onPressed: state.isLoading ? null : _handleQuickDiagnose,
               color: Theme.of(context).primaryColor,
@@ -1289,10 +1289,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 onSubmitted: (_) => _handleSend(),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             // زر الإرسال
             IconButton(
-              icon: const Icon(Icons.send),
+              icon: Icon(Icons.send),
               onPressed: _inputEnabled && !state.isLoading ? _handleSend : null,
               color: Theme.of(context).primaryColor,
             ),
@@ -1348,7 +1348,7 @@ class _MessageBubble extends StatelessWidget {
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.85,
                   ),
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isError
                         ? Colors.red.withValues(alpha: 0.1)
@@ -1369,7 +1369,7 @@ class _MessageBubble extends StatelessWidget {
                   SelectableText(
                     message.content,
                     style: TextStyle(
-                      color: isUser ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                      color: isUser ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.9),
                       fontSize: 14,
                       height: 1.5,
                     ),
@@ -1377,17 +1377,17 @@ class _MessageBubble extends StatelessWidget {
                   // الأوامر المقترحة
                   if (message.suggestedCommands != null &&
                       message.suggestedCommands!.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: Colors.white24),
+                    SizedBox(height: 12),
+                    Divider(height: 1, color: Theme.of(context).dividerColor),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'أوامر مقترحة (اضغط للنسخ):',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white54,
+                              color: Theme.of(context).hintColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1397,11 +1397,11 @@ class _MessageBubble extends StatelessWidget {
                           TextButton.icon(
                             onPressed: () =>
                                 onCopyAllCommands!(message.suggestedCommands!),
-                            icon: const Icon(Icons.copy_all,
-                                size: 14, color: Colors.white70),
-                            label: const Text('نسخ الكل',
+                            icon: Icon(Icons.copy_all,
+                                size: 14, color: Theme.of(context).textTheme.bodySmall?.color),
+                            label: Text('نسخ الكل',
                                 style: TextStyle(
-                                    fontSize: 11, color: Colors.white70)),
+                                    fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 6),
                               minimumSize: const Size(0, 28),
@@ -1434,14 +1434,14 @@ class _MessageBubble extends StatelessWidget {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: EdgeInsets.symmetric(vertical: 10),
                           ),
-                          icon: const Icon(Icons.play_circle_fill,
-                              color: Colors.white, size: 18),
+                          icon: Icon(Icons.play_circle_fill,
+                              color: Theme.of(context).colorScheme.onSurface, size: 18),
                           label: Text(
                             'تنفيذ السكربت كاملاً (${message.suggestedCommands!.length} أوامر)',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 12),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
                           ),
                         ),
                       ),
@@ -1454,7 +1454,7 @@ class _MessageBubble extends StatelessWidget {
                       (message.suggestedCommands == null ||
                           message.suggestedCommands!.isEmpty) &&
                       message.type == MessageType.assistant) ...[
-                    ..._buildExtractedScripts(message, onExecuteScript!),
+                    ..._buildExtractedScripts(context, message, onExecuteScript!),
                   ],
                 ],
               ),
@@ -1469,7 +1469,7 @@ class _MessageBubble extends StatelessWidget {
                     onPressed: () => onCopyMessage!(message.content),
                     icon: Icon(Icons.copy,
                         size: 16,
-                        color: Colors.white.withValues(alpha: 0.5)),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                     tooltip: 'نسخ نص الرسالة',
                     padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(),
@@ -1489,6 +1489,7 @@ class _MessageBubble extends StatelessWidget {
   /// يستخدم ScriptExecutor.extractScriptsFromAiResponse لاستخراج
   /// السكربتات من كتل ```...``` أو من أسطر تبدأ بـ / مباشرة
   List<Widget> _buildExtractedScripts(
+    BuildContext context,
     DiagnosticMessage message,
     void Function(RouterOsScript) onExecuteScript,
   ) {
@@ -1496,11 +1497,11 @@ class _MessageBubble extends StatelessWidget {
       aiResponse: message.content,
     );
 
-    if (scripts.isEmpty) return const [];
+    if (scripts.isEmpty) return [];
 
     return [
-      const SizedBox(height: 12),
-      const Divider(height: 1, color: Colors.white24),
+      SizedBox(height: 12),
+      Divider(height: 1, color: Theme.of(context).dividerColor),
       const SizedBox(height: 8),
       Row(
         children: [
@@ -1539,15 +1540,15 @@ class _MessageBubble extends StatelessWidget {
                 ? Icons.error_outline
                 : Icons.smart_toy,
         size: 18,
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }
 
   Widget _buildSystemMessage(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
@@ -1559,11 +1560,11 @@ class _MessageBubble extends StatelessWidget {
         children: [
           Icon(Icons.info_outline,
               size: 18, color: Theme.of(context).primaryColor),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               message.content,
-              style: const TextStyle(fontSize: 13, color: Colors.white70),
+              style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
             ),
           ),
         ],
@@ -1598,16 +1599,16 @@ class _CommandChip extends StatelessWidget {
             : '✅';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: 6),
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _riskLevel == CommandRiskLevel.dangerous
                 ? Colors.red.withValues(alpha: 0.5)
-                : Colors.white24,
+                : Theme.of(context).dividerColor,
           ),
         ),
         child: Column(
@@ -1639,12 +1640,12 @@ class _CommandChip extends StatelessWidget {
               children: [
                 TextButton.icon(
                   onPressed: onCopy,
-                  icon: const Icon(Icons.copy, size: 14),
-                  label: const Text('نسخ', style: TextStyle(fontSize: 12)),
+                  icon: Icon(Icons.copy, size: 14),
+                  label: Text('نسخ', style: TextStyle(fontSize: 12)),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, 30),
-                    foregroundColor: Colors.white70,
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size(0, 30),
+                    foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -1653,12 +1654,12 @@ class _CommandChip extends StatelessWidget {
                   icon: const Icon(Icons.play_arrow, size: 14),
                   label: const Text('تنفيذ', style: TextStyle(fontSize: 12)),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    minimumSize: const Size(0, 30),
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: Size(0, 30),
                     backgroundColor: _riskLevel == CommandRiskLevel.dangerous
                         ? Colors.red
                         : Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -1697,9 +1698,9 @@ class _ScriptCard extends StatelessWidget {
             : Icons.check_circle;
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: riskColor.withValues(alpha: 0.4)),
       ),
@@ -1737,20 +1738,20 @@ class _ScriptCard extends StatelessWidget {
             ],
           ),
           if (script.description.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               script.description,
-              style: const TextStyle(fontSize: 11, color: Colors.white54),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           // ===== معاينة الأوامر (أول 5) =====
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.black54,
+              color: Theme.of(context).textTheme.bodySmall?.color,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Column(
@@ -1770,9 +1771,9 @@ class _ScriptCard extends StatelessWidget {
                 if (script.commands.length > 5)
                   Text(
                     '... و ${script.commands.length - 5} أوامر أخرى',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: Colors.white38,
+                      color: Theme.of(context).disabledColor,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -1785,7 +1786,7 @@ class _ScriptCard extends StatelessWidget {
             children: [
               Text(
                 '${script.commands.length} أوامر',
-                style: const TextStyle(fontSize: 11, color: Colors.white54),
+                style: TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
               ),
               const Spacer(),
               TextButton.icon(
@@ -1793,19 +1794,19 @@ class _ScriptCard extends StatelessWidget {
                   final commandsText = script.commands.join('\n');
                   Clipboard.setData(ClipboardData(text: commandsText));
                 },
-                icon: const Icon(Icons.copy, size: 14),
-                label: const Text('نسخ', style: TextStyle(fontSize: 11)),
+                icon: Icon(Icons.copy, size: 14),
+                label: Text('نسخ', style: TextStyle(fontSize: 11)),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  minimumSize: const Size(0, 28),
-                  foregroundColor: Colors.white70,
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  minimumSize: Size(0, 28),
+                  foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               ElevatedButton.icon(
                 onPressed: onExecute,
-                icon: const Icon(Icons.play_arrow, size: 14, color: Colors.white),
-                label: const Text('تنفيذ', style: TextStyle(fontSize: 11, color: Colors.white)),
+                icon: Icon(Icons.play_arrow, size: 14, color: Theme.of(context).colorScheme.onSurface),
+                label: Text('تنفيذ', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: riskColor,
                   padding: const EdgeInsets.symmetric(horizontal: 10),

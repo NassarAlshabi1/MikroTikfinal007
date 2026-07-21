@@ -162,12 +162,12 @@ class _TerminalScreenState extends State<TerminalScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('قد يقطع هذا الأمر الاتصال أو يحذف بيانات. متأكد؟'),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -225,11 +225,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
       case _LineKind.prompt:
         return const Color(0xFF4FC3F7); // أزرق فاتح
       case _LineKind.output:
-        return const Color(0xFFB9F6CA); // أخضر فاتح
+        return Color(0xFFB9F6CA); // أخضر فاتح
       case _LineKind.error:
-        return const Color(0xFFFF8A80); // أحمر فاتح
+        return Color(0xFFFF8A80); // أحمر فاتح
       case _LineKind.info:
-        return Colors.white54;
+        return Theme.of(context).hintColor;
     }
   }
 
@@ -290,10 +290,10 @@ class _TerminalScreenState extends State<TerminalScreen> {
                   size: 14,
                   color: Colors.greenAccent,
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   _method.displayName,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
                 ),
                 const Spacer(),
                 if (_busy)
@@ -345,14 +345,14 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 final cmd = _quickCommands[i];
                 return Center(
                   child: ActionChip(
-                    backgroundColor: const Color(0xFF21262D),
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    backgroundColor: Color(0xFF21262D),
+                    side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
                     label: Text(
                       cmd,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 11,
-                        color: Colors.white70,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                     onPressed: _busy ? null : () => _runCommand(cmd),
@@ -392,10 +392,10 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 enabled: !_busy,
                 autocorrect: false,
                 enableSuggestions: false,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 14,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 decoration: InputDecoration(
                   isDense: true,
@@ -406,7 +406,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                     fontSize: 14,
                   ),
                   hintText: 'اكتب أمر RouterOS...',
-                  hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+                  hintStyle: TextStyle(color: Theme.of(context).dividerColor, fontSize: 13),
                   filled: true,
                   fillColor: const Color(0xFF0D1117),
                   contentPadding:
@@ -420,12 +420,12 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 onSubmitted: (_) => _runCommand(),
               ),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             CircleAvatar(
               backgroundColor:
                   _busy ? Colors.grey : Theme.of(context).primaryColor,
               child: IconButton(
-                icon: const Icon(Icons.play_arrow, color: Colors.white),
+                icon: Icon(Icons.play_arrow, color: Theme.of(context).colorScheme.onSurface),
                 onPressed: _busy ? null : () => _runCommand(),
               ),
             ),
@@ -439,11 +439,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return InkWell(
       onTap: _history.isEmpty ? null : onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
+        padding: EdgeInsets.symmetric(horizontal: 2),
         child: Icon(
           icon,
           size: 18,
-          color: _history.isEmpty ? Colors.white24 : Colors.white54,
+          color: _history.isEmpty ? Theme.of(context).dividerColor : Theme.of(context).hintColor,
         ),
       ),
     );
