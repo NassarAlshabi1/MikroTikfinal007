@@ -16,7 +16,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   List<Map<String, dynamic>> _activeUsers = [];
   DateTime? _lastActiveFetch;
   static const Duration _minRefreshGap = Duration(seconds: 20);
-  static const Duration _cacheDuration = Duration(minutes: 2);
+// ignore: unused_field
+  static const Duration _cacheDurationUnused = Duration(minutes: 2);
   int _page = 0;
   static const int _pageSize = 50;
   bool _isLoading = true;

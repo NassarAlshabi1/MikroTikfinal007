@@ -31,9 +31,11 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   Map<String, int> _cardsByProfile = {};
 
   int _usersTotalPages = 0;
+// ignore: unused_field
   int _usersFetchedPages = 0;
-  int _sessionsTotalPages = 0;
   int _sessionsFetchedPages = 0;
+// ignore: unused_field
+  int _sessionsTotalPages = 0;
 
   DateTime? _fetchStartTime;
   Duration? _fetchDuration;
@@ -163,7 +165,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
 
       final results = await Future.wait<List<Map<String, dynamic>>>([
         _fetchPaginated(
-          client!,
+          client,
           '/tool/user-manager/user/print',
           'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
           chunk: usersChunk,
@@ -177,7 +179,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
           },
         ),
         _fetchPaginated(
-          client!,
+          client,
           '/tool/user-manager/session/print',
           'user,upload,download,uptime,start-time',
           chunk: sessionsChunk,

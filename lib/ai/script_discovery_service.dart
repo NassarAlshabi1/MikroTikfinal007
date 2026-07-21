@@ -65,10 +65,10 @@ class ScriptDiscoveryService {
 
       final scripts = <MikrotikScript>[];
       for (final item in response) {
-        final name = item['name'] as String? ?? '';
+        final name = item['name'] ?? '';
         if (name.isEmpty) continue;
 
-        final comment = item['comment'] as String?;
+        final comment = item['comment'];
         final level = _extractLevel(name);
 
         scripts.add(MikrotikScript(
