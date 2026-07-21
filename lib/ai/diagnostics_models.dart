@@ -110,6 +110,7 @@ extension DiagnosticModeExtension on DiagnosticMode {
 enum AiProvider {
   openAI,    // GPT-4o, GPT-4o-mini
   gemini,    // gemini-2.5-flash, gemini-2.5-pro
+  openRouter, // OpenRouter — نماذج متعددة (Gemini, Claude, Llama, Qwen...)
   custom,    // مزود مخصص (اسم نموذج + baseUrl + API key يدوياً)
 }
 
@@ -120,6 +121,8 @@ extension AiProviderExtension on AiProvider {
         return 'OpenAI (ChatGPT)';
       case AiProvider.gemini:
         return 'Google Gemini';
+      case AiProvider.openRouter:
+        return 'OpenRouter';
       case AiProvider.custom:
         return 'مزود مخصص (OpenAI-compatible)';
     }
@@ -131,6 +134,8 @@ extension AiProviderExtension on AiProvider {
         return 'gpt-4o-mini';
       case AiProvider.gemini:
         return 'gemini-2.5-flash';
+      case AiProvider.openRouter:
+        return 'google/gemini-2.5-flash';
       case AiProvider.custom:
         return '';
     }
@@ -142,6 +147,15 @@ extension AiProviderExtension on AiProvider {
         return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'];
       case AiProvider.gemini:
         return ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      case AiProvider.openRouter:
+        return [
+          'google/gemini-2.5-flash',
+          'google/gemini-2.5-pro',
+          'meta-llama/llama-3.3-70b-instruct',
+          'qwen/qwen-2.5-72b-instruct',
+          'deepseek/deepseek-chat-v3-0324',
+          'mistralai/mistral-small-3.1-24b-instruct',
+        ];
       case AiProvider.custom:
         return []; // المستخدم يُدخل اسم النموذج يدوياً
     }
@@ -328,19 +342,20 @@ class AiSettings {
         return 'https://api.openai.com/v1';
       case AiProvider.gemini:
         return 'https://generativelanguage.googleapis.com/v1beta';
+      case AiProvider.openRouter:
+        return 'https://openrouter.ai/api/v1';
       case AiProvider.custom:
         return ''; // المستخدم يجب أن يُدخل baseUrl يدوياً
     }
   }
 
   /// يعيد اسم النموذج الفعلي للاستخدام
-  /// للمزود المخصص: يُرجع model (الذي يُدخله المستخدم يدوياً)
-  /// للآخرين: يُرجع model (من القائمة المنسدلة)
+  /// إذا كان النموذج فارغاً، يستخدم النموذج الافتراضي للمزود
   String get effectiveModel {
     if (provider == AiProvider.custom) {
       return model; // اسم النموذج الذي يُدخله المستخدم يدوياً
     }
-    return model;
+    return model.isNotEmpty ? model : provider.defaultModel;
   }
 
   /// هل المزود المخصص مُهيّأ بشكل صحيح؟
@@ -353,10 +368,10 @@ class AiSettings {
   }
 
   static AiSettings get default_ => const AiSettings(
-        provider: AiProvider.openAI,
-        model: 'gpt-4o-mini',
+        provider: AiProvider.openRouter,
+        model: 'google/gemini-2.5-flash',
         apiKey: '',
-        baseUrl: null,
+        baseUrl: 'https://openrouter.ai/api/v1',
         connectionMethod: MikrotikConnectionMethod.routerOS,
         mode: DiagnosticMode.general,
       );

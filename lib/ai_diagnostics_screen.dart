@@ -867,6 +867,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     final isGeminiFlash25 =
         state.settings.provider == AiProvider.gemini &&
         state.settings.model == 'gemini-2.5-flash';
+    final isOpenRouterFlash =
+        state.settings.provider == AiProvider.openRouter &&
+        state.settings.model == 'google/gemini-2.5-flash';
 
     return Container(
       width: double.infinity,
@@ -877,9 +880,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           Icon(
             state.settings.provider == AiProvider.openAI
                 ? Icons.smart_toy
-                : Icons.auto_awesome,
+                : state.settings.provider == AiProvider.openRouter
+                    ? Icons.swap_horiz
+                    : Icons.auto_awesome,
             size: 16,
-            color: Theme.of(context).textTheme.bodySmall?.color,
+            color: state.settings.provider == AiProvider.openRouter
+                ? Colors.purpleAccent
+                : Theme.of(context).textTheme.bodySmall?.color,
           ),
           const SizedBox(width: 8),
           // ===== زر تبديل المزود/الموديل السريع =====
@@ -889,23 +896,31 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: isGeminiFlash25
-                    ? Colors.blueAccent.withValues(alpha: 0.25)
-                    : Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                color: isOpenRouterFlash
+                    ? Colors.purpleAccent.withValues(alpha: 0.25)
+                    : isGeminiFlash25
+                        ? Colors.blueAccent.withValues(alpha: 0.25)
+                        : Theme.of(context).primaryColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
-                border: isGeminiFlash25
-                    ? Border.all(color: Colors.blueAccent.withValues(alpha: 0.5))
-                    : null,
+                border: isOpenRouterFlash
+                    ? Border.all(color: Colors.purpleAccent.withValues(alpha: 0.5))
+                    : isGeminiFlash25
+                        ? Border.all(color: Colors.blueAccent.withValues(alpha: 0.5))
+                        : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isGeminiFlash25 ? Icons.bolt : Icons.memory,
+                    isOpenRouterFlash
+                        ? Icons.swap_horiz
+                        : isGeminiFlash25 ? Icons.bolt : Icons.memory,
                     size: 12,
-                    color: isGeminiFlash25
-                        ? Colors.blueAccent
-                        : Theme.of(context).textTheme.bodySmall?.color,
+                    color: isOpenRouterFlash
+                        ? Colors.purpleAccent
+                        : isGeminiFlash25
+                            ? Colors.blueAccent
+                            : Theme.of(context).textTheme.bodySmall?.color,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
@@ -913,10 +928,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       '${state.settings.provider.displayName} • ${state.settings.model}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isGeminiFlash25
-                            ? Colors.blueAccent
-                            : Theme.of(context).colorScheme.onSurface,
-                        fontWeight: isGeminiFlash25
+                        color: isOpenRouterFlash
+                            ? Colors.purpleAccent
+                            : isGeminiFlash25
+                                ? Colors.blueAccent
+                                : Theme.of(context).colorScheme.onSurface,
+                        fontWeight: isOpenRouterFlash || isGeminiFlash25
                             ? FontWeight.bold
                             : FontWeight.normal,
                       ),
@@ -1006,7 +1023,41 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             ),
             const Divider(height: 1),
 
-            // ===== قسم: Gemini (مع تمييز gemini-2.5-flash) =====
+            // ===== قسم: OpenRouter (الافتراضي) =====
+            const Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_horiz, size: 14, color: Colors.purpleAccent),
+                    SizedBox(width: 4),
+                    Text(
+                      'OpenRouter (نماذج متعددة)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.purpleAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            for (final model in AiProvider.openRouter.availableModels)
+              _buildModelTile(
+                ctx: ctx,
+                provider: AiProvider.openRouter,
+                model: model,
+                isSelected: settings.provider == AiProvider.openRouter &&
+                    settings.model == model,
+                isRecommended: model == 'google/gemini-2.5-flash',
+                description: _openRouterModelDescription(model),
+              ),
+
+            const Divider(height: 1),
+
+            // ===== قسم: Gemini =====
             const Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Align(
@@ -1104,6 +1155,26 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         return 'متقدم ومتوازن';
       case 'gpt-4-turbo':
         return 'قوي للمشاكل المعقدة';
+      default:
+        return '';
+    }
+  }
+
+  /// وصف موجز لنماذج OpenRouter
+  String _openRouterModelDescription(String model) {
+    switch (model) {
+      case 'google/gemini-2.5-flash':
+        return 'سريع واقتصادي — مثالي للتشخيص ⚡';
+      case 'google/gemini-2.5-pro':
+        return 'الأذكى — للمشاكل المعقدة';
+      case 'meta-llama/llama-3.3-70b-instruct':
+        return 'Llama 3.3 — مفتوح المصدر قوي';
+      case 'qwen/qwen-2.5-72b-instruct':
+        return 'Qwen 2.5 — دعم عربي ممتاز';
+      case 'deepseek/deepseek-chat-v3-0324':
+        return 'DeepSeek — قوي واقتصادي';
+      case 'mistralai/mistral-small-3.1-24b-instruct':
+        return 'Mistral — سريع وخفيف';
       default:
         return '';
     }
