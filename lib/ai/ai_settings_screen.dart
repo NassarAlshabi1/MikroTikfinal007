@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
 
 import 'diagnostics_models.dart';
 import 'diagnostics_provider.dart';
@@ -60,6 +61,77 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             content: Text('فشل الحفظ: $e'),
             backgroundColor: Colors.red,
           ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _testConnection() async {
+    final apiKey = _apiKeyController.text.trim();
+    final baseUrl = _baseUrlController.text.trim();
+
+    if (apiKey.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('أدخل مفتاح API أولاً'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final dio = Dio();
+      dio.options.connectTimeout = const Duration(seconds: 10);
+      dio.options.receiveTimeout = const Duration(seconds: 15);
+
+      final url = (baseUrl.isNotEmpty ? baseUrl : 'https://openrouter.ai/api/v1')
+          .replaceAll(RegExp(r'\/+$'), '');
+      final endpoint = '$url/models';
+
+      final response = await dio.get(
+        endpoint,
+        options: Options(headers: {
+          'Authorization': 'Bearer $apiKey',
+        }),
+      );
+
+      if (mounted) {
+        if (response.statusCode == 200) {
+          final models = (response.data['data'] as List?)?.length ?? 0;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ اتصال ناجح — $models نموذج متاح'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('⚠️ رمز غير متوقع: ${response.statusCode}'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        final msg = e.response?.statusCode == 401
+            ? '❌ مفتاح API غير صالح'
+            : '❌ فشل الاتصال: ${e.message}';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -236,7 +308,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             Text(
               settings.provider == AiProvider.custom
                   ? 'API Endpoint (إلزامي للمزود المخصص)'
-                  : 'API Endpoint مخصص (اختياري)',
+                  : settings.provider == AiProvider.openRouter
+                      ? 'API Endpoint (الافتراضي: openrouter.ai)'
+                      : 'API Endpoint مخصص (اختياري)',
               style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
@@ -248,7 +322,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                     EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 hintText: settings.provider == AiProvider.custom
                     ? 'https://api.xxx.com/v1 (إلزامي)'
-                    : 'https://api.openai.com/v1 (اتركه فارغاً للافتراضي)',
+                    : settings.provider == AiProvider.openRouter
+                        ? 'https://openrouter.ai/api/v1'
+                        : 'https://api.openai.com/v1 (اتركه فارغاً للافتراضي)',
                 hintStyle: TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
                 prefixIcon: Icon(Icons.link, size: 18, color: Theme.of(context).hintColor),
               ),
@@ -263,12 +339,20 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                     '• Together AI: https://api.together.xyz/v1\n'
                     '• Groq: https://api.groq.com/openai/v1\n'
                     '• أي مزود آخر متوافق مع OpenAI API'
-                  : 'استخدم هذا للمزودين المتوافقين مع OpenAI API:\n'
-                    '• OpenRouter: https://openrouter.ai/api/v1\n'
-                    '• Azure OpenAI: https://{resource}.openai.azure.com/openai/deployments/{deployment}\n'
-                    '• Ollama (محلي): http://localhost:11434/v1\n'
-                    '• LocalAI: http://localhost:8080/v1\n'
-                    '• Together AI: https://api.together.xyz/v1',
+                  : settings.provider == AiProvider.openRouter
+                      ? 'النماذج المتاحة على OpenRouter:\n'
+                        '• gemini-2.5-flash — سريع واقتصادي\n'
+                        '• gemini-2.5-pro — الأذكى\n'
+                        '• llama-3.3-70b — مفتوح المصدر\n'
+                        '• qwen-2.5-72b — دعم عربي ممتاز\n'
+                        '• deepseek-chat — قوي واقتصادي\n'
+                        '• mistral-small-3.1 — سريع وخفيف'
+                      : 'استخدم هذا للمزودين المتوافقين مع OpenAI API:\n'
+                        '• OpenRouter: https://openrouter.ai/api/v1\n'
+                        '• Azure OpenAI: https://{resource}.openai.azure.com/openai/deployments/{deployment}\n'
+                        '• Ollama (محلي): http://localhost:11434/v1\n'
+                        '• LocalAI: http://localhost:8080/v1\n'
+                        '• Together AI: https://api.together.xyz/v1',
               style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor),
             ),
             SizedBox(height: 16),
@@ -286,9 +370,11 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 border: const OutlineInputBorder(),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                hintText: settings.provider == AiProvider.openAI
-                    ? 'sk-...'
-                    : 'AIza...',
+                hintText: settings.provider == AiProvider.openRouter
+                    ? 'sk-or-...'
+                    : settings.provider == AiProvider.openAI
+                        ? 'sk-...'
+                        : 'AIza...',
                 suffixIcon: IconButton(
                   icon: Icon(_obscureApiKey
                       ? Icons.visibility
@@ -304,9 +390,11 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             // رابط الحصول على المفتاح
             InkWell(
               onTap: () async {
-                final url = settings.provider == AiProvider.openAI
-                    ? 'https://platform.openai.com/api-keys'
-                    : 'https://aistudio.google.com/app/apikey';
+                final url = settings.provider == AiProvider.openRouter
+                    ? 'https://openrouter.ai/keys'
+                    : settings.provider == AiProvider.openAI
+                        ? 'https://platform.openai.com/api-keys'
+                        : 'https://aistudio.google.com/app/apikey';
                 final uri = Uri.parse(url);
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -317,9 +405,11 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 }
               },
               child: Text(
-                settings.provider == AiProvider.openAI
-                    ? 'احصل على مفتاح OpenAI من: platform.openai.com/api-keys'
-                    : 'احصل على مفتاح Gemini من: aistudio.google.com/app/apikey',
+                settings.provider == AiProvider.openRouter
+                    ? 'احصل على مفتاح OpenRouter من: openrouter.ai/keys'
+                    : settings.provider == AiProvider.openAI
+                        ? 'احصل على مفتاح OpenAI من: platform.openai.com/api-keys'
+                        : 'احصل على مفتاح Gemini من: aistudio.google.com/app/apikey',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).primaryColor,
@@ -353,6 +443,18 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ),
 
             const SizedBox(height: 32),
+
+            // ===== زر اختبار الاتصال =====
+            OutlinedButton.icon(
+              onPressed: _isSaving ? null : _testConnection,
+              icon: const Icon(Icons.wifi_find, size: 18),
+              label: const Text('اختبار الاتصال'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+
+            const SizedBox(height: 16),
 
             // ===== زر الحفظ =====
             ElevatedButton.icon(

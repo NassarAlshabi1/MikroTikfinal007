@@ -34,6 +34,7 @@ class AiService {
     try {
       switch (settings.provider) {
         case AiProvider.openAI:
+        case AiProvider.openRouter: // 🔧 OpenRouter متوافق مع OpenAI API
         case AiProvider.custom: // 🔧 المزود المخصص يستخدم OpenAI API
           return await _analyzeWithOpenAI(
             settings: settings,
@@ -76,6 +77,7 @@ class AiService {
     try {
       switch (settings.provider) {
         case AiProvider.openAI:
+        case AiProvider.openRouter: // المزود المخصص يستخدم OpenAI API
         case AiProvider.custom: // المزود المخصص يستخدم OpenAI API
           return await _chatOpenAI(
             settings: settings,
@@ -123,7 +125,8 @@ class AiService {
       options: Options(headers: {
         'Authorization': 'Bearer ${settings.apiKey}',
         'Content-Type': 'application/json',
-      }),
+        'Accept': 'application/json',
+      }, responseType: ResponseType.json),
       data: {
         'model': settings.effectiveModel,
         'messages': payloadMessages,
@@ -131,7 +134,8 @@ class AiService {
         'temperature': temperature,
       },
     );
-    return response.data['choices'][0]['message']['content'] as String;
+    final data = response.data as Map<String, dynamic>;
+    return data['choices'][0]['message']['content'] as String;
   }
 
   static Future<String> _chatGemini({
@@ -258,7 +262,9 @@ class AiService {
         headers: {
           'Authorization': 'Bearer ${settings.apiKey}',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        responseType: ResponseType.json,
       ),
       data: {
         'model': settings.effectiveModel,
@@ -268,8 +274,14 @@ class AiService {
       },
     );
 
+    final data = response.data as Map<String, dynamic>;
+    if (data.containsKey('error')) {
+      final error = data['error'] as Map<String, dynamic>;
+      throw AiServiceException(
+          'خطأ من الـ AI: ${error['message'] ?? error['code'] ?? 'خطأ غير معروف'}');
+    }
     final content =
-        response.data['choices'][0]['message']['content'] as String;
+        data['choices'][0]['message']['content'] as String;
     final commands = _extractCommands(content);
 
     return AiAnalysisResult(

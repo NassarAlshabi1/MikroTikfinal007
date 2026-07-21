@@ -30,8 +30,8 @@ class AiSettingsService {
   Future<AiSettings> load() async {
     try {
       final apiKey = await _storage.read(key: _keyApiKey) ?? '';
-      final providerStr = await _storage.read(key: _keyProvider) ?? 'openAI';
-      final model = await _storage.read(key: _keyModel) ?? 'gpt-4o-mini';
+      final providerStr = await _storage.read(key: _keyProvider) ?? 'openRouter';
+      final model = await _storage.read(key: _keyModel) ?? 'google/gemini-2.5-flash';
       final baseUrl = await _storage.read(key: _keyBaseUrl);
       final methodStr =
           await _storage.read(key: _keyConnectionMethod) ?? 'routerOS';
@@ -44,7 +44,7 @@ class AiSettingsService {
         apiKey: apiKey,
         provider: AiProvider.values.firstWhere(
           (p) => p.name == providerStr,
-          orElse: () => AiProvider.openAI,
+          orElse: () => AiProvider.openRouter,
         ),
         model: model,
         baseUrl: baseUrl,
@@ -96,5 +96,23 @@ class AiSettingsService {
     await _storage.delete(key: _keyMaxTokens);
     await _storage.delete(key: _keyMode);
     await _storage.delete(key: _keyAgenticMaxSteps);
+  }
+
+  /// يُعبّئ التخزين الآمن بقيم افتراضية (يُستخدم مرة واحدة عند أول تشغيل)
+  /// يجب استدعاؤه مع مفتاح API حقيقي — لا تُخزّن المفاتيح في الكود المصدري
+  static Future<void> seedDefaults({
+    required String apiKey,
+    String provider = 'openRouter',
+    String model = 'google/gemini-2.5-flash',
+    String baseUrl = 'https://openrouter.ai/api/v1',
+  }) async {
+    final existingKey = await _storage.read(key: _keyApiKey);
+    if (existingKey == null || existingKey.isEmpty) {
+      await _storage.write(key: _keyApiKey, value: apiKey);
+      await _storage.write(key: _keyProvider, value: provider);
+      await _storage.write(key: _keyModel, value: model);
+      await _storage.write(key: _keyBaseUrl, value: baseUrl);
+      debugPrint('[AiSettingsService] Defaults seeded (provider=$provider)');
+    }
   }
 }
