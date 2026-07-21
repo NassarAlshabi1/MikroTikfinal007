@@ -3,6 +3,7 @@
 //
 //  مستوحى من smartconnect-app/lib/export_helper.dart
 //  يصدّر البيانات إلى CSV + يشاركها عبر Share.shareXFiles
+//  + زر فتح الملف (Open) — مستوحى من smartconnect-app
 // ============================================================
 
 import 'dart:io';
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// يساعد في تصدير البيانات إلى CSV
 class CsvExportHelper {
@@ -194,12 +196,20 @@ class CsvExportHelper {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                // 🔧 مستوحى من smartconnect-app: زر فتح الملف
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('فتح'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _openFile(path);
+                  },
+                ),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.share),
                   label: const Text('مشاركة'),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // shareXFiles deprecated في share_plus 11+ — نستخدم Share.share
                     Share.share(
                       path,
                       subject: 'MikroTik Manager - $title Export',
@@ -217,5 +227,14 @@ class CsvExportHelper {
         ),
       ),
     );
+  }
+
+  /// يفتح ملفاً عبر التطبيق الافتراضي للنظام
+  /// 🔧 مستوحى من smartconnect-app/lib/export_helper.dart (OpenFile.open)
+  static Future<void> _openFile(String path) async {
+    final uri = Uri.file(path);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 }
