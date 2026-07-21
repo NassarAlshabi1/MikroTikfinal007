@@ -43,9 +43,8 @@ void main() {
   // تهيئة قاعدة البيانات العامة
   appDatabase = db.AppDatabase();
   runApp(
-    // 🔧 إصلاح حرج: ProviderScope مطلوب لـ Riverpod (ConsumerStatefulWidget)
-    // بدونه، كل شاشة تستخدم ref.watch/ref.read ستفشل في وقت التشغيل
-    // وتظهر فارغة — هذا سبب أن شاشة AI لم تكن تعرض شيئاً
+    // 🔧 Riverpod ProviderScope — مطلوب لكل شاشات Riverpod
+    // + Provider for MqttService و AppTheme (للتوافق مع الشاشات القديمة)
     ProviderScope(
       child: provider.MultiProvider(
         providers: [

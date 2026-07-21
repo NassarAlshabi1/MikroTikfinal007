@@ -327,15 +327,15 @@ class AppTheme with ChangeNotifier {
     info: AppPalette.info,
     onInfo: Colors.white,
     background: AppPalette.darkBackground,
-    onBackground: Colors.white,
+    onBackground: AppPalette.textOnDarkCard,
     surface: AppPalette.darkSurface,
-    onSurface: Colors.white,
+    onSurface: AppPalette.textOnDarkCard,
     card: AppPalette.darkCard,
-    onCard: Colors.white,  // 🔧 نص أبيض على البطاقة الداكنة (كان غامقاً)
+    onCard: AppPalette.textOnDarkCard,
     accent: AppPalette.accent,
     muted: AppPalette.textSecondaryOnDark,
     border: AppPalette.muted,
-    inputBackground: AppPalette.darkSurface,
+    inputBackground: AppPalette.darkCardSecondary,
   );
 
   static final _darkTextTheme = AppTextThemeExtension(

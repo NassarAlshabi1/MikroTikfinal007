@@ -34,6 +34,7 @@ class AiService {
     try {
       switch (settings.provider) {
         case AiProvider.openAI:
+        case AiProvider.custom: // 🔧 المزود المخصص يستخدم OpenAI API
           return await _analyzeWithOpenAI(
             settings: settings,
             userQuery: userQuery,
@@ -75,6 +76,7 @@ class AiService {
     try {
       switch (settings.provider) {
         case AiProvider.openAI:
+        case AiProvider.custom: // المزود المخصص يستخدم OpenAI API
           return await _chatOpenAI(
             settings: settings,
             systemPrompt: systemPrompt,
@@ -123,7 +125,7 @@ class AiService {
         'Content-Type': 'application/json',
       }),
       data: {
-        'model': settings.model,
+        'model': settings.effectiveModel,
         'messages': payloadMessages,
         'max_tokens': settings.maxTokens,
         'temperature': temperature,
@@ -248,7 +250,7 @@ class AiService {
     ];
 
     debugPrint('[AiService] OpenAI request: ${messages.length} messages, '
-        'model=${settings.model}, maxTokens=${settings.maxTokens}, endpoint=$endpoint');
+        'model=${settings.effectiveModel}, maxTokens=${settings.maxTokens}, endpoint=$endpoint');
 
     final response = await dio.post(
       endpoint,
@@ -259,7 +261,7 @@ class AiService {
         },
       ),
       data: {
-        'model': settings.model,
+        'model': settings.effectiveModel,
         'messages': messages,
         'max_tokens': settings.maxTokens,
         'temperature': 0.4,  // منخفض لإجابات تقنية دقيقة

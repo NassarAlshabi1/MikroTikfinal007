@@ -110,6 +110,7 @@ extension DiagnosticModeExtension on DiagnosticMode {
 enum AiProvider {
   openAI,    // GPT-4o, GPT-4o-mini
   gemini,    // gemini-2.5-flash, gemini-2.5-pro
+  custom,    // مزود مخصص (اسم نموذج + baseUrl + API key يدوياً)
 }
 
 extension AiProviderExtension on AiProvider {
@@ -119,6 +120,8 @@ extension AiProviderExtension on AiProvider {
         return 'OpenAI (ChatGPT)';
       case AiProvider.gemini:
         return 'Google Gemini';
+      case AiProvider.custom:
+        return 'مزود مخصص (OpenAI-compatible)';
     }
   }
 
@@ -128,6 +131,8 @@ extension AiProviderExtension on AiProvider {
         return 'gpt-4o-mini';
       case AiProvider.gemini:
         return 'gemini-2.5-flash';
+      case AiProvider.custom:
+        return '';
     }
   }
 
@@ -137,6 +142,8 @@ extension AiProviderExtension on AiProvider {
         return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'];
       case AiProvider.gemini:
         return ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      case AiProvider.custom:
+        return []; // المستخدم يُدخل اسم النموذج يدوياً
     }
   }
 }
@@ -321,7 +328,28 @@ class AiSettings {
         return 'https://api.openai.com/v1';
       case AiProvider.gemini:
         return 'https://generativelanguage.googleapis.com/v1beta';
+      case AiProvider.custom:
+        return ''; // المستخدم يجب أن يُدخل baseUrl يدوياً
     }
+  }
+
+  /// يعيد اسم النموذج الفعلي للاستخدام
+  /// للمزود المخصص: يُرجع model (الذي يُدخله المستخدم يدوياً)
+  /// للآخرين: يُرجع model (من القائمة المنسدلة)
+  String get effectiveModel {
+    if (provider == AiProvider.custom) {
+      return model; // اسم النموذج الذي يُدخله المستخدم يدوياً
+    }
+    return model;
+  }
+
+  /// هل المزود المخصص مُهيّأ بشكل صحيح؟
+  bool get isCustomConfigured {
+    if (provider != AiProvider.custom) return true;
+    return model.isNotEmpty &&
+        apiKey.isNotEmpty &&
+        baseUrl != null &&
+        baseUrl!.isNotEmpty;
   }
 
   static AiSettings get default_ => const AiSettings(
@@ -354,7 +382,15 @@ class AiSettings {
         agenticMaxSteps: agenticMaxSteps ?? this.agenticMaxSteps,
       );
 
-  bool get isConfigured => apiKey.isNotEmpty;
+  bool get isConfigured {
+    if (apiKey.isEmpty) return false;
+    if (provider == AiProvider.custom) {
+      return model.isNotEmpty &&
+          baseUrl != null &&
+          baseUrl!.isNotEmpty;
+    }
+    return true;
+  }
 
   @override
   bool operator ==(Object other) =>

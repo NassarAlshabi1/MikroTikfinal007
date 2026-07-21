@@ -151,27 +151,45 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: settings.model,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // للمزود المخصص: حقل نص لإدخال اسم النموذج يدوياً
+            // للآخرين: قائمة منسدلة
+            if (settings.provider == AiProvider.custom) ...[
+              TextField(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  hintText: 'مثال: gpt-4o-mini أو llama-3.1-70b',
+                  hintStyle: TextStyle(fontSize: 12, color: Colors.white38),
+                  prefixIcon: Icon(Icons.model_training, size: 18, color: Colors.white54),
+                ),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                onChanged: (value) {
+                  ref.read(aiSettingsNotifierProvider.notifier).setModel(value.trim());
+                },
               ),
-              items: settings.provider.availableModels
-                  .map((m) => DropdownMenuItem(
-                        value: m,
-                        child: Text(m),
+            ] else ...[
+              DropdownButtonFormField<String>(
+                value: settings.model,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: settings.provider.availableModels
+                    .map((m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(m),
                       ))
-                  .toList(),
-              onChanged: (model) {
-                if (model != null) {
-                  ref
-                      .read(aiSettingsNotifierProvider.notifier)
-                      .setModel(model);
-                }
-              },
-            ),
+                    .toList(),
+                onChanged: (model) {
+                  if (model != null) {
+                    ref
+                        .read(aiSettingsNotifierProvider.notifier)
+                        .setModel(model);
+                  }
+                },
+              ),
+            ],
             const SizedBox(height: 16),
 
             // ===== حد خطوات الاستقصاء (التشخيص الوكيل) =====
@@ -214,10 +232,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ===== Custom Base URL (اختياري) =====
-            const Text(
-              'API Endpoint مخصص (اختياري)',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+            // ===== Custom Base URL =====
+            Text(
+              settings.provider == AiProvider.custom
+                  ? 'API Endpoint (إلزامي للمزود المخصص)'
+                  : 'API Endpoint مخصص (اختياري)',
+              style: const TextStyle(fontSize: 14, color: Colors.white70),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -226,7 +246,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 border: const OutlineInputBorder(),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                hintText: 'https://api.openai.com/v1 (اتركه فارغاً للافتراضي)',
+                hintText: settings.provider == AiProvider.custom
+                    ? 'https://api.xxx.com/v1 (إلزامي)'
+                    : 'https://api.openai.com/v1 (اتركه فارغاً للافتراضي)',
                 hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
                 prefixIcon: const Icon(Icons.link, size: 18, color: Colors.white54),
               ),
@@ -234,12 +256,19 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'استخدم هذا للمزودين المتوافقين مع OpenAI API:\n'
-              '• OpenRouter: https://openrouter.ai/api/v1\n'
-              '• Azure OpenAI: https://{resource}.openai.azure.com/openai/deployments/{deployment}\n'
-              '• Ollama (محلي): http://localhost:11434/v1\n'
-              '• LocalAI: http://localhost:8080/v1\n'
-              '• Together AI: https://api.together.xyz/v1',
+              settings.provider == AiProvider.custom
+                  ? 'أدخل عنوان API الكامل للمزود المتوافق مع OpenAI:\n'
+                    '• OpenRouter: https://openrouter.ai/api/v1\n'
+                    '• Ollama (محلي): http://localhost:11434/v1\n'
+                    '• Together AI: https://api.together.xyz/v1\n'
+                    '• Groq: https://api.groq.com/openai/v1\n'
+                    '• أي مزود آخر متوافق مع OpenAI API'
+                  : 'استخدم هذا للمزودين المتوافقين مع OpenAI API:\n'
+                    '• OpenRouter: https://openrouter.ai/api/v1\n'
+                    '• Azure OpenAI: https://{resource}.openai.azure.com/openai/deployments/{deployment}\n'
+                    '• Ollama (محلي): http://localhost:11434/v1\n'
+                    '• LocalAI: http://localhost:8080/v1\n'
+                    '• Together AI: https://api.together.xyz/v1',
               style: TextStyle(fontSize: 11, color: Colors.white38),
             ),
             const SizedBox(height: 16),
