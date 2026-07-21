@@ -13,6 +13,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -240,3 +241,87 @@ class MikrotikConnector {
     return '$_currentIp:$_currentPort$ssl';
   }
 }
+
+// ============================================================
+//  Riverpod providers لحالة اتصال MikroTik
+// ============================================================
+
+/// حالة اتصال MikroTik
+enum MikrotikConnectionState {
+  disconnected,
+  connecting,
+  connected,
+  error,
+}
+
+/// حالة اتصال MikroTik عبر Riverpod
+class MikrotikConnectionStatus {
+  final MikrotikConnectionState state;
+  final String? errorMessage;
+  final String? ip;
+  final int? port;
+
+  const MikrotikConnectionStatus({
+    this.state = MikrotikConnectionState.disconnected,
+    this.errorMessage,
+    this.ip,
+    this.port,
+  });
+
+  bool get isConnected => state == MikrotikConnectionState.connected;
+  bool get isConnecting => state == MikrotikConnectionState.connecting;
+}
+
+/// StateNotifier لإدارة حالة اتصال MikroTik عبر Riverpod
+class MikrotikConnectionNotifier extends StateNotifier<MikrotikConnectionStatus> {
+  MikrotikConnectionNotifier() : super(const MikrotikConnectionStatus());
+
+  Future<void> connect() async {
+    state = MikrotikConnectionStatus(
+      state: MikrotikConnectionState.connecting,
+    );
+
+    try {
+      final client = await MikrotikConnector.connect();
+      state = MikrotikConnectionStatus(
+        state: MikrotikConnectionState.connected,
+        ip: MikrotikConnector.currentIp,
+        port: MikrotikConnector.currentPort,
+      );
+    } on MikrotikCredentialsMissingException catch (e) {
+      state = MikrotikConnectionStatus(
+        state: MikrotikConnectionState.error,
+        errorMessage: e.message,
+      );
+    } on MikrotikConnectionException catch (e) {
+      state = MikrotikConnectionStatus(
+        state: MikrotikConnectionState.error,
+        errorMessage: e.message,
+      );
+    } catch (e) {
+      state = MikrotikConnectionStatus(
+        state: MikrotikConnectionState.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  void disconnect() {
+    MikrotikConnector.forceDisconnect();
+    state = const MikrotikConnectionStatus(
+      state: MikrotikConnectionState.disconnected,
+    );
+  }
+
+  void reset() {
+    state = const MikrotikConnectionStatus(
+      state: MikrotikConnectionState.disconnected,
+    );
+  }
+}
+
+/// Riverpod provider لحالة اتصال MikroTik
+final mikrotikConnectionProvider =
+    StateNotifierProvider<MikrotikConnectionNotifier, MikrotikConnectionStatus>(
+  (ref) => MikrotikConnectionNotifier(),
+);
