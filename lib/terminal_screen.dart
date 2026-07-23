@@ -2,7 +2,8 @@
 //  Terminal Screen — تيرمنال تفاعلي لأوامر MikroTik RouterOS
 //  - ينفّذ الأوامر عبر RouterOS API (8728) أو SSH (22)
 //  - يعرض المخرجات كوحدة طرفية (console) مع سجل الأوامر
-//  - تأكيد للأوامر الخطرة + أوامر سريعة جاهزة
+//  - تأكيد للأوامر الخطرة + أوامر سريعة جاهزة مصنّفة
+//  - زر "تدقيق شامل" لتنفيذ كل أوامر الفئة بالتسلسل
 // ============================================================
 
 import 'package:flutter/material.dart';
@@ -14,13 +15,41 @@ import 'ai/diagnostics_models.dart';
 import 'snackbar_helpers.dart';
 
 /// نوع سطر في مخرجات التيرمنال
-enum _LineKind { prompt, output, error, info }
+enum _LineKind { prompt, output, error, info, header }
 
 /// سطر واحد في شاشة التيرمنال
 class _TermLine {
   final String text;
   final _LineKind kind;
   const _TermLine(this.text, this.kind);
+}
+
+/// فئات الأوامر السريعة في التيرمنال
+enum _CmdCategory {
+  system,    // معلومات النظام
+  security,  // تدقيق أمني (firewall, services, users)
+  qos,       // طباعة QoS / Queues
+  network,   // واجهات وعناوين IP
+}
+
+extension _CmdCategoryX on _CmdCategory {
+  String get displayName {
+    switch (this) {
+      case _CmdCategory.system:    return 'النظام';
+      case _CmdCategory.security:  return 'تدقيق أمني';
+      case _CmdCategory.qos:       return 'QoS';
+      case _CmdCategory.network:   return 'الشبكة';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case _CmdCategory.system:    return Icons.memory;
+      case _CmdCategory.security:  return Icons.security;
+      case _CmdCategory.qos:       return Icons.speed;
+      case _CmdCategory.network:   return Icons.lan;
+    }
+  }
 }
 
 class TerminalScreen extends StatefulWidget {
@@ -43,15 +72,50 @@ class _TerminalScreenState extends State<TerminalScreen> {
   bool _busy = false;
   String _deviceIp = '';
 
-  static const _quickCommands = <String>[
-    '/system resource print',
-    '/system identity print',
-    '/interface print',
-    '/ip address print',
-    '/ip dhcp-server lease print',
-    '/ip firewall filter print',
-    '/log print',
-  ];
+  /// الفئة النشطة حالياً للأوامر السريعة
+  _CmdCategory _activeCategory = _CmdCategory.security;
+
+  /// خريطة الأوامر السريعة مصنّفة حسب الفئة
+  static const _categorizedCommands = <_CmdCategory, List<String>>{
+    _CmdCategory.system: <String>[
+      '/system resource print',
+      '/system identity print',
+      '/system routerboard print',
+      '/system package print',
+      '/system clock print',
+      '/log print',
+    ],
+    // فئة التدقيق الأمني — لرؤية firewall (filter+nat) + services + users كاملة
+    _CmdCategory.security: <String>[
+      '/ip firewall filter print',
+      '/ip firewall nat print',
+      '/ip firewall mangle print',
+      '/ip firewall address-list print',
+      '/ip firewall connection print',
+      '/ip service print',
+      '/user print',
+      '/user group print',
+      '/ip ssh print',
+      '/system note print',
+    ],
+    // فئة QoS — طباعة كل أنواع الطوابير
+    _CmdCategory.qos: <String>[
+      '/queue simple print',
+      '/queue tree print',
+      '/queue type print',
+      '/queue interface print',
+      '/queue simple stats',
+    ],
+    _CmdCategory.network: <String>[
+      '/interface print',
+      '/ip address print',
+      '/ip route print',
+      '/ip dhcp-server lease print',
+      '/ip dhcp-server network print',
+      '/ip dns print',
+      '/ip arp print',
+    ],
+  };
 
   @override
   void initState() {
@@ -59,7 +123,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
     _loadDeviceInfo();
     _lines.add(const _TermLine(
       'MikroTik Terminal — اكتب أمر RouterOS ثم اضغط تنفيذ.\n'
-      'مثال: /system resource print',
+      'مثال: /system resource print\n'
+      'استخدم الفئات أعلاه للوصول السريع لأوامر التدقيق الأمني و QoS.',
       _LineKind.info,
     ));
   }
@@ -146,6 +211,147 @@ class _TerminalScreenState extends State<TerminalScreen> {
     }
   }
 
+  /// ينفّذ كل أوامر الفئة النشطة بالتسلسل مع رؤوس فاصلة بين كل أمر.
+  /// مفيد جداً للتدقيق الأمني: يعرض firewall + nat + services + users دفعة واحدة.
+  Future<void> _runAuditAll() async {
+    if (_busy) return;
+    final commands = _categorizedCommands[_activeCategory] ?? const [];
+    if (commands.isEmpty) return;
+
+    final ok = await _confirmAuditAll(commands);
+    if (ok != true) return;
+
+    _append(const _TermLine(
+      '═══════════════════════════════════════════',
+      _LineKind.header,
+    ));
+    _append(_TermLine(
+      'تدقيق شامل — ${_activeCategory.displayName} (${commands.length} أوامر)',
+      _LineKind.header,
+    ));
+    _append(const _TermLine(
+      '═══════════════════════════════════════════',
+      _LineKind.header,
+    ));
+
+    setState(() => _busy = true);
+    int success = 0;
+    int failed = 0;
+    try {
+      for (var i = 0; i < commands.length; i++) {
+        final cmd = commands[i];
+
+        // رأس فاصل لكل أمر
+        _append(_TermLine(
+          '\n─── [${i + 1}/${commands.length}] $cmd ───',
+          _LineKind.header,
+        ));
+        _append(_TermLine('$_prompt $cmd', _LineKind.prompt));
+
+        try {
+          final result = await CommandExecutor.execute(
+            command: cmd,
+            method: _method,
+            timeout: const Duration(seconds: 30),
+          );
+          if (result.success) {
+            final out = result.output.trim();
+            _append(_TermLine(
+              out.isEmpty ? '(تم — بدون مخرجات)' : out,
+              _LineKind.output,
+            ));
+            success++;
+          } else {
+            _append(_TermLine(
+              'خطأ: ${result.error ?? "فشل غير معروف"}',
+              _LineKind.error,
+            ));
+            failed++;
+          }
+        } catch (e) {
+          _append(_TermLine('استثناء: $e', _LineKind.error));
+          failed++;
+        }
+      }
+    } finally {
+      _append(const _TermLine(
+        '═══════════════════════════════════════════',
+        _LineKind.header,
+      ));
+      _append(_TermLine(
+        'انتهى التدقيق — نجاح: $success | فشل: $failed',
+        _LineKind.info,
+      ));
+      _append(const _TermLine(
+        '═══════════════════════════════════════════',
+        _LineKind.header,
+      ));
+      if (mounted) {
+        setState(() => _busy = false);
+        _inputFocus.requestFocus();
+      }
+    }
+  }
+
+  Future<bool?> _confirmAuditAll(List<String> commands) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(_activeCategory.icon, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Text('تدقيق ${_activeCategory.displayName}'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'سيتم تنفيذ ${commands.length} أوامر قراءة (آمنة) بالتسلسل. '
+                'هذا يتيح رؤية شاملة لإعدادات ${_activeCategory.displayName} لتقييم الثغرات.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 220),
+                padding: const EdgeInsets.all(8),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: commands.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 2),
+                  itemBuilder: (_, i) => Text(
+                    '${i + 1}. ${commands[i]}',
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.playlist_play),
+            label: const Text('تنفيذ الكل'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<bool?> _confirmDangerous(String command) {
     return showDialog<bool>(
       context: context,
@@ -153,7 +359,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
         title: const Row(
           children: [
             Icon(Icons.dangerous, color: Colors.red),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text('أمر خطير'),
           ],
         ),
@@ -162,9 +368,9 @@ class _TerminalScreenState extends State<TerminalScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('قد يقطع هذا الأمر الاتصال أو يحذف بيانات. متأكد؟'),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Container(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.onSurface,
@@ -225,9 +431,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
       case _LineKind.prompt:
         return const Color(0xFF4FC3F7); // أزرق فاتح
       case _LineKind.output:
-        return Color(0xFFB9F6CA); // أخضر فاتح
+        return const Color(0xFFB9F6CA); // أخضر فاتح
       case _LineKind.error:
-        return Color(0xFFFF8A80); // أحمر فاتح
+        return const Color(0xFFFF8A80); // أحمر فاتح
+      case _LineKind.header:
+        return const Color(0xFFFFD180); // برتقالي ذهبي للرؤوس الفاصلة
       case _LineKind.info:
         return Theme.of(context).hintColor;
     }
@@ -235,6 +443,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final commands = _categorizedCommands[_activeCategory] ?? const <String>[];
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D1117),
       appBar: AppBar(
@@ -290,7 +500,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                   size: 14,
                   color: Colors.greenAccent,
                 ),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
                   _method.displayName,
                   style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
@@ -314,16 +524,17 @@ class _TerminalScreenState extends State<TerminalScreen> {
               itemCount: _lines.length,
               itemBuilder: (context, index) {
                 final line = _lines[index];
+                final isHeader = line.kind == _LineKind.header;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: EdgeInsets.only(bottom: isHeader ? 4 : 6),
                   child: SelectableText(
                     line.text,
                     style: TextStyle(
                       fontFamily: 'monospace',
-                      fontSize: 13,
+                      fontSize: isHeader ? 13 : 13,
                       height: 1.35,
                       color: _colorFor(line.kind),
-                      fontWeight: line.kind == _LineKind.prompt
+                      fontWeight: line.kind == _LineKind.prompt || isHeader
                           ? FontWeight.bold
                           : FontWeight.normal,
                     ),
@@ -333,19 +544,22 @@ class _TerminalScreenState extends State<TerminalScreen> {
             ),
           ),
 
-          // أوامر سريعة
+          // منتقي الفئة + زر التدقيق الشامل
+          _buildCategoryBar(),
+
+          // أوامر سريعة حسب الفئة المحددة
           SizedBox(
             height: 42,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              itemCount: _quickCommands.length,
+              itemCount: commands.length,
               separatorBuilder: (_, __) => const SizedBox(width: 6),
               itemBuilder: (_, i) {
-                final cmd = _quickCommands[i];
+                final cmd = commands[i];
                 return Center(
                   child: ActionChip(
-                    backgroundColor: Color(0xFF21262D),
+                    backgroundColor: const Color(0xFF21262D),
                     side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
                     label: Text(
                       cmd,
@@ -364,6 +578,78 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
           // صندوق الإدخال
           _buildInputBar(),
+        ],
+      ),
+    );
+  }
+
+  /// شريط الفئات مع زر "تدقيق شامل"
+  Widget _buildCategoryBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      color: const Color(0xFF0A0E1A),
+      child: Row(
+        children: [
+          // أيقونة الفئة الحالية
+          Icon(
+            _activeCategory.icon,
+            size: 16,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 6),
+          // منتقي الفئات (قابل للتمرير)
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _CmdCategory.values.map((cat) {
+                  final selected = cat == _activeCategory;
+                  return Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 4),
+                    child: FilterChip(
+                      selected: selected,
+                      label: Text(
+                        cat.displayName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      onSelected: _busy
+                          ? null
+                          : (_) => setState(() => _activeCategory = cat),
+                      selectedColor: Theme.of(context).colorScheme.primary,
+                      labelStyle: TextStyle(
+                        color: selected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                      backgroundColor: const Color(0xFF21262D),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          // زر التدقيق الشامل
+          FilledButton.icon(
+            onPressed: _busy ? null : _runAuditAll,
+            icon: const Icon(Icons.playlist_play, size: 16),
+            label: const Text('تدقيق شامل', style: TextStyle(fontSize: 12)),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              minimumSize: const Size(0, 32),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
         ],
       ),
     );
@@ -420,7 +706,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 onSubmitted: (_) => _runCommand(),
               ),
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             CircleAvatar(
               backgroundColor:
                   _busy ? Colors.grey : Theme.of(context).primaryColor,
@@ -439,7 +725,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return InkWell(
       onTap: _history.isEmpty ? null : onTap,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 2),
         child: Icon(
           icon,
           size: 18,
