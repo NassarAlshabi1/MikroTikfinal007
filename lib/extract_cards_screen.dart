@@ -473,7 +473,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                               icon: const Icon(Icons.clear, size: 18),
                               label: const Text('مسح', style: TextStyle(fontSize: 12)),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
+                                backgroundColor: Theme.of(context).appColors.error,
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               ),
                             ),

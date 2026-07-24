@@ -18,8 +18,10 @@ import 'ai/diagnostics_history_screen.dart';
 import 'ai/command_executor.dart';
 import 'ai/script_executor.dart';
 import 'ai/auto_fix_service.dart';
+import 'ai/fix_plan_dialog.dart';
 import 'snackbar_helpers.dart';
 
+import 'theme/app_theme.dart';
 class AiDiagnosticsScreen extends ConsumerStatefulWidget {
   const AiDiagnosticsScreen({super.key});
 
@@ -155,8 +157,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     ? Icons.dangerous
                     : Icons.warning,
                 color: riskLevel == CommandRiskLevel.dangerous
-                    ? Colors.red
-                    : Colors.orange,
+                    ? Theme.of(context).appColors.error
+                    : Theme.of(context).appColors.warning,
               ),
               const SizedBox(width: 8),
               Text('تنفيذ أمر ${riskLevel.displayName}'),
@@ -194,7 +196,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: riskLevel == CommandRiskLevel.dangerous
-                    ? Colors.red
+                    ? Theme.of(context).appColors.error
                     : Theme.of(context).primaryColor,
               ),
               onPressed: () => Navigator.of(ctx).pop(true),
@@ -257,7 +259,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         actions: [
           // زر الإصلاح التلقائي (Auto-Fix)
           IconButton(
-            icon: const Icon(Icons.auto_fix_high, color: Colors.amber),
+            icon: Icon(Icons.auto_fix_high, color: Theme.of(context).appColors.warning),
             tooltip: 'إصلاح تلقائي (بدون AI)',
             onPressed: state.isLoading
                 ? null
@@ -382,8 +384,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             Icon(
               script.isDangerous ? Icons.dangerous : Icons.movie,
               color: script.isDangerous
-                  ? Colors.red
-                  : (script.hasModerate ? Colors.orange : Colors.green),
+                  ? Theme.of(context).appColors.error
+                  : (script.hasModerate ? Theme.of(context).appColors.warning : Theme.of(context).appColors.success),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -414,10 +416,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   ),
                   child: SelectableText(
                     ScriptExecutor.previewScript(script),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 11,
-                      color: Colors.greenAccent,
+                      color: Theme.of(context).appColors.success,
                     ),
                   ),
                 ),
@@ -426,18 +428,18 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: Theme.of(context).appColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                      border: Border.all(color: Theme.of(context).appColors.error.withValues(alpha: 0.5)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.warning, color: Colors.red, size: 18),
+                        Icon(Icons.warning, color: Theme.of(context).appColors.error, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'هذا السكربت يحتوي على أوامر خطرة. سيتم عمل backup تلقائياً قبل التنفيذ.',
-                            style: TextStyle(fontSize: 12, color: Colors.red),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).appColors.error),
                           ),
                         ),
                       ],
@@ -447,17 +449,17 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
+                      color: Theme.of(context).appColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.info, color: Colors.orange, size: 18),
+                        Icon(Icons.info, color: Theme.of(context).appColors.warning, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'سيتم عمل backup تلقائياً قبل التنفيذ.',
-                            style: TextStyle(fontSize: 12, color: Colors.orange),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).appColors.warning),
                           ),
                         ),
                       ],
@@ -475,7 +477,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: script.isDangerous
-                  ? Colors.red
+                  ? Theme.of(context).appColors.error
                   : Theme.of(context).primaryColor,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -525,9 +527,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.green),
+              Icon(Icons.check_circle, color: Theme.of(context).appColors.success),
               const SizedBox(width: 8),
               Text('لا توجد إصلاحات'),
             ],
@@ -568,7 +570,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.auto_fix_high, color: Colors.amber, size: 24),
+                  Icon(Icons.auto_fix_high, color: Theme.of(context).appColors.warning, size: 24),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -614,23 +616,50 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             // ===== زر تطبيق كل الإصلاحات الآمنة =====
             Padding(
               padding: const EdgeInsets.all(12),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    _applyAllSafeFixes(fixes);
-                  },
-                  icon: Icon(Icons.bolt, color: Theme.of(context).colorScheme.onSurface),
-                  label: Text(
-                    'تطبيق كل الإصلاحات الآمنة فقط',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              child: Column(
+                children: [
+                  // زر خطة شاملة (dry-run + snapshot + apply + rollback)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showFixPlanDialog(ctx, fixes),
+                      icon: Icon(Icons.checklist,
+                          color: Theme.of(context).appColors.primary),
+                      label: Text(
+                        '📋 خطة شاملة (معاينة + تنفيذ آمن + استعادة)',
+                        style: TextStyle(
+                            color: Theme.of(context).appColors.primary),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                            color: Theme.of(context).appColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  const SizedBox(height: 8),
+                  // زر التطبيق السريع للإصلاحات الآمنة فقط
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _applyAllSafeFixes(fixes);
+                      },
+                      icon: Icon(Icons.bolt,
+                          color: Theme.of(context).colorScheme.onSurface),
+                      label: Text(
+                        'تطبيق كل الإصلاحات الآمنة فقط',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).appColors.success,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -642,10 +671,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   /// بناء عنصر إصلاح في القائمة
   Widget _buildAutoFixTile(ProposedFix fix) {
     final riskColor = fix.risk == CommandRiskLevel.dangerous
-        ? Colors.red
+        ? Theme.of(context).appColors.error
         : fix.risk == CommandRiskLevel.moderate
-            ? Colors.orange
-            : Colors.green;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.success;
 
     return ExpansionTile(
       leading: CircleAvatar(
@@ -667,12 +696,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.2),
+                color: Theme.of(context).appColors.success.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text(
+              child: Text(
                 'تلقائي',
-                style: TextStyle(fontSize: 10, color: Colors.green),
+                style: TextStyle(fontSize: 10, color: Theme.of(context).appColors.success),
               ),
             ),
         ],
@@ -705,7 +734,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               Text(
                 fix.impact,
                 style: TextStyle(
-                    fontSize: 12, color: Colors.orange.shade200),
+                    fontSize: 12, color: Theme.of(context).appColors.warning),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -721,10 +750,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ),
                 child: SelectableText(
                   fix.script.commands.join('\n'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 11,
-                    color: Colors.greenAccent,
+                    color: Theme.of(context).appColors.success,
                   ),
                 ),
               ),
@@ -778,9 +807,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.bolt, color: Colors.green),
+            Icon(Icons.bolt, color: Theme.of(context).appColors.success),
             const SizedBox(width: 8),
             Text('تطبيق الإصلاحات الآمنة'),
           ],
@@ -796,7 +825,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             child: Text('إلغاء'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).appColors.success),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text('تطبيق', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
@@ -837,14 +866,56 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     }
   }
 
+  /// يفتح نافذة خطة الإصلاح الشاملة (dry-run + تنفيذ آمن + rollback)
+  /// مستوحى من router diagnostics (plan_changes + apply_plan + rollback_change)
+  Future<void> _showFixPlanDialog(
+      BuildContext parentContext, List<ProposedFix> fixes) async {
+    // أغلق نافذة قائمة الإصلاحات أولاً
+    Navigator.of(parentContext).pop();
+
+    // جلب الـ snapshot الحالي من الـ provider
+    final diagState = ref.read(diagnosticsProvider);
+    final snapshot = diagState.lastSnapshot;
+    if (snapshot == null) {
+      showSuccessSnackBar(context, 'لا توجد بيانات تشخيص متاحة. شغّل التشخيص أولاً.');
+      return;
+    }
+
+    // إنشاء خطة
+    final plan = PlanService.createPlan(
+      fixes: fixes,
+      snapshot: snapshot,
+      title: 'خطة إصلاح (${fixes.length} إصلاحات)',
+    );
+
+    // تحديد طريقة الاتصال
+    final method = MikrotikConnectionMethod.routerOS;
+
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => FixPlanDialog(
+        plan: plan,
+        method: method,
+      ),
+    );
+
+    // بعد إغلاق النافذة، حدّث الحالة
+    if (mounted) {
+      _scrollToBottom();
+      setState(() {});
+    }
+  }
+
   Widget _buildNotConfiguredBanner() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      color: Colors.orange.withValues(alpha: 0.2),
+      color: Theme.of(context).appColors.warning.withValues(alpha: 0.2),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber, color: Colors.orange),
+          Icon(Icons.warning_amber, color: Theme.of(context).appColors.warning),
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
@@ -899,13 +970,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 color: isOpenRouterFlash
                     ? Colors.purpleAccent.withValues(alpha: 0.25)
                     : isGeminiFlash25
-                        ? Colors.blueAccent.withValues(alpha: 0.25)
+                        ? Theme.of(context).appColors.info.withValues(alpha: 0.25)
                         : Theme.of(context).primaryColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: isOpenRouterFlash
                     ? Border.all(color: Colors.purpleAccent.withValues(alpha: 0.5))
                     : isGeminiFlash25
-                        ? Border.all(color: Colors.blueAccent.withValues(alpha: 0.5))
+                        ? Border.all(color: Theme.of(context).appColors.info.withValues(alpha: 0.5))
                         : null,
               ),
               child: Row(
@@ -919,7 +990,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     color: isOpenRouterFlash
                         ? Colors.purpleAccent
                         : isGeminiFlash25
-                            ? Colors.blueAccent
+                            ? Theme.of(context).appColors.info
                             : Theme.of(context).textTheme.bodySmall?.color,
                   ),
                   const SizedBox(width: 4),
@@ -931,7 +1002,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         color: isOpenRouterFlash
                             ? Colors.purpleAccent
                             : isGeminiFlash25
-                                ? Colors.blueAccent
+                                ? Theme.of(context).appColors.info
                                 : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isOpenRouterFlash || isGeminiFlash25
                             ? FontWeight.bold
@@ -997,7 +1068,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Icons.swap_horiz, color: Colors.blueAccent),
+                  Icon(Icons.swap_horiz, color: Theme.of(context).appColors.info),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
@@ -1058,19 +1129,19 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             const Divider(height: 1),
 
             // ===== قسم: Gemini =====
-            const Padding(
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome, size: 14, color: Colors.blueAccent),
+                    Icon(Icons.auto_awesome, size: 14, color: Theme.of(context).appColors.info),
                     const SizedBox(width: 4),
                     Text(
                       'Google Gemini',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.blueAccent,
+                        color: Theme.of(context).appColors.info,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1092,19 +1163,19 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             const Divider(height: 1),
 
             // ===== قسم: OpenAI =====
-            const Padding(
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
-                    Icon(Icons.smart_toy, size: 14, color: Colors.greenAccent),
+                    Icon(Icons.smart_toy, size: 14, color: Theme.of(context).appColors.success),
                     const SizedBox(width: 4),
                     Text(
                       'OpenAI (ChatGPT)',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.greenAccent,
+                        color: Theme.of(context).appColors.success,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1193,8 +1264,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       leading: Icon(
         isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
         color: isSelected
-            ? Colors.blueAccent
-            : (isRecommended ? Colors.amber : Theme.of(context).disabledColor),
+            ? Theme.of(context).appColors.info
+            : (isRecommended ? Theme.of(context).appColors.warning : Theme.of(context).disabledColor),
         size: 22,
       ),
       title: Row(
@@ -1208,8 +1279,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 fontWeight:
                     isSelected || isRecommended ? FontWeight.bold : FontWeight.normal,
                 color: isSelected
-                    ? Colors.blueAccent
-                    : (isRecommended ? Colors.amber.shade200 : Theme.of(context).colorScheme.onSurface),
+                    ? Theme.of(context).appColors.info
+                    : (isRecommended ? Theme.of(context).appColors.warning : Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ),
@@ -1218,13 +1289,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
+                color: Theme.of(context).appColors.warning.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                border: Border.all(color: Theme.of(context).appColors.warning.withValues(alpha: 0.5)),
               ),
-              child: const Text(
+              child: Text(
                 'موصى به',
-                style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 10, color: Theme.of(context).appColors.warning, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -1237,7 +1308,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               style: TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
             ),
       trailing: isRecommended
-          ? const Icon(Icons.bolt, color: Colors.amber, size: 18)
+          ? Icon(Icons.bolt, color: Theme.of(context).appColors.warning, size: 18)
           : null,
       onTap: () async {
         await ref
@@ -1422,7 +1493,7 @@ class _MessageBubble extends StatelessWidget {
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isError
-                        ? Colors.red.withValues(alpha: 0.1)
+                        ? Theme.of(context).appColors.error.withValues(alpha: 0.1)
                         : isUser
                             ? Theme.of(context).primaryColor
                             : Theme.of(context).cardColor,
@@ -1576,13 +1647,13 @@ class _MessageBubble extends StatelessWidget {
       const SizedBox(height: 8),
       Row(
         children: [
-          const Icon(Icons.code, size: 14, color: Colors.amber),
+          Icon(Icons.code, size: 14, color: Theme.of(context).appColors.warning),
           const SizedBox(width: 4),
           Text(
             'سكربتات جاهزة للتنفيذ (${scripts.length})',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.amber,
+              color: Theme.of(context).appColors.warning,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1603,7 +1674,7 @@ class _MessageBubble extends StatelessWidget {
     final isUser = message.type == MessageType.user;
     return CircleAvatar(
       radius: 16,
-      backgroundColor: isUser ? Colors.blue : Theme.of(context).primaryColor,
+      backgroundColor: isUser ? Theme.of(context).appColors.info : Theme.of(context).primaryColor,
       child: Icon(
         isUser
             ? Icons.person
@@ -1678,7 +1749,7 @@ class _CommandChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _riskLevel == CommandRiskLevel.dangerous
-                ? Colors.red.withValues(alpha: 0.5)
+                ? Theme.of(context).appColors.error.withValues(alpha: 0.5)
                 : Theme.of(context).dividerColor,
           ),
         ),
@@ -1690,15 +1761,15 @@ class _CommandChip extends StatelessWidget {
               children: [
                 Text(riskEmoji, style: const TextStyle(fontSize: 14)),
                 const SizedBox(width: 6),
-                const Icon(Icons.terminal, size: 14, color: Colors.greenAccent),
+                Icon(Icons.terminal, size: 14, color: Theme.of(context).appColors.success),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     command,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 12,
-                      color: Colors.greenAccent,
+                      color: Theme.of(context).appColors.success,
                     ),
                   ),
                 ),
@@ -1728,7 +1799,7 @@ class _CommandChip extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 10),
                     minimumSize: Size(0, 30),
                     backgroundColor: _riskLevel == CommandRiskLevel.dangerous
-                        ? Colors.red
+                        ? Theme.of(context).appColors.error
                         : Theme.of(context).primaryColor,
                     foregroundColor: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -1757,10 +1828,10 @@ class _ScriptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final riskColor = script.isDangerous
-        ? Colors.red
+        ? Theme.of(context).appColors.error
         : script.hasModerate
-            ? Colors.orange
-            : Colors.green;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.success;
 
     final riskIcon = script.isDangerous
         ? Icons.dangerous
@@ -1831,10 +1902,10 @@ class _ScriptCard extends StatelessWidget {
                 for (var i = 0; i < script.commands.length && i < 5; i++)
                   Text(
                     '${i + 1}. ${script.commands[i]}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 10,
-                      color: Colors.greenAccent,
+                      color: Theme.of(context).appColors.success,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

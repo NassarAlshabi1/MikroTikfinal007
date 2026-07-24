@@ -14,6 +14,7 @@ import 'ai/command_executor.dart';
 import 'ai/diagnostics_models.dart';
 import 'snackbar_helpers.dart';
 
+import 'theme/app_theme.dart';
 /// نوع سطر في مخرجات التيرمنال
 enum _LineKind { prompt, output, error, info, header }
 
@@ -417,9 +418,9 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.dangerous, color: Colors.red),
+            Icon(Icons.dangerous, color: Theme.of(context).appColors.error),
             SizedBox(width: 8),
             Text('أمر خطير'),
           ],
@@ -439,8 +440,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
               ),
               child: Text(
                 command,
-                style: const TextStyle(
-                    fontFamily: 'monospace', color: Colors.orangeAccent),
+                style: TextStyle(
+                    fontFamily: 'monospace', color: Theme.of(context).appColors.warning),
               ),
             ),
           ],
@@ -451,7 +452,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
             child: const Text('إلغاء'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('تنفيذ'),
           ),
@@ -559,7 +560,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                       ? Icons.terminal
                       : Icons.api,
                   size: 14,
-                  color: Colors.greenAccent,
+                  color: Theme.of(context).appColors.success,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -747,8 +748,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 decoration: InputDecoration(
                   isDense: true,
                   prefixText: '> ',
-                  prefixStyle: const TextStyle(
-                    color: Colors.greenAccent,
+                  prefixStyle: TextStyle(
+                    color: Theme.of(context).appColors.success,
                     fontFamily: 'monospace',
                     fontSize: 14,
                   ),
@@ -770,7 +771,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
             const SizedBox(width: 6),
             CircleAvatar(
               backgroundColor:
-                  _busy ? Colors.grey : Theme.of(context).primaryColor,
+                  _busy ? Theme.of(context).appColors.muted : Theme.of(context).primaryColor,
               child: IconButton(
                 icon: Icon(Icons.play_arrow, color: Theme.of(context).colorScheme.onSurface),
                 onPressed: _busy ? null : () => _runCommand(),

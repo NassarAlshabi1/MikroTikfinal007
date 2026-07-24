@@ -10,6 +10,7 @@ import 'package:dio/dio.dart';
 import 'diagnostics_models.dart';
 import 'diagnostics_provider.dart';
 
+import '../theme/app_theme.dart';
 class AiSettingsScreen extends ConsumerStatefulWidget {
   const AiSettingsScreen({super.key});
 
@@ -47,9 +48,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       await notifier.setBaseUrl(_baseUrlController.text.trim());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('تم حفظ الإعدادات'),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).appColors.success,
           ),
         );
         Navigator.of(context).pop();
@@ -59,7 +60,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('فشل الحفظ: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).appColors.error,
           ),
         );
       }
@@ -75,9 +76,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     if (apiKey.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('أدخل مفتاح API أولاً'),
-            backgroundColor: Colors.orange,
+            backgroundColor: Theme.of(context).appColors.warning,
           ),
         );
       }
@@ -107,14 +108,14 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('✅ اتصال ناجح — $models نموذج متاح'),
-              backgroundColor: Colors.green,
+              backgroundColor: Theme.of(context).appColors.success,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('⚠️ رمز غير متوقع: ${response.statusCode}'),
-              backgroundColor: Colors.orange,
+              backgroundColor: Theme.of(context).appColors.warning,
             ),
           );
         }
@@ -125,13 +126,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ? '❌ مفتاح API غير صالح'
             : '❌ فشل الاتصال: ${e.message}';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(content: Text(msg), backgroundColor: Theme.of(context).appColors.error),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Theme.of(context).appColors.error),
         );
       }
     } finally {
@@ -424,12 +425,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.1),
+                color: Theme.of(context).appColors.info.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blueAccent, size: 18),
+                  Icon(Icons.info_outline, color: Theme.of(context).appColors.info, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -474,21 +475,21 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: Theme.of(context).appColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                border: Border.all(color: Theme.of(context).appColors.error.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.security, color: Colors.red, size: 18),
+                      Icon(Icons.security, color: Theme.of(context).appColors.error, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'تنبيه أمني',
                         style: TextStyle(
-                          color: Colors.red,
+                          color: Theme.of(context).appColors.error,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

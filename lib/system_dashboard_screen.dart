@@ -401,7 +401,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           'تحذير: استخدام المعالج مرتفع!',
           'استخدام المعالج وصل إلى $_cpuLoad% (الحد: ${_cpuThreshold.toInt()}%)',
           Icons.warning_amber_rounded,
-          Colors.orange,
+          Theme.of(context).appColors.warning,
         );
         _lastCpuAlertTime = now;
       }
@@ -422,7 +422,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           'تحذير: الذاكرة ممتلئة!',
           'استخدام الذاكرة وصل إلى ${memoryUsedPercentage.toStringAsFixed(1)}% (الحد: ${_memoryThreshold.toInt()}%)',
           Icons.memory,
-          Colors.red,
+          Theme.of(context).appColors.error,
         );
         _lastMemoryAlertTime = now;
       }
@@ -441,7 +441,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             'تحذير: حرارة الجهاز مرتفعة!',
             'درجة الحرارة وصلت إلى $temp°C (الحد: ${_temperatureThreshold.toInt()}°C)',
             Icons.thermostat,
-            Colors.red,
+            Theme.of(context).appColors.error,
           );
           _lastTempAlertTime = now;
         }
@@ -507,7 +507,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+              Icon(Icons.error_outline, size: 64, color: Theme.of(context).appColors.error),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
@@ -563,7 +563,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildChartCard(
                   title: 'استخدام المعالج (CPU)',
                   data: _cpuHistory,
-                  color: _cpuAlert ? Colors.red : Colors.purple,
+                  color: _cpuAlert ? Theme.of(context).appColors.error : Colors.purple,
                   unit: '%',
                   isAlert: _cpuAlert,
                 ),
@@ -571,7 +571,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildChartCard(
                   title: 'استخدام الذاكرة (RAM)',
                   data: _memoryHistory,
-                  color: _memoryAlert ? Colors.red : Colors.blue,
+                  color: _memoryAlert ? Theme.of(context).appColors.error : Theme.of(context).appColors.info,
                   unit: '%',
                   isAlert: _memoryAlert,
                 ),
@@ -591,25 +591,25 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     'مدة التشغيل',
                     _formatUptime(_uptime),
                     Icons.timer,
-                    Colors.blue,
+                    Theme.of(context).appColors.info,
                   ),
                   _buildInfoCard(
                     'المستخدمين النشطين',
                     '$_activeUsers من $_totalUsers',
                     Icons.people,
-                    Colors.green,
+                    Theme.of(context).appColors.success,
                   ),
                   _buildInfoCard(
                     'سرعة النت',
                     '${_formatSpeed(_rxBitsPerSecond)} ⬇\n${_formatSpeed(_txBitsPerSecond)} ⬆',
                     Icons.speed,
-                    Colors.cyan,
+                    Theme.of(context).appColors.info,
                   ),
                   _buildInfoCard(
                     'التخزين',
                     '${_formatBytes(_totalHddSpace - _freeHddSpace)} من ${_formatBytes(_totalHddSpace)}\n${_calculatePercentage(_freeHddSpace, _totalHddSpace).toStringAsFixed(1)}%',
                     Icons.storage,
-                    Colors.orange,
+                    Theme.of(context).appColors.warning,
                   ),
                 ],
               ),
@@ -657,7 +657,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   _buildActionButton(
                     'البروديائد',
                     Icons.wifi_tethering,
-                    Colors.grey,
+                    Theme.of(context).appColors.muted,
                     () {
                       // TODO
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -668,7 +668,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   _buildActionButton(
                     'يوزر متجر',
                     Icons.group,
-                    Colors.grey,
+                    Theme.of(context).appColors.muted,
                     () {
                       // TODO
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -747,7 +747,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 'الفولت',
                 _voltage,
                 Icons.bolt,
-                Colors.yellow,
+                Theme.of(context).appColors.warning,
                 false,
               ),
               Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
@@ -755,7 +755,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 'الحرارة',
                 _temperature == 'غير متاح' ? _temperature : '$_temperature°',
                 Icons.thermostat,
-                _temperatureAlert ? Colors.red : Colors.orange,
+                _temperatureAlert ? Theme.of(context).appColors.error : Theme.of(context).appColors.warning,
                 _temperatureAlert,
               ),
               Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
@@ -763,7 +763,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 'المعالج',
                 '$_cpuLoad%',
                 Icons.memory,
-                _cpuAlert ? Colors.red : Colors.purple,
+                _cpuAlert ? Theme.of(context).appColors.error : Colors.purple,
                 _cpuAlert,
               ),
             ],
@@ -784,8 +784,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               if (isAlert)
                 Container(
                   padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).appColors.error,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -812,7 +812,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               borderRadius: BorderRadius.circular(8),
               boxShadow: isAlert ? [
                 BoxShadow(
-                  color: Colors.red.withValues(alpha: 0.5),
+                  color: Theme.of(context).appColors.error.withValues(alpha: 0.5),
                   blurRadius: 8,
                   spreadRadius: 2,
                 ),
@@ -1135,11 +1135,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildChartStat('الحد الأدنى', minY, unit, Colors.green),
-              _buildChartStat('الحد الأقصى', maxY, unit, Colors.red),
+              _buildChartStat('الحد الأدنى', minY, unit, Theme.of(context).appColors.success),
+              _buildChartStat('الحد الأقصى', maxY, unit, Theme.of(context).appColors.error),
               _buildChartStat('المتوسط', 
                 data.map((e) => e.y).reduce((a, b) => a + b) / data.length, 
-                unit, Colors.orange),
+                unit, Theme.of(context).appColors.warning),
             ],
           ),
         ],
@@ -1189,7 +1189,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'title': 'استخدام المعالج مرتفع',
         'value': '$_cpuLoad%',
         'icon': Icons.memory,
-        'color': Colors.orange,
+        'color': Theme.of(context).appColors.warning,
       });
     }
     
@@ -1201,7 +1201,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'title': 'الذاكرة ممتلئة',
         'value': '${memoryUsedPercentage.toStringAsFixed(1)}%',
         'icon': Icons.storage,
-        'color': Colors.red,
+        'color': Theme.of(context).appColors.error,
       });
     }
     
@@ -1210,7 +1210,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'title': 'الحرارة مرتفعة',
         'value': '$_temperature°C',
         'icon': Icons.thermostat,
-        'color': Colors.red,
+        'color': Theme.of(context).appColors.error,
       });
     }
 
@@ -1219,8 +1219,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.red.shade700,
-            Colors.orange.shade600,
+            Theme.of(context).appColors.error,
+            Theme.of(context).appColors.warning,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1228,7 +1228,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withValues(alpha: 0.4),
+            color: Theme.of(context).appColors.error.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 4),
             spreadRadius: 2,

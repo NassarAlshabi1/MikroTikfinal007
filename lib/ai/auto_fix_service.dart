@@ -1036,6 +1036,9 @@ class PlanApplyResult {
 
   /// هل كل الإصلاحات نجحت
   bool get isSuccess => status == PlanApplyStatus.success;
+
+  /// هل يمكن استعادة الحالة (rollback متاح)
+  bool get canRollback => rollbackScript != null;
 }
 
 /// حالة تطبيق خطة

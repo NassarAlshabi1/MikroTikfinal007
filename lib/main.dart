@@ -484,7 +484,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 child: Icon(
                   themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                   key: ValueKey(themeProvider.isDarkMode),
-                  color: themeProvider.isDarkMode ? Colors.amber[600] : Colors.indigo[600],
+                  color: themeProvider.isDarkMode ? Theme.of(context).appColors.warning : Theme.of(context).appColors.primary,
                   size: 26,
                 ),
               ),
@@ -1244,7 +1244,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   child: Icon(
                     themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
                     key: ValueKey(themeProvider.isDarkMode),
-                    color: themeProvider.isDarkMode ? Colors.amber : Colors.indigo,
+                    color: themeProvider.isDarkMode ? Theme.of(context).appColors.warning : Theme.of(context).appColors.primary,
                   ),
                 ),
                 tooltip: themeProvider.isDarkMode ? 'التبديل للثيم الفاتح' : 'التبديل للثيم الغامق',

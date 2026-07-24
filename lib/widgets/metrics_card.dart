@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 /// بطاقة لعرض مقياس واحد (رقم + أيقونة + label)
 ///
 /// مثال:
@@ -15,14 +16,14 @@ import 'package:flutter/material.dart';
 ///   icon: Icons.people,
 ///   label: 'مستخدمين نشطين',
 ///   count: 42,
-///   color: Colors.green,
+///   color: Theme.of(context).appColors.success,
 /// )
 /// ```
 class MetricsCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final int count;
-  final Color color;
+  final Color? color;
   final VoidCallback? onTap;
 
   const MetricsCard({
@@ -30,12 +31,13 @@ class MetricsCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.count,
-    this.color = Colors.indigo,
+    this.color,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Theme.of(context).appColors.primary;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmallScreen = constraints.maxWidth < 160;
@@ -52,12 +54,12 @@ class MetricsCard extends StatelessWidget {
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: color.withValues(alpha: 0.2),
+                color: effectiveColor.withValues(alpha: 0.2),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: color.withValues(alpha: 0.1),
+                  color: effectiveColor.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -70,10 +72,10 @@ class MetricsCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(isSmallScreen ? 6 : 10),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
+                    color: effectiveColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: iconSize, color: color),
+                  child: Icon(icon, size: iconSize, color: effectiveColor),
                 ),
                 SizedBox(height: isSmallScreen ? 6 : 10),
                 Text(

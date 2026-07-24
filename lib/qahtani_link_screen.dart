@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'mqtt_service.dart';
 import 'perf/device_capability.dart';
 
+import 'theme/app_theme.dart';
 class QahtaniLinkScreen extends StatefulWidget {
   const QahtaniLinkScreen({super.key});
 
@@ -293,14 +294,14 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
         cacheExtent: DeviceCapability.instance.listViewCacheExtent,
         addAutomaticKeepAlives: false,
         children: [
-          const Icon(Icons.cloud_done, color: Colors.green, size: 80),
+          Icon(Icons.cloud_done, color: Theme.of(context).appColors.success, size: 80),
           const SizedBox(height: 16),
-          const Center(
+          Center(
               child: Text('الشبكة مرتبطة بنجاح',
                   style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green))),
+                      color: Theme.of(context).appColors.success))),
           const SizedBox(height: 24),
           RepaintBoundary(
             child: Card(
@@ -343,7 +344,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
                 child: Card(
                   color: Theme.of(context).scaffoldBackgroundColor,
                   child: ListTile(
-                    leading: const Icon(Icons.wifi_tethering, color: Colors.cyan),
+                    leading: Icon(Icons.wifi_tethering, color: Theme.of(context).appColors.info),
                     title: Text(unit['name'] ?? 'فئة غير مسماة'),
                   ),
                 ),
@@ -360,7 +361,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.link_off, color: Colors.orange, size: 80),
+          Icon(Icons.link_off, color: Theme.of(context).appColors.warning, size: 80),
           const SizedBox(height: 16),
           Center(
               child: Text(
@@ -373,13 +374,13 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Text(_errorMessage!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Colors.redAccent, fontSize: 12)),
+                  style: TextStyle(
+                      color: Theme.of(context).appColors.error, fontSize: 12)),
             ),
           if (_isAwaitingCode)
             Text(_statusMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.amber, fontSize: 16)),
+                style: TextStyle(color: Theme.of(context).appColors.warning, fontSize: 16)),
           const SizedBox(height: 16),
           if (!_isAwaitingCode)
             TextField(

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'perf/device_capability.dart';
 
+import 'theme/app_theme.dart';
 class RogueDhcpDetectorScreen extends StatefulWidget {
   const RogueDhcpDetectorScreen({super.key});
 
@@ -249,7 +250,7 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
                       return Card(
                         color: isRogue ? const Color(0x1AF44336) : const Color(0x1A4CAF50),
                         child: ListTile(
-                          leading: Icon(Icons.router, color: isRogue ? Colors.redAccent : Colors.green),
+                          leading: Icon(Icons.router, color: isRogue ? Theme.of(context).appColors.error : Theme.of(context).appColors.success),
                           title: Text(serverIp),
                           subtitle: Text(isRogue ? 'خادم DHCP دخيل' : 'خادم DHCP شرعي (الراوتر)'),
                         ),

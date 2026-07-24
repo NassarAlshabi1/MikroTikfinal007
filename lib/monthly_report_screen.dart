@@ -9,6 +9,7 @@ import 'database/daos/cards_dao.dart';
 import 'database/daos/ai_diagnostics_dao.dart';
 import 'main.dart';
 
+import 'theme/app_theme.dart';
 class MonthlyReportScreen extends StatefulWidget {
   const MonthlyReportScreen({super.key});
 
@@ -82,8 +83,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      Icon(Icons.error_outline,
+                          size: 48, color: Theme.of(context).appColors.error),
                       const SizedBox(height: 16),
                       Text(_error!),
                       const SizedBox(height: 16),
@@ -150,13 +151,13 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
           'إجمالي الكروت',
           _cardStats?.totalCards.toString() ?? '0',
           Icons.credit_card,
-          Colors.blue,
+          Theme.of(context).appColors.info,
         ),
         _buildStatCard(
           'الكروت النشطة',
           _cardStats?.activeCards.toString() ?? '0',
           Icons.check_circle,
-          Colors.green,
+          Theme.of(context).appColors.success,
         ),
         _buildStatCard(
           'الأوامر المنفّذة',
@@ -168,7 +169,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
           'جلسات التشخيص',
           _diagStats?.totalSessions.toString() ?? '0',
           Icons.psychology,
-          Colors.orange,
+          Theme.of(context).appColors.warning,
         ),
       ],
     );
@@ -213,10 +214,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       child: ExpansionTile(
         leading: CircleAvatar(
           backgroundColor: successRate >= 80
-              ? Colors.green
+              ? Theme.of(context).appColors.success
               : successRate >= 50
-                  ? Colors.orange
-                  : Colors.red,
+                  ? Theme.of(context).appColors.warning
+                  : Theme.of(context).appColors.error,
           child: Text(
             report.month.substring(5), // الشهر فقط (MM)
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
@@ -233,10 +234,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: successRate >= 80
-                ? Colors.green
+                ? Theme.of(context).appColors.success
                 : successRate >= 50
-                    ? Colors.orange
-                    : Colors.red,
+                    ? Theme.of(context).appColors.warning
+                    : Theme.of(context).appColors.error,
           ),
         ),
         children: [
@@ -247,9 +248,9 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               children: [
                 _buildDetailRow('إجمالي الأوامر', '${report.total}'),
                 _buildDetailRow('ناجحة', '${report.successful}',
-                    color: Colors.green),
+                    color: Theme.of(context).appColors.success),
                 _buildDetailRow('فاشلة', '${report.failed}',
-                    color: Colors.red),
+                    color: Theme.of(context).appColors.error),
                 _buildDetailRow(
                     'متوسط زمن التنفيذ', '${report.avgDurationMs}ms'),
                 const SizedBox(height: 8),
@@ -260,8 +261,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     value: report.total > 0
                         ? report.successful / report.total
                         : 0,
-                    backgroundColor: Colors.red.withValues(alpha: 0.3),
-                    color: Colors.green,
+                    backgroundColor: Theme.of(context).appColors.error.withValues(alpha: 0.3),
+                    color: Theme.of(context).appColors.success,
                     minHeight: 8,
                   ),
                 ),
@@ -295,10 +296,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   Widget _buildRiskBar(String risk, int count, int total) {
     final percentage = total > 0 ? (count / total * 100).round() : 0;
     final color = risk == 'dangerous'
-        ? Colors.red
+        ? Theme.of(context).appColors.error
         : risk == 'moderate'
-            ? Colors.orange
-            : Colors.green;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.success;
     final label = risk == 'dangerous'
         ? 'خطير'
         : risk == 'moderate'

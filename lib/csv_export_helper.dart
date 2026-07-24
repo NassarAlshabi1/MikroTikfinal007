@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'theme/app_theme.dart';
 /// يساعد في تصدير البيانات إلى CSV
 class CsvExportHelper {
   CsvExportHelper._();
@@ -187,7 +188,7 @@ class CsvExportHelper {
             const SizedBox(height: 8),
             Text(
               path,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).appColors.muted),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
