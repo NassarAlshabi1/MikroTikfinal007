@@ -901,3 +901,348 @@ class AutoFixService {
     return fixes;
   }
 }
+
+// ============================================================
+//  Plan / Apply Workflow — مستوحى من router diagnostics (plan_changes + apply_plan)
+//
+//  يضيف طبقة إدارة أعلى فوق AutoFixService:
+//  1. planFixes: يأخذ قائمة fixes مقترحة ويولّد plan نصي للعرض
+//  2. applyPlan: ينفذ كل الـ fixes دفعة واحدة مع snapshot موحّد
+//  3. rollbackPlan: يستعيد snapshot عند فشل أي fix
+//
+//  الهدف: تنفيذ آمن لعدة إصلاحات كوحدة واحدة قابلة للاستعادة
+// ============================================================
+
+/// يمثل خطة إصلاح شاملة — تجمع عدة ProposedFix في وحدة واحدة
+@immutable
+class FixPlan {
+  final String id;                   // معرّف فريد للخطة
+  final String title;                // عنوان الخطة
+  final DateTime createdAt;          // وقت الإنشاء
+  final List<ProposedFix> fixes;     // قائمة الإصلاحات
+  final MikrotikSnapshot snapshot;   // الـ snapshot الذي حلّلته الخطة
+
+  const FixPlan({
+    required this.id,
+    required this.title,
+    required this.createdAt,
+    required this.fixes,
+    required this.snapshot,
+  });
+
+  /// عدد الإصلاحات الكلي
+  int get length => fixes.length;
+
+  /// عدد الإصلاحات الآمنة للتطبيق التلقائي
+  int get autoApplySafeCount =>
+      fixes.where((f) => f.autoApplySafe).length;
+
+  /// عدد الإصلاحات الخطرة
+  int get dangerousCount =>
+      fixes.where((f) => f.risk == CommandRiskLevel.dangerous).length;
+
+  /// إجمالي عدد الأوامر في كل الإصلاحات
+  int get totalCommands =>
+      fixes.fold(0, (sum, f) => sum + f.script.commands.length);
+
+  /// جميع الأوامر من كل الإصلاحات (مدموجة)
+  List<String> get allCommands =>
+      fixes.expand((f) => f.script.commands).toList();
+
+  /// تصنيفات الإصلاحات الموجودة (للعرض)
+  Set<FixCategory> get categoriesPresent =>
+      fixes.map((f) => f.category).toSet();
+
+  /// هل الخطة تحتاج snapshot قبل التنفيذ؟
+  bool get needsSnapshot =>
+      fixes.any((f) => f.risk != CommandRiskLevel.safe);
+
+  /// نص الخطة للعرض على المستخدم قبل التأكيد
+  String get displayPlan {
+    final buffer = StringBuffer()
+      ..writeln('═══════════════════════════════════════════════════')
+      ..writeln('📋 خطة الإصلاح: $title')
+      ..writeln('🆔 $id')
+      ..writeln('🕐 ${createdAt.toLocal()}')
+      ..writeln('═══════════════════════════════════════════════════')
+      ..writeln('📊 الإحصائيات:')
+      ..writeln('   • عدد الإصلاحات: $length')
+      ..writeln('   • أوامر إجمالية: $totalCommands')
+      ..writeln('   • آمنة تلقائياً: $autoApplySafeCount')
+      ..writeln('   • خطرة: $dangerousCount')
+      ..writeln('   • يحتاج snapshot: ${needsSnapshot ? "✅ نعم" : "❌ لا"}')
+      ..writeln('   • الفئات: ${categoriesPresent.map((c) => "${c.icon} ${c.displayName}").join(", ")}')
+      ..writeln('───────────────────────────────────────────────────')
+      ..writeln();
+
+    for (var i = 0; i < fixes.length; i++) {
+      final fix = fixes[i];
+      final riskIcon = fix.risk == CommandRiskLevel.dangerous
+          ? '🚨'
+          : fix.risk == CommandRiskLevel.moderate
+              ? '⚠️'
+              : '✅';
+      final autoIcon = fix.autoApplySafe ? '🟢' : '🟡';
+      buffer
+        ..writeln('${i + 1}. $riskIcon $autoIcon [${fix.category.icon} ${fix.category.displayName}] ${fix.title}')
+        ..writeln('   📝 ${fix.description}')
+        ..writeln('   💥 الأثر: ${fix.impact}')
+        ..writeln('   📦 الأوامر (${fix.script.commands.length}):');
+      for (final cmd in fix.script.commands) {
+        buffer.writeln('      • $cmd');
+      }
+      buffer.writeln();
+    }
+
+    buffer.writeln('═══════════════════════════════════════════════════');
+    if (needsSnapshot) {
+      buffer.writeln('💾 سيُنشئ snapshot تلقائياً قبل التنفيذ.');
+      buffer.writeln('↩️ في حال الفشل، سيُجهّز rollback script للاستعادة.');
+    } else {
+      buffer.writeln('✅ الخطة آمنة — أوامر قراءة فقط.');
+    }
+    buffer.writeln('═══════════════════════════════════════════════════');
+
+    return buffer.toString();
+  }
+}
+
+/// نتيجة تطبيق خطة إصلاح
+@immutable
+class PlanApplyResult {
+  final FixPlan plan;
+  final ChangeSnapshot? snapshot;        // snapshot قبل التطبيق (إن وُجد)
+  final List<ScriptExecutionResult> fixResults; // نتائج كل fix على حدة
+  final RouterOsScript? rollbackScript;  // سكربت الاستعادة (إن فشل البعض)
+  final PlanApplyStatus status;          // الحالة النهائية
+  final String? errorMessage;
+
+  const PlanApplyResult({
+    required this.plan,
+    required this.snapshot,
+    required this.fixResults,
+    required this.rollbackScript,
+    required this.status,
+    this.errorMessage,
+  });
+
+  /// عدد الإصلاحات الناجحة
+  int get successCount =>
+      fixResults.where((r) => r.overallSuccess).length;
+
+  /// عدد الإصلاحات الفاشلة
+  int get failureCount =>
+      fixResults.where((r) => !r.overallSuccess).length;
+
+  /// هل كل الإصلاحات نجحت
+  bool get isSuccess => status == PlanApplyStatus.success;
+}
+
+/// حالة تطبيق خطة
+enum PlanApplyStatus {
+  success,                  // نجحت كل الإصلاحات
+  partialSuccess,           // بعضها نجح وبعضها فشل
+  failedWithRollbackReady,  // فشل وsnapshot جاهز
+  failedNoSnapshot,         // فشل ولا snapshot
+  snapshotFailed,           // فشل إنشاء snapshot
+  dryRunRejected,           // رفض المستخدم بعد dry-run
+}
+
+extension PlanApplyStatusX on PlanApplyStatus {
+  String get displayName {
+    switch (this) {
+      case PlanApplyStatus.success:                 return 'نجاح كامل';
+      case PlanApplyStatus.partialSuccess:          return 'نجاح جزئي';
+      case PlanApplyStatus.failedWithRollbackReady: return 'فشل (rollback جاهز)';
+      case PlanApplyStatus.failedNoSnapshot:        return 'فشل (بدون snapshot)';
+      case PlanApplyStatus.snapshotFailed:          return 'فشل snapshot';
+      case PlanApplyStatus.dryRunRejected:          return 'مرفوض بعد dry-run';
+    }
+  }
+
+  bool get isRecoverable =>
+      this == PlanApplyStatus.failedWithRollbackReady;
+}
+
+/// خدمة Plan/Apply — تنفّذ خطط إصلاح بأمان
+class PlanService {
+  PlanService._();
+
+  /// يولّد خطة من قائمة إصلاحات مقترحة
+  ///
+  /// مثال:
+  /// ```dart
+  /// final fixes = AutoFixService.analyze(snapshot, mode: DiagnosticMode.security);
+  /// final plan = PlanService.createPlan(
+  ///   fixes: fixes,
+  ///   snapshot: snapshot,
+  ///   title: 'إصلاح أمني شامل',
+  /// );
+  /// print(plan.displayPlan);  // اعرض على المستخدم للتأكيد
+  /// ```
+  static FixPlan createPlan({
+    required List<ProposedFix> fixes,
+    required MikrotikSnapshot snapshot,
+    required String title,
+    String? id,
+  }) {
+    final planId = id ??
+        'plan-${DateTime.now().millisecondsSinceEpoch}';
+    return FixPlan(
+      id: planId,
+      title: title,
+      createdAt: DateTime.now(),
+      fixes: List.unmodifiable(fixes),
+      snapshot: snapshot,
+    );
+  }
+
+  /// ينفّذ خطة إصلاح بأمان — snapshot + apply all + rollback عند الفشل
+  ///
+  /// المنهجية:
+  /// 1. إن كان needsSnapshot=true، ينشئ snapshot موحّد للخطة كلها
+  /// 2. ينفّذ كل fix بالتسلسل مع stopOnError
+  /// 3. عند فشل أي fix: يوقف التنفيذ ويُجهّز rollback script
+  /// 4. يُرجِع PlanApplyResult شامل
+  ///
+  /// [onFixStart] يُستدعى قبل كل fix (لتحديث UI)
+  /// [onFixComplete] يُستدعى بعد كل fix
+  static Future<PlanApplyResult> applyPlan({
+    required FixPlan plan,
+    MikrotikConnectionMethod method = MikrotikConnectionMethod.routerOS,
+    bool requireSnapshot = true,
+    Duration perCommandTimeout = const Duration(seconds: 30),
+    void Function(int index, int total, ProposedFix fix)? onFixStart,
+    void Function(int index, int total, ScriptExecutionResult result)? onFixComplete,
+  }) async {
+    debugPrint('[PlanService] Applying plan ${plan.id} '
+        '(${plan.length} fixes, snapshot=${plan.needsSnapshot})');
+
+    // 1. إنشاء snapshot إن لزم
+    ChangeSnapshot? snapshot;
+    final shouldSnapshot = requireSnapshot && plan.needsSnapshot;
+    if (shouldSnapshot) {
+      try {
+        snapshot = await ScriptExecutor.createSnapshot(
+          method: method,
+          label: 'plan-${plan.id}',
+          correlationId: plan.id,
+        );
+      } catch (e) {
+        return PlanApplyResult(
+          plan: plan,
+          snapshot: null,
+          fixResults: const [],
+          rollbackScript: null,
+          status: PlanApplyStatus.snapshotFailed,
+          errorMessage: 'فشل إنشاء snapshot: $e',
+        );
+      }
+    }
+
+    // 2. تنفيذ كل fix بالتسلسل
+    final fixResults = <ScriptExecutionResult>[];
+    var anyFailed = false;
+    for (var i = 0; i < plan.fixes.length; i++) {
+      final fix = plan.fixes[i];
+      onFixStart?.call(i, plan.fixes.length, fix);
+
+      final result = await ScriptExecutor.execute(
+        script: fix.script,
+        method: method,
+        stopOnError: true,
+        perCommandTimeout: perCommandTimeout,
+      );
+      fixResults.add(result);
+      onFixComplete?.call(i, plan.fixes.length, result);
+
+      if (!result.overallSuccess) {
+        anyFailed = true;
+        debugPrint('[PlanService] Fix ${i + 1} failed: ${fix.title}');
+        break; // أوقف عند أول فشل
+      }
+    }
+
+    // 3. تحديد الحالة النهائية
+    PlanApplyStatus status;
+    if (!anyFailed) {
+      status = PlanApplyStatus.success;
+    } else if (snapshot != null) {
+      status = PlanApplyStatus.failedWithRollbackReady;
+    } else {
+      status = PlanApplyStatus.failedNoSnapshot;
+    }
+
+    // 4. تجهيز rollback script إن لزم
+    RouterOsScript? rollbackScript;
+    if (anyFailed && snapshot != null) {
+      rollbackScript = snapshot.toRollbackScript();
+    }
+
+    return PlanApplyResult(
+      plan: plan,
+      snapshot: snapshot,
+      fixResults: fixResults,
+      rollbackScript: rollbackScript,
+      status: status,
+      errorMessage: anyFailed
+          ? 'فشل تنفيذ خطة ${plan.id} — توقفت عند أول خطأ'
+          : null,
+    );
+  }
+
+  /// يولّد dry-run report لخطة كاملة (تحليل قبل التطبيق)
+  ///
+  /// يُرجِع تقرير مفصل لكل fix وكل أمر على حدة
+  static String planDryRunReport(FixPlan plan) {
+    final buffer = StringBuffer()
+      ..writeln('═══════════════════════════════════════════════════')
+      ..writeln('🔍 تقرير Dry-Run للخطة: ${plan.title}')
+      ..writeln('🆔 ${plan.id}')
+      ..writeln('═══════════════════════════════════════════════════')
+      ..writeln('📊 الإحصائيات:')
+      ..writeln('   • عدد الإصلاحات: ${plan.length}')
+      ..writeln('   • أوامر إجمالية: ${plan.totalCommands}')
+      ..writeln('   • يحتاج snapshot: ${plan.needsSnapshot ? "✅ نعم" : "❌ لا"}')
+      ..writeln('───────────────────────────────────────────────────');
+
+    for (var i = 0; i < plan.fixes.length; i++) {
+      final fix = plan.fixes[i];
+      final fixDryRun = ScriptExecutor.dryRun(fix.script);
+      buffer
+        ..writeln()
+        ..writeln('${i + 1}. 📦 [${fix.category.icon} ${fix.category.displayName}] ${fix.title}')
+        ..writeln('   • أوامر: ${fix.script.commands.length}')
+        ..writeln('   • خطرة: ${fixDryRun.dangerousCount}')
+        ..writeln('   • غير idempotent: ${fixDryRun.nonIdempotentCount}')
+        ..writeln('   • يحتاج snapshot: ${fixDryRun.needsSnapshot ? "نعم" : "لا"}');
+
+      // عرض تفاصيل كل أمر
+      for (final cmd in fixDryRun.commandAnalysis) {
+        final riskIcon = cmd.risk == CommandRiskLevel.dangerous
+            ? '🚨'
+            : cmd.risk == CommandRiskLevel.moderate
+                ? '⚠️'
+                : '✅';
+        final idemIcon = cmd.isIdempotent ? '🔁' : '⚠️';
+        buffer.writeln('      $riskIcon $idemIcon ${cmd.command}');
+        if (cmd.validationError != null) {
+          buffer.writeln('         ❌ خطأ: ${cmd.validationError}');
+        }
+      }
+    }
+
+    buffer
+      ..writeln()
+      ..writeln('═══════════════════════════════════════════════════');
+    if (plan.needsSnapshot) {
+      buffer.writeln('💾 قبل التنفيذ: سيُنشئ snapshot تلقائياً.');
+      buffer.writeln('↩️ في حال الفشل: rollback script جاهز للاستعادة.');
+    } else {
+      buffer.writeln('✅ الخطة آمنة بالكامل — أوامر قراءة فقط.');
+    }
+    buffer.writeln('═══════════════════════════════════════════════════');
+
+    return buffer.toString();
+  }
+}

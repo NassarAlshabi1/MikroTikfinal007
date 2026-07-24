@@ -391,4 +391,393 @@ class ScriptExecutor {
       ],
     );
   }
+
+  // ============================================================
+  //  Change Safety Layer — مستوحى من router diagnostics (dryRun + snapshot + rollback)
+  //  هذا القسم يضيف طبقة أمان إنتاجية لتنفيذ الإصلاحات:
+  //  1. dryRun: يُرجِع diff متوقّع دون تطبيق
+  //  2. snapshot: ينشئ backup + export قبل أي تنفيذ
+  //  3. rollback: يستعيد snapshot عند الفشل
+  //  4. idempotency: يتحقق أن الأمر لم يُطبّق مسبقاً
+  // ============================================================
+
+  /// يُنشئ snapshot قبل تنفيذ أي تغييرات (backup + export)
+  ///
+  /// مثال:
+  /// ```dart
+  /// final snapshot = await ScriptExecutor.createSnapshot(
+  ///   method: MikrotikConnectionMethod.ssh,
+  ///   label: 'before-qos-fix',
+  /// );
+  /// // نفّذ الإصلاحات...
+  /// // في حال الفشل:
+  /// await ScriptExecutor.execute(
+  ///   script: snapshot.toRollbackScript(),
+  ///   method: MikrotikConnectionMethod.ssh,
+  /// );
+  /// ```
+  static Future<ChangeSnapshot> createSnapshot({
+    MikrotikConnectionMethod method = MikrotikConnectionMethod.routerOS,
+    String? label,
+    String? correlationId,
+  }) async {
+    final stamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
+    final name = label != null
+        ? '$label-$stamp'
+        : 'snapshot-$stamp';
+
+    final backupScript = RouterOsScript(
+      title: 'إنشاء snapshot',
+      description: 'backup كامل + export قبل التغييرات',
+      overallRisk: CommandRiskLevel.safe,
+      category: 'safety',
+      commands: [
+        '/system backup save name=$name',
+        '/export file=$name-export',
+      ],
+    );
+
+    final result = await execute(
+      script: backupScript,
+      method: method,
+      stopOnError: true,
+      perCommandTimeout: const Duration(seconds: 60),
+    );
+
+    if (!result.overallSuccess) {
+      throw Exception('فشل إنشاء snapshot: ${result.results.where((r) => !r.success).map((r) => r.error).join(", ")}');
+    }
+
+    debugPrint('[ScriptExecutor] Snapshot created: $name (corrId=$correlationId)');
+    return ChangeSnapshot(
+      backupName: name,
+      exportFileName: '$name-export',
+      createdAt: DateTime.now(),
+      correlationId: correlationId,
+    );
+  }
+
+  /// ينفّذ سكربت بوضع dry-run — يحلل الأوامر ويعرض تأثيرها المتوقّع دون تطبيق
+  ///
+  /// يُرجِع تقرير مفصل يحتوي على:
+  /// - تصنيف كل أمر (آمن/متوسط/خطير)
+  /// - هل يحتاج snapshot؟ (نعم إذا كان متوسط/خطير)
+  /// - هل هو idempotent؟ (يُحدد من شكل الأمر)
+  /// - توصيات الأمان
+  ///
+  /// ملاحظة: الـ dry-run الحقيقي على مستوى RouterOS غير متاح في v6
+  /// لذا هذه الدالة تعمل "تحليل قبل التنفيذ" (pre-execution analysis)
+  static DryRunReport dryRun(RouterOsScript script) {
+    final analysis = <DryRunCommandAnalysis>[];
+    var needsSnapshot = false;
+    var hasIdempotency = true;
+
+    for (var i = 0; i < script.commands.length; i++) {
+      final cmd = script.commands[i];
+      final risk = CommandExecutor.classifyRisk(cmd);
+      final idempotent = _isIdempotent(cmd);
+      final validationError = CommandExecutor.validateCommand(cmd);
+      final willModify = risk != CommandRiskLevel.safe;
+
+      if (willModify) needsSnapshot = true;
+      if (!idempotent) hasIdempotency = false;
+
+      analysis.add(DryRunCommandAnalysis(
+        index: i,
+        command: cmd,
+        risk: risk,
+        isIdempotent: idempotent,
+        willModify: willModify,
+        validationError: validationError,
+      ));
+    }
+
+    return DryRunReport(
+      script: script,
+      commandAnalysis: analysis,
+      needsSnapshot: needsSnapshot,
+      hasIdempotency: hasIdempotency,
+    );
+  }
+
+  /// يتحقق إن كان أمر RouterOS idempotent (يعطي نفس النتيجة عند التكرار)
+  ///
+  /// قواعد الـ idempotency (مستوحاة من router diagnostics):
+  /// - `print`, `monitor`, `find` — آمنة و idempotent (قراءة فقط)
+  /// - `set [find ...]` — idempotent (يحدّث قائمة مطابقة)
+  /// - `add` بدون `comment=` — غالباً NOT idempotent (ينشئ نسخة جديدة)
+  /// - `add ... comment=...` — شبه idempotent (يمكن التحقق منه بالـ comment)
+  /// - `remove [find ...]` — idempotent (يحذف كل المطابق)
+  /// - `enable/disable [find ...]` — idempotent
+  static bool _isIdempotent(String command) {
+    final lc = command.toLowerCase();
+    // أوامر القراءة آمنة
+    if (lc.contains('print') || lc.contains('monitor') || lc.contains('find')) {
+      return true;
+    }
+    // set/remove/enable/disable على [find ...] = idempotent
+    if ((lc.contains('set [find') ||
+         lc.contains('remove [find') ||
+         lc.contains('enable [find') ||
+         lc.contains('disable [find'))) {
+      return true;
+    }
+    // add مع comment يعتبر semi-idempotent
+    if (lc.contains('add') && lc.contains('comment=')) {
+      return true;
+    }
+    // add بدون comment = NOT idempotent
+    if (lc.contains('add')) {
+      return false;
+    }
+    // افتراضي: نعتبره غير idempotent للحذر
+    return false;
+  }
+
+  /// ينفّذ سكربت بأمان كامل — snapshot + execute + rollback عند الفشل
+  ///
+  /// المنهجية (مستوحاة من router diagnostics apply_plan):
+  /// 1. ينشئ snapshot قبل التنفيذ (إن احتاج الأمر)
+  /// 2. ينفّذ الأوامر بالتسلسل مع stopOnError=true
+  /// 3. عند أول فشل: يُنشئ rollback script من الـ snapshot
+  /// 4. يُرجِع نتيجة شاملة تحتوي على snapshot + rollback script
+  ///
+  /// [requireSnapshot] — إن true (افتراضي للسكربتات المتوسطة/الخطيرة)
+  ///                     ينشئ snapshot قبل التنفيذ إجبارياً
+  static Future<SafeExecutionResult> executeWithSafety({
+    required RouterOsScript script,
+    MikrotikConnectionMethod method = MikrotikConnectionMethod.routerOS,
+    bool requireSnapshot = true,
+    String? correlationId,
+    Duration perCommandTimeout = const Duration(seconds: 30),
+    void Function(int currentIndex, int total, CommandResult result)? onProgress,
+  }) async {
+    // تحليل قبل التنفيذ
+    final dryRunReport = dryRun(script);
+
+    // إن كان السكربت آمناً بالكامل (قراءة فقط)، لا حاجة لـ snapshot
+    final shouldSnapshot = requireSnapshot && dryRunReport.needsSnapshot;
+    ChangeSnapshot? snapshot;
+    if (shouldSnapshot) {
+      try {
+        snapshot = await createSnapshot(
+          method: method,
+          label: 'safety-${script.category ?? "auto"}',
+          correlationId: correlationId,
+        );
+      } catch (e) {
+        return SafeExecutionResult(
+          script: script,
+          snapshot: null,
+          executionResult: null,
+          rollbackScript: null,
+          dryRunReport: dryRunReport,
+          status: SafeExecutionStatus.snapshotFailed,
+          errorMessage: 'فشل إنشاء snapshot: $e',
+        );
+      }
+    }
+
+    // تنفيذ السكربت
+    final executionResult = await execute(
+      script: script,
+      method: method,
+      stopOnError: true,
+      perCommandTimeout: perCommandTimeout,
+      onProgress: onProgress,
+    );
+
+    // في حال الفشل وأنشأنا snapshot، نُجهّز rollback script
+    RouterOsScript? rollbackScript;
+    if (!executionResult.overallSuccess && snapshot != null) {
+      rollbackScript = snapshot.toRollbackScript();
+    }
+
+    return SafeExecutionResult(
+      script: script,
+      snapshot: snapshot,
+      executionResult: executionResult,
+      rollbackScript: rollbackScript,
+      dryRunReport: dryRunReport,
+      status: executionResult.overallSuccess
+          ? SafeExecutionStatus.success
+          : (snapshot != null
+              ? SafeExecutionStatus.failedWithRollbackReady
+              : SafeExecutionStatus.failedNoSnapshot),
+      errorMessage: executionResult.overallSuccess
+          ? null
+          : 'فشل ${executionResult.failureCount} من ${script.commands.length} أوامر',
+    );
+  }
+}
+
+// ============================================================
+//  نماذج Change Safety Layer
+// ============================================================
+
+/// يمثل snapshot قبل التغيير — يحوي backup + export
+@immutable
+class ChangeSnapshot {
+  final String backupName;       // اسم ملف الـ backup
+  final String exportFileName;   // اسم ملف الـ export
+  final DateTime createdAt;      // وقت الإنشاء
+  final String? correlationId;   // معرّف لتتبع العملية
+
+  const ChangeSnapshot({
+    required this.backupName,
+    required this.exportFileName,
+    required this.createdAt,
+    this.correlationId,
+  });
+
+  /// سكربت الاستعادة من هذا snapshot
+  RouterOsScript toRollbackScript() => RouterOsScript(
+        title: 'استعادة snapshot $backupName',
+        description: 'يستعيد الإعدادات من الـ snapshot المُنشأ في $createdAt',
+        overallRisk: CommandRiskLevel.dangerous,
+        category: 'safety',
+        commands: [
+          '/system backup load name=$backupName',
+        ],
+      );
+}
+
+/// نتيجة تحليل أمر واحد في dry-run
+@immutable
+class DryRunCommandAnalysis {
+  final int index;
+  final String command;
+  final CommandRiskLevel risk;
+  final bool isIdempotent;
+  final bool willModify;
+  final String? validationError;
+
+  const DryRunCommandAnalysis({
+    required this.index,
+    required this.command,
+    required this.risk,
+    required this.isIdempotent,
+    required this.willModify,
+    this.validationError,
+  });
+
+  /// هل الأمر جاهز للتنفيذ (لا أخطاء تحقق)
+  bool get isExecutable => validationError == null;
+}
+
+/// تقرير dry-run شامل لسكربت كامل
+@immutable
+class DryRunReport {
+  final RouterOsScript script;
+  final List<DryRunCommandAnalysis> commandAnalysis;
+  final bool needsSnapshot;     // هل يحتاج snapshot قبل التنفيذ؟
+  final bool hasIdempotency;    // هل كل الأوامر idempotent؟
+
+  const DryRunReport({
+    required this.script,
+    required this.commandAnalysis,
+    required this.needsSnapshot,
+    required this.hasIdempotency,
+  });
+
+  /// عدد الأوامر القابلة للتنفيذ (بدون أخطاء تحقق)
+  int get executableCount => commandAnalysis.where((c) => c.isExecutable).length;
+
+  /// عدد الأوامر الخطرة
+  int get dangerousCount => commandAnalysis.where((c) =>
+      c.risk == CommandRiskLevel.dangerous).length;
+
+  /// عدد الأوامر غير idempotent
+  int get nonIdempotentCount => commandAnalysis.where((c) => !c.isIdempotent).length;
+
+  /// نص التقرير للعرض
+  String get displayReport {
+    final buffer = StringBuffer()
+      ..writeln('═══════════════════════════════════════')
+      ..writeln('🔍 تقرير Dry-Run: ${script.title}')
+      ..writeln('═══════════════════════════════════════')
+      ..writeln('📦 عدد الأوامر: ${script.commands.length}')
+      ..writeln('✅ قابلة للتنفيذ: $executableCount')
+      ..writeln('🚨 خطرة: $dangerousCount')
+      ..writeln('🔁 غير idempotent: $nonIdempotentCount')
+      ..writeln('💾 يحتاج snapshot: ${needsSnapshot ? "نعم" : "لا"}')
+      ..writeln('───────────────────────────────────────');
+
+    for (final c in commandAnalysis) {
+      final riskIcon = c.risk == CommandRiskLevel.dangerous
+          ? '🚨'
+          : c.risk == CommandRiskLevel.moderate
+              ? '⚠️'
+              : '✅';
+      final idemIcon = c.isIdempotent ? '🔁' : '⚠️';
+      buffer.writeln('${c.index + 1}. $riskIcon $idemIcon ${c.command}');
+      if (c.validationError != null) {
+        buffer.writeln('   ❌ خطأ: ${c.validationError}');
+      }
+    }
+
+    buffer.writeln('═══════════════════════════════════════');
+    if (!needsSnapshot) {
+      buffer.writeln('✅ السكربت آمن — أوامر قراءة فقط، لا يحتاج snapshot.');
+    } else if (hasIdempotency) {
+      buffer.writeln('✅ السكربت قابل للتكرار بأمان (idempotent).');
+      buffer.writeln('💾 سيُنشئ snapshot تلقائياً قبل التنفيذ.');
+    } else {
+      buffer.writeln('⚠️ يحتوي على أوامر غير idempotent — راجع بعناية.');
+      buffer.writeln('💾 سيُنشئ snapshot تلقائياً قبل التنفيذ.');
+    }
+    buffer.writeln('═══════════════════════════════════════');
+
+    return buffer.toString();
+  }
+}
+
+/// حالة تنفيذ آمن
+enum SafeExecutionStatus {
+  success,                // نجح كل الأوامر
+  failedWithRollbackReady,// فشل ولكن snapshot جاهز للاستعادة
+  failedNoSnapshot,       // فشل ولا snapshot متاح
+  snapshotFailed,         // فشل إنشاء snapshot قبل التنفيذ
+}
+
+extension SafeExecutionStatusX on SafeExecutionStatus {
+  String get displayName {
+    switch (this) {
+      case SafeExecutionStatus.success: return 'نجاح';
+      case SafeExecutionStatus.failedWithRollbackReady: return 'فشل (snapshot جاهز)';
+      case SafeExecutionStatus.failedNoSnapshot: return 'فشل (بدون snapshot)';
+      case SafeExecutionStatus.snapshotFailed: return 'فشل إنشاء snapshot';
+    }
+  }
+
+  bool get isRecoverable =>
+      this == SafeExecutionStatus.failedWithRollbackReady;
+}
+
+/// نتيجة تنفيذ آمن — تحتوي على snapshot + execution + rollback
+@immutable
+class SafeExecutionResult {
+  final RouterOsScript script;
+  final ChangeSnapshot? snapshot;
+  final ScriptExecutionResult? executionResult;
+  final RouterOsScript? rollbackScript;
+  final DryRunReport dryRunReport;
+  final SafeExecutionStatus status;
+  final String? errorMessage;
+
+  const SafeExecutionResult({
+    required this.script,
+    required this.snapshot,
+    required this.executionResult,
+    required this.rollbackScript,
+    required this.dryRunReport,
+    required this.status,
+    this.errorMessage,
+  });
+
+  /// هل نجح التنفيذ بالكامل
+  bool get isSuccess => status == SafeExecutionStatus.success;
+
+  /// هل يمكن استعادة الحالة (rollback متاح)
+  bool get canRollback => rollbackScript != null;
 }
