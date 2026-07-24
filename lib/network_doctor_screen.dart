@@ -8,6 +8,7 @@ import 'network_map_screen.dart';
 import 'rogue_dhcp_detector_screen.dart';
 import 'theme/app_palette.dart';
 
+import 'theme/app_theme.dart';
 enum DiagnosticStatus { pending, running, success, warning, error }
 
 enum SeverityLevel { info, low, medium, high }
@@ -433,15 +434,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Color _statusColor(DiagnosticStatus s) {
     switch (s) {
       case DiagnosticStatus.success:
-        return Colors.green;
+        return Theme.of(context).appColors.success;
       case DiagnosticStatus.warning:
-        return Colors.orange;
+        return Theme.of(context).appColors.warning;
       case DiagnosticStatus.error:
         return AppPalette.error;
       case DiagnosticStatus.running:
         return Theme.of(context).primaryColor;
       default:
-        return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
+        return Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).appColors.muted;
     }
   }
 
@@ -595,7 +596,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       children: [
         Expanded(child: _buildChip('ناجحة', _countSuccess.toString(), AppPalette.success, Icons.check_circle)),
         const SizedBox(width: 10),
-        Expanded(child: _buildChip('تحذير', _countWarning.toString(), Colors.orange, Icons.warning)),
+        Expanded(child: _buildChip('تحذير', _countWarning.toString(), Theme.of(context).appColors.warning, Icons.warning)),
         const SizedBox(width: 10),
         Expanded(child: _buildChip('فشل', _countError.toString(), AppPalette.error, Icons.error)),
       ],
@@ -815,19 +816,19 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.15),
+                    color: Theme.of(context).appColors.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                    border: Border.all(color: Theme.of(context).appColors.warning.withValues(alpha: 0.3)),
                   ),
                   alignment: Alignment.center,
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.orange, size: 18),
+                      Icon(Icons.warning_amber, color: Theme.of(context).appColors.warning, size: 18),
                       const SizedBox(width: 6),
                       Text(
                         '~30MB',
                         style: TextStyle(
-                          color: Colors.orange,
+                          color: Theme.of(context).appColors.warning,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -897,11 +898,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         severityLabel = 'عاجل';
         break;
       case SeverityLevel.medium:
-        sevColor = Colors.orange;
+        sevColor = Theme.of(context).appColors.warning;
         severityLabel = 'متوسط';
         break;
       case SeverityLevel.low:
-        sevColor = Colors.amber;
+        sevColor = Theme.of(context).appColors.warning;
         severityLabel = 'منخفض';
         break;
       case SeverityLevel.info:
@@ -1130,10 +1131,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.redAccent.withValues(alpha: 0.2),
+                          color: Theme.of(context).appColors.error.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
+                        child: Icon(Icons.security, size: 32, color: Theme.of(context).appColors.error),
                       ),
                       SizedBox(height: 12),
                       Text(

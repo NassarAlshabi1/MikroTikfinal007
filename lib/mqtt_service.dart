@@ -135,9 +135,9 @@ class MqttService with ChangeNotifier {
       // لا تعيد المحاولة تلقائياً هنا، اترك المنطق في الواجهة يقرر إعادة الإرسال
       checkAndReconnect();
       scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFFFB74D), // warning
         ),
       );
       return;

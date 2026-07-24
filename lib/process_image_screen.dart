@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'perf/device_capability.dart';
 
+import 'theme/app_theme.dart';
 class ProcessImageScreen extends StatefulWidget {
   final String imagePath;
   final String prefix;
@@ -143,7 +144,7 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Theme.of(context).appColors.error,
         duration: const Duration(seconds: 4),
       ),
     );

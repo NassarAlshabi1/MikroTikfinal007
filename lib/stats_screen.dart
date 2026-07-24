@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_gradients.dart';
 import 'mikrotik_connector.dart';
 
+import 'theme/app_theme.dart';
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
 
@@ -374,14 +375,14 @@ class _StatsScreenState extends State<StatsScreen> {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: Colors.redAccent,
+                color: Theme.of(context).appColors.error,
               ),
               const SizedBox(height: 16),
               Text(
                 _errorMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.redAccent,
+                style: TextStyle(
+                  color: Theme.of(context).appColors.error,
                   fontSize: 12,
                 ),
               ),
@@ -474,7 +475,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     PieChartSectionData(
                       value: download,
                       title: '${(download / total * 100).toStringAsFixed(1)}%',
-                      color: Colors.blue[400],
+                      color: Theme.of(context).appColors.info,
                       radius: 100,
                       titleStyle: TextStyle(
                         fontSize: 14,
@@ -485,7 +486,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     PieChartSectionData(
                       value: upload,
                       title: '${(upload / total * 100).toStringAsFixed(1)}%',
-                      color: Colors.green[400],
+                      color: Theme.of(context).appColors.success,
                       radius: 100,
                       titleStyle: TextStyle(
                         fontSize: 14,
@@ -503,8 +504,8 @@ class _StatsScreenState extends State<StatsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildLegendItem('التحميل', Colors.blue[400]!, download),
-                _buildLegendItem('الرفع', Colors.green[400]!, upload),
+                _buildLegendItem('التحميل', Theme.of(context).appColors.info, download),
+                _buildLegendItem('الرفع', Theme.of(context).appColors.success, upload),
               ],
             ),
           ],
@@ -581,13 +582,13 @@ class _StatsScreenState extends State<StatsScreen> {
               'المستخدمين النشطين',
               '${_stats['activeUsers']}',
               Icons.people,
-              Colors.teal[400]!,
+              Theme.of(context).appColors.secondary,
             ),
             _buildStatCard(
               'استخدام المعالج',
               '${_stats['cpuUsage'].toStringAsFixed(1)}%',
               Icons.memory,
-              Colors.orange[400]!,
+              Theme.of(context).appColors.warning,
             ),
             _buildStatCard(
               'استخدام الذاكرة',
@@ -661,10 +662,10 @@ class _StatsScreenState extends State<StatsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue[400]!.withOpacity(0.2),
+                color: Theme.of(context).appColors.info.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.access_time, color: Colors.blue[400], size: 28),
+              child: Icon(Icons.access_time, color: Theme.of(context).appColors.info, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(

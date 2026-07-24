@@ -15,6 +15,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'mikrotik_connector.dart';
 
+import 'theme/app_theme.dart';
 enum DeviceStatus { unknown, online, offline }
 
 class DeviceNode {
@@ -107,7 +108,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   void initState() {
     super.initState();
     _edgePaint = Paint()
-      ..color = Colors.grey
+      ..color = Theme.of(context).appColors.muted
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
     _builder
@@ -341,7 +342,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
               _rebuildGraph();
               Navigator.of(context).pop();
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error)),
           ),
         ],
       ),
@@ -408,7 +409,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             content: const Text('سيتم استبدال الخريطة الحالية بالخريطة الجديدة. هل أنت متأكد؟'),
             actions: [
               TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('إلغاء')),
-              TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('تأكيد', style: TextStyle(color: Colors.orange))),
+              TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text('تأكيد', style: TextStyle(color: Theme.of(context).appColors.warning))),
             ],
           ),
         );
@@ -514,13 +515,13 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     Color nodeColor;
     switch (deviceNode.status) {
       case DeviceStatus.online:
-        nodeColor = Colors.green.shade800;
+        nodeColor = Theme.of(context).appColors.success;
         break;
       case DeviceStatus.offline:
-        nodeColor = Colors.grey.shade700;
+        nodeColor = Theme.of(context).appColors.muted;
         break;
       default:
-        nodeColor = Colors.blue.shade800;
+        nodeColor = Theme.of(context).appColors.info;
     }
 
     final nodeContent = Container(
@@ -550,7 +551,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
                         label: Text('فحص', style: TextStyle(fontSize: 12)),
                         onPressed: () => _checkSpecificDeviceStatus(deviceNode),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
+                          backgroundColor: Theme.of(context).appColors.warning,
                           foregroundColor: Theme.of(context).colorScheme.onSurface,
                           minimumSize: Size.zero, // Set this
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // and this
@@ -615,11 +616,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             title: Text('تعديل الجهاز', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: ListTile(
-            leading: Icon(Icons.delete_outline, color: Colors.redAccent),
-            title: Text('حذف الجهاز', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            leading: Icon(Icons.delete_outline, color: Theme.of(context).appColors.error),
+            title: Text('حذف الجهاز', style: TextStyle(color: Theme.of(context).appColors.error, fontWeight: FontWeight.bold)),
           ),
         ),
       ]
@@ -640,7 +641,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.hub_outlined, size: 80, color: Colors.grey),
+          Icon(Icons.hub_outlined, size: 80, color: Theme.of(context).appColors.muted),
           SizedBox(height: 16),
           Text('الخريطة فارغة', style: TextStyle(fontSize: 22)),
           SizedBox(height: 8),

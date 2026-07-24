@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'snackbar_helpers.dart';
 
 import 'card_list_screen.dart';
+import 'theme/app_theme.dart';
 import 'pdf_generator.dart';      // <-- ١. استيراد جديد
 import 'pdf_templates_screen.dart'; // <-- ٢. استيراد جديد
 
@@ -205,7 +206,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       child: ListTile(
-                        leading: const Icon(Icons.description, color: Colors.cyan, size: 30),
+                        leading: Icon(Icons.description, color: Theme.of(context).appColors.info, size: 30),
                         title: Text('فئة: ${file.profileName}', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('العدد: ${file.userCount} كرت\nالتاريخ: $formattedDate'),
                         isThreeLine: true,
@@ -213,24 +214,24 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.visibility, color: Colors.blueAccent),
+                              icon: Icon(Icons.visibility, color: Theme.of(context).appColors.info),
                               onPressed: () => _viewFile(file.path),
                               tooltip: 'عرض',
                             ),
                             // --- ٧. زر المشاركة كـ PDF الجديد ---
                              IconButton(
-                              icon: const Icon(Icons.picture_as_pdf, color: Colors.orangeAccent),
+                              icon: Icon(Icons.picture_as_pdf, color: Theme.of(context).appColors.warning),
                               onPressed: () => _shareAsPdf(file),
                               tooltip: 'مشاركة كـ PDF',
                             ),
                             // ----------------------------------
                             IconButton(
-                              icon: const Icon(Icons.share, color: Colors.greenAccent),
+                              icon: Icon(Icons.share, color: Theme.of(context).appColors.success),
                               onPressed: () => _shareFile(file.path),
                               tooltip: 'مشاركة كملف نصي',
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                              icon: Icon(Icons.delete_outline, color: Theme.of(context).appColors.error),
                               onPressed: () => _deleteFile(file),
                               tooltip: 'حذف',
                             ),

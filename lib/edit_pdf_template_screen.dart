@@ -288,7 +288,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   border: Border.all(
-                                      color: Colors.grey.shade700),
+                                      color: Theme.of(context).appColors.muted),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Stack(

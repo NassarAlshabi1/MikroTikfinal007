@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'database/app_database.dart' as db;
 import 'main.dart';
 
+import 'theme/app_theme.dart';
 class CardSearchScreen extends StatefulWidget {
   const CardSearchScreen({super.key});
 
@@ -135,8 +136,8 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.error_outline,
-                                size: 48, color: Colors.red),
+                            Icon(Icons.error_outline,
+                                size: 48, color: Theme.of(context).appColors.error),
                             const SizedBox(height: 16),
                             Text(_error!),
                           ],
@@ -189,10 +190,10 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
 
   Widget _buildCardTile(db.Card card) {
     final statusColor = card.status == 'active'
-        ? Colors.green
+        ? Theme.of(context).appColors.success
         : card.status == 'disabled'
-            ? Colors.orange
-            : Colors.red;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.error;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -234,12 +235,12 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                 break;
             }
           },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'copy', child: Text('نسخ اسم المستخدم')),
+          itemBuilder: (_) => [
+            const PopupMenuItem(value: 'copy', child: Text('نسخ اسم المستخدم')),
             PopupMenuItem(
                 value: 'delete',
                 child:
-                    Text('حذف', style: TextStyle(color: Colors.red))),
+                    Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error))),
           ],
         ),
         isThreeLine: true,
@@ -281,7 +282,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
             onPressed: () async {
               Navigator.of(ctx).pop();
               await appDatabase.cardsDao.deleteCard(card.id);

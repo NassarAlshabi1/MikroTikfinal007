@@ -5,6 +5,7 @@ import 'snackbar_helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_pdf_template_screen.dart';
 
+import 'theme/app_theme.dart';
 // موديل بسيط لتسهيل التعامل مع بيانات القالب
 class PdfTemplate {
   final String profileName;
@@ -105,7 +106,7 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
           TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               child:
-                  const Text('حذف', style: TextStyle(color: Colors.redAccent))),
+                  Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error))),
         ],
       ),
     );
@@ -186,14 +187,14 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               child: Container(
                 height: 150,
                 width: double.infinity,
-                color: Colors.grey.shade800,
+                color: Theme.of(context).appColors.muted,
                 child: Image.file(
                   File(template.imagePath),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Center(
+                    return Center(
                         child: Icon(Icons.image_not_supported,
-                            color: Colors.grey, size: 40));
+                            color: Theme.of(context).appColors.muted, size: 40));
                   },
                 ),
               ),
@@ -217,10 +218,10 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               children: [
                 TextButton.icon(
                   onPressed: () => _deleteTemplate(template),
-                  icon: const Icon(Icons.delete_outline,
-                      color: Colors.redAccent, size: 20),
-                  label: const Text('حذف',
-                      style: TextStyle(color: Colors.redAccent)),
+                  icon: Icon(Icons.delete_outline,
+                      color: Theme.of(context).appColors.error, size: 20),
+                  label: Text('حذف',
+                      style: TextStyle(color: Theme.of(context).appColors.error)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
@@ -247,7 +248,7 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.style_outlined, size: 80, color: Colors.grey.shade600),
+            Icon(Icons.style_outlined, size: 80, color: Theme.of(context).appColors.muted),
             const SizedBox(height: 20),
             const Text(
               'لا توجد قوالب محفوظة',

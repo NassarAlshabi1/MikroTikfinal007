@@ -10,6 +10,7 @@ import 'diagnostics_models.dart';
 import 'diagnostics_provider.dart';
 import 'command_executor.dart';
 
+import '../theme/app_theme.dart';
 class DiagnosticsHistoryScreen extends ConsumerWidget {
   const DiagnosticsHistoryScreen({super.key});
 
@@ -39,7 +40,7 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              Icon(Icons.error_outline, size: 48, color: Theme.of(context).appColors.error),
               const SizedBox(height: 16),
               Text('خطأ في تحميل السجل: $e'),
             ],
@@ -95,7 +96,7 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
             onPressed: () {
               Navigator.of(ctx).pop();
               ref.read(historyManagerProvider.notifier).clearAll();
@@ -161,11 +162,11 @@ class _SessionCard extends ConsumerWidget {
                 break;
             }
           },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'view', child: Text('عرض التفاصيل')),
+          itemBuilder: (_) => [
+            const PopupMenuItem(value: 'view', child: Text('عرض التفاصيل')),
             PopupMenuItem(
                 value: 'delete',
-                child: Text('حذف', style: TextStyle(color: Colors.red))),
+                child: Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error))),
           ],
         ),
         onTap: () {
@@ -191,7 +192,7 @@ class _SessionCard extends ConsumerWidget {
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
             onPressed: () {
               Navigator.of(ctx).pop();
               ref
@@ -288,7 +289,7 @@ class _DetailMessageBubble extends StatelessWidget {
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isError
-            ? Colors.red.withValues(alpha: 0.1)
+            ? Theme.of(context).appColors.error.withValues(alpha: 0.1)
             : isUser
                 ? Theme.of(context).primaryColor
                 : Theme.of(context).cardColor,
@@ -352,7 +353,7 @@ class _CommandResultCard extends StatelessWidget {
       child: ExpansionTile(
         leading: Icon(
           result.success ? Icons.check_circle : Icons.error,
-          color: result.success ? Colors.green : Colors.red,
+          color: result.success ? Theme.of(context).appColors.success : Theme.of(context).appColors.error,
         ),
         title: Text(
           result.command,
@@ -364,7 +365,7 @@ class _CommandResultCard extends StatelessWidget {
           '${result.success ? "نجح" : "فشل"} • ${result.elapsed.inMilliseconds}ms',
           style: TextStyle(
             fontSize: 11,
-            color: result.success ? Colors.green : Colors.red,
+            color: result.success ? Theme.of(context).appColors.success : Theme.of(context).appColors.error,
           ),
         ),
         children: [
@@ -397,25 +398,25 @@ class _CommandResultCard extends StatelessWidget {
                 ],
                 if (result.error != null) ...[
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'الخطأ:',
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.red),
+                        color: Theme.of(context).appColors.error),
                   ),
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: Theme.of(context).appColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: SelectableText(
                       result.error!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 11,
-                          color: Colors.red),
+                          color: Theme.of(context).appColors.error),
                     ),
                   ),
                 ],

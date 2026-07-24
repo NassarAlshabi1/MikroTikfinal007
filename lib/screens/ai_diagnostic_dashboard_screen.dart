@@ -5,6 +5,7 @@ import '../providers/mikrotik_qos_provider.dart';
 import '../models/qos_config.dart';
 import '../models/diagnostic_result.dart';
 
+import '../theme/app_theme.dart';
 class AiDiagnosticDashboardScreen extends ConsumerWidget {
   const AiDiagnosticDashboardScreen({super.key});
 
@@ -132,10 +133,10 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
   Widget _buildHealthScoreCard(BuildContext context, DiagnosticState state) {
     final score = state.healthScore;
     final color = score >= 80
-        ? Colors.green
+        ? Theme.of(context).appColors.success
         : score >= 50
-            ? Colors.orange
-            : Colors.red;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.error;
 
     return Card(
       child: Padding(
@@ -242,12 +243,12 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isWarning
-            ? Colors.orange.withValues(alpha: 0.1)
+            ? Theme.of(context).appColors.warning.withValues(alpha: 0.1)
             : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isWarning
-              ? Colors.orange.withValues(alpha: 0.3)
+              ? Theme.of(context).appColors.warning.withValues(alpha: 0.3)
               : Theme.of(context).dividerColor,
         ),
       ),
@@ -263,7 +264,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isWarning ? Colors.orange : null,
+                color: isWarning ? Theme.of(context).appColors.warning : null,
               )),
         ],
       ),
@@ -296,18 +297,18 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: (isCritical
-                ? Colors.red
+                ? Theme.of(context).appColors.error
                 : isHigh
-                    ? Colors.orange
-                    : Colors.blue)
+                    ? Theme.of(context).appColors.warning
+                    : Theme.of(context).appColors.info)
             .withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: (isCritical
-                  ? Colors.red
+                  ? Theme.of(context).appColors.error
                   : isHigh
-                      ? Colors.orange
-                      : Colors.blue)
+                      ? Theme.of(context).appColors.warning
+                      : Theme.of(context).appColors.info)
               .withValues(alpha: 0.2),
         ),
       ),
@@ -323,10 +324,10 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                         ? Icons.warning
                         : Icons.info,
                 color: isCritical
-                    ? Colors.red
+                    ? Theme.of(context).appColors.error
                     : isHigh
-                        ? Colors.orange
-                        : Colors.blue,
+                        ? Theme.of(context).appColors.warning
+                        : Theme.of(context).appColors.info,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -341,10 +342,10 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: (isCritical
-                          ? Colors.red
+                          ? Theme.of(context).appColors.error
                           : isHigh
-                              ? Colors.orange
-                              : Colors.blue)
+                              ? Theme.of(context).appColors.warning
+                              : Theme.of(context).appColors.info)
                       .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -354,10 +355,10 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: isCritical
-                        ? Colors.red
+                        ? Theme.of(context).appColors.error
                         : isHigh
-                            ? Colors.orange
-                            : Colors.blue,
+                            ? Theme.of(context).appColors.warning
+                            : Theme.of(context).appColors.info,
                   ),
                 ),
               ),
@@ -447,10 +448,10 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
 
   Widget _buildQosRuleTile(BuildContext context, QosRule rule) {
     final priorityColor = rule.priority <= 2
-        ? Colors.green
+        ? Theme.of(context).appColors.success
         : rule.priority <= 5
-            ? Colors.orange
-            : Colors.red;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.error;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
