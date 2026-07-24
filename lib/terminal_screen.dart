@@ -30,24 +30,30 @@ enum _CmdCategory {
   security,  // تدقيق أمني (firewall, services, users)
   qos,       // طباعة QoS / Queues
   network,   // واجهات وعناوين IP
+  diagnostics, // تشخيص شبكي (ping/traceroute/bandwidth-test من الموجّه)
+  advanced,  // أدوات متقدمة (VRRP/certificates/interface lists/backup)
 }
 
 extension _CmdCategoryX on _CmdCategory {
   String get displayName {
     switch (this) {
-      case _CmdCategory.system:    return 'النظام';
-      case _CmdCategory.security:  return 'تدقيق أمني';
-      case _CmdCategory.qos:       return 'QoS';
-      case _CmdCategory.network:   return 'الشبكة';
+      case _CmdCategory.system:       return 'النظام';
+      case _CmdCategory.security:     return 'تدقيق أمني';
+      case _CmdCategory.qos:          return 'QoS';
+      case _CmdCategory.network:      return 'الشبكة';
+      case _CmdCategory.diagnostics:  return 'تشخيص شبكي';
+      case _CmdCategory.advanced:     return 'أدوات متقدمة';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case _CmdCategory.system:    return Icons.memory;
-      case _CmdCategory.security:  return Icons.security;
-      case _CmdCategory.qos:       return Icons.speed;
-      case _CmdCategory.network:   return Icons.lan;
+      case _CmdCategory.system:       return Icons.memory;
+      case _CmdCategory.security:     return Icons.security;
+      case _CmdCategory.qos:          return Icons.speed;
+      case _CmdCategory.network:      return Icons.lan;
+      case _CmdCategory.diagnostics:  return Icons.network_ping;
+      case _CmdCategory.advanced:     return Icons.engineering;
     }
   }
 }
@@ -114,6 +120,33 @@ class _TerminalScreenState extends State<TerminalScreen> {
       '/ip dhcp-server network print',
       '/ip dns print',
       '/ip arp print',
+    ],
+    // فئة التشخيص الشبكي — أوامر تُنفّذ من الموجّه نفسه (router-originated)
+    // مستوحاة من MikroMCP: ping, traceroute, bandwidth-test, fetch, torch
+    // ملاحظة: هذه أوامر v6 متوافقة بالكامل (لا حاجة لـ v7)
+    _CmdCategory.diagnostics: <String>[
+      '/ping count=5 address=8.8.8.8',
+      '/ping count=5 address=1.1.1.1',
+      '/tool traceroute address=8.8.8.8',
+      '/tool bandwidth-test address=127.0.0.1 protocol=tcp direction=both duration=10',
+      '/tool torch port=80 ip-protocol=tcp',
+      '/tool fetch url="https://www.google.com" mode=https keep-result=no',
+      '/ip firewall connection print',
+      '/tool netwatch print',
+    ],
+    // فئة الأدوات المتقدمة — VRRP, certificates, interface lists, backup, export
+    // مستوحاة من MikroMCP: list_vrrp_instances, list_certificates, list_interface_lists, create_backup, export_config
+    _CmdCategory.advanced: <String>[
+      '/interface vrrp print',
+      '/interface vrrp print detail',
+      '/certificate print',
+      '/interface list print',
+      '/interface list member print',
+      '/system backup save name=manual-backup',
+      '/export',
+      '/system history print',
+      '/system script print',
+      '/system scheduler print',
     ],
   };
 
@@ -213,10 +246,34 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
   /// ينفّذ كل أوامر الفئة النشطة بالتسلسل مع رؤوس فاصلة بين كل أمر.
   /// مفيد جداً للتدقيق الأمني: يعرض firewall + nat + services + users دفعة واحدة.
+  ///
+  /// استثناء: فئة "تشخيص شبكي" تتجاوز أوامر bandwidth-test و torch
+  /// لأنها تتطلب stream/timer ولا تصلح لتنفيذ batch.
   Future<void> _runAuditAll() async {
     if (_busy) return;
-    final commands = _categorizedCommands[_activeCategory] ?? const [];
+    var commands = _categorizedCommands[_activeCategory] ?? const <String>[];
     if (commands.isEmpty) return;
+
+    // استثناء الأوامر التفاعلية/الطويلة من التدقيق الشامل
+    if (_activeCategory == _CmdCategory.diagnostics) {
+      commands = commands.where((c) {
+        final lc = c.toLowerCase();
+        // bandwidth-test و torch يحتاجان stream ومدة محددة
+        // لا تصلح للتنفيذ التسلسلي الآلي
+        if (lc.contains('bandwidth-test')) return false;
+        if (lc.contains('torch')) return false;
+        return true;
+      }).toList();
+    }
+
+    if (commands.isEmpty) {
+      _append(const _TermLine(
+        'لا توجد أوامر صالحة للتدقيق الشامل في فئة "تشخيص شبكي". '
+        'نفّذ bandwidth-test و torch يدوياً.',
+        _LineKind.info,
+      ));
+      return;
+    }
 
     final ok = await _confirmAuditAll(commands);
     if (ok != true) return;
@@ -249,10 +306,14 @@ class _TerminalScreenState extends State<TerminalScreen> {
         _append(_TermLine('$_prompt $cmd', _LineKind.prompt));
 
         try {
+          // مهلة أطول لفئة التشخيص (ping/traceroute قد تستغرق وقتاً)
+          final cmdTimeout = _activeCategory == _CmdCategory.diagnostics
+              ? const Duration(seconds: 60)
+              : const Duration(seconds: 30);
           final result = await CommandExecutor.execute(
             command: cmd,
             method: _method,
-            timeout: const Duration(seconds: 30),
+            timeout: cmdTimeout,
           );
           if (result.success) {
             final out = result.output.trim();

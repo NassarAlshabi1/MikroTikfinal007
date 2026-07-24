@@ -1212,6 +1212,73 @@ class MikrotikDataCollector {
           '=.proplist=address,interface,network,disabled',
         ],
       ),
+      // ===== أوامر v6 جديدة مستوحاة من MikroMCP (بدون LTE) =====
+      // VRRP instances — مستوحاة من list_vrrp_instances في MikroMCP
+      _CollectorCommand(
+        sectionName: 'INTERFACE VRRP (v6)',
+        sshCommand: 'interface vrrp print',
+        apiArgs: [
+          '/interface/vrrp/print',
+          '=.proplist=name,interface,vrid,priority,interval,preemption-mode,authentication,comment,disabled',
+        ],
+        // v6: VRRP على /interface vrrp (v7 أضاف v3 على /interface vrrp submenu منفصل)
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE VRRP DETAIL (v6)',
+        sshCommand: 'interface vrrp print detail',
+        apiArgs: [
+          '/interface/vrrp/print',
+          '=.proplist=name,interface,vrid,priority,interval,preemption-mode,authentication,authentication-type,authentication-password,master,backup,comment,disabled',
+        ],
+      ),
+      // Certificates — مستوحاة من list_certificates في MikroMCP
+      _CollectorCommand(
+        sectionName: 'CERTIFICATES (v6)',
+        sshCommand: 'certificate print',
+        apiArgs: [
+          '/certificate/print',
+          '=.proplist=name,key-size,days-valid,common-name,subject-alt-name,invalid-after,fingerprint,smart-card-key,private-key,trusted',
+        ],
+        // v6: certificates submenu (CA, server, client certs)
+      ),
+      // Interface Lists — مستوحاة من list_interface_lists في MikroMCP
+      _CollectorCommand(
+        sectionName: 'INTERFACE LIST (v6)',
+        sshCommand: 'interface list print',
+        apiArgs: [
+          '/interface/list/print',
+          '=.proplist=name,include,exclude,comment',
+        ],
+        // v6.41+: interface lists (مهمة لـ firewall الحديث)
+      ),
+      _CollectorCommand(
+        sectionName: 'INTERFACE LIST MEMBER (v6)',
+        sshCommand: 'interface list member print',
+        apiArgs: [
+          '/interface/list/member/print',
+          '=.proplist=list,interface,comment',
+        ],
+      ),
+      // Policy routing rules + tables — مستوحاة من list_routing_rules/tables في MikroMCP
+      _CollectorCommand(
+        sectionName: 'IP ROUTE RULE (v6 policy routing)',
+        sshCommand: 'ip route rule print',
+        apiArgs: [
+          '/ip/route/rule/print',
+          '=.proplist=src-address,dst-address,action,table,comment,disabled',
+        ],
+        // v6: policy-based routing rules
+      ),
+      // Backup files listing — مستوحاة من create_backup في MikroMCP
+      _CollectorCommand(
+        sectionName: 'FILE LIST (v6 — لمراجعة backups)',
+        sshCommand: 'file print where name~".backup" or name~".rsc"',
+        apiArgs: [
+          '/file/print',
+          '=.proplist=name,size,creation-time,type',
+        ],
+        // v6: عرض ملفات backup/export فقط
+      ),
     ],
 
     // وضع التشخيص العام لا يجمع بيانات إضافية (يكتفي بالأساسية)
@@ -1461,6 +1528,192 @@ class MikrotikDataCollector {
           port: sshPort,
           mode: mode,
         );
+    }
+  }
+
+  // ============================================================
+  //  أوامر تشخيص من الموجّه (router-originated) — مستوحاة من MikroMCP
+  //  تقوم بتنفيذ ping/traceroute/bandwidth-test/torch من الموجّه نفسه
+  //  هذا يكشف مشاكل التوجيه الداخلي التي لا يراها ping الـ client
+  // ============================================================
+
+  /// ينفّذ ping من الموجّه (router-originated ICMP echo)
+  ///
+  /// أمثلة:
+  /// - `routerPing(host: '8.8.8.8', count: 5)`
+  /// - `routerPing(host: '192.168.1.1', count: 3, interface: 'ether1')`
+  ///
+  /// ملاحظة: هذه الدالة تستخدم SSH فقط لأن `/ping` في RouterOS API
+  /// يُرجع streaming responses غير متوافقة مع talk() التراكضية.
+  static Future<String> routerPing({
+    required String host,
+    required String username,
+    required String password,
+    int count = 5,
+    String? interface,
+    int sshPort = 22,
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final cmd = StringBuffer('/ping count=$count address=$host');
+    if (interface != null && interface.isNotEmpty) {
+      cmd.write(' interface=$interface');
+    }
+    return _executeRouterToolCommand(
+      command: cmd.toString(),
+      username: username,
+      password: password,
+      sshPort: sshPort,
+      timeout: timeout,
+    );
+  }
+
+  /// ينفّذ traceroute من الموجّه (router-originated)
+  ///
+  /// مثال: `routerTraceroute(host: '8.8.8.8')`
+  static Future<String> routerTraceroute({
+    required String host,
+    required String username,
+    required String password,
+    int maxHops = 30,
+    int sshPort = 22,
+    Duration timeout = const Duration(seconds: 60),
+  }) async {
+    final cmd = '/tool traceroute address=$host count=1 max-hop-count=$maxHops';
+    return _executeRouterToolCommand(
+      command: cmd,
+      username: username,
+      password: password,
+      sshPort: sshPort,
+      timeout: timeout,
+    );
+  }
+
+  /// ينفّذ bandwidth-test من الموجّه لمضيف بعيد
+  ///
+  /// مثال: `routerBandwidthTest(target: '192.168.1.2', durationSeconds: 10)`
+  ///
+  /// ملاحظة: يتطلب تشغيل btest server على الطرف الآخر.
+  static Future<String> routerBandwidthTest({
+    required String target,
+    required String username,
+    required String password,
+    int durationSeconds = 10,
+    String protocol = 'tcp',
+    String direction = 'both',
+    int sshPort = 22,
+    Duration timeout = const Duration(seconds: 120),
+  }) async {
+    final cmd = '/tool bandwidth-test address=$target '
+        'protocol=$protocol direction=$direction duration=$durationSeconds';
+    return _executeRouterToolCommand(
+      command: cmd,
+      username: username,
+      password: password,
+      sshPort: sshPort,
+      timeout: timeout,
+    );
+  }
+
+  /// ينفّذ HTTP fetch من الموجّه (للتحقق من اتصال HTTP/HTTPS الخارجي)
+  ///
+  /// مثال: `routerFetch(url: 'https://www.google.com')`
+  static Future<String> routerFetch({
+    required String url,
+    required String username,
+    required String password,
+    bool keepResult = false,
+    int sshPort = 22,
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final keepArg = keepResult ? 'yes' : 'no';
+    // اقتباس الـ URL لأنه قد يحتوي على رموز خاصة
+    final cmd = '/tool fetch url="$url" mode=https keep-result=$keepArg';
+    return _executeRouterToolCommand(
+      command: cmd,
+      username: username,
+      password: password,
+      sshPort: sshPort,
+      timeout: timeout,
+    );
+  }
+
+  /// ينفّذ torch snapshot (مرور شبكي على منفذ محدد) لمدة محددة
+  ///
+  /// مثال: `routerTorch(interface: 'ether1', durationSeconds: 5, port: 80)`
+  static Future<String> routerTorch({
+    required String interface,
+    required String username,
+    required String password,
+    int? port,
+    String ipProtocol = 'tcp',
+    int durationSeconds = 5,
+    int sshPort = 22,
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final cmd = StringBuffer('/tool torch $interface ip-protocol=$ipProtocol');
+    if (port != null) cmd.write(' port=$port');
+    cmd.write(' duration=${durationSeconds}s');
+    return _executeRouterToolCommand(
+      command: cmd.toString(),
+      username: username,
+      password: password,
+      sshPort: sshPort,
+      timeout: timeout,
+    );
+  }
+
+  /// يستخرج عنوان واجهة موجّه خلف host معيّن (Find Host via ARP)
+  /// مستوحى من mikrotik-powershell-diagnostics: ip arp print + فلترة
+  ///
+  /// مثال: `findHostInArp(host: '192.168.1.100', ...)`
+  /// يُرجع سطور ARP المطابقة للـ host (مفيد لتحديد واجهة العميل)
+  static Future<String> findHostInArp({
+    required String host,
+    required String username,
+    required String password,
+    int sshPort = 22,
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
+    // v6: ip arp print where address=<host>
+    final cmd = 'ip arp print where address="$host"';
+    return _executeRouterToolCommand(
+      command: cmd,
+      username: username,
+      password: password,
+      sshPort: sshPort,
+      timeout: timeout,
+    );
+  }
+
+  /// ينفّذ أمر tool عشوائي عبر SSH (داخل /tool/ و /ping)
+  /// يستخدم بواسطة routerPing/routerTraceroute/routerBandwidthTest/routerTorch
+  static Future<String> _executeRouterToolCommand({
+    required String command,
+    required String username,
+    required String password,
+    required int sshPort,
+    required Duration timeout,
+  }) async {
+    // جلب الـ host من SharedPreferences لأن المستخدم قد لا يمرره دائماً
+    final prefs = await SharedPreferences.getInstance();
+    final host = prefs.getString('ip');
+    if (host == null) {
+      throw Exception('عنوان الموجّه غير محفوظ — سجّل الدخول أولاً');
+    }
+
+    final socket = await SSHSocket.connect(host, sshPort, timeout: timeout);
+    final client = SSHClient(
+      socket,
+      username: username,
+      onPasswordRequest: () => password,
+    );
+
+    try {
+      debugPrint('[MikrotikDataCollector] router tool: $command');
+      final result = await client.run(command).timeout(timeout);
+      return utf8.decode(result, allowMalformed: true).trim();
+    } finally {
+      client.close();
     }
   }
 }
