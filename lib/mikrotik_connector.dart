@@ -285,7 +285,7 @@ class MikrotikConnectionNotifier extends StateNotifier<MikrotikConnectionStatus>
     );
 
     try {
-      final client = await MikrotikConnector.connect();
+      await MikrotikConnector.connect();
       state = MikrotikConnectionStatus(
         state: MikrotikConnectionState.connected,
         ip: MikrotikConnector.currentIp,

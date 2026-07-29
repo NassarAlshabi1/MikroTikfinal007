@@ -13,7 +13,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../services/app_logger.dart';
 import '../services/secure_credentials_storage.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_colors_extension.dart';

@@ -45,10 +45,15 @@ class _NetworkDiagnostic {
     required this.id,
     required this.title,
     required this.description,
+    // ignore: unused_element_parameter
     this.status = DiagnosticStatus.pending,
+    // ignore: unused_element_parameter
     this.message = 'لم يتم الفحص بعد',
+    // ignore: unused_element_parameter
     this.latencyMs,
+    // ignore: unused_element_parameter
     this.downloadSpeedMbps,
+    // ignore: unused_element_parameter
     this.uploadSpeedMbps,
   });
 }
@@ -429,6 +434,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   int get _countSuccess => _tests.where((t) => t.status == DiagnosticStatus.success).length;
   int get _countWarning => _tests.where((t) => t.status == DiagnosticStatus.warning).length;
   int get _countError => _tests.where((t) => t.status == DiagnosticStatus.error).length;
+  // ignore: unused_element
   int get _countPending => _tests.where((t) => t.status == DiagnosticStatus.pending).length;
 
   Color _statusColor(DiagnosticStatus s) {

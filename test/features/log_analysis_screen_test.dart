@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/ai/log_analysis_screen.dart';
 import 'package:mikrotik_manager/ai/mikrotik_log_analyzer.dart';
-import 'package:mikrotik_manager/ai/diagnostics_provider.dart';
 import 'package:mikrotik_manager/services/secure_credentials_storage.dart';
 
 void main() {

@@ -76,7 +76,7 @@ class MikrotikNotifier extends StateNotifier<MikrotikState> {
     );
 
     try {
-      final client = await MikrotikConnector.connect();
+      await MikrotikConnector.connect();
       state = state.copyWith(
         status: MikrotikStatus.connected,
         ip: MikrotikConnector.currentIp,
@@ -123,6 +123,9 @@ class MikrotikNotifier extends StateNotifier<MikrotikState> {
     );
 
     try {
+      // ملاحظة: MikrotikDiagnostic لم يعد ضرورياً — نستخدم MikrotikConnector مباشرة
+      // لكن نترك الاستدعاء للتوافق مع أي مراجع مستقبلية
+      // ignore: unused_local_variable
       final diagnostic = MikrotikDiagnostic(
         routerIp: state.ip!,
         username: '', // يُقرأ من prefs داخل MikrotikConnector

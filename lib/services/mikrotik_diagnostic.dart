@@ -18,7 +18,6 @@ import 'package:flutter/foundation.dart';
 import 'package:router_os_client/router_os_client.dart';
 
 import '../models/diagnostic_result.dart' as diag;
-import '../mikrotik_connector.dart';
 
 /// أداة تشخيص وفحص مشاكل MikroTik v6
 class MikrotikDiagnostic {

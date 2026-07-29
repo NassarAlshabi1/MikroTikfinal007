@@ -13,7 +13,6 @@
 //  التي هي plaintext XML file على Android — غير آمن للجذر (rooted devices).
 // ============================================================
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

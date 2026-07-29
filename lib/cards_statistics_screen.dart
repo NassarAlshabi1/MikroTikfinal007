@@ -33,6 +33,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen> with Sing
   int _usersTotalPages = 0;
 // ignore: unused_field
   int _usersFetchedPages = 0;
+  // ignore: unused_field
   int _sessionsFetchedPages = 0;
 // ignore: unused_field
   int _sessionsTotalPages = 0;
