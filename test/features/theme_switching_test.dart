@@ -100,6 +100,7 @@ class ThemeAwareWidget extends StatelessWidget {
 /// widget يلتقط brightness الحالي ويحفظه في static field
 class _BrightnessChecker extends StatefulWidget {
   const _BrightnessChecker();
+  // ignore: unused_field
   static Brightness? lastBrightness;
 
   @override

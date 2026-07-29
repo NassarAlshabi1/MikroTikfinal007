@@ -67,6 +67,7 @@ dev_dependencies:
   # --- drift code generation ---
   drift_dev: ^2.16.0
   build_runner: ^2.4.0
+  dart_code_linter: ^4.1.9
 
 flutter:
   uses-material-design: true
@@ -75,6 +76,31 @@ flutter:
     - assets/images/
     # ملاحظة: .env غير مُضاف كـ asset لأنه في .gitignore
     # المفاتيح تُحمّل من flutter_secure_storage بدل .env
+
+  # ============================================================
+  #  Custom Fonts — Tajawal + Cairo (من amolood/Mikrotik-flutter-app)
+  # ============================================================
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: fonts/Tajawal-Regular.ttf
+          weight: 400
+        - asset: fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: fonts/Tajawal-Bold.ttf
+          weight: 700
+        - asset: fonts/Tajawal-ExtraBold.ttf
+          weight: 800
+        - asset: fonts/Tajawal-Black.ttf
+          weight: 900
+        - asset: fonts/Tajawal-ExtraLight.ttf
+          weight: 200
+        - asset: fonts/Tajawal-Light.ttf
+          weight: 300
+    - family: Cairo
+      fonts:
+        - asset: fonts/Cairo-Regular.ttf
+          weight: 400
 
 flutter_app_name:
   name: "اداره الكروت"

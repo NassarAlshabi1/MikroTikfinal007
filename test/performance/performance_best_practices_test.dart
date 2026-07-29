@@ -103,6 +103,7 @@ void main() {
             ),
           );
 
+          // ignore: unused_local_variable
           final initialParent = parentBuildCount;
           final initialConsumer = consumerBuildCount;
 

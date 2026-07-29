@@ -12,7 +12,6 @@
 // ============================================================
 
 import 'dart:async';
-import 'dart:collection';
 
 /// حالة المهمة
 enum TaskState { pending, running, completed, failed, cancelled }
@@ -53,7 +52,13 @@ class AsyncTask<T> {
     this.state = TaskState.pending,
   });
 
-  Future<TaskResult<T>> get future => _completer?.future ?? Future.value(null);
+  Future<TaskResult<T>> get future =>
+      _completer?.future ??
+      Future.value(TaskResult<T>(
+        success: false,
+        error: 'Task not started yet',
+        elapsed: Duration.zero,
+      ));
 
   void _start() {
     state = TaskState.running;

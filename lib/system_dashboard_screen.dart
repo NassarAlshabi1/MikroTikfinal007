@@ -23,41 +23,30 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _uptime = '';
   String _version = '';
   String _boardName = '';
-// ignore: unused_field
-// ignore: unused_field
-// ignore: unused_field
-  String _cpu = '';
-  String _cpuCount = '';
-  String _cpuFrequency = '';
+  String _cpu = ''; // ignore: unused_field
+  String _cpuCount = ''; // ignore: unused_field
+  String _cpuFrequency = ''; // ignore: unused_field
   int _cpuLoad = 0;
   int _freeMemory = 0;
-// ignore: unused_field
-// ignore: unused_field
   int _totalMemory = 0;
   int _freeHddSpace = 0;
   int _totalHddSpace = 0;
-  String _architectureName = '';
-  String _platform = '';
+  String _architectureName = ''; // ignore: unused_field
+  String _platform = ''; // ignore: unused_field
 
   // System Health data
-// ignore: unused_field
-// ignore: unused_field
-// ignore: unused_field
-// ignore: unused_field
-// ignore: unused_field
   String _voltage = 'غير متاح';
   String _temperature = 'غير متاح';
 
   // RouterBoard data
   String _model = '';
-  String _serialNumber = '';
-  String _firmwareType = '';
-  String _factoryFirmware = '';
-  String _currentFirmware = '';
-  String _upgradeFirmware = '';
+  String _serialNumber = ''; // ignore: unused_field
+  String _firmwareType = ''; // ignore: unused_field
+  String _factoryFirmware = ''; // ignore: unused_field
+  String _currentFirmware = ''; // ignore: unused_field
+  String _upgradeFirmware = ''; // ignore: unused_field
 
   // Interface Statistics
-// ignore: unused_field
   int _rxBitsPerSecond = 0;
   int _txBitsPerSecond = 0;
 
@@ -68,7 +57,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   // System Clock
   String _time = '';
   String _date = '';
-  String _timeZoneName = '';
+  String _timeZoneName = ''; // ignore: unused_field
 
   // History for Charts (last 20 data points)
   List<FlSpot> _cpuHistory = [];
