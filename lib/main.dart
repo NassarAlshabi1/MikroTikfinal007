@@ -32,6 +32,7 @@ import 'active_users_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_palette.dart';
 import 'theme/app_gradients.dart';
+import 'theme/amolood_theme.dart';
 // ===== Imports من capy/v2-riverpod (AI + terminal + perf + database) =====
 import 'ai_diagnostics_screen.dart';
 import 'terminal_screen.dart';
@@ -143,10 +144,11 @@ class MyApp extends StatelessWidget {
         scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
         title: 'MikroTik Manager',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        // Theme Provider يدير الوضع تلقائياً
-        themeMode: themeProvider.themeMode,
+        // 🎨 ثيم amolood (Dark Navy + Electric Blue + Neon) + Tajawal font
+        // مستوحى من github.com/amolood/Mikrotik-flutter-app
+        theme: AmoloodTheme.dark,
+        darkTheme: AmoloodTheme.dark,
+        themeMode: ThemeMode.dark,
         home: const LoginScreen(),
       ),
     );
