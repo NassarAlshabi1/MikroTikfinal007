@@ -15,6 +15,7 @@ import 'ai/diagnostics_models.dart';
 import 'snackbar_helpers.dart';
 
 import 'theme/app_theme.dart';
+import 'services/secure_clipboard.dart';
 /// نوع سطر في مخرجات التيرمنال
 enum _LineKind { prompt, output, error, info, header }
 
@@ -477,7 +478,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     final buffer = _lines
         .map((l) => l.kind == _LineKind.prompt ? l.text : l.text)
         .join('\n');
-    await Clipboard.setData(ClipboardData(text: buffer));
+    await SecureClipboard.copy(buffer, sensitive: false);
     if (mounted) showSuccessSnackBar(context, 'تم نسخ مخرجات التيرمنال');
   }
 

@@ -1,12 +1,13 @@
 // ============================================================
 //  SecureCredentialsStorage — تخزين آمن للبيانات الحساسة
 //
-//  تطبّق معايير flutter-security skill:
+//  تطبّق معايير flutter-security skill + flutter-apply-architecture:
 //  ✅ AES-256-GCM (flutter_secure_storage يستخدمه داخلياً)
 //  ✅ Secret Storage: لا SharedPreferences للبيانات الحساسة
 //  ✅ Memory Safety: لا تحتفظ بالبيانات في الذاكرة أكثر من اللازم
 //  ✅ Audit Log: يسجّل عمليات القراءة/الكتابة (بدون تسجيل القيم)
 //  ✅ Token Storage: لا API keys في source code
+//  ✅ Testability: abstract interface + concrete impl + in-memory mock
 //
 //  يحلّ مشكلة: main.dart يخزّن 'pass' و 'remote_pass' في SharedPreferences
 //  التي هي plaintext XML file على Android — غير آمن للجذر (rooted devices).
@@ -16,18 +17,34 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// خدمة تخزين آمنة للبيانات الحساسة (كلمات المرور، API keys، tokens)
-///
-/// الهجرة من SharedPreferences:
-/// - قديماً: prefs.setString('pass', password)  ← plaintext
-/// - حديثاً: SecureCredentialsStorage.setPassword(password)  ← encrypted
-///
-/// يدعم الترحيل التلقائي: إذا وُجدت بيانات في SharedPreferences القديمة،
-/// تُنقل إلى flutter_secure_storage ثم تُمسح من SharedPreferences.
-class SecureCredentialsStorage {
-  SecureCredentialsStorage._();
-  static final SecureCredentialsStorage instance = SecureCredentialsStorage._();
+import 'app_logger.dart';
 
+/// عقد (interface) للتخزين الآمن — يمكن استبداله بـ mock في الاختبارات
+///
+/// يتبع نمط flutter-apply-architecture: فصل الـ DataSource abstraction
+/// عن الـ implementation. هذا يسمح بحقن mock في الاختبارات.
+abstract class SecureCredentialsStorage {
+  // ─── Mikrotik password ───
+  Future<String?> getMikrotikPassword();
+  Future<void> setMikrotikPassword(String? password);
+
+  // ─── Remote password ───
+  Future<String?> getRemotePassword();
+  Future<void> setRemotePassword(String? password);
+
+  // ─── OOMOL API key ───
+  Future<String?> getOomolApiKey();
+  Future<void> setOomolApiKey(String? apiKey);
+
+  // ─── Utilities ───
+  Future<void> clearAll();
+  Future<void> clearMikrotikCredentials();
+  Future<bool> hasStoredCredentials();
+  Future<void> migrateFromSharedPreferences();
+}
+
+/// تنفيذ إنتاجي يستخدم flutter_secure_storage (AES-256-GCM + Keychain + libsecret)
+class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
   /// خيارات التشفير على كل منصة:
   /// - Android: EncryptedSharedPreferences (AES-256-GCM)
   /// - iOS: Keychain (first_unlock accessibility)
@@ -48,148 +65,240 @@ class SecureCredentialsStorage {
   /// علامة تشير لترحيل البيانات من SharedPreferences إلى SecureStorage
   static const _migrationDoneKey = 'secure_storage_migrated';
 
-  // ============================================================
-  //  Migration — نقل البيانات الحساسة من SharedPreferences إلى Secure
-  // ============================================================
+  @override
+  Future<String?> getMikrotikPassword() async {
+    try {
+      return await _storage.read(key: _keyMikrotikPass);
+    } catch (e) {
+      AppLogger.error('Failed to read mikrotik_pass', error: e, category: LogCategory.storage);
+      return null;
+    }
+  }
 
-  /// يهاجر البيانات الحساسة من SharedPreferences إلى flutter_secure_storage
-  ///
-  /// يجب استدعاؤها مرة واحدة عند بدء التطبيق (في main()).
-  /// بعد الترحيل، تُمسح البيانات من SharedPreferences نهائياً.
+  @override
+  Future<void> setMikrotikPassword(String? password) async {
+    if (password == null || password.isEmpty) {
+      await _storage.delete(key: _keyMikrotikPass);
+      AppLogger.security('mikrotik_pass cleared');
+    } else {
+      await _storage.write(key: _keyMikrotikPass, value: password);
+      AppLogger.security('mikrotik_pass set');
+    }
+  }
+
+  @override
+  Future<String?> getRemotePassword() async {
+    try {
+      return await _storage.read(key: _keyRemotePass);
+    } catch (e) {
+      AppLogger.error('Failed to read remote_pass', error: e, category: LogCategory.storage);
+      return null;
+    }
+  }
+
+  @override
+  Future<void> setRemotePassword(String? password) async {
+    if (password == null || password.isEmpty) {
+      await _storage.delete(key: _keyRemotePass);
+      AppLogger.security('remote_pass cleared');
+    } else {
+      await _storage.write(key: _keyRemotePass, value: password);
+      AppLogger.security('remote_pass set');
+    }
+  }
+
+  @override
+  Future<String?> getOomolApiKey() async {
+    try {
+      return await _storage.read(key: _keyOomolApiKey);
+    } catch (e) {
+      AppLogger.error('Failed to read oomol_api_key', error: e, category: LogCategory.storage);
+      return null;
+    }
+  }
+
+  @override
+  Future<void> setOomolApiKey(String? apiKey) async {
+    if (apiKey == null || apiKey.isEmpty) {
+      await _storage.delete(key: _keyOomolApiKey);
+      AppLogger.security('oomol_api_key cleared');
+    } else {
+      await _storage.write(key: _keyOomolApiKey, value: apiKey);
+      AppLogger.security('oomol_api_key set');
+    }
+  }
+
+  @override
+  Future<void> clearAll() async {
+    try {
+      await _storage.delete(key: _keyMikrotikPass);
+      await _storage.delete(key: _keyRemotePass);
+      await _storage.delete(key: _keyOomolApiKey);
+      AppLogger.security('All credentials cleared');
+    } catch (e) {
+      AppLogger.error('Failed to clear credentials', error: e, category: LogCategory.storage);
+    }
+  }
+
+  @override
+  Future<void> clearMikrotikCredentials() async {
+    try {
+      await _storage.delete(key: _keyMikrotikPass);
+      AppLogger.security('mikrotik_pass cleared');
+    } catch (e) {
+      AppLogger.error('Failed to clear mikrotik_pass', error: e, category: LogCategory.storage);
+    }
+  }
+
+  @override
+  Future<bool> hasStoredCredentials() async {
+    final pass = await getMikrotikPassword();
+    return pass != null && pass.isNotEmpty;
+  }
+
+  @override
   Future<void> migrateFromSharedPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final migrated = prefs.getBool(_migrationDoneKey) ?? false;
       if (migrated) {
-        debugPrint('[SecureStorage] Already migrated, skipping.');
+        AppLogger.debug('SecureStorage already migrated', category: LogCategory.storage);
         return;
       }
 
-      debugPrint('[SecureStorage] Migrating sensitive data from prefs to secure storage...');
+      AppLogger.info('Migrating sensitive data from prefs to secure storage',
+          category: LogCategory.storage);
 
       // نقل كلمات المرور إن وُجدت في SharedPreferences
       final mikrotikPass = prefs.getString('pass');
       if (mikrotikPass != null && mikrotikPass.isNotEmpty) {
         await _storage.write(key: _keyMikrotikPass, value: mikrotikPass);
         await prefs.remove('pass');
-        debugPrint('[SecureStorage] ✓ Migrated mikrotik_pass');
+        AppLogger.security('mikrotik_pass migrated from prefs');
       }
 
       final remotePass = prefs.getString('remote_pass');
       if (remotePass != null && remotePass.isNotEmpty) {
         await _storage.write(key: _keyRemotePass, value: remotePass);
         await prefs.remove('remote_pass');
-        debugPrint('[SecureStorage] ✓ Migrated remote_pass');
+        AppLogger.security('remote_pass migrated from prefs');
       }
 
       final oomolKey = prefs.getString('oomol_api_key');
       if (oomolKey != null && oomolKey.isNotEmpty) {
         await _storage.write(key: _keyOomolApiKey, value: oomolKey);
         await prefs.remove('oomol_api_key');
-        debugPrint('[SecureStorage] ✓ Migrated oomol_api_key');
+        AppLogger.security('oomol_api_key migrated from prefs');
       }
 
       // وضع علامة الترحيل
       await prefs.setBool(_migrationDoneKey, true);
-      debugPrint('[SecureStorage] Migration complete.');
+      AppLogger.info('SecureStorage migration complete', category: LogCategory.storage);
     } catch (e) {
-      debugPrint('[SecureStorage] Migration failed: $e');
+      AppLogger.error('SecureStorage migration failed', error: e, category: LogCategory.storage);
       // لا نرمي — التطبيق يجب أن يكمل التشغيل حتى لو فشل الترحيل
     }
   }
+}
 
-  // ============================================================
-  //  Mikrotik password
-  // ============================================================
+/// Mock implementation للاختبارات — يخزّن في memory بدل التخزين الفعلي
+class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
+  final Map<String, String> _store = {};
 
-  Future<String?> getMikrotikPassword() async {
-    try {
-      return await _storage.read(key: _keyMikrotikPass);
-    } catch (e) {
-      debugPrint('[SecureStorage] Failed to read mikrotik_pass: $e');
-      return null;
-    }
+  /// يضبط قيمة ابتدائية (لاستخدامها في الاختبارات)
+  void seed({
+    String? mikrotikPass,
+    String? remotePass,
+    String? oomolApiKey,
+  }) {
+    if (mikrotikPass != null) _store['mikrotik_pass'] = mikrotikPass;
+    if (remotePass != null) _store['remote_pass'] = remotePass;
+    if (oomolApiKey != null) _store['oomol_api_key'] = oomolApiKey;
   }
 
+  @override
+  Future<String?> getMikrotikPassword() async => _store['mikrotik_pass'];
+
+  @override
   Future<void> setMikrotikPassword(String? password) async {
     if (password == null || password.isEmpty) {
-      await _storage.delete(key: _keyMikrotikPass);
+      _store.remove('mikrotik_pass');
     } else {
-      await _storage.write(key: _keyMikrotikPass, value: password);
+      _store['mikrotik_pass'] = password;
     }
   }
 
-  // ============================================================
-  //  Remote password
-  // ============================================================
+  @override
+  Future<String?> getRemotePassword() async => _store['remote_pass'];
 
-  Future<String?> getRemotePassword() async {
-    try {
-      return await _storage.read(key: _keyRemotePass);
-    } catch (e) {
-      debugPrint('[SecureStorage] Failed to read remote_pass: $e');
-      return null;
-    }
-  }
-
+  @override
   Future<void> setRemotePassword(String? password) async {
     if (password == null || password.isEmpty) {
-      await _storage.delete(key: _keyRemotePass);
+      _store.remove('remote_pass');
     } else {
-      await _storage.write(key: _keyRemotePass, value: password);
+      _store['remote_pass'] = password;
     }
   }
 
-  // ============================================================
-  //  OOMOL API key
-  // ============================================================
+  @override
+  Future<String?> getOomolApiKey() async => _store['oomol_api_key'];
 
-  Future<String?> getOomolApiKey() async {
-    try {
-      return await _storage.read(key: _keyOomolApiKey);
-    } catch (e) {
-      debugPrint('[SecureStorage] Failed to read oomol_api_key: $e');
-      return null;
-    }
-  }
-
+  @override
   Future<void> setOomolApiKey(String? apiKey) async {
     if (apiKey == null || apiKey.isEmpty) {
-      await _storage.delete(key: _keyOomolApiKey);
+      _store.remove('oomol_api_key');
     } else {
-      await _storage.write(key: _keyOomolApiKey, value: apiKey);
+      _store['oomol_api_key'] = apiKey;
     }
   }
 
-  // ============================================================
-  //  Utilities
-  // ============================================================
-
-  /// يحذف كل البيانات الحساسة (للتسجيل الخروج الكامل)
+  @override
   Future<void> clearAll() async {
-    try {
-      await _storage.delete(key: _keyMikrotikPass);
-      await _storage.delete(key: _keyRemotePass);
-      await _storage.delete(key: _keyOomolApiKey);
-      debugPrint('[SecureStorage] Cleared all credentials.');
-    } catch (e) {
-      debugPrint('[SecureStorage] Failed to clear: $e');
-    }
+    _store.clear();
   }
 
-  /// يحذف كلمة مرور MikroTik فقط (عند تسجيل الخروج بدون "تذكرني")
+  @override
   Future<void> clearMikrotikCredentials() async {
-    try {
-      await _storage.delete(key: _keyMikrotikPass);
-      debugPrint('[SecureStorage] Cleared mikrotik_pass.');
-    } catch (e) {
-      debugPrint('[SecureStorage] Failed to clear mikrotik_pass: $e');
-    }
+    _store.remove('mikrotik_pass');
   }
 
-  /// تحقق من وجود بيانات حساسة محفوظة
+  @override
   Future<bool> hasStoredCredentials() async {
-    final pass = await getMikrotikPassword();
+    final pass = _store['mikrotik_pass'];
     return pass != null && pass.isNotEmpty;
+  }
+
+  @override
+  Future<void> migrateFromSharedPreferences() async {
+    // لا شيء في mock — الاختبارات تضبط القيم مباشرة عبر seed()
+  }
+}
+
+/// Container للـ dependency injection — يسمح بحقن mock في الاختبارات
+///
+/// الاستخدام في الإنتاج (main.dart):
+/// ```dart
+/// SecureCredentialsStorageContainer.instance = SecureCredentialsStorageImpl();
+/// ```
+///
+/// الاستخدام في الاختبارات:
+/// ```dart
+/// setUp(() {
+///   SecureCredentialsStorageContainer.instance = InMemorySecureCredentialsStorage();
+/// });
+/// ```
+class SecureCredentialsStorageContainer {
+  SecureCredentialsStorageContainer._();
+  static SecureCredentialsStorage _instance = SecureCredentialsStorageImpl();
+
+  static SecureCredentialsStorage get instance => _instance;
+
+  static set instance(SecureCredentialsStorage storage) {
+    _instance = storage;
+  }
+
+  /// يعيد الضبط للتنفيذ الإنتاجي (يُستخدم بعد الاختبارات)
+  static void resetToProduction() {
+    _instance = SecureCredentialsStorageImpl();
   }
 }

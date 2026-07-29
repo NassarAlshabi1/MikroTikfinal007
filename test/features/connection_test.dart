@@ -14,11 +14,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/mikrotik_connector.dart';
+import 'package:mikrotik_manager/services/secure_credentials_storage.dart';
 
 void main() {
-  // إعداد SharedPreferences mock
+  // إعداد SharedPreferences mock + SecureCredentialsStorage mock
+  // 🔒 flutter-security: كلمة المرور تُقرأ الآن من flutter_secure_storage
+  // لكن flutter_secure_storage لا يعمل في unit tests (يتطلب platform channel)
+  // لذا نستبدله بـ InMemorySecureCredentialsStorage قبل كل اختبار.
+  late InMemorySecureCredentialsStorage mockSecureStorage;
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    mockSecureStorage = InMemorySecureCredentialsStorage();
+    SecureCredentialsStorageContainer.instance = mockSecureStorage;
+  });
+
+  tearDown(() {
+    SecureCredentialsStorageContainer.resetToProduction();
   });
 
   group('🔗 اختبارات الاتصال وتسجيل الدخول', () {
@@ -94,8 +106,9 @@ void main() {
     // ============================================================
     group('④ MikrotikConnector.connect — Error Cases', () {
       test('يرمي MikrotikCredentialsMissingException عند غياب IP', () async {
-        // لا توجد بيانات في prefs
+        // لا توجد بيانات في prefs ولا في secure storage
         SharedPreferences.setMockInitialValues({});
+        // (mock secure storage فارغ افتراضياً)
 
         await expectLater(
           MikrotikConnector.connect(),
@@ -119,7 +132,7 @@ void main() {
         SharedPreferences.setMockInitialValues({
           'ip': '192.168.1.1',
           'user': 'admin',
-          // pass missing
+          // 🔒 pass missing في secure storage (لا نضعها في mock)
         });
 
         await expectLater(
@@ -132,9 +145,10 @@ void main() {
         SharedPreferences.setMockInitialValues({
           'ip': '192.168.99.99', // IP غير متاح
           'user': 'admin',
-          'pass': 'password',
           'port': '8728',
         });
+        // 🔒 seed كلمة المرور في mock secure storage
+        mockSecureStorage.seed(mikrotikPass: 'password');
 
         // سيحاول الاتصال ويفشل (timeout أو connection refused)
         await expectLater(
@@ -329,8 +343,9 @@ void main() {
       test('user و pass بدون IP', () async {
         SharedPreferences.setMockInitialValues({
           'user': 'admin',
-          'pass': 'secret',
+          // 🔒 pass في secure storage بدل prefs
         });
+        mockSecureStorage.seed(mikrotikPass: 'secret');
 
         await expectLater(
           MikrotikConnector.connect(),
@@ -342,9 +357,9 @@ void main() {
         SharedPreferences.setMockInitialValues({
           'ip': '192.168.99.99', // IP غير صالح لتفادي اتصال ناجح
           'user': 'admin',
-          'pass': 'secret',
           'port': 'abc', // غير رقمي
         });
+        mockSecureStorage.seed(mikrotikPass: 'secret');
 
         // يجب أن يحاول الاتصال بالمنفذ 8728 ويفشل
         await expectLater(
@@ -357,9 +372,9 @@ void main() {
         SharedPreferences.setMockInitialValues({
           'ip': '192.168.99.99',
           'user': 'admin',
-          'pass': 'secret',
           'port': '8729',
         });
+        mockSecureStorage.seed(mikrotikPass: 'secret');
 
         // سيفشل الاتصال لكن نتحقق من أنه يقرأ المنفذ الصحيح
         await expectLater(
@@ -411,14 +426,16 @@ void main() {
         SharedPreferences.setMockInitialValues({
           'ip': '192.168.99.99',
           'user': 'admin',
-          'pass': 'secret',
           'port': '8728',
         });
+        mockSecureStorage.seed(mikrotikPass: 'secret');
 
         final stopwatch = Stopwatch()..start();
         try {
           await MikrotikConnector.connect();
-        } catch (_) {}
+        } on MikrotikConnectionException {
+          // متوقع
+        }
         stopwatch.stop();
 
         // يجب أن يفشل خلال 10 ثوان (timeout = 5s + overhead)

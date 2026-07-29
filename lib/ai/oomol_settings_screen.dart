@@ -56,7 +56,7 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     // 🔒 قراءة API key من flutter_secure_storage (مشفّر)
-    final apiKey = await SecureCredentialsStorage.instance.getOomolApiKey() ?? '';
+    final apiKey = await SecureCredentialsStorageContainer.instance.getOomolApiKey() ?? '';
     setState(() {
       _apiKeyController.text = apiKey;
       _packageNameController.text = prefs.getString('oomol_package_name') ?? '';
@@ -67,7 +67,7 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     // 🔒 حفظ API key في flutter_secure_storage (مشفّر)
-    await SecureCredentialsStorage.instance.setOomolApiKey(_apiKeyController.text.trim());
+    await SecureCredentialsStorageContainer.instance.setOomolApiKey(_apiKeyController.text.trim());
     await prefs.setString('oomol_package_name', _packageNameController.text.trim());
     await prefs.setString('oomol_package_version', _packageVersionController.text.trim());
     if (mounted) showSuccessSnackBar(context, 'تم حفظ إعدادات OOMOL');

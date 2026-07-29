@@ -137,10 +137,10 @@ void main() {
     //  3) AiSettings — إعدادات الـ AI
     // ============================================================
     group('③ AiSettings', () {
-      test('default_ يكون OpenAI + gpt-4o-mini', () {
+      test('default_ يكون OpenRouter + google/gemini-2.5-flash', () {
         final settings = AiSettings.default_;
-        expect(settings.provider, AiProvider.openAI);
-        expect(settings.model, 'gpt-4o-mini');
+        expect(settings.provider, AiProvider.openRouter);
+        expect(settings.model, 'google/gemini-2.5-flash');
         expect(settings.apiKey, isEmpty);
         expect(settings.isConfigured, isFalse);
       });
@@ -161,15 +161,39 @@ void main() {
         expect(updated.model, 'gemini-2.5-flash');
         expect(updated.apiKey, 'AIza-test');
         // الأصلي لم يتغير
-        expect(original.provider, AiProvider.openAI);
+        expect(original.provider, AiProvider.openRouter);
       });
 
       test('effectiveBaseUrl يُرجع الافتراضي للمزود', () {
+        // default_ لها baseUrl = 'https://openrouter.ai/api/v1' كقيمة صريحة
         final openAi = AiSettings.default_;
-        expect(openAi.effectiveBaseUrl, 'https://api.openai.com/v1');
+        expect(openAi.effectiveBaseUrl, 'https://openrouter.ai/api/v1');
 
-        final gemini = AiSettings.default_.copyWith(provider: AiProvider.gemini);
+        // لتغيير الـ baseUrl الافتراضي للمزود، ننشئ AiSettings جديد
+        // (copyWith(baseUrl: null) لا يمسح بسبب ?? semantics)
+        const gemini = AiSettings(
+          provider: AiProvider.gemini,
+          model: 'gemini-2.5-flash',
+          apiKey: '',
+          baseUrl: null,
+          connectionMethod: MikrotikConnectionMethod.routerOS,
+          maxTokens: 1500,
+          mode: DiagnosticMode.general,
+          agenticMaxSteps: 5,
+        );
         expect(gemini.effectiveBaseUrl, 'https://generativelanguage.googleapis.com/v1beta');
+
+        const openAiSettings = AiSettings(
+          provider: AiProvider.openAI,
+          model: 'gpt-4o-mini',
+          apiKey: '',
+          baseUrl: null,
+          connectionMethod: MikrotikConnectionMethod.routerOS,
+          maxTokens: 1500,
+          mode: DiagnosticMode.general,
+          agenticMaxSteps: 5,
+        );
+        expect(openAiSettings.effectiveBaseUrl, 'https://api.openai.com/v1');
       });
 
       test('effectiveBaseUrl يستخدم baseUrl المخصص إن وُجد', () {

@@ -52,7 +52,7 @@ void main() async {
   // 🔒 Security: ترحيل البيانات الحساسة من SharedPreferences إلى flutter_secure_storage
   // (يحدث مرة واحدة فقط — بعدها يُعلام كمنتهٍ)
   WidgetsFlutterBinding.ensureInitialized();
-  await SecureCredentialsStorage.instance.migrateFromSharedPreferences();
+  await SecureCredentialsStorageContainer.instance.migrateFromSharedPreferences();
   AppLogger.info('App starting', category: LogCategory.system);
 
   runApp(
@@ -279,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('remember_me') ?? false) {
       // 🔒 قراءة كلمة المرور من flutter_secure_storage
-      final password = await SecureCredentialsStorage.instance.getMikrotikPassword() ?? '';
+      final password = await SecureCredentialsStorageContainer.instance.getMikrotikPassword() ?? '';
       setState(() {
         _ipController.text = prefs.getString('ip') ?? '';
         _userController.text = prefs.getString('user') ?? '';
@@ -290,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     }
     if (prefs.getBool('remember_me_remote') ?? false) {
       // 🔒 قراءة كلمة المرور البعيدة من flutter_secure_storage
-      final remotePass = await SecureCredentialsStorage.instance.getRemotePassword() ?? '';
+      final remotePass = await SecureCredentialsStorageContainer.instance.getRemotePassword() ?? '';
       setState(() {
         _remoteServerController.text = prefs.getString('remote_server') ?? '';
         _remotePortController.text = prefs.getString('remote_port') ?? '8728';
@@ -311,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     // بدل SharedPreferences (plaintext).
     await prefs.setString('ip', _ipController.text);
     await prefs.setString('user', _userController.text);
-    await SecureCredentialsStorage.instance
+    await SecureCredentialsStorageContainer.instance
         .setMikrotikPassword(_passwordController.text);
     await prefs.setString('port', _portController.text);
     // إن لم يفعّل "تذكرني"، نمسح بيانات الدخول عند تسجيل الخروج
@@ -333,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     await prefs.setString('remote_port', _remotePortController.text);
     await prefs.setString('remote_user', _remoteUserController.text);
     // 🔒 كلمة المرور البعيدة في flutter_secure_storage
-    await SecureCredentialsStorage.instance
+    await SecureCredentialsStorageContainer.instance
         .setRemotePassword(_remotePasswordController.text);
   }
 
@@ -580,7 +580,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await prefs.setString('port', _remotePortController.text);
       await prefs.setString('user', _remoteUserController.text);
       // 🔒 كلمة المرور في flutter_secure_storage (مشفّرة)
-      await SecureCredentialsStorage.instance
+      await SecureCredentialsStorageContainer.instance
           .setMikrotikPassword(_remotePasswordController.text);
       
       if (mounted) {

@@ -22,6 +22,7 @@ import 'ai/fix_plan_dialog.dart';
 import 'snackbar_helpers.dart';
 
 import 'theme/app_theme.dart';
+import 'services/secure_clipboard.dart';
 class AiDiagnosticsScreen extends ConsumerStatefulWidget {
   const AiDiagnosticsScreen({super.key});
 
@@ -110,7 +111,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   }
 
   Future<void> _copyCommand(String command) async {
-    await Clipboard.setData(ClipboardData(text: command));
+    await SecureClipboard.copy(command, sensitive: false);
     if (mounted) showSuccessSnackBar(context, 'تم نسخ الأمر: $command');
   }
 
@@ -130,14 +131,14 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       buffer.writeln(msg.content);
       buffer.writeln('');
     }
-    await Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
+    await SecureClipboard.copy(buffer.toString().trim(), sensitive: false);
     if (mounted) {
       showSuccessSnackBar(context, 'تم نسخ ${state.messages.length} رسالة من التشخيص');
     }
   }
 
   Future<void> _copyMessage(String content) async {
-    await Clipboard.setData(ClipboardData(text: content));
+    await SecureClipboard.copy(content, sensitive: false);
     if (mounted) showSuccessSnackBar(context, 'تم نسخ نص الرسالة');
   }
 
@@ -326,8 +327,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     onExecuteCommand: _handleExecuteCommand,
                     onExecuteScript: _handleExecuteScript,
                     onCopyAllCommands: (commands) async {
-                      await Clipboard.setData(
-                        ClipboardData(text: commands.join('\n')),
+                      await SecureClipboard.copy(
+                        commands.join('\n'),
+                        sensitive: false,
                       );
                       if (context.mounted) {
                         showSuccessSnackBar(
@@ -765,7 +767,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     onPressed: () {
                       // نسخ الأوامر فقط
                       final commands = fix.script.commands.join('\n');
-                      Clipboard.setData(ClipboardData(text: commands));
+                      SecureClipboard.copy(commands, sensitive: false);
                       if (mounted) {
                         showSuccessSnackBar(context, 'تم نسخ ${fix.script.commands.length} أمر');
                       }
@@ -1934,7 +1936,7 @@ class _ScriptCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: () {
                   final commandsText = script.commands.join('\n');
-                  Clipboard.setData(ClipboardData(text: commandsText));
+                  SecureClipboard.copy(commandsText, sensitive: false);
                 },
                 icon: Icon(Icons.copy, size: 14),
                 label: Text('نسخ', style: TextStyle(fontSize: 11)),
