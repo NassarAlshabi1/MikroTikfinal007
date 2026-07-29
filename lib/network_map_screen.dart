@@ -435,7 +435,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'تعديل خريطة الشبكة' : 'خريطة الشبكة'),
-        backgroundColor: _isEditMode ? Colors.blueGrey[700] : Theme.of(context).cardColor,
+        backgroundColor: _isEditMode ? Theme.of(context).colorScheme.surfaceContainerHighest : Theme.of(context).cardColor,
         actions: [
            PopupMenuButton<String>(
             onSelected: (value) {

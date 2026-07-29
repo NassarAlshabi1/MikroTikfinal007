@@ -1439,12 +1439,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           end: Alignment.bottomRight,
           colors: isDark
               ? [
-                  AppPalette.primaryLight.withValues(alpha: 0.6),
-                  AppPalette.secondaryDark.withValues(alpha: 0.4),
+                  AmoloodColors.primaryLight.withValues(alpha: 0.6),
+                  AmoloodColors.electric.withValues(alpha: 0.4),
                 ]
               : [
-                  const Color(0xFFB6C4FF),
-                  const Color(0xFFD7C8FF),
+                  AmoloodColors.primaryLight.withValues(alpha: 0.6),
+                  AmoloodColors.electric.withValues(alpha: 0.4),
                 ],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -1529,31 +1529,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       label: 'المعالج',
                       value: '${cpuUsage.toStringAsFixed(1)}%',
                       icon: Icons.speed,
-                      color: const Color(0xFF8254FF),
+                      color: AmoloodColors.primaryLight,
                     ),
                     _buildStatusMetric(
                       label: 'الذاكرة',
                       value: '${memoryUsage.toStringAsFixed(1)}%',
                       icon: Icons.memory,
-                      color: const Color(0xFF00BFA5),
+                      color: AmoloodColors.success,
                     ),
                     _buildStatusMetric(
                       label: 'التحميل',
                       value: '${downloadMb.toStringAsFixed(1)} MB',
                       icon: Icons.download_rounded,
-                      color: const Color(0xFF0288D1),
+                      color: AmoloodColors.electric,
                     ),
                     _buildStatusMetric(
                       label: 'الرفع',
                       value: '${uploadMb.toStringAsFixed(1)} MB',
                       icon: Icons.upload_rounded,
-                      color: const Color(0xFFFF7043),
+                      color: AmoloodColors.warning,
                     ),
                     _buildStatusMetric(
                       label: 'المستخدمون النشطون',
                       value: '$activeUsers',
                       icon: Icons.wifi,
-                      color: const Color(0xFF7C4DFF),
+                      color: AmoloodColors.neon,
                     ),
                   ],
                 ),

@@ -15,6 +15,7 @@ import 'ai/diagnostics_models.dart';
 import 'snackbar_helpers.dart';
 
 import 'theme/app_theme.dart';
+import 'theme/amolood_theme.dart';
 import 'services/secure_clipboard.dart';
 /// نوع سطر في مخرجات التيرمنال
 enum _LineKind { prompt, output, error, info, header }
@@ -490,17 +491,18 @@ class _TerminalScreenState extends State<TerminalScreen> {
   }
 
   Color _colorFor(_LineKind kind) {
+    final c = context.appColors;
     switch (kind) {
       case _LineKind.prompt:
-        return const Color(0xFF4FC3F7); // أزرق فاتح
+        return c.info; // أزرق فاتح (Electric Blue)
       case _LineKind.output:
-        return const Color(0xFFB9F6CA); // أخضر فاتح
+        return c.success; // أخضر (Neon Green)
       case _LineKind.error:
-        return const Color(0xFFFF8A80); // أحمر فاتح
+        return c.error; // أحمر
       case _LineKind.header:
-        return const Color(0xFFFFD180); // برتقالي ذهبي للرؤوس الفاصلة
+        return c.warning; // برتقالي ذهبي للرؤوس الفاصلة
       case _LineKind.info:
-        return Theme.of(context).hintColor;
+        return c.textTertiary;
     }
   }
 
@@ -509,7 +511,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     final commands = _categorizedCommands[_activeCategory] ?? const <String>[];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: AmoloodColors.background,
       appBar: AppBar(
         title: const Text('تيرمنال MikroTik'),
         actions: [
@@ -553,7 +555,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            color: const Color(0xFF161B22),
+            color: AmoloodColors.surface,
             child: Row(
               children: [
                 Icon(
@@ -622,7 +624,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 final cmd = commands[i];
                 return Center(
                   child: ActionChip(
-                    backgroundColor: const Color(0xFF21262D),
+                    backgroundColor: AmoloodColors.surfaceElevated,
                     side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
                     label: Text(
                       cmd,
@@ -651,7 +653,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      color: const Color(0xFF0A0E1A),
+      color: AmoloodColors.background,
       child: Row(
         children: [
           // أيقونة الفئة الحالية
@@ -688,7 +690,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                             ? Theme.of(context).colorScheme.onPrimary
                             : Theme.of(context).textTheme.bodySmall?.color,
                       ),
-                      backgroundColor: const Color(0xFF21262D),
+                      backgroundColor: AmoloodColors.surfaceElevated,
                       side: BorderSide(
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                       ),
@@ -722,7 +724,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.all(8),
-        color: const Color(0xFF161B22),
+        color: AmoloodColors.surface,
         child: Row(
           children: [
             // استرجاع السجل (أعلى/أسفل)
@@ -757,7 +759,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                   hintText: 'اكتب أمر RouterOS...',
                   hintStyle: TextStyle(color: Theme.of(context).dividerColor, fontSize: 13),
                   filled: true,
-                  fillColor: const Color(0xFF0D1117),
+                  fillColor: AmoloodColors.background,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(

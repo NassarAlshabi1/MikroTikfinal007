@@ -22,6 +22,10 @@
 
 import 'package:flutter/material.dart';
 
+import 'app_colors_extension.dart';
+import 'app_text_theme_extension.dart';
+import 'app_typography.dart';
+
 /// الألوان الرئيسية — مستوحاة من amolood/Mikrotik-flutter-app
 ///
 /// لوحة Dark Navy + Electric Blue + Neon — مريحة للعين وعصرية.
@@ -223,8 +227,97 @@ class AmoloodTheme {
           return const IconThemeData(color: Color(0xFF9090AA), size: 24);
         }),
       ),
+      // 🔑 تسجيل AppColorsExtension + AppTextThemeExtension
+      // هذا ضروري لأن 364 استخدام لـ context.appColors في الشاشات
+      // بدون هذا، كانت الشاشات تحصل على ألوان الثيم الفاتح القديم!
+      extensions: [
+        _amoloodAppColors,
+        _amoloodTextTheme,
+      ],
     );
   }
+
+  /// AppColorsExtension بألوان Amolood — يطابق AmoloodColors
+  /// هذا يضمن أن context.appColors.primary يرجع AmoloodColors.primary
+  /// بدل الألوان القديمة (Navy/Teal palette)
+  static final _amoloodAppColors = AppColorsExtension(
+    // Brand — مطابقة لـ AmoloodColors
+    primary: AmoloodColors.primary,
+    onPrimary: Colors.white,
+    primaryContainer: AmoloodColors.surfaceElevated,
+    onPrimaryContainer: AmoloodColors.textPrimary,
+    secondary: AmoloodColors.electric,
+    onSecondary: Colors.white,
+    secondaryContainer: const Color(0xFF0D2137),
+    onSecondaryContainer: AmoloodColors.textPrimary,
+    accent: AmoloodColors.neon,
+    onAccent: Colors.white,
+    accentContainer: const Color(0xFF112840),
+    onAccentContainer: AmoloodColors.textPrimary,
+    // Semantic
+    error: AmoloodColors.error,
+    onError: Colors.white,
+    errorContainer: const Color(0xFF3D1111),
+    onErrorContainer: const Color(0xFFFFCDD2),
+    success: AmoloodColors.success,
+    onSuccess: Colors.black,
+    successContainer: const Color(0xFF003319),
+    onSuccessContainer: const Color(0xFFB9F6CA),
+    warning: AmoloodColors.warning,
+    onWarning: Colors.black,
+    warningContainer: const Color(0xFF3D2900),
+    onWarningContainer: const Color(0xFFFFE0B2),
+    info: const Color(0xFF4FC3F7),
+    onInfo: Colors.black,
+    infoContainer: const Color(0xFF003C5A),
+    onInfoContainer: const Color(0xFFB3E5FC),
+    // Surfaces (layered) — مطابقة لـ AmoloodColors
+    background: AmoloodColors.background,
+    onBackground: AmoloodColors.textPrimary,
+    surface: AmoloodColors.surface,
+    onSurface: AmoloodColors.textPrimary,
+    surfaceVariant: AmoloodColors.surfaceElevated,
+    onSurfaceVariant: AmoloodColors.textSecondary,
+    card: AmoloodColors.surface,
+    onCard: AmoloodColors.textPrimary,
+    cardInteractive: AmoloodColors.surfaceElevated,
+    cardHover: const Color(0xFF1A3A5C),
+    onCardInteractive: AmoloodColors.textPrimary,
+    // Borders
+    outline: AmoloodColors.border,
+    outlineVariant: const Color(0xFF0D1F3C),
+    // Inputs
+    inputBackground: AmoloodColors.surface,
+    inputFocusedBorder: AmoloodColors.primary,
+    // Text hierarchy
+    textPrimary: AmoloodColors.textPrimary,
+    textSecondary: AmoloodColors.textSecondary,
+    textTertiary: AmoloodColors.textMuted,
+    textDisabled: const Color(0xFF2A4865),
+    // Misc
+    muted: AmoloodColors.inactive,
+    scrim: Colors.black.withValues(alpha: 0.7),
+    shadow: Colors.black.withValues(alpha: 0.4),
+  );
+
+  /// AppTextThemeExtension بخط Tajawal وألوان Amolood
+  static final _amoloodTextTheme = AppTextThemeExtension(
+    displayLarge: AppTypography.displayLarge.copyWith(color: AmoloodColors.textPrimary),
+    displayMedium: AppTypography.displayMedium.copyWith(color: AmoloodColors.textPrimary),
+    displaySmall: AppTypography.displaySmall.copyWith(color: AmoloodColors.textPrimary),
+    headlineLarge: AppTypography.headlineLarge.copyWith(color: AmoloodColors.textPrimary),
+    headlineMedium: AppTypography.headlineMedium.copyWith(color: AmoloodColors.textPrimary),
+    headlineSmall: AppTypography.headlineSmall.copyWith(color: AmoloodColors.textPrimary),
+    titleLarge: AppTypography.titleLarge.copyWith(color: AmoloodColors.textPrimary),
+    titleMedium: AppTypography.titleMedium.copyWith(color: AmoloodColors.textPrimary),
+    titleSmall: AppTypography.titleSmall.copyWith(color: AmoloodColors.textSecondary),
+    bodyLarge: AppTypography.bodyLarge.copyWith(color: AmoloodColors.textPrimary),
+    bodyMedium: AppTypography.bodyMedium.copyWith(color: AmoloodColors.textSecondary),
+    bodySmall: AppTypography.bodySmall.copyWith(color: AmoloodColors.textMuted),
+    labelLarge: AppTypography.labelLarge.copyWith(color: AmoloodColors.textPrimary),
+    labelMedium: AppTypography.labelMedium.copyWith(color: AmoloodColors.textSecondary),
+    labelSmall: AppTypography.labelSmall.copyWith(color: AmoloodColors.textMuted),
+  );
 }
 
 /// زخارف مشتركة (Decorations) — مستوحاة من amolood

@@ -93,9 +93,9 @@ class PerfLoadingIndicator extends StatelessWidget {
           SizedBox(
             height: size,
             width: size,
-            child: const CircularProgressIndicator(
+            child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0)),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
             ),
           ),
           if (message != null) ...[
