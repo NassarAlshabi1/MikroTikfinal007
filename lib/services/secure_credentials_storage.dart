@@ -67,31 +67,94 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
   @override
   Future<String?> getMikrotikPassword() async {
     try {
-      return await _storage.read(key: _keyMikrotikPass);
+      final pass = await _storage.read(key: _keyMikrotikPass);
+      if (pass != null && pass.isNotEmpty) return pass;
+
+      // 🔧 Fallback: إن فشل secure storage أو كان فارغاً،
+      // حاول القراءة من SharedPreferences (للبيانات القديمة غير المُرحّلة)
+      // هذا يحل مشكلة "كلمة المرور غير موجودة" بعد الترقية.
+      final prefs = await SharedPreferences.getInstance();
+      final legacyPass = prefs.getString('pass');
+      if (legacyPass != null && legacyPass.isNotEmpty) {
+        // إن وُجدت في prefs، انقلها لـ secure storage صامتة
+        try {
+          await _storage.write(key: _keyMikrotikPass, value: legacyPass);
+          await prefs.remove('pass');
+          AppLogger.security('mikrotik_pass migrated lazily from prefs');
+          return legacyPass;
+        } catch (_) {
+          // إن فشلت الكتابة لـ secure storage، استخدم القيمة من prefs
+          return legacyPass;
+        }
+      }
+      return null;
     } catch (e) {
       AppLogger.error('Failed to read mikrotik_pass', error: e, category: LogCategory.storage);
-      return null;
+      // 🔧 Fallback أخير: حاول SharedPreferences
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        return prefs.getString('pass');
+      } catch (_) {
+        return null;
+      }
     }
   }
 
   @override
   Future<void> setMikrotikPassword(String? password) async {
     if (password == null || password.isEmpty) {
-      await _storage.delete(key: _keyMikrotikPass);
+      try {
+        await _storage.delete(key: _keyMikrotikPass);
+      } catch (_) {}
+      // امسح من prefs أيضاً (إن وُجدت نسخة قديمة)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('pass');
       AppLogger.security('mikrotik_pass cleared');
     } else {
-      await _storage.write(key: _keyMikrotikPass, value: password);
-      AppLogger.security('mikrotik_pass set');
+      try {
+        await _storage.write(key: _keyMikrotikPass, value: password);
+        AppLogger.security('mikrotik_pass set in secure storage');
+      } catch (e) {
+        // 🔧 Fallback: إن فشل secure storage (مثلاً على بعض أجهزة Android
+        // بدون EncryptedSharedPreferences)، احفظ في SharedPreferences
+        // كحل أخير. ليس مثالياً أمنياً، لكن يمنع فقدان البيانات.
+        AppLogger.error('Secure storage write failed, using prefs fallback',
+            error: e, category: LogCategory.storage);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('pass', password);
+        AppLogger.security('mikrotik_pass set in prefs (fallback)');
+      }
     }
   }
 
   @override
   Future<String?> getRemotePassword() async {
     try {
-      return await _storage.read(key: _keyRemotePass);
+      final pass = await _storage.read(key: _keyRemotePass);
+      if (pass != null && pass.isNotEmpty) return pass;
+
+      // 🔧 Fallback للبيانات القديمة
+      final prefs = await SharedPreferences.getInstance();
+      final legacyPass = prefs.getString('remote_pass');
+      if (legacyPass != null && legacyPass.isNotEmpty) {
+        try {
+          await _storage.write(key: _keyRemotePass, value: legacyPass);
+          await prefs.remove('remote_pass');
+          AppLogger.security('remote_pass migrated lazily from prefs');
+          return legacyPass;
+        } catch (_) {
+          return legacyPass;
+        }
+      }
+      return null;
     } catch (e) {
       AppLogger.error('Failed to read remote_pass', error: e, category: LogCategory.storage);
-      return null;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        return prefs.getString('remote_pass');
+      } catch (_) {
+        return null;
+      }
     }
   }
 
@@ -109,10 +172,31 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
   @override
   Future<String?> getOomolApiKey() async {
     try {
-      return await _storage.read(key: _keyOomolApiKey);
+      final key = await _storage.read(key: _keyOomolApiKey);
+      if (key != null && key.isNotEmpty) return key;
+
+      // 🔧 Fallback للبيانات القديمة
+      final prefs = await SharedPreferences.getInstance();
+      final legacyKey = prefs.getString('oomol_api_key');
+      if (legacyKey != null && legacyKey.isNotEmpty) {
+        try {
+          await _storage.write(key: _keyOomolApiKey, value: legacyKey);
+          await prefs.remove('oomol_api_key');
+          AppLogger.security('oomol_api_key migrated lazily from prefs');
+          return legacyKey;
+        } catch (_) {
+          return legacyKey;
+        }
+      }
+      return null;
     } catch (e) {
       AppLogger.error('Failed to read oomol_api_key', error: e, category: LogCategory.storage);
-      return null;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        return prefs.getString('oomol_api_key');
+      } catch (_) {
+        return null;
+      }
     }
   }
 

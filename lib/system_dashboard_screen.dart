@@ -141,11 +141,26 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       }
     } catch (e) {
       if (mounted) {
+        // 🔧 رسالة خطأ أوضح للمستخدم — تصنيف حسب نوع الخطأ
+        String userMessage;
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('credentials') || errorStr.contains('password')) {
+          userMessage = 'بيانات الاعتماد غير مكتملة. تأكد من تسجيل الدخول أولاً.';
+        } else if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
+          userMessage = 'انتهت مهلة الاتصال. تأكد من أن الراوتر يعمل وقابل للوصول.';
+        } else if (errorStr.contains('socket') || errorStr.contains('connection refused')) {
+          userMessage = 'تعذّر الاتصال بالراوتر. تحقق من الـ IP والمنفذ.';
+        } else if (errorStr.contains('login')) {
+          userMessage = 'فشل تسجيل الدخول. تحقق من اسم المستخدم وكلمة المرور.';
+        } else {
+          userMessage = 'فشل الاتصال: ${e.toString()}';
+        }
+
         setState(() {
           _isLoading = false;
-          _errorMessage = 'فشل الاتصال بالراوتر: ${e.toString()}';
+          _errorMessage = userMessage;
         });
-        showErrorSnackBar(context, 'فشل الاتصال بالراوتر. تحقق من إعدادات الشبكة.');
+        showErrorSnackBar(context, userMessage);
       }
     }
   }
