@@ -13,6 +13,7 @@ import 'dart:io';
 import 'process_image_screen.dart';
 import 'mqtt_service.dart';
 
+import 'services/secure_clipboard.dart';
 class ExtractCardsScreen extends StatefulWidget {
   const ExtractCardsScreen({super.key});
 
@@ -309,7 +310,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
   }
 
   void _copyToClipboard(String text, String message) {
-    Clipboard.setData(ClipboardData(text: text));
+    SecureClipboard.copy(text, sensitive: false);
     showSuccessSnackBar(context, message);
   }
 

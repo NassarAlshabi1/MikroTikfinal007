@@ -1395,7 +1395,7 @@ class MikrotikDataCollector {
         final prefs = await SharedPreferences.getInstance();
         final ip = prefs.getString('ip');
         final user = prefs.getString('user');
-        final pass = await SecureCredentialsStorage.instance.getMikrotikPassword();
+        final pass = await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
         final portStr = prefs.getString('port') ?? '8728';
         final port = int.tryParse(portStr) ?? 8728;
 

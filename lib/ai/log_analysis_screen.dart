@@ -26,6 +26,7 @@ import 'legacy_integration_cloud_ai_service.dart';
 import 'legacy_integration_mcp_client.dart';
 import '../snackbar_helpers.dart';
 
+import '../services/secure_clipboard.dart';
 class LogAnalysisScreen extends ConsumerStatefulWidget {
   const LogAnalysisScreen({super.key});
 
@@ -155,7 +156,7 @@ Time: ${DateTime.now().toIso8601String()}
 
     try {
       // 🔒 قراءة API key من flutter_secure_storage + باقي الإعدادات من prefs
-      final apiKey = await SecureCredentialsStorage.instance.getOomolApiKey() ?? '';
+      final apiKey = await SecureCredentialsStorageContainer.instance.getOomolApiKey() ?? '';
       final prefs = await SharedPreferences.getInstance();
       final packageName = prefs.getString('legacy_integration_package_name');
       final packageVersion = prefs.getString('legacy_integration_package_version');
@@ -225,7 +226,7 @@ Time: ${DateTime.now().toIso8601String()}
             onPressed: _result == null
                 ? null
                 : () async {
-                    await Clipboard.setData(ClipboardData(text: _result!.summary));
+                    await SecureClipboard.copy(_result!.summary, sensitive: false);
                     if (mounted) showSuccessSnackBar(context, 'تم نسخ التقرير');
                   },
           ),

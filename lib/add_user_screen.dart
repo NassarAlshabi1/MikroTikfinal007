@@ -10,6 +10,7 @@ import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
 import 'theme/app_theme.dart';
 
+import 'services/secure_clipboard.dart';
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
   final bool isVersion7OrNewer;
@@ -124,7 +125,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
 
       if (mounted) {
         showSuccessSnackBar(context, 'تمت إضافة المستخدم "$username" بنجاح');
-        Clipboard.setData(ClipboardData(text: cardDetails));
+        SecureClipboard.copy(cardDetails, sensitive: false);
         showSuccessSnackBar(context, 'تم نسخ تفاصيل الكرت!');
         Navigator.of(context).pop(true);
       }

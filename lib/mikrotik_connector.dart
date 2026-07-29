@@ -100,7 +100,7 @@ class MikrotikConnector {
     final ip = prefs.getString('ip');
     final user = prefs.getString('user');
     // 🔒 قراءة كلمة المرور من flutter_secure_storage (مشفّرة)
-    final pass = await SecureCredentialsStorage.instance.getMikrotikPassword();
+    final pass = await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
     final portString = prefs.getString('port');
     final useSslString = prefs.getString('use_ssl');
     final useSsl = useSslString == 'true';

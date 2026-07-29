@@ -14,6 +14,7 @@ import 'snackbar_helpers.dart';
 import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
+import 'services/secure_clipboard.dart';
 class CardListScreen extends StatefulWidget {
   final List<String> cardList;
   final bool isNetworkLinked;
@@ -216,7 +217,7 @@ class _CardListScreenState extends State<CardListScreen> {
       Expanded(
         child: ElevatedButton.icon(
           onPressed: () {
-            Clipboard.setData(ClipboardData(text: widget.cardList.join('\n')));
+            SecureClipboard.copy(widget.cardList.join('\n'), sensitive: false);
             showSuccessSnackBar(context, 'تم نسخ جميع الكروت!');
           },
           icon: Icon(Icons.copy_all),
@@ -268,7 +269,7 @@ class _CardListScreenState extends State<CardListScreen> {
                 trailing: IconButton(
                   icon: const Icon(Icons.copy),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: cardLine));
+                    SecureClipboard.copy(cardLine, sensitive: false);
                     showSuccessSnackBar(context, 'تم نسخ الكرت!');
                   },
                   tooltip: 'نسخ',
