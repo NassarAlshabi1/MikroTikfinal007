@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/secure_credentials_storage.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_colors_extension.dart';
 import 'ai_service.dart';
@@ -153,9 +154,9 @@ Time: ${DateTime.now().toIso8601String()}
     });
 
     try {
-      // قراءة إعدادات OOMOL من SharedPreferences
+      // 🔒 قراءة API key من flutter_secure_storage + باقي الإعدادات من prefs
+      final apiKey = await SecureCredentialsStorage.instance.getOomolApiKey() ?? '';
       final prefs = await SharedPreferences.getInstance();
-      final apiKey = prefs.getString('oomol_api_key') ?? '';
       final packageName = prefs.getString('oomol_package_name');
       final packageVersion = prefs.getString('oomol_package_version');
 
@@ -907,17 +908,26 @@ Time: ${DateTime.now().toIso8601String()}
             ),
           ),
           const SizedBox(width: 6),
-          Text(
-            e.category.displayName,
-            style: TextStyle(fontSize: 10, color: colors.textSecondary),
+          // 🎨flutter-fix-layout-issues: استخدم Flexible لمنع overflow
+          // عند الأسماء الطويلة + ellipsis
+          Flexible(
+            child: Text(
+              e.category.displayName,
+              style: TextStyle(fontSize: 10, color: colors.textSecondary),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           if (e.source != null) ...[
             const SizedBox(width: 6),
             Icon(Icons.router, size: 10, color: colors.textTertiary),
             const SizedBox(width: 2),
-            Text(
-              e.source!,
-              style: TextStyle(fontSize: 10, color: colors.textTertiary),
+            // 🎨flutter-fix-layout-issues: Flexible للـ IP أيضاً
+            Flexible(
+              child: Text(
+                e.source!,
+                style: TextStyle(fontSize: 10, color: colors.textTertiary),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ],

@@ -22,6 +22,7 @@ import 'package:flutter/foundation.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/secure_credentials_storage.dart';
 import 'diagnostics_models.dart';
 
 /// أمر يجمع عنوان القسم وأمر RouterOS (سواء بصيغة SSH أو RouterOS API)
@@ -1390,10 +1391,11 @@ class MikrotikDataCollector {
     try {
       if (internalClient == null) {
         // قراءة بيانات الاعتماد من SharedPreferences
+        // 🔒 كلمة المرور من flutter_secure_storage
         final prefs = await SharedPreferences.getInstance();
         final ip = prefs.getString('ip');
         final user = prefs.getString('user');
-        final pass = prefs.getString('pass');
+        final pass = await SecureCredentialsStorage.instance.getMikrotikPassword();
         final portStr = prefs.getString('port') ?? '8728';
         final port = int.tryParse(portStr) ?? 8728;
 

@@ -13,6 +13,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/app_logger.dart';
+import '../services/secure_credentials_storage.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_colors_extension.dart';
 import '../snackbar_helpers.dart';
@@ -53,8 +55,10 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    // 🔒 قراءة API key من flutter_secure_storage (مشفّر)
+    final apiKey = await SecureCredentialsStorage.instance.getOomolApiKey() ?? '';
     setState(() {
-      _apiKeyController.text = prefs.getString('oomol_api_key') ?? '';
+      _apiKeyController.text = apiKey;
       _packageNameController.text = prefs.getString('oomol_package_name') ?? '';
       _packageVersionController.text = prefs.getString('oomol_package_version') ?? 'latest';
     });
@@ -62,7 +66,8 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
 
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('oomol_api_key', _apiKeyController.text.trim());
+    // 🔒 حفظ API key في flutter_secure_storage (مشفّر)
+    await SecureCredentialsStorage.instance.setOomolApiKey(_apiKeyController.text.trim());
     await prefs.setString('oomol_package_name', _packageNameController.text.trim());
     await prefs.setString('oomol_package_version', _packageVersionController.text.trim());
     if (mounted) showSuccessSnackBar(context, 'تم حفظ إعدادات OOMOL');
@@ -596,9 +601,13 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
           ),
           if (t.createdAtDate != null) ...[
             const SizedBox(width: 6),
-            Text(
-              t.createdAtDate!.toLocal().toString().substring(0, 16),
-              style: TextStyle(fontSize: 10, color: colors.textTertiary),
+            // 🎨flutter-fix-layout-issues: Flexible + ellipsis للـ timestamp
+            Flexible(
+              child: Text(
+                t.createdAtDate!.toLocal().toString().substring(0, 16),
+                style: TextStyle(fontSize: 10, color: colors.textTertiary),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ],

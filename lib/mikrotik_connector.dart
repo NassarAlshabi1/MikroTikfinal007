@@ -17,6 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'services/secure_credentials_storage.dart';
+
 /// استثناء: بيانات الاعتماد غير موجودة
 class MikrotikCredentialsMissingException implements Exception {
   final String message;
@@ -97,7 +99,8 @@ class MikrotikConnector {
     final prefs = await SharedPreferences.getInstance();
     final ip = prefs.getString('ip');
     final user = prefs.getString('user');
-    final pass = prefs.getString('pass');
+    // 🔒 قراءة كلمة المرور من flutter_secure_storage (مشفّرة)
+    final pass = await SecureCredentialsStorage.instance.getMikrotikPassword();
     final portString = prefs.getString('port');
     final useSslString = prefs.getString('use_ssl');
     final useSsl = useSslString == 'true';

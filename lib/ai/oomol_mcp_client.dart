@@ -152,10 +152,11 @@ class McpToolResult {
   const McpToolResult({required this.text, this.isError = false});
 
   /// يحاول تحويل النص إلى JSON (إن أمكن)
-  dynamic get asJson {
+  /// يرجع Object? لتجنّب dynamic (dart-optimization)
+  Object? get asJson {
     try {
       return jsonDecode(text);
-    } catch (_) {
+    } on FormatException {
       return text;
     }
   }
