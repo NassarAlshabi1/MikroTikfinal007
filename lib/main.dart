@@ -31,6 +31,8 @@ import 'theme/app_gradients.dart';
 // ===== Imports من capy/v2-riverpod (AI + terminal + perf + database) =====
 import 'ai_diagnostics_screen.dart';
 import 'terminal_screen.dart';
+import 'ai/log_analysis_screen.dart';
+import 'ai/legacy_integration_settings_screen.dart';
 import 'database/app_database.dart' as db;
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
@@ -1197,6 +1199,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const TerminalScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'تحليل Logs MikroTik',
+        icon: Icons.analytics,
+        color: AppPalette.success,
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const LogAnalysisScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'إعدادات legacy integration Cloud',
+        icon: Icons.cloud,
+        color: AppPalette.info,
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const OomolSettingsScreen()));
         },
       ),
       ServiceItem(
