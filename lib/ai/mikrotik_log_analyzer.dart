@@ -172,6 +172,17 @@ class LogAnalysisResult {
 class MikrotikLogAnalyzer {
   MikrotikLogAnalyzer._();
 
+  // ⚡dart-optimization: تحويل RegExp من local variables إلى static final
+  // ليتم ترجمتها مرة واحدة بدل إنشائها لكل سطر (hot path optimization).
+  static final RegExp _ipPattern =
+      RegExp(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})');
+  static final RegExp _timestampPattern =
+      RegExp(r'(\w{3})/(\d{1,2})/(\d{4})\s+(\d{2}:\d{2}:\d{2})');
+  static const List<String> _months = [
+    'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+    'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+  ];
+
   /// يجمع الـ logs من الراوتر عبر SSH أو RouterOS API
   ///
   /// [maxLines] يحدّ عدد الأسطر (لتفادي إغراق الذاكرة)
@@ -258,8 +269,8 @@ class MikrotikLogAnalyzer {
     String? source;
     List<String> tags = [];
 
-    // استخراج IP من السطر (إن وجد)
-    final ipMatch = RegExp(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})').firstMatch(line);
+    // ⚡dart-optimization: استخدم الـ patterns المُترجمة مسبقاً
+    final ipMatch = _ipPattern.firstMatch(line);
     if (ipMatch != null) {
       source = ipMatch.group(1);
       tags.add('has-ip');
@@ -267,19 +278,21 @@ class MikrotikLogAnalyzer {
 
     // استخراج timestamp (مثلاً "jan/15/2024 14:30:45" أو "14:30:45")
     DateTime? ts;
-    final tsMatch1 = RegExp(r'(\w{3})/(\d{1,2})/(\d{4})\s+(\d{2}:\d{2}:\d{2})').firstMatch(line);
+    // ⚡dart-optimization: استخدم الـ pattern المُترجم مسبقاً
+    final tsMatch1 = _timestampPattern.firstMatch(line);
     if (tsMatch1 != null) {
       try {
         // MikroTik format: jan/15/2024 14:30:45
-        final months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-        final monthIdx = months.indexOf(tsMatch1.group(1)!.toLowerCase());
+        final monthIdx = _months.indexOf(tsMatch1.group(1)!.toLowerCase());
         if (monthIdx >= 0) {
           final day = int.parse(tsMatch1.group(2)!);
           final year = int.parse(tsMatch1.group(3)!);
           final timeParts = tsMatch1.group(4)!.split(':').map(int.parse).toList();
           ts = DateTime(year, monthIdx + 1, day, timeParts[0], timeParts[1], timeParts[2]);
         }
-      } catch (_) {}
+      } on FormatException {
+        // تجاهل أخطاء parse — ليست مهمة
+      }
     }
 
     // ─── تصنيف حسب الكلمات المفتاحية ───
