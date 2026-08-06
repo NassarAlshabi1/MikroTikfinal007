@@ -288,8 +288,8 @@ interface ether1 link down
 
       test('يأخذ أعلى 5 مشاكل فقط', () {
         // إنشاء 10 مشاكل مختلفة
-        final logs = '${List.generate(10, (i) => 'login failure from 1.2.3.$i')
-                .join('\n')}\n${List.generate(10, (i) => 'interface ether$i link down').join('\n')}';
+        final logs =
+            '${List.generate(10, (i) => 'login failure from 1.2.3.$i').join('\n')}\n${List.generate(10, (i) => 'interface ether$i link down').join('\n')}';
         final result = MikrotikLogAnalyzer.analyze(logs);
         expect(result.topIssues.length, lessThanOrEqualTo(5));
       });

@@ -6,7 +6,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    hide ChangeNotifierProvider;
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart' as provider;
 
@@ -64,8 +65,8 @@ class ScreenPerfResult {
 
 /// عتبات الأداء (ms)
 // ملاحظة: المحاكي أبطأ من الجهاز الحقيقي بـ 3-5x، لذا العتبات متساهلة
-const int _thresholdPass = 3000;  // < 3s ممتاز على المحاكي
-const int _thresholdWarn = 8000;  // 3-8s مقبول على المحاكي
+const int _thresholdPass = 3000; // < 3s ممتاز على المحاكي
+const int _thresholdWarn = 8000; // 3-8s مقبول على المحاكي
 // > 8s بطيء (FAIL)
 
 /// تقرير كل الاختبارات
@@ -181,7 +182,8 @@ void main() {
       _results.add(result);
       // نتساهل مع WARN على المحاكي (HomeScreen بطيئة بسبب GridView + profiles fetch)
       expect(result.status, isNot(equals('FAIL')),
-          reason: 'HomeScreen build failed: ${result.error ?? "took ${result.totalTimeMs}ms"}');
+          reason:
+              'HomeScreen build failed: ${result.error ?? "took ${result.totalTimeMs}ms"}');
     });
 
     testWidgets('ActiveUsersScreen', (tester) async {
@@ -308,7 +310,7 @@ void main() {
         tester,
         'ProcessImageScreen',
         ProcessImageScreen(
-          imagePath: imagePath,  // مسار حقيقي الآن
+          imagePath: imagePath, // مسار حقيقي الآن
           prefix: 'u',
           length: 6,
           total: 10,
@@ -374,7 +376,8 @@ void main() {
     debugPrint('=' * 80);
     debugPrint('  📊 PERFORMANCE TEST REPORT');
     debugPrint('=' * 80);
-    debugPrint('${'Screen'.padRight(30)} | ${'Build'.padLeft(8)} | ${'Settle'.padLeft(8)} | ${'Total'.padLeft(8)} | Status');
+    debugPrint(
+        '${'Screen'.padRight(30)} | ${'Build'.padLeft(8)} | ${'Settle'.padLeft(8)} | ${'Total'.padLeft(8)} | Status');
     debugPrint('-' * 80);
 
     int passCount = 0, warnCount = 0, failCount = 0;
@@ -417,9 +420,12 @@ void main() {
         '${totalSettleMs.toString().padLeft(6)}ms | '
         '${totalMs.toString().padLeft(6)}ms |');
     debugPrint('-' * 80);
-    debugPrint('Summary: ✅ $passCount PASS | ⚠️ $warnCount WARN | ❌ $failCount FAIL');
-    debugPrint('Average build time per screen: ${(totalMs / _results.length).round()}ms');
-    debugPrint('Thresholds: PASS < ${_thresholdPass}ms | WARN < ${_thresholdWarn}ms | FAIL >= ${_thresholdWarn}ms');
+    debugPrint(
+        'Summary: ✅ $passCount PASS | ⚠️ $warnCount WARN | ❌ $failCount FAIL');
+    debugPrint(
+        'Average build time per screen: ${(totalMs / _results.length).round()}ms');
+    debugPrint(
+        'Thresholds: PASS < ${_thresholdPass}ms | WARN < ${_thresholdWarn}ms | FAIL >= ${_thresholdWarn}ms');
     debugPrint('=' * 80);
 
     // JSON report for CI parsing

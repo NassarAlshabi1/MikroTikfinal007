@@ -318,7 +318,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           Expanded(
             child: RepaintBoundary(
               child: ListView.builder(
-                scrollCacheExtent: const ScrollCacheExtent.pixels(300), controller: _scrollController,
+                scrollCacheExtent: const ScrollCacheExtent.pixels(300),
+                controller: _scrollController,
                 padding: const EdgeInsets.all(12),
                 itemCount: state.messages.length,
                 itemBuilder: (context, index) {
@@ -1669,7 +1670,8 @@ class _MessageBubble extends StatelessWidget {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).primaryColor,
-                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
                               ),
                               icon: Icon(Icons.play_circle_fill,
                                   color:

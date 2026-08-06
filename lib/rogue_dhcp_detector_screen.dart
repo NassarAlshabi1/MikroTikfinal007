@@ -256,7 +256,9 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
               Expanded(
                 child: RepaintBoundary(
                   child: ListView.builder(
-                    scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), itemCount: _allServers.length,
+                    scrollCacheExtent: ScrollCacheExtent.pixels(
+                        DeviceCapability.instance.listViewCacheExtent),
+                    itemCount: _allServers.length,
                     addAutomaticKeepAlives: false,
                     itemBuilder: (context, index) {
                       final serverIp = _allServers.elementAt(index);

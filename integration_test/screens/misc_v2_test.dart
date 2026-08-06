@@ -9,7 +9,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    hide ChangeNotifierProvider;
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart' as provider;
 
@@ -238,11 +239,11 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 10));
 
       // يجب أن تظهر البطاقات الإحصائية أو شاشة تحميل
-      final hasLoading = find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
+      final hasLoading =
+          find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
       final hasCard = find.byType(Card).evaluate().isNotEmpty;
-      final hasStatsText =
-          find.text('عدد المستخدمين').evaluate().isNotEmpty ||
-              find.text('عدد الجلسات').evaluate().isNotEmpty;
+      final hasStatsText = find.text('عدد المستخدمين').evaluate().isNotEmpty ||
+          find.text('عدد الجلسات').evaluate().isNotEmpty;
       expect(hasLoading || hasCard || hasStatsText, isTrue);
     });
   });
@@ -263,6 +264,7 @@ final ThemeData _testTheme = ThemeData(
   appBarTheme: const AppBarTheme(
     backgroundColor: Color(0xFF2d213f),
     elevation: 0,
-    titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+    titleTextStyle: TextStyle(
+        color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
   ),
 );

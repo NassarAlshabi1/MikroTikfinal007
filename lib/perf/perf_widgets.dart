@@ -145,7 +145,9 @@ class PerfListView<T> extends StatelessWidget {
     }
     return RepaintBoundary(
       child: ListView.builder(
-        scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), itemCount: items.length,
+        scrollCacheExtent: ScrollCacheExtent.pixels(
+            DeviceCapability.instance.listViewCacheExtent),
+        itemCount: items.length,
         itemExtent: itemExtent, // مهم: يُسرّع scroll بشكل كبير
         padding: padding,
         controller: controller,

@@ -290,8 +290,8 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             children: [
               TextFormField(
                 controller: nameController,
-                decoration:
-                    const InputDecoration(labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
+                decoration: const InputDecoration(
+                    labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
                 style: TextStyle(
                     color: Theme.of(context).textTheme.bodyMedium?.color ??
                         Theme.of(context).colorScheme.onSurface),
@@ -453,7 +453,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         // ignore: use_build_context_synchronously
       }
     } catch (e) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       showErrorSnackBar(
           context, 'فشل الاستيراد: ملف غير صالح أو خطأ في القراءة.');
     }

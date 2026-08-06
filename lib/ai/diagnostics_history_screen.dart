@@ -79,7 +79,8 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
             );
           }
           return ListView.builder(
-            scrollCacheExtent: const ScrollCacheExtent.pixels(250), itemCount: sessions.length,
+            scrollCacheExtent: const ScrollCacheExtent.pixels(250),
+            itemCount: sessions.length,
             itemBuilder: (context, index) {
               final session = sessions[index];
               return _SessionCard(session: session);

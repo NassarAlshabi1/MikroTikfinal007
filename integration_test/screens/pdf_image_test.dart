@@ -83,10 +83,9 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // ابحث عن ElevatedButton أو IconButton حفظ
-      final hasSaveButton =
-          find.byType(ElevatedButton).evaluate().isNotEmpty ||
-              find.byIcon(Icons.save).evaluate().isNotEmpty ||
-              find.byIcon(Icons.check).evaluate().isNotEmpty;
+      final hasSaveButton = find.byType(ElevatedButton).evaluate().isNotEmpty ||
+          find.byIcon(Icons.save).evaluate().isNotEmpty ||
+          find.byIcon(Icons.check).evaluate().isNotEmpty;
       expect(hasSaveButton, isTrue, reason: 'يجب أن يوجد زر حفظ');
     });
   });
@@ -130,7 +129,7 @@ void main() {
       await pumpScreen(
         tester,
         ProcessImageScreen(
-          imagePath: imagePath,  // مسار حقيقي
+          imagePath: imagePath, // مسار حقيقي
           prefix: 'user',
           length: 6,
           total: 10,
