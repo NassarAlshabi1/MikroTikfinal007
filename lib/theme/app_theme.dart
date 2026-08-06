@@ -169,7 +169,8 @@ class AppTheme with ChangeNotifier {
         shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppPalette.lightOutlineVariant, width: 0.5),
+          side: const BorderSide(
+              color: AppPalette.lightOutlineVariant, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -484,7 +485,8 @@ class AppTheme with ChangeNotifier {
         shadowColor: Colors.black.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppPalette.darkOutlineVariant, width: 0.5),
+          side: const BorderSide(
+              color: AppPalette.darkOutlineVariant, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -547,7 +549,8 @@ class AppTheme with ChangeNotifier {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppPalette.primaryLight, width: 2),
+          borderSide:
+              const BorderSide(color: AppPalette.primaryLight, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

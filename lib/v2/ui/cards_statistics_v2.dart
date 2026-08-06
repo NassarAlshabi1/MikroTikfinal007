@@ -39,7 +39,9 @@ class CardsStatisticsV2 extends ConsumerWidget {
       body: loading && users.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
-              scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), padding: const EdgeInsets.all(12),
+              scrollCacheExtent: ScrollCacheExtent.pixels(
+                  DeviceCapability.instance.listViewCacheExtent),
+              padding: const EdgeInsets.all(12),
               // إجمالي العناصر: بطاقتان إحصائيتان + عنوان + عينة 10 مستخدمين
               itemCount: 2 + 1 + sampleUsers.length,
               addAutomaticKeepAlives: false,

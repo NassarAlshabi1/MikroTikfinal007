@@ -47,7 +47,8 @@ void main() {
 
       // تحقق من ظهور رسالة الخطأ
       expect(find.text('هذا الحقل مطلوب'), findsWidgets,
-          reason: 'يجب أن تظهر رسالة "هذا الحقل مطلوب" عند ترك username فارغاً');
+          reason:
+              'يجب أن تظهر رسالة "هذا الحقل مطلوب" عند ترك username فارغاً');
     });
 
     // ============================================================
@@ -288,21 +289,24 @@ void main() {
     });
 
     testWidgets('يقلع ويعرض النموذج', (tester) async {
-      await pumpScreen(tester, const ExtractCardsScreen(), wrapWithProvider: true);
+      await pumpScreen(tester, const ExtractCardsScreen(),
+          wrapWithProvider: true);
 
       // يحتوي على Form
       expect(find.byType(Form), findsWidgets);
     });
 
     testWidgets('يعرض حقول prefix, length, total', (tester) async {
-      await pumpScreen(tester, const ExtractCardsScreen(), wrapWithProvider: true);
+      await pumpScreen(tester, const ExtractCardsScreen(),
+          wrapWithProvider: true);
 
       // ابحث عن حقول إدخال متعددة
       expect(find.byType(TextFormField), findsWidgets);
     });
 
     testWidgets('يعرض خطأ عند ترك الحقول فارغة', (tester) async {
-      await pumpScreen(tester, const ExtractCardsScreen(), wrapWithProvider: true);
+      await pumpScreen(tester, const ExtractCardsScreen(),
+          wrapWithProvider: true);
 
       // ابحث عن زر استخراج واضغطه
       final buttons = find.byType(ElevatedButton);
@@ -433,8 +437,10 @@ void main() {
 
     test('كل mock profile يحتوي على .id و name', () {
       for (final p in mockProfiles) {
-        expect(p.containsKey('.id'), isTrue, reason: 'profile يجب أن يحتوي على .id');
-        expect(p.containsKey('name'), isTrue, reason: 'profile يجب أن يحتوي على name');
+        expect(p.containsKey('.id'), isTrue,
+            reason: 'profile يجب أن يحتوي على .id');
+        expect(p.containsKey('name'), isTrue,
+            reason: 'profile يجب أن يحتوي على name');
         expect(p['name'], isA<String>());
       }
     });

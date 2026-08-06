@@ -23,8 +23,8 @@ void main(List<String> args) {
   }
 
   final content = file.readAsStringSync();
-  final regex = RegExp(r'^version:\s*(\d+)\.(\d+)\.(\d+)\+(\d+)\s*$',
-      multiLine: true);
+  final regex =
+      RegExp(r'^version:\s*(\d+)\.(\d+)\.(\d+)\+(\d+)\s*$', multiLine: true);
   final match = regex.firstMatch(content);
 
   if (match == null) {
@@ -59,13 +59,13 @@ void main(List<String> args) {
       build += 1;
       break;
     default:
-      stderr.writeln('❌ خيار غير معروف: $part (المتاح: build | patch | minor | major)');
+      stderr.writeln(
+          '❌ خيار غير معروف: $part (المتاح: build | patch | minor | major)');
       exit(1);
   }
 
   final newVersion = '$major.$minor.$patch+$build';
-  final updated =
-      content.replaceFirst(regex, 'version: $newVersion');
+  final updated = content.replaceFirst(regex, 'version: $newVersion');
   file.writeAsStringSync(updated);
 
   stdout.writeln('✅ تم رفع الإصدار: $oldVersion  →  $newVersion');

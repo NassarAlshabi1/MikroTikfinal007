@@ -234,7 +234,9 @@ Time: ${DateTime.now().toIso8601String()}
                 : () async {
                     await SecureClipboard.copy(_result!.summary,
                         sensitive: false);
-                    if (context.mounted) showSuccessSnackBar(context, 'تم نسخ التقرير');
+                    if (context.mounted) {
+                      showSuccessSnackBar(context, 'تم نسخ التقرير');
+                    }
                   },
           ),
         ],

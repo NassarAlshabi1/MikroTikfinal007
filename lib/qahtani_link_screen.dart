@@ -299,7 +299,9 @@ class _QahtaniLinkScreenState extends ConsumerState<QahtaniLinkScreen> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
-        scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), addAutomaticKeepAlives: false,
+        scrollCacheExtent: ScrollCacheExtent.pixels(
+            DeviceCapability.instance.listViewCacheExtent),
+        addAutomaticKeepAlives: false,
         children: [
           Icon(Icons.cloud_done,
               color: Theme.of(context).appColors.success, size: 80),

@@ -36,13 +36,13 @@ void main() {
       expect(find.byIcon(Icons.refresh), findsOneWidget);
     });
 
-    testWidgets('يعرض حالة فارغة أو تحميل أو قائمة بدون crash',
-        (tester) async {
+    testWidgets('يعرض حالة فارغة أو تحميل أو قائمة بدون crash', (tester) async {
       await pumpScreen(tester, const ActiveUsersScreen());
       await tester.pumpAndSettle(const Duration(seconds: 10));
 
       // إما CircularProgressIndicator أو ListView أو رسالة
-      final hasLoading = find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
+      final hasLoading =
+          find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
       final hasList = find.byType(ListView).evaluate().isNotEmpty;
       final hasText = find.byType(Text).evaluate().isNotEmpty;
 
@@ -69,8 +69,10 @@ void main() {
 
       // انتظر بداية التحميل
       await tester.pump();
-      expect(find.byType(CircularProgressIndicator).evaluate().isNotEmpty ||
-          find.byType(Scaffold).evaluate().isNotEmpty, isTrue);
+      expect(
+          find.byType(CircularProgressIndicator).evaluate().isNotEmpty ||
+              find.byType(Scaffold).evaluate().isNotEmpty,
+          isTrue);
 
       // انتظر اكتمال
       await tester.pumpAndSettle(const Duration(seconds: 10));
@@ -104,8 +106,7 @@ void main() {
       expect(find.byIcon(Icons.copy), findsWidgets);
     });
 
-    testWidgets('يعرض حالة "مرتبط بشبكة" عند تمرير linkedData',
-        (tester) async {
+    testWidgets('يعرض حالة "مرتبط بشبكة" عند تمرير linkedData', (tester) async {
       await pumpScreen(
         tester,
         CardListScreen(

@@ -620,7 +620,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   : const Icon(Icons.play_arrow),
               label: Text(
                 _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context)
@@ -712,12 +713,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        ..._tests
-            .map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildTestCard(t),
-                ))
-            ,
+        ..._tests.map((t) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildTestCard(t),
+            )),
       ],
     );
   }
@@ -804,9 +803,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               child: Row(
                 children: [
                   Icon(Icons.timer,
-                      color:
-                          Theme.of(context).iconTheme.color?.withValues(alpha: 0.7) ??
-                              Theme.of(context).textTheme.bodySmall?.color,
+                      color: Theme.of(context)
+                              .iconTheme
+                              .color
+                              ?.withValues(alpha: 0.7) ??
+                          Theme.of(context).textTheme.bodySmall?.color,
                       size: 16),
                   const SizedBox(width: 6),
                   Text(
@@ -826,9 +827,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               child: Row(
                 children: [
                   Icon(Icons.speed,
-                      color:
-                          Theme.of(context).iconTheme.color?.withValues(alpha: 0.7) ??
-                              Theme.of(context).textTheme.bodySmall?.color,
+                      color: Theme.of(context)
+                              .iconTheme
+                              .color
+                              ?.withValues(alpha: 0.7) ??
+                          Theme.of(context).textTheme.bodySmall?.color,
                       size: 16),
                   const SizedBox(width: 6),
                   Expanded(
@@ -962,7 +965,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle, color: AppPalette.success, size: 24),
+                const Icon(Icons.check_circle,
+                    color: AppPalette.success, size: 24),
                 const SizedBox(width: 12),
                 Text(
                   'لا توجد توصيات - الشبكة في حالة جيدة!',
@@ -974,12 +978,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               ],
             ),
           ),
-        ..._recommendations
-            .map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildRecommendationCard(r),
-                ))
-            ,
+        ..._recommendations.map((r) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildRecommendationCard(r),
+            )),
       ],
     );
   }
@@ -1089,7 +1091,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                 },
                 icon: Icon(
                   r.expanded ? Icons.expand_less : Icons.expand_more,
-                  color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6) ??
+                  color: Theme.of(context)
+                          .iconTheme
+                          .color
+                          ?.withValues(alpha: 0.6) ??
                       Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),

@@ -151,7 +151,9 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                     : _results.isEmpty
                         ? _buildEmptyState()
                         : ListView.builder(
-                            scrollCacheExtent: const ScrollCacheExtent.pixels(250), itemCount: _results.length,
+                            scrollCacheExtent:
+                                const ScrollCacheExtent.pixels(250),
+                            itemCount: _results.length,
                             itemBuilder: (context, index) {
                               final card = _results[index];
                               return _buildCardTile(card);

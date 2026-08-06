@@ -136,7 +136,8 @@ void main() {
                 body: SizedBox(
                   height: 200, // viewport محدود
                   child: ListView.builder(
-                    scrollCacheExtent: const ScrollCacheExtent.pixels(100), itemCount: 10000,
+                    scrollCacheExtent: const ScrollCacheExtent.pixels(100),
+                    itemCount: 10000,
                     itemBuilder: (context, index) {
                       buildCount++;
                       return ListTile(

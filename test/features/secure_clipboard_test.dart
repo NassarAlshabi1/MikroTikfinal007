@@ -13,7 +13,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   // Mock Clipboard channel — الاسم الصحيح هو 'flutter/clipboard'
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   const channel = MethodChannel('flutter/clipboard');
 
   setUp(() {

@@ -159,7 +159,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
 
   // --- ٦. دالة جديدة للمشاركة كملف PDF ---
   Future<void> _shareAsPdf(SavedFile savedFile) async {
-    if (!context.mounted) return;
+    if (!mounted) return;
     showSuccessSnackBar(context, 'جاري تحضير ملف PDF...');
 
     try {
@@ -183,6 +183,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
           .toList();
 
       // استدعاء دالة إنشاء ومشاركة الـ PDF
+      if (!mounted) return;
       await PdfGenerator.sharePdf(
         context,
         cardUsernames: cardUsernames,
@@ -198,6 +199,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       showErrorSnackBar(context, 'فشل إنشاء ملف PDF.');
     }
   }
+
   // ----------------------------------------
 
   @override

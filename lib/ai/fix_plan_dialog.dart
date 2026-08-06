@@ -480,7 +480,10 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
                     ),
                   ),
                   Text(
-                    result.snapshot!.createdAt.toLocal().toString().substring(0, 19),
+                    result.snapshot!.createdAt
+                        .toLocal()
+                        .toString()
+                        .substring(0, 19),
                     style: TextStyle(fontSize: 10, color: colors.textSecondary),
                   ),
                 ],

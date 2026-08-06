@@ -71,7 +71,9 @@ class ActiveUsersV2 extends ConsumerWidget {
                     child: ListView.builder(
                       // itemExtent يمنع حساب الارتفاع لكل عنصر → تحسن أداء scroll
                       // بشكل كبير على الأجهزة الضعيفة
-                      scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), itemExtent: 72,
+                      scrollCacheExtent: ScrollCacheExtent.pixels(
+                          DeviceCapability.instance.listViewCacheExtent),
+                      itemExtent: 72,
                       // addAutomaticKeepAlives خاطئ لأن العناصر خفيفة
                       addAutomaticKeepAlives: false,
                       // لا نُبقي العناصر حية عند الـ scroll-out
