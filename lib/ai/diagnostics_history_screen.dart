@@ -312,7 +312,7 @@ class _DetailMessageBubble extends StatelessWidget {
             ? Theme.of(context).appColors.error.withValues(alpha: 0.1)
             : isUser
                 ? Theme.of(context).primaryColor
-                : Theme.of(context).cardColor,
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

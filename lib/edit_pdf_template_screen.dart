@@ -199,7 +199,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       appBar: AppBar(
         title: Text(
             widget.existingTemplate == null ? 'إضافة قالب جديد' : 'تعديل قالب'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: _isLoading
           ? const Center(
@@ -227,7 +227,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                 color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.bold),
                             dropdownColor:
-                                Theme.of(context).colorScheme.onSurface,
+                                Theme.of(context).colorScheme.surface,
                             decoration: const InputDecoration(
                                 labelText: 'اختر الفئة (البروفايل)',
                                 prefixIcon: Icon(Icons.category_outlined)),

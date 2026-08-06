@@ -260,7 +260,7 @@ class _QahtaniLinkScreenState extends ConsumerState<QahtaniLinkScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ربط الشبكة بـ م/نصار الشعبي'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           if (_isLinked)
             IconButton(

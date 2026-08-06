@@ -183,7 +183,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('مراقبة الأجهزة'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

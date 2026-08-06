@@ -3,9 +3,16 @@ name: Code Quality & Testing
 on:
   push:
     branches: [ main, develop, 'feature/**', 'capy/**' ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
     branches: [ '**' ]
   workflow_dispatch:  # يسمح بالتشغيل اليدوي من تبويب Actions
+  workflow_run:
+    workflows: ["Build Flutter Release APK"]
+    types: [completed]
+    branches: [feature/isar-migration, main, capy/v2-riverpod]
 
 permissions:
   contents: read

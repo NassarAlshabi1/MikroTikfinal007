@@ -347,7 +347,7 @@ class _StatsScreenState extends State<StatsScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const Text('الإحصائيات'),
-          backgroundColor: Theme.of(context).cardColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),

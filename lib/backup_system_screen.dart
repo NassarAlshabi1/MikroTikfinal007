@@ -147,7 +147,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   void _showBackupOptions(Map<String, dynamic> backup) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).cardColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -421,7 +421,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      color: Theme.of(context).cardColor,
+      color: Theme.of(context).colorScheme.surface,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _showBackupOptions(backup),
@@ -602,7 +602,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('نظام النسخ الاحتياطي الكامل'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
