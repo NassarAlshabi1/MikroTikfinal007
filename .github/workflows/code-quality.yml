@@ -5,6 +5,7 @@ on:
     branches: [ main, develop, 'feature/**', 'capy/**' ]
   pull_request:
     branches: [ '**' ]
+  workflow_dispatch:  # يسمح بالتشغيل اليدوي من تبويب Actions
 
 permissions:
   contents: read
