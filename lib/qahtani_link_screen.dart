@@ -1,20 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'mqtt_service.dart';
 import 'perf/device_capability.dart';
 
 import 'theme/app_theme.dart';
-class QahtaniLinkScreen extends StatefulWidget {
+class QahtaniLinkScreen extends ConsumerStatefulWidget {
   const QahtaniLinkScreen({super.key});
 
   @override
-  State<QahtaniLinkScreen> createState() => _QahtaniLinkScreenState();
+  ConsumerState<QahtaniLinkScreen> createState() => _QahtaniLinkScreenState();
 }
 
-class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
+class _QahtaniLinkScreenState extends ConsumerState<QahtaniLinkScreen> {
   late MqttService _mqttService;
   StreamSubscription? _mqttSubscription;
 
@@ -49,7 +49,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     super.didChangeDependencies();
     if (_initialized) return;
     _initialized = true;
-    _mqttService = Provider.of<MqttService>(context, listen: false);
+    _mqttService = ref.read(mqttServiceProvider);
     _setupMqttListener();
     _loadInitialData();
   }

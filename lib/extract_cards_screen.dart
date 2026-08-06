@@ -6,7 +6,7 @@ import 'snackbar_helpers.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:provider/provider.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'dart:io';
@@ -14,14 +14,14 @@ import 'process_image_screen.dart';
 import 'mqtt_service.dart';
 
 import 'services/secure_clipboard.dart';
-class ExtractCardsScreen extends StatefulWidget {
+class ExtractCardsScreen extends ConsumerStatefulWidget {
   const ExtractCardsScreen({super.key});
 
   @override
-  State<ExtractCardsScreen> createState() => _ExtractCardsScreenState();
+  ConsumerState<ExtractCardsScreen> createState() => _ExtractCardsScreenState();
 }
 
-class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
+class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _prefixController = TextEditingController();
   final _lengthController = TextEditingController();
@@ -58,7 +58,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _mqttService = Provider.of<MqttService>(context, listen: false);
+    _mqttService = ref.read(mqttServiceProvider);
     _setupMqttListener();
   }
 

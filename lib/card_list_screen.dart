@@ -5,7 +5,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'mqtt_service.dart';
@@ -15,7 +15,7 @@ import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 import 'services/secure_clipboard.dart';
-class CardListScreen extends StatefulWidget {
+class CardListScreen extends ConsumerStatefulWidget {
   final List<String> cardList;
   final bool isNetworkLinked;
   final Map<String, dynamic> linkedData;
@@ -28,10 +28,10 @@ class CardListScreen extends StatefulWidget {
   });
 
   @override
-  State<CardListScreen> createState() => _CardListScreenState();
+  ConsumerState<CardListScreen> createState() => _CardListScreenState();
 }
 
-class _CardListScreenState extends State<CardListScreen> {
+class _CardListScreenState extends ConsumerState<CardListScreen> {
   late MqttService _mqttService;
   StreamSubscription? _mqttSubscription;
   String? _addCardsJobId;
@@ -41,7 +41,7 @@ class _CardListScreenState extends State<CardListScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _mqttService = Provider.of<MqttService>(context, listen: false);
+    _mqttService = ref.read(mqttServiceProvider);
     _setupMqttListener();
   }
 

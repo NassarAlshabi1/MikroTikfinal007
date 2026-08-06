@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
@@ -22,7 +22,7 @@ import 'pdf_templates_screen.dart';
 import 'pdf_generator.dart';
 import 'snackbar_helpers.dart';
 
-class BulkAddScreen extends StatefulWidget {
+class BulkAddScreen extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> profiles;
   final bool isVersion7OrNewer;
   final String username;
@@ -35,10 +35,10 @@ class BulkAddScreen extends StatefulWidget {
   });
 
   @override
-  State<BulkAddScreen> createState() => _BulkAddScreenState();
+  ConsumerState<BulkAddScreen> createState() => _BulkAddScreenState();
 }
 
-class _BulkAddScreenState extends State<BulkAddScreen> {
+class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   final _formKey = GlobalKey<FormState>();
   
   bool _isGenerating = false;
@@ -80,7 +80,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _mqttService = Provider.of<MqttService>(context, listen: false);
+    _mqttService = ref.read(mqttServiceProvider);
     _setupMqttListener();
   }
 
