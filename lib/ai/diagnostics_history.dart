@@ -1,21 +1,19 @@
 // ============================================================
 //  Diagnostics History — حفظ ومراجعة جلسات التشخيص السابقة
-//  الآن يستخدم SQLite عبر drift (أسرع بكثير من SharedPreferences)
+//  يستخدم Isar database (بعد الهجرة من Drift)
 //  مع fallback لـ SharedPreferences للتوافق مع الإصدارات القديمة
 // ============================================================
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:drift/drift.dart';
 
-import '../database/app_database.dart';
+import '../database/isar/ai_diagnostic_collection.dart';
 import '../database/daos/ai_diagnostics_dao.dart';
 import 'command_executor.dart';
 import 'diagnostics_models.dart';
 
 /// جلسة تشخيص كاملة (محفوظة)
-/// (هذا الـ model يُستخدم في UI — يبقى كما هو للتوافق)
 @immutable
 class DiagnosticSession {
   final String id;
@@ -38,7 +36,6 @@ class DiagnosticSession {
     this.tokensUsed = 0,
   });
 
-  /// 🔧 إصلاح: copyWith مطلوب من قبل DiagnosticsNotifier
   DiagnosticSession copyWith({
     String? id,
     DateTime? startedAt,
@@ -60,7 +57,6 @@ class DiagnosticSession {
         tokensUsed: tokensUsed ?? this.tokensUsed,
       );
 
-  /// 🔧 إصلاح: title getter مطلوب من قبل DiagnosticsHistoryScreen
   String get title {
     final dateStr = '${startedAt.day}/${startedAt.month}/${startedAt.year}';
     final userMsg = messages.firstWhere(
@@ -97,8 +93,8 @@ class DiagnosticSession {
     return parts.join(' • ');
   }
 
-  /// يحوّل لـ drift companion للحفظ في SQLite
-  AiDiagnosticsCompanion toDriftCompanion() {
+  /// يحوّل الجلسة إلى AiDiagnosticCollection للحفظ في Isar
+  AiDiagnosticCollection toIsarCollection() {
     final userQuery = messages
         .firstWhere((m) => m.type == MessageType.user,
             orElse: () => DiagnosticMessage.user(''))
@@ -108,24 +104,24 @@ class DiagnosticSession {
             orElse: () => DiagnosticMessage.assistant(''))
         .content;
 
-    return AiDiagnosticsCompanion.insert(
+    return AiDiagnosticCollection.fromData(
       mode: mode.name,
-      mikrotikIp: Value(mikrotikIp),
+      mikrotikIp: mikrotikIp,
       startedAt: startedAt,
-      endedAt: Value(endedAt),
+      endedAt: endedAt,
       userQuery: userQuery,
       aiResponse: aiResponse,
-      snapshotJson: Value(jsonEncode({
+      snapshotJson: jsonEncode({
         'id': id,
         'messages': messages.map((m) => _messageToJson(m)).toList(),
         'executedCommands': executedCommands.map((c) => c.toJson()).toList(),
-      })),
-      isFavorite: const Value(false),
+      }),
+      isFavorite: false,
     );
   }
 
-  /// يبني DiagnosticSession من سجل drift
-  factory DiagnosticSession.fromDrift(AiDiagnostic row) {
+  /// يبني DiagnosticSession من سجل Isar
+  factory DiagnosticSession.fromIsar(AiDiagnosticCollection row) {
     Map<String, dynamic>? data;
     try {
       if (row.snapshotJson != null) {
@@ -157,7 +153,7 @@ class DiagnosticSession {
         const [];
 
     return DiagnosticSession(
-      id: 'session_${row.id}', // استخدام drift id
+      id: 'session_${row.id}',
       startedAt: row.startedAt,
       endedAt: row.endedAt,
       mode: DiagnosticMode.values.firstWhere(
@@ -207,35 +203,30 @@ class DiagnosticSession {
 }
 
 /// خدمة حفظ وقراءة الجلسات
-/// تستخدم SQLite عبر drift (مع fallback لـ SharedPreferences)
+/// تستخدم Isar database (مع fallback لـ SharedPreferences)
 class DiagnosticsHistoryService {
   DiagnosticsHistoryService._();
   static final DiagnosticsHistoryService instance =
       DiagnosticsHistoryService._();
 
-  // الـ DAO يُحقن من Riverpod — لكن نحتفظ بمرجع للتوافق مع الكود القديم
   AiDiagnosticsDao? _dao;
   static const _legacyKey = 'diagnostics_sessions';
   static const _maxSessions = 50;
 
-  /// يضبط الـ DAO (يُستدعى من main.dart بعد تهيئة Riverpod)
   void setDao(AiDiagnosticsDao dao) {
     _dao = dao;
   }
 
   /// يحمّل كل الجلسات المحفوظة (مرتبة من الأحدث للأقدم)
   Future<List<DiagnosticSession>> loadAll() async {
-    // محاولة استخدام SQLite أولاً
     if (_dao != null) {
       try {
         final rows = await _dao!.getAllDiagnostics();
-        return rows.map(DiagnosticSession.fromDrift).toList();
+        return rows.map(DiagnosticSession.fromIsar).toList();
       } catch (e) {
-        debugPrint('[DiagnosticsHistory] SQLite error, falling back: $e');
+        debugPrint('[DiagnosticsHistory] Isar error, falling back: $e');
       }
     }
-
-    // Fallback لـ SharedPreferences
     return _loadFromPrefs();
   }
 
@@ -258,21 +249,17 @@ class DiagnosticsHistoryService {
     }
   }
 
-  /// يحفظ جلسة (يُضيفها للأخرى، مع تطبيق الحد الأقصى)
+  /// يحفظ جلسة
   Future<void> save(DiagnosticSession session) async {
-    // محاولة SQLite أولاً
     if (_dao != null) {
       try {
-        await _dao!.insertDiagnostic(session.toDriftCompanion());
-        // تطبيق الحد الأقصى
+        await _dao!.insertDiagnostic(session.toIsarCollection());
         await _dao!.keepOnlyLatest(_maxSessions);
         return;
       } catch (e) {
-        debugPrint('[DiagnosticsHistory] SQLite save error, falling back: $e');
+        debugPrint('[DiagnosticsHistory] Isar save error, falling back: $e');
       }
     }
-
-    // Fallback
     await _saveToPrefs(session);
   }
 
@@ -301,7 +288,6 @@ class DiagnosticsHistoryService {
 
   /// يحذف جلسة محددة
   Future<void> delete(String sessionId) async {
-    // محاولة SQLite
     if (_dao != null && sessionId.startsWith('session_')) {
       final id = int.tryParse(sessionId.replaceAll('session_', ''));
       if (id != null) {
@@ -309,12 +295,11 @@ class DiagnosticsHistoryService {
           await _dao!.deleteDiagnostic(id);
           return;
         } catch (e) {
-          debugPrint('[DiagnosticsHistory] SQLite delete error: $e');
+          debugPrint('[DiagnosticsHistory] Isar delete error: $e');
         }
       }
     }
 
-    // Fallback
     final prefs = await SharedPreferences.getInstance();
     final existing = await _loadFromPrefs();
     final filtered = existing.where((s) => s.id != sessionId).toList();
@@ -328,19 +313,18 @@ class DiagnosticsHistoryService {
       try {
         await _dao!.deleteAllDiagnostics();
       } catch (e) {
-        debugPrint('[DiagnosticsHistory] SQLite clearAll error: $e');
+        debugPrint('[DiagnosticsHistory] Isar clearAll error: $e');
       }
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_legacyKey);
   }
 
-  /// يصدّر جلسة كـ JSON (للمشاركة)
+  /// يصدّر جلسة كـ JSON
   String exportSession(DiagnosticSession session) {
     return const JsonEncoder.withIndent('  ').convert(session.toJson());
   }
 
-  /// Legacy: يبني DiagnosticSession من JSON قديم
   DiagnosticSession _fromJsonLegacy(Map<String, dynamic> json) {
     return DiagnosticSession(
       id: json['id'] as String,

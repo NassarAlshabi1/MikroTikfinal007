@@ -1,186 +1,14 @@
 // ============================================================
-//  CardsDao — Data Access Object لجدول الكروت
-//  يوفّر استعلامات type-safe وأداء عالي عبر drift
+//  CardsDao (Isar) — Data Access Object لجدول الكروت
+//
+//  يحل محل Drift CardsDao القديم.
+//  يحافظ على نفس الـ API لتقليل التغييرات في المستهلكين.
 // ============================================================
 
-import 'package:drift/drift.dart';
-import '../app_database.dart';
+import 'package:isar/isar.dart';
 
-part 'cards_dao.g.dart';
+import '../isar/card_collection.dart';
 
-@DriftAccessor(tables: [Cards, Profiles, CardsFts])
-class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
-  CardsDao(super.db);
-
-  // ============================================================
-  //  CRUD Operations
-  // ============================================================
-
-  /// إضافة كرت جديد
-  Future<int> insertCard(CardsCompanion card) => into(cards).insert(card);
-
-  /// إضافة عدة كروت في transaction واحد (atomic)
-  Future<void> insertCards(List<CardsCompanion> newCards) async {
-    await batch((b) => b.insertAll(cards, newCards));
-  }
-
-  /// تحديث كرت
-  Future<bool> updateCard(Card card) => update(cards).replace(card);
-
-  /// حذف كرت
-  Future<int> deleteCard(int id) =>
-      (delete(cards)..where((c) => c.id.equals(id))).go();
-
-  /// حذف كل الكروت (للـ reset)
-  Future<int> deleteAllCards() => delete(cards).go();
-
-  // ============================================================
-  //  Queries
-  // ============================================================
-
-  /// كل الكروت (مرتبة بالأحدث)
-  Future<List<Card>> getAllCards() =>
-      (select(cards)..orderBy([(c) => OrderingTerm.desc(c.createdAt)])).get();
-
-  /// كرت واحد بالـ ID
-  Future<Card?> getCardById(int id) =>
-      (select(cards)..where((c) => c.id.equals(id))).getSingleOrNull();
-
-  /// كرت بالـ username
-  Future<Card?> getCardByUsername(String username) =>
-      (select(cards)..where((c) => c.username.equals(username)))
-          .getSingleOrNull();
-
-  /// الكروت النشطة فقط
-  Future<List<Card>> getActiveCards() =>
-      (select(cards)..where((c) => c.status.equals('active'))).get();
-
-  /// الكروت المنتهية
-  Future<List<Card>> getExpiredCards() =>
-      (select(cards)..where((c) => c.status.equals('expired'))).get();
-
-  /// الكروت المنتهية هذا الشهر
-  Future<List<Card>> getCardsExpiringBetween(DateTime start, DateTime end) =>
-      (select(cards)
-            ..where((c) =>
-                c.expiresAt.isBetweenValues(start, end) &
-                c.status.equals('active')))
-          .get();
-
-  /// أعلى N مستخدمين استهلاكاً
-  Future<List<Card>> getTopConsumers(int limit) => (select(cards)
-        ..where((c) => c.status.equals('active'))
-        ..orderBy([(c) => OrderingTerm.desc(c.uploadBytes + c.downloadBytes)])
-        ..limit(limit))
-      .get();
-
-  // ============================================================
-  //  Stream Queries (reactive — يتحدث تلقائياً عند تغيير البيانات)
-  // ============================================================
-
-  /// Stream لكل الكروت (للـ reactive UI)
-  Stream<List<Card>> watchAllCards() =>
-      (select(cards)..orderBy([(c) => OrderingTerm.desc(c.createdAt)])).watch();
-
-  /// Stream للكروت النشطة
-  Stream<List<Card>> watchActiveCards() =>
-      (select(cards)..where((c) => c.status.equals('active'))).watch();
-
-  /// Stream لكرت واحد
-  Stream<Card?> watchCardById(int id) =>
-      (select(cards)..where((c) => c.id.equals(id))).watchSingleOrNull();
-
-  // ============================================================
-  //  Statistics (SQL aggregations — أسرع بكثير من Dart)
-  // ============================================================
-
-  /// إحصائيات شاملة في استعلام واحد
-  Future<CardsStatistics> getStatistics() async {
-    final totalCards = await cards.count().getSingle();
-
-    // عدد الكروت النشطة
-    final activeResult = await (selectOnly(cards)
-          ..addColumns([cards.id.count()])
-          ..where(cards.status.equals('active')))
-        .getSingle();
-    final activeCount = activeResult.read(cards.id.count()) ?? 0;
-
-    final disabledResult = await (selectOnly(cards)
-          ..addColumns([cards.id.count()])
-          ..where(cards.status.equals('disabled')))
-        .getSingle();
-    final disabledCount = disabledResult.read(cards.id.count()) ?? 0;
-
-    final expiredResult = await (selectOnly(cards)
-          ..addColumns([cards.id.count()])
-          ..where(cards.status.equals('expired')))
-        .getSingle();
-    final expiredCount = expiredResult.read(cards.id.count()) ?? 0;
-
-    // مجموع bytes الرفع والتنزيل عبر aggregate expressions
-    final uploadResult = await (selectOnly(cards)
-          ..addColumns([cards.uploadBytes.sum()]))
-        .getSingle();
-    final totalUpload = uploadResult.read(cards.uploadBytes.sum()) ?? 0;
-
-    final downloadResult = await (selectOnly(cards)
-          ..addColumns([cards.downloadBytes.sum()]))
-        .getSingle();
-    final totalDownload = downloadResult.read(cards.downloadBytes.sum()) ?? 0;
-
-    return CardsStatistics(
-      totalCards: totalCards,
-      activeCards: activeCount,
-      disabledCards: disabledCount,
-      expiredCards: expiredCount,
-      totalUploadBytes: totalUpload,
-      totalDownloadBytes: totalDownload,
-    );
-  }
-
-  // ============================================================
-  //  Full-Text Search (FTS5) — بحث فوري في آلاف الكروت
-  // ============================================================
-
-  /// بحث نصي كامل في الكروت (سريع جداً مع FTS5)
-  Future<List<Card>> searchCards(String query) async {
-    if (query.isEmpty) return getAllCards();
-
-    // استخدام FTS5 MATCH للبحث الفوري
-    final results = await customSelect(
-      'SELECT c.* FROM cards_fts fts '
-      'JOIN cards c ON c.id = fts.rowid '
-      'WHERE cards_fts MATCH ? '
-      'ORDER BY rank '
-      'LIMIT 100',
-      variables: [Variable.withString(query)],
-      readsFrom: {cards, cardsFts},
-    ).get();
-
-    return results.map((row) => cards.map(row.data)).toList();
-  }
-
-  // ============================================================
-  //  Bulk Operations
-  // ============================================================
-
-  /// تحديث حالة عدة كروت في transaction
-  Future<void> updateStatusBatch(List<int> ids, String newStatus) async {
-    await batch((b) => b.update(
-          cards,
-          CardsCompanion(status: Value(newStatus)),
-          where: (c) => c.id.isIn(ids),
-        ));
-  }
-
-  /// حذف الكروت المنتهية قبل تاريخ محدد
-  Future<int> deleteExpiredBefore(DateTime date) => (delete(cards)
-        ..where((c) =>
-            c.status.equals('expired') & c.expiresAt.isSmallerThanValue(date)))
-      .go();
-}
-
-/// إحصائيات الكروت (من SQL aggregation)
 class CardsStatistics {
   final int totalCards;
   final int activeCards;
@@ -201,5 +29,220 @@ class CardsStatistics {
   int get totalBytes => totalUploadBytes + totalDownloadBytes;
 
   double get totalUploadGB => totalUploadBytes / (1024 * 1024 * 1024);
+
   double get totalDownloadGB => totalDownloadBytes / (1024 * 1024 * 1024);
+}
+
+class CardsDao {
+  final Isar _isar;
+  CardsDao(this._isar);
+
+  // ============================================================
+  //  CRUD Operations
+  // ============================================================
+
+  /// إضافة كرت جديد
+  Future<int> insertCard(CardCollection card) async {
+    await _isar.writeTxn(() => _isar.cardCollections.put(card));
+    return card.id;
+  }
+
+  /// إضافة عدة كروت في transaction واحد (atomic)
+  Future<void> insertCards(List<CardCollection> newCards) async {
+    await _isar.writeTxn(() => _isar.cardCollections.putAll(newCards));
+  }
+
+  /// تحديث كرت
+  Future<bool> updateCard(CardCollection card) async {
+    await _isar.writeTxn(() => _isar.cardCollections.put(card));
+    return true;
+  }
+
+  /// حذف كرت
+  Future<bool> deleteCard(int id) async {
+    return await _isar.writeTxn(() => _isar.cardCollections.delete(id));
+  }
+
+  /// حذف كل الكروت
+  Future<int> deleteAllCards() async {
+    return await _isar.writeTxn(() async {
+      final count = await _isar.cardCollections.count();
+      await _isar.cardCollections.clear();
+      return count;
+    });
+  }
+
+  // ============================================================
+  //  Queries
+  // ============================================================
+
+  /// كل الكروت (مرتبة بالأحدث)
+  Future<List<CardCollection>> getAllCards() async {
+    return await _isar.cardCollections
+        .where()
+        .sortByCreatedAtDesc()
+        .findAll();
+  }
+
+  /// كرت بالـ ID
+  Future<CardCollection?> getCardById(int id) async {
+    return await _isar.cardCollections.get(id);
+  }
+
+  /// كرت بالـ username
+  Future<CardCollection?> getCardByUsername(String username) async {
+    return await _isar.cardCollections
+        .where()
+        .usernameEqualTo(username)
+        .findFirst();
+  }
+
+  /// الكروت النشطة فقط
+  Future<List<CardCollection>> getActiveCards() async {
+    return await _isar.cardCollections
+        .filter()
+        .statusEqualTo('active')
+        .findAll();
+  }
+
+  /// الكروت المنتهية
+  Future<List<CardCollection>> getExpiredCards() async {
+    return await _isar.cardCollections
+        .filter()
+        .statusEqualTo('expired')
+        .findAll();
+  }
+
+  /// الكروت المنتهية بين تاريخين
+  Future<List<CardCollection>> getCardsExpiringBetween(
+    DateTime start,
+    DateTime end,
+  ) async {
+    return await _isar.cardCollections
+        .filter()
+        .statusEqualTo('active')
+        .expiresAtBetween(start, end)
+        .findAll();
+  }
+
+  /// أعلى N مستخدمين استهلاكاً
+  Future<List<CardCollection>> getTopConsumers(int limit) async {
+    final all = await _isar.cardCollections
+        .filter()
+        .statusEqualTo('active')
+        .findAll();
+    all.sort((a, b) => b.totalBytes.compareTo(a.totalBytes));
+    return all.take(limit).toList();
+  }
+
+  // ============================================================
+  //  Stream Queries (reactive)
+  // ============================================================
+
+  /// Stream لكل الكروت
+  Stream<List<CardCollection>> watchAllCards() {
+    return _isar.cardCollections
+        .where()
+        .sortByCreatedAtDesc()
+        .watch(fireImmediately: true);
+  }
+
+  /// Stream للكروت النشطة
+  Stream<List<CardCollection>> watchActiveCards() {
+    return _isar.cardCollections
+        .filter()
+        .statusEqualTo('active')
+        .watch(fireImmediately: true);
+  }
+
+  /// Stream لكرت واحد
+  Stream<CardCollection?> watchCardById(int id) {
+    return _isar.cardCollections.watchObject(id, fireImmediately: true);
+  }
+
+  // ============================================================
+  //  Statistics
+  // ============================================================
+
+  /// إحصائيات شاملة
+  Future<CardsStatistics> getStatistics() async {
+    final allCards = await _isar.cardCollections.where().findAll();
+
+    int activeCount = 0;
+    int disabledCount = 0;
+    int expiredCount = 0;
+    int totalUpload = 0;
+    int totalDownload = 0;
+
+    for (final card in allCards) {
+      switch (card.status) {
+        case 'active':
+          activeCount++;
+          break;
+        case 'disabled':
+          disabledCount++;
+          break;
+        case 'expired':
+          expiredCount++;
+          break;
+      }
+      totalUpload += card.uploadBytes;
+      totalDownload += card.downloadBytes;
+    }
+
+    return CardsStatistics(
+      totalCards: allCards.length,
+      activeCards: activeCount,
+      disabledCards: disabledCount,
+      expiredCards: expiredCount,
+      totalUploadBytes: totalUpload,
+      totalDownloadBytes: totalDownload,
+    );
+  }
+
+  // ============================================================
+  //  Search — بحث فوري عبر Isar indexes
+  // ============================================================
+
+  /// بحث في الكروت (يستخدم username filter)
+  Future<List<CardCollection>> searchCards(String query) async {
+    if (query.isEmpty) return getAllCards();
+
+    return await _isar.cardCollections
+        .filter()
+        .usernameContains(query, caseSensitive: false)
+        .findAll();
+  }
+
+  // ============================================================
+  //  Bulk Operations
+  // ============================================================
+
+  /// تحديث حالة عدة كروت في transaction
+  Future<void> updateStatusBatch(List<int> ids, String newStatus) async {
+    await _isar.writeTxn(() async {
+      final cards = await _isar.cardCollections.getAll(ids);
+      for (var i = 0; i < cards.length; i++) {
+        if (cards[i] != null) {
+          cards[i]!.status = newStatus;
+        }
+      }
+      await _isar.cardCollections.putAll(cards.whereType<CardCollection>().toList());
+    });
+  }
+
+  /// حذف الكروت المنتهية قبل تاريخ محدد
+  Future<int> deleteExpiredBefore(DateTime date) async {
+    return await _isar.writeTxn(() async {
+      final expired = await _isar.cardCollections
+          .filter()
+          .statusEqualTo('expired')
+          .expiresAtLessThan(date)
+          .findAll();
+      for (final card in expired) {
+        await _isar.cardCollections.delete(card.id);
+      }
+      return expired.length;
+    });
+  }
 }
