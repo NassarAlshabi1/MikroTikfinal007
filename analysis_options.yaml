@@ -19,6 +19,12 @@ analyzer:
     - "**/*.freezed.dart"
     - "**/*.drift.dart"
     - "**/generated_plugin_registrant.dart"
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 # ============================================================
 #  DCL Configuration (Dart Code Linter by Bancolombia)
