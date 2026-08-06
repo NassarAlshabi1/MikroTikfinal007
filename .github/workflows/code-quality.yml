@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Format code
         run: dart format .
@@ -48,8 +48,8 @@ jobs:
       - name: Analyze project source
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         # ملاحظة: --fatal-infos يجعل كل info warning خطأ قاتل
-        # لدينا 180 info-level issues (deprecated_member_use, prefer_const)
-        # هذه non-blocking ونتركها للتحسين التدريجي
+        # تم إصلاح جميع الـ info-level issues سابقاً — الكود نظيف (0 issues)
+        # نُبقي --no-fatal-infos احترازياً لتفادي إيقاف CI بسبب تحذيرات non-blocking
 
       - name: Check for unused dependencies
         run: |
@@ -73,7 +73,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Run tests
         run: |
@@ -128,7 +128,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Run pub audit
         run: |
@@ -155,7 +155,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate drift code
-        run: dart run build_runner build
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons || echo "Icon generation skipped"
