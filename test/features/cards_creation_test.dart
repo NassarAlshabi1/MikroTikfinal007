@@ -54,7 +54,8 @@ class CardGenerator {
         break;
       case 'alphanumeric':
       default:
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        chars =
+            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     }
     return List.generate(
       length,
@@ -82,7 +83,8 @@ class CardGenerator {
   }) {
     final username = prefix != null
         ? generateUsername(prefix: prefix, length: usernameLength)
-        : generateRandomString(length: usernameLength, charType: 'alphanumeric');
+        : generateRandomString(
+            length: usernameLength, charType: 'alphanumeric');
     final password = usernameEqualsPassword
         ? username
         : generateRandomString(length: passwordLength, charType: charType);
@@ -236,7 +238,8 @@ void main() {
 
       test('password فارغ أو قصير يُرجع خطأ', () {
         expect(CardValidator.validatePassword(''), 'كلمة المرور مطلوبة');
-        expect(CardValidator.validatePassword('123'), 'كلمة المرور يجب أن تكون 4 أحرف على الأقل');
+        expect(CardValidator.validatePassword('123'),
+            'كلمة المرور يجب أن تكون 4 أحرف على الأقل');
       });
 
       test('shared-users صالح', () {
@@ -246,10 +249,14 @@ void main() {
       });
 
       test('shared-users غير صالح', () {
-        expect(CardValidator.validateSharedUsers('0'), 'يجب أن يكون رقماً صحيحاً موجباً');
-        expect(CardValidator.validateSharedUsers('-5'), 'يجب أن يكون رقماً صحيحاً موجباً');
-        expect(CardValidator.validateSharedUsers('abc'), 'يجب أن يكون رقماً صحيحاً موجباً');
-        expect(CardValidator.validateSharedUsers('101'), 'الحد الأقصى 100 مستخدم');
+        expect(CardValidator.validateSharedUsers('0'),
+            'يجب أن يكون رقماً صحيحاً موجباً');
+        expect(CardValidator.validateSharedUsers('-5'),
+            'يجب أن يكون رقماً صحيحاً موجباً');
+        expect(CardValidator.validateSharedUsers('abc'),
+            'يجب أن يكون رقماً صحيحاً موجباً');
+        expect(
+            CardValidator.validateSharedUsers('101'), 'الحد الأقصى 100 مستخدم');
       });
 
       test('batch count صالح', () {
@@ -259,8 +266,10 @@ void main() {
       });
 
       test('batch count غير صالح', () {
-        expect(CardValidator.validateBatchCount('0'), 'يجب أن يكون رقماً صحيحاً موجباً');
-        expect(CardValidator.validateBatchCount('1001'), 'الحد الأقصى 1000 كرت');
+        expect(CardValidator.validateBatchCount('0'),
+            'يجب أن يكون رقماً صحيحاً موجباً');
+        expect(
+            CardValidator.validateBatchCount('1001'), 'الحد الأقصى 1000 كرت');
       });
     });
 
@@ -274,17 +283,20 @@ void main() {
       });
 
       test('توليد نص عشوائي numeric يحتوي على أرقام فقط', () {
-        final s = CardGenerator.generateRandomString(length: 10, charType: 'numeric');
+        final s =
+            CardGenerator.generateRandomString(length: 10, charType: 'numeric');
         expect(RegExp(r'^\d+$').hasMatch(s), isTrue);
       });
 
       test('توليد نص عشوائي alpha يحتوي على أحرف فقط', () {
-        final s = CardGenerator.generateRandomString(length: 10, charType: 'alpha');
+        final s =
+            CardGenerator.generateRandomString(length: 10, charType: 'alpha');
         expect(RegExp(r'^[a-zA-Z]+$').hasMatch(s), isTrue);
       });
 
       test('توليد نص عشوائي alphanumeric يحتوي على أحرف وأرقام', () {
-        final s = CardGenerator.generateRandomString(length: 20, charType: 'alphanumeric');
+        final s = CardGenerator.generateRandomString(
+            length: 20, charType: 'alphanumeric');
         expect(RegExp(r'^[a-zA-Z0-9]+$').hasMatch(s), isTrue);
       });
 
@@ -330,7 +342,8 @@ void main() {
       });
 
       test('توليد دفعة كروت — كل الكروت لها نفس الـ profile', () {
-        final cards = CardGenerator.generateBatch(count: 10, profile: 'premium');
+        final cards =
+            CardGenerator.generateBatch(count: 10, profile: 'premium');
         expect(cards.every((c) => c.profile == 'premium'), isTrue);
       });
 
@@ -382,11 +395,13 @@ void main() {
                 child: Column(
                   children: [
                     TextFormField(
-                      decoration: const InputDecoration(labelText: 'اسم المستخدم'),
+                      decoration:
+                          const InputDecoration(labelText: 'اسم المستخدم'),
                       validator: CardValidator.validateUsername,
                     ),
                     TextFormField(
-                      decoration: const InputDecoration(labelText: 'كلمة المرور'),
+                      decoration:
+                          const InputDecoration(labelText: 'كلمة المرور'),
                       validator: CardValidator.validatePassword,
                       obscureText: true,
                     ),

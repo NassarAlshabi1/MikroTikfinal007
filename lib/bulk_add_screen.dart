@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,7 +41,7 @@ class BulkAddScreen extends ConsumerStatefulWidget {
 
 class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   bool _isGenerating = false;
   double _generationProgress = 0.0;
   String _generationStatusText = '';
@@ -57,7 +58,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   String _charType = 'numbers';
   String _cardType = 'username_only';
   bool _linkPasswordToFirstUser = false;
-  
+
   // القوالب والقالب المختار
   List<PdfTemplate> _templates = [];
   PdfTemplate? _selectedTemplate;
@@ -114,40 +115,42 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     _mqttSubscription?.cancel();
     _mqttSubscription = _mqttService.messages.listen((message) {
       if (!mounted) return;
-      
+
       final jobId = message['job_id'];
       if (_addCardsJobId == null || jobId != _addCardsJobId) return;
 
       final status = message['status'];
 
-      switch(status) {
+      switch (status) {
         case 'acknowledged':
           _addCardsTimer?.cancel();
           setState(() {
             _isJobAcknowledged = true;
           });
           Navigator.of(context, rootNavigator: true).pop();
-          _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
+          _showWaitingDialog(
+              "تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
           break;
-        
+
         case 'job_status_response':
-           final jobStatus = message['job_status'];
-           if (jobStatus == 'not_found') {
-             _addCardsTimer?.cancel();
-             Navigator.of(context, rootNavigator: true).pop(); 
+          final jobStatus = message['job_status'];
+          if (jobStatus == 'not_found') {
+            _addCardsTimer?.cancel();
+            Navigator.of(context, rootNavigator: true).pop();
             _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
-           }
-           break;
+          }
+          break;
 
         case 'cards_added_success':
           _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
-          showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
+          Navigator.of(context, rootNavigator: true).pop();
+          showSuccessSnackBar(
+              context, message['message'] ?? 'تمت العملية بنجاح.');
           break;
 
         case 'error':
           _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
+          Navigator.of(context, rootNavigator: true).pop();
           _showErrorDialog(message['message'] ?? 'حدث خطأ.');
           break;
       }
@@ -203,7 +206,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
           _generationStatusText = message['status'];
         });
       } else if (type == 'success') {
-        final newlyCreatedUsers = (message['users'] as List).cast<Map<String, dynamic>>();
+        final newlyCreatedUsers =
+            (message['users'] as List).cast<Map<String, dynamic>>();
         final successCount = message['count'] as int;
         final address = message['address'] as String;
 
@@ -213,150 +217,167 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
             "الفئة: $_selectedProfile";
         _sendTelegramMessage(notificationMessage);
 
-        setState(() { _isGenerating = false; });
+        setState(() {
+          _isGenerating = false;
+        });
 
         if (newlyCreatedUsers.isNotEmpty) {
-          _showSuccessDialog(newlyCreatedUsers.map((e) => {'username': e['username'] as String, 'password': e['password'] as String}).toList());
+          _showSuccessDialog(newlyCreatedUsers
+              .map((e) => {
+                    'username': e['username'] as String,
+                    'password': e['password'] as String
+                  })
+              .toList());
         }
 
         isolate.kill();
       } else if (type == 'error') {
         final errorMessage = message['message'] as String;
         final successCount = message['count'] as int;
-        _showErrorDialog('فشلت العملية بعد إنشاء $successCount كرت: $errorMessage');
-        setState(() { _isGenerating = false; });
+        _showErrorDialog(
+            'فشلت العملية بعد إنشاء $successCount كرت: $errorMessage');
+        setState(() {
+          _isGenerating = false;
+        });
         isolate.kill();
       }
     });
   }
 
   void _showSuccessDialog(List<Map<String, String>> users) async {
-      final List<String> userListForFile = users.map((user) {
-        if (_cardType == 'username_only') return user['username']!;
-        return 'username: ${user['username']}, password: ${user['password']}';
-      }).toList();
+    final List<String> userListForFile = users.map((user) {
+      if (_cardType == 'username_only') return user['username']!;
+      return 'username: ${user['username']}, password: ${user['password']}';
+    }).toList();
 
-      final String fileContent = userListForFile.join('\n');
+    final String fileContent = userListForFile.join('\n');
 
-      final directory = await getApplicationDocumentsDirectory();
-      String timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final filePath = '${directory.path}/new_cards_$timestamp.txt';
-      final file = File(filePath);
-      await file.writeAsString(fileContent);
+    final directory = await getApplicationDocumentsDirectory();
+    String timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+    final filePath = '${directory.path}/new_cards_$timestamp.txt';
+    final file = File(filePath);
+    await file.writeAsString(fileContent);
 
-      final prefs = await SharedPreferences.getInstance();
-      final savedFile = SavedFile(
-          path: filePath,
-          profileName: _selectedProfile!,
-          userCount: users.length,
-          date: DateTime.now());
-      final existingFiles = prefs.getStringList('saved_files') ?? [];
-      existingFiles.add(jsonEncode(savedFile.toJson()));
-      await prefs.setStringList('saved_files', existingFiles);
+    final prefs = await SharedPreferences.getInstance();
+    final savedFile = SavedFile(
+        path: filePath,
+        profileName: _selectedProfile!,
+        userCount: users.length,
+        date: DateTime.now());
+    final existingFiles = prefs.getStringList('saved_files') ?? [];
+    existingFiles.add(jsonEncode(savedFile.toJson()));
+    await prefs.setStringList('saved_files', existingFiles);
 
-      // استخدام القالب المختار من المستخدم، أو البحث عن قالب مطابق للـ profile
-      PdfTemplate? relevantTemplate = _selectedTemplate;
-      if (relevantTemplate == null) {
-        final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-        try {
-          final templateJson = templatesJson.firstWhere(
-            (json) => PdfTemplate.fromJson(jsonDecode(json)).profileName == _selectedProfile,
-          );
-          relevantTemplate = PdfTemplate.fromJson(jsonDecode(templateJson));
-        } catch (e) {
-          // No template found
-        }
+    // استخدام القالب المختار من المستخدم، أو البحث عن قالب مطابق للـ profile
+    PdfTemplate? relevantTemplate = _selectedTemplate;
+    if (relevantTemplate == null) {
+      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
+      try {
+        final templateJson = templatesJson.firstWhere(
+          (json) =>
+              PdfTemplate.fromJson(jsonDecode(json)).profileName ==
+              _selectedProfile,
+        );
+        relevantTemplate = PdfTemplate.fromJson(jsonDecode(templateJson));
+      } catch (e) {
+        // No template found
       }
+    }
 
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Center(
-                child: Text('عملية ناجحة')),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  Center(child: Text('تم إنشاء ${users.length} كرت بنجاح!')) ,
-                  const SizedBox(height: 16),
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Center(child: Text('عملية ناجحة')),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Center(child: Text('تم إنشاء ${users.length} كرت بنجاح!')),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.visibility),
+                  label: const Text('عرض الكروت'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              CardListScreen(cardList: userListForFile)),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.share),
+                  label: const Text('مشاركة كملف نصي'),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await SharePlus.instance.share(ShareParams(
+                        files: [XFile(filePath)], text: 'New MikroTik Users'));
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor),
+                ),
+                if (relevantTemplate != null) ...[
+                  const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.visibility),
-                    label: const Text('عرض الكروت'),
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('مشاركة PDF'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                CardListScreen(cardList: userListForFile)),
+                      final List<String> usernamesOnly =
+                          users.map((u) => u['username']!).toList();
+                      PdfGenerator.sharePdf(
+                        context,
+                        cardUsernames: usernamesOnly,
+                        template: relevantTemplate!,
                       );
                     },
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.share),
-                    label: const Text('مشاركة كملف نصي'),
+                    icon: const Icon(Icons.save_alt),
+                    label: const Text('حفظ PDF'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor),
                     onPressed: () async {
                       Navigator.of(context).pop();
-                      await Share.shareXFiles([XFile(filePath)],
-                          text: 'New MikroTik Users');
+                      final List<String> usernamesOnly =
+                          users.map((u) => u['username']!).toList();
+                      await PdfGenerator.savePdf(
+                        context,
+                        cardUsernames: usernamesOnly,
+                        template: relevantTemplate!,
+                      );
                     },
-                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                   ),
-
-                  if (relevantTemplate != null) ...[
-                    SizedBox(height: 8),
-                     ElevatedButton.icon(
-                        icon: Icon(Icons.picture_as_pdf),
-                        label: Text('مشاركة PDF'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          final List<String> usernamesOnly = users.map((u) => u['username']!).toList();
-                          PdfGenerator.sharePdf(
-                            context,
-                            cardUsernames: usernamesOnly,
-                            template: relevantTemplate!,
-                          );
-                        },
-                      ),
-                      SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        icon: Icon(Icons.save_alt),
-                        label: Text('حفظ PDF'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          final List<String> usernamesOnly = users.map((u) => u['username']!).toList();
-                          await PdfGenerator.savePdf(
-                            context,
-                            cardUsernames: usernamesOnly,
-                            template: relevantTemplate!,
-                          );
-                        },
-                      ),
-                  ],
-
-                  if (_isNetworkLinked) ...[
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add_to_queue),
-                      label: Text('إضافة لـ م/نصار الشعبي'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _showAddCardsToQahtaniDialog(users);
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
-                    ),
-                  ],
-                  TextButton(child: const Text('إغلاق'), onPressed: () => Navigator.of(context).pop())
                 ],
-              ),
+                if (_isNetworkLinked) ...[
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add_to_queue),
+                    label: const Text('إضافة لـ م/نصار الشعبي'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _showAddCardsToQahtaniDialog(users);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor),
+                  ),
+                ],
+                TextButton(
+                    child: const Text('إغلاق'),
+                    onPressed: () => Navigator.of(context).pop())
+              ],
             ),
-          );
-        },
-      );
+          ),
+        );
+      },
+    );
   }
 
   void _showAddCardsToQahtaniDialog(List<Map<String, String>> cards) {
@@ -367,15 +388,23 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('اختر فئة م/نصار الشعبي'),
+          title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold),
             dropdownColor: Theme.of(context).colorScheme.onSurface,
-            hint: Text('اختر الفئة', style: TextStyle(color: context.theme.appColors.muted, fontWeight: FontWeight.bold)),
+            hint: Text('اختر الفئة',
+                style: TextStyle(
+                    color: context.theme.appColors.muted,
+                    fontWeight: FontWeight.bold)),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name'], style: TextStyle(color: context.theme.appColors.onSurface, fontWeight: FontWeight.bold)),
+                child: Text(unit['name'],
+                    style: TextStyle(
+                        color: context.theme.appColors.onSurface,
+                        fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (value) {
@@ -403,35 +432,37 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     );
   }
 
-  void _sendCardsToQahtani(List<Map<String, String>> cards, String selectedUnitId) {
-      _showWaitingDialog("جاري إرسال الكروت...");
+  void _sendCardsToQahtani(
+      List<Map<String, String>> cards, String selectedUnitId) {
+    _showWaitingDialog("جاري إرسال الكروت...");
 
-      setState(() {
-        _addCardsJobId = _mqttService.generateUniqueId();
-        _isJobAcknowledged = false;
-      });
+    setState(() {
+      _addCardsJobId = _mqttService.generateUniqueId();
+      _isJobAcknowledged = false;
+    });
 
-      _addCardsTimer?.cancel();
-      _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
+    _addCardsTimer?.cancel();
+    _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
 
-      final List<String> cardUsernamesOnly = cards.map((cardMap) => cardMap['username']!).toList();
-      final String cardsAsString = cardUsernamesOnly.join('\n');
+    final List<String> cardUsernamesOnly =
+        cards.map((cardMap) => cardMap['username']!).toList();
+    final String cardsAsString = cardUsernamesOnly.join('\n');
 
-      _mqttService.publish({
-        'command': 'add_wifi_cards',
-        'network_id': _linkedData['network_details']?['network_id'],
-        'unit_id': selectedUnitId,
-        'cards': cardsAsString,
-        'job_id': _addCardsJobId,
-      });
+    _mqttService.publish({
+      'command': 'add_wifi_cards',
+      'network_id': _linkedData['network_details']?['network_id'],
+      'unit_id': selectedUnitId,
+      'cards': cardsAsString,
+      'job_id': _addCardsJobId,
+    });
   }
 
   void _checkAddCardsStatus() {
     if (!mounted) return;
 
     if (_isJobAcknowledged) {
-       // print("⏰ [إضافة كروت] الطلب تم استلامه، ننتظر...");
-       return;
+      // print("⏰ [إضافة كروت] الطلب تم استلامه، ننتظر...");
+      return;
     }
 
     // print("⏰ [إضافة كروت] لم يتم استلام تأكيد، جاري فحص حالة الطلب...");
@@ -441,9 +472,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     });
   }
 
-
   void _showWaitingDialog(String message) {
-     showDialog(
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -461,7 +491,6 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     showErrorSnackBar(context, message);
   }
 
-
   @override
   void dispose() {
     _prefixController.dispose();
@@ -477,168 +506,238 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('إضافة كروت جماعية'),
+        title: const Text('إضافة كروت جماعية'),
         backgroundColor: Theme.of(context).cardColor,
       ),
-      body: _isGenerating 
-        ? Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(_generationStatusText, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(height: 20),
-                  LinearProgressIndicator(
-                    value: _generationProgress,
-                    minHeight: 10,
-                  ),
-                  const SizedBox(height: 10),
-                  Text('${(_generationProgress * 100).toStringAsFixed(0)}%'),
-                ],
+      body: _isGenerating
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_generationStatusText,
+                        style: const TextStyle(fontSize: 18)),
+                    const SizedBox(height: 20),
+                    LinearProgressIndicator(
+                      value: _generationProgress,
+                      minHeight: 10,
+                    ),
+                    const SizedBox(height: 10),
+                    Text('${(_generationProgress * 100).toStringAsFixed(0)}%'),
+                  ],
+                ),
+              ),
+            )
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                        controller: _prefixController,
+                        decoration: const InputDecoration(
+                            labelText: 'بادئة (اختياري)',
+                            border: OutlineInputBorder()),
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyMedium?.color ??
+                                    Theme.of(context).colorScheme.onSurface)),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: TextFormField(
+                                controller: _lengthController,
+                                decoration: const InputDecoration(
+                                    labelText: 'الطول',
+                                    border: OutlineInputBorder()),
+                                style: TextStyle(
+                                    color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color ??
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .onSurface),
+                                keyboardType: TextInputType.number,
+                                validator: (v) =>
+                                    (v == null || v.isEmpty) ? 'مطلوب' : null)),
+                        const SizedBox(width: 16),
+                        Expanded(
+                            child: TextFormField(
+                                controller: _countController,
+                                decoration: const InputDecoration(
+                                    labelText: 'العدد',
+                                    border: OutlineInputBorder()),
+                                style: TextStyle(
+                                    color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color ??
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .onSurface),
+                                keyboardType: TextInputType.number,
+                                validator: (v) =>
+                                    (v == null || v.isEmpty) ? 'مطلوب' : null)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedProfile,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold),
+                      dropdownColor: Theme.of(context).colorScheme.onSurface,
+                      decoration: const InputDecoration(
+                          labelText: 'الفئة (البروفايل)',
+                          border: OutlineInputBorder()),
+                      hint: Text('اختر فئة',
+                          style: TextStyle(
+                              color: context.theme.appColors.muted,
+                              fontWeight: FontWeight.bold)),
+                      items: widget.profiles
+                          .map((p) => DropdownMenuItem(
+                              value: p['name'] as String,
+                              child: Text(p['name'] as String,
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                      fontWeight: FontWeight.bold))))
+                          .toList(),
+                      onChanged: (v) => setState(() => _selectedProfile = v),
+                      validator: (v) =>
+                          (v == null) ? 'الرجاء اختيار فئة' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _charType,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold),
+                      dropdownColor: Theme.of(context).colorScheme.onSurface,
+                      decoration: const InputDecoration(
+                          labelText: 'نوع أحرف المستخدم',
+                          border: OutlineInputBorder()),
+                      items: [
+                        DropdownMenuItem(
+                            value: 'mixed',
+                            child: Text('حروف وأرقام',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold))),
+                        DropdownMenuItem(
+                            value: 'letters',
+                            child: Text('حروف فقط',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold))),
+                        DropdownMenuItem(
+                            value: 'numbers',
+                            child: Text('أرقام فقط',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold))),
+                      ],
+                      onChanged: (v) => setState(() => _charType = v!),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _cardType,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold),
+                      dropdownColor: Theme.of(context).colorScheme.onSurface,
+                      decoration: const InputDecoration(
+                          labelText: 'نوع الكرت', border: OutlineInputBorder()),
+                      items: [
+                        DropdownMenuItem(
+                            value: 'username_only',
+                            child: Text('اسم مستخدم فقط',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold))),
+                        DropdownMenuItem(
+                            value: 'username_and_password_equal',
+                            child: Text('اسم مستخدم وكلمة مرور متساوية',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold))),
+                        DropdownMenuItem(
+                            value: 'username_and_password_different',
+                            child: Text('اسم مستخدم وكلمة مرور مختلفة',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold))),
+                      ],
+                      onChanged: (v) => setState(() => _cardType = v!),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedTemplate?.profileName,
+                      decoration: const InputDecoration(
+                          labelText: 'نوع القالب (اختياري)',
+                          border: OutlineInputBorder()),
+                      hint: const Text('اختر قالب للتصدير إلى PDF'),
+                      items: _templates
+                          .map((template) => DropdownMenuItem(
+                              value: template.profileName,
+                              child: Text(template.profileName)))
+                          .toList(),
+                      onChanged: (v) {
+                        setState(() {
+                          _selectedTemplate = _templates.firstWhere(
+                            (t) => t.profileName == v,
+                            orElse: () => _templates.first,
+                          );
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      title: const Text("ربط كلمة المرور بأول مستخدم"),
+                      value: _linkPasswordToFirstUser,
+                      onChanged: (newValue) {
+                        setState(() {
+                          _linkPasswordToFirstUser = newValue ?? false;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                        controller: _sharedUsersController,
+                        decoration: const InputDecoration(
+                            labelText: 'Shared Users',
+                            border: OutlineInputBorder()),
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyMedium?.color ??
+                                    Theme.of(context).colorScheme.onSurface),
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'مطلوب' : null),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: _isGenerating ? null : _generateUsers,
+                      icon: const Icon(Icons.apps_outage_rounded),
+                      label: const Text('إنشاء الكروت'),
+                    ),
+                  ],
+                ),
               ),
             ),
-          )
-        : Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                  controller: _prefixController,
-                  decoration: InputDecoration(
-                      labelText: 'بادئة (اختياري)',
-                      border: OutlineInputBorder()),
-                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: TextFormField(
-                          controller: _lengthController,
-                          decoration: InputDecoration(
-                              labelText: 'الطول', border: OutlineInputBorder()),
-                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
-                          keyboardType: TextInputType.number,
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? 'مطلوب' : null)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: TextFormField(
-                          controller: _countController,
-                          decoration: InputDecoration(
-                              labelText: 'العدد', border: OutlineInputBorder()),
-                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
-                          keyboardType: TextInputType.number,
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? 'مطلوب' : null)),
-                ],
-              ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedProfile,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
-                dropdownColor: Theme.of(context).colorScheme.onSurface,
-                decoration: const InputDecoration(
-                    labelText: 'الفئة (البروفايل)',
-                    border: OutlineInputBorder()),
-                hint: Text('اختر فئة', style: TextStyle(color: context.theme.appColors.muted, fontWeight: FontWeight.bold)),
-                items: widget.profiles
-                    .map((p) => DropdownMenuItem(
-                        value: p['name'] as String,
-                        child: Text(p['name'] as String, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedProfile = v),
-                validator: (v) => (v == null) ? 'الرجاء اختيار فئة' : null,
-              ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _charType,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
-                dropdownColor: Theme.of(context).colorScheme.onSurface,
-                decoration: InputDecoration(
-                    labelText: 'نوع أحرف المستخدم',
-                    border: OutlineInputBorder()),
-                items: [
-                  DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
-                ],
-                onChanged: (v) => setState(() => _charType = v!),
-              ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _cardType,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
-                dropdownColor: Theme.of(context).colorScheme.onSurface,
-                decoration: InputDecoration(
-                    labelText: 'نوع الكرت', border: OutlineInputBorder()),
-                items: [
-                  DropdownMenuItem(
-                      value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))) ,
-                  DropdownMenuItem(
-                      value: 'username_and_password_equal',
-                      child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))) ,
-                  DropdownMenuItem(
-                      value: 'username_and_password_different',
-                      child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))) ,
-                ],
-                onChanged: (v) => setState(() => _cardType = v!),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedTemplate?.profileName,
-                decoration: const InputDecoration(
-                    labelText: 'نوع القالب (اختياري)',
-                    border: OutlineInputBorder()),
-                hint: const Text('اختر قالب للتصدير إلى PDF'),
-                items: _templates
-                    .map((template) => DropdownMenuItem(
-                        value: template.profileName,
-                        child: Text(template.profileName)))
-                    .toList(),
-                onChanged: (v) {
-                  setState(() {
-                    _selectedTemplate = _templates.firstWhere(
-                      (t) => t.profileName == v,
-                      orElse: () => _templates.first,
-                    );
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              CheckboxListTile(
-                title: const Text("ربط كلمة المرور بأول مستخدم"),
-                value: _linkPasswordToFirstUser,
-                onChanged: (newValue) {
-                  setState(() {
-                    _linkPasswordToFirstUser = newValue ?? false;
-                  });
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                  controller: _sharedUsersController,
-                  decoration: InputDecoration(
-                      labelText: 'Shared Users', border: OutlineInputBorder()),
-                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
-                  keyboardType: TextInputType.number,
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'مطلوب' : null),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _isGenerating ? null : _generateUsers,
-                icon: const Icon(Icons.apps_outage_rounded),
-                label: const Text('إنشاء الكروت'),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

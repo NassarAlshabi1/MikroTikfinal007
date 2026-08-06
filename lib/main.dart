@@ -53,7 +53,8 @@ void main() async {
   // 🔒 Security: ترحيل البيانات الحساسة من SharedPreferences إلى flutter_secure_storage
   // (يحدث مرة واحدة فقط — بعدها يُعلام كمنتهٍ)
   WidgetsFlutterBinding.ensureInitialized();
-  await SecureCredentialsStorageContainer.instance.migrateFromSharedPreferences();
+  await SecureCredentialsStorageContainer.instance
+      .migrateFromSharedPreferences();
   AppLogger.info('App starting', category: LogCategory.system);
 
   runApp(
@@ -63,7 +64,8 @@ void main() async {
       child: provider.MultiProvider(
         providers: [
           provider.ChangeNotifierProvider(create: (_) => MqttService()),
-          provider.ChangeNotifierProvider(create: (_) => AppTheme()..initialize()),
+          provider.ChangeNotifierProvider(
+              create: (_) => AppTheme()..initialize()),
         ],
         child: const MyApp(),
       ),
@@ -72,7 +74,8 @@ void main() async {
 }
 
 // A global key for the ScaffoldMessenger
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 /* snackbar helpers moved to snackbar_helpers.dart */
 void showErrorSnackBar(BuildContext context, String message) {
@@ -81,7 +84,8 @@ void showErrorSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onSurface, size: 24),
+          Icon(Icons.error_outline,
+              color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -97,7 +101,7 @@ void showErrorSnackBar(BuildContext context, String message) {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       action: SnackBarAction(
         label: 'إغلاق',
         textColor: Theme.of(context).colorScheme.onSurface,
@@ -113,7 +117,8 @@ void showSuccessSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          Icon(Icons.check_circle_outline, color: Theme.of(context).colorScheme.onSurface, size: 24),
+          Icon(Icons.check_circle_outline,
+              color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -192,9 +197,10 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   final _ipController = TextEditingController();
   final _userController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -268,10 +274,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           });
         }
       } else {
-        if (mounted) setState(() => _errorMessage = 'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.');
+        if (mounted) {
+          setState(() => _errorMessage =
+              'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.');
+        }
       }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
+      if (mounted) {
+        setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
+      }
     } finally {
       if (mounted) setState(() => _isScanning = false);
     }
@@ -281,7 +292,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('remember_me') ?? false) {
       // 🔒 قراءة كلمة المرور من flutter_secure_storage
-      final password = await SecureCredentialsStorageContainer.instance.getMikrotikPassword() ?? '';
+      final password = await SecureCredentialsStorageContainer.instance
+              .getMikrotikPassword() ??
+          '';
       setState(() {
         _ipController.text = prefs.getString('ip') ?? '';
         _userController.text = prefs.getString('user') ?? '';
@@ -292,7 +305,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     }
     if (prefs.getBool('remember_me_remote') ?? false) {
       // 🔒 قراءة كلمة المرور البعيدة من flutter_secure_storage
-      final remotePass = await SecureCredentialsStorageContainer.instance.getRemotePassword() ?? '';
+      final remotePass = await SecureCredentialsStorageContainer.instance
+              .getRemotePassword() ??
+          '';
       setState(() {
         _remoteServerController.text = prefs.getString('remote_server') ?? '';
         _remotePortController.text = prefs.getString('remote_port') ?? '8728';
@@ -325,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await prefs.setBool('clear_on_logout', false);
     }
   }
-  
+
   Future<void> _handleRemoteCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('remember_me_remote', _rememberMeRemote);
@@ -351,7 +366,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     try {
       await _handleCredentials();
       final client = await MikrotikConnector.connect();
-      _sendTelegramMessage('تم الدخول إلى التطبيق بنجاح عبر عنوان IP: ${_ipController.text}');
+      _sendTelegramMessage(
+          'تم الدخول إلى التطبيق بنجاح عبر عنوان IP: ${_ipController.text}');
       final response = await client.talk(['/system/resource/print']);
       bool isVersion7OrNewer = false;
       if (response.isNotEmpty && response[0]['version'] != null) {
@@ -365,7 +381,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
-            builder: (context) => HomeScreen(isVersion7OrNewer: isVersion7OrNewer, username: _userController.text),
+            builder: (context) => HomeScreen(
+                isVersion7OrNewer: isVersion7OrNewer,
+                username: _userController.text),
           ),
         );
       }
@@ -381,7 +399,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = 'فشل الاتصال. تحقق من البيانات أو الشبكة.\n(الخطأ: ${e.toString()})');
+        setState(() => _errorMessage =
+            'فشل الاتصال. تحقق من البيانات أو الشبكة.\n(الخطأ: ${e.toString()})');
         showErrorSnackBar(context, 'فشل الاتصال. تحقق من البيانات أو الشبكة.');
       }
     } finally {
@@ -423,132 +442,147 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                Image.asset('assets/images/wifi_logo.png', width: 48, height: 48),
-                const SizedBox(height: 24),
-                Text(
-                  'إدارة شبكتك بسهولة وأمان',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                  ),
-                ),
-                SizedBox(height: 24),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicatorColor: context.theme.appColors.primary,
-                    labelColor: context.theme.appColors.onSurface,
-                    unselectedLabelColor: context.theme.appColors.muted,
-                    indicatorWeight: 3,
-                    tabs: const [
-                      Tab(
-                        icon: Icon(Icons.lan),
-                        text: 'اتصال محلي',
-                      ),
-                      Tab(
-                        icon: Icon(Icons.cloud),
-                        text: 'اتصال عن بعد',
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                if (_errorMessage.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Text(
-                      _errorMessage,
+                    Image.asset('assets/images/wifi_logo.png',
+                        width: 48, height: 48),
+                    const SizedBox(height: 24),
+                    Text(
+                      'إدارة شبكتك بسهولة وأمان',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: context.theme.appColors.error,
-                        fontSize: 12,
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
-                  ),
-                SizedBox(
-                  height: 550,
-                  child: TabBarView(
-                    controller: _tabController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildLocalLoginForm(),
-                      _buildRemoteLoginForm(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-          // مفتاح تبديل الثيم في الزاوية العلوية اليسرى
-          Positioned(
-        top: 50,
-        left: 20,
-        child: provider.Consumer<AppTheme>(
-          builder: (context, themeProvider, child) => Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Icon(
-                  themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                  key: ValueKey(themeProvider.isDarkMode),
-                  color: themeProvider.isDarkMode ? Theme.of(context).appColors.warning : Theme.of(context).appColors.primary,
-                  size: 26,
-                ),
-              ),
-              tooltip: themeProvider.isDarkMode ? 'التبديل للثيم الفاتح' : 'التبديل للثيم الغامق',
-              onPressed: () async {
-                await themeProvider.toggleTheme();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                            size: 20,
-                            color: Theme.of(context).colorScheme.onSurface,
+                    const SizedBox(height: 24),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        indicatorColor: context.theme.appColors.primary,
+                        labelColor: context.theme.appColors.onSurface,
+                        unselectedLabelColor: context.theme.appColors.muted,
+                        indicatorWeight: 3,
+                        tabs: const [
+                          Tab(
+                            icon: Icon(Icons.lan),
+                            text: 'اتصال محلي',
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            themeProvider.isDarkMode ? 'تم التبديل للثيم الغامق' : 'تم التبديل للثيم الفاتح',
-                            style: const TextStyle(fontSize: 14),
+                          Tab(
+                            icon: Icon(Icons.cloud),
+                            text: 'اتصال عن بعد',
                           ),
                         ],
                       ),
-                      duration: const Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    ),
+                    const SizedBox(height: 24),
+                    if (_errorMessage.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Text(
+                          _errorMessage,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: context.theme.appColors.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    SizedBox(
+                      height: 550,
+                      child: TabBarView(
+                        controller: _tabController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildLocalLoginForm(),
+                          _buildRemoteLoginForm(),
+                        ],
                       ),
                     ),
-                  );
-                }
-              },
+                  ],
+                ),
+              ),
             ),
-          ),
+            // مفتاح تبديل الثيم في الزاوية العلوية اليسرى
+            Positioned(
+              top: 50,
+              left: 20,
+              child: provider.Consumer<AppTheme>(
+                builder: (context, themeProvider, child) => Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Icon(
+                        themeProvider.isDarkMode
+                            ? Icons.light_mode_rounded
+                            : Icons.dark_mode_rounded,
+                        key: ValueKey(themeProvider.isDarkMode),
+                        color: themeProvider.isDarkMode
+                            ? Theme.of(context).appColors.warning
+                            : Theme.of(context).appColors.primary,
+                        size: 26,
+                      ),
+                    ),
+                    tooltip: themeProvider.isDarkMode
+                        ? 'التبديل للثيم الفاتح'
+                        : 'التبديل للثيم الغامق',
+                    onPressed: () async {
+                      await themeProvider.toggleTheme();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  themeProvider.isDarkMode
+                                      ? Icons.dark_mode
+                                      : Icons.light_mode,
+                                  size: 20,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  themeProvider.isDarkMode
+                                      ? 'تم التبديل للثيم الغامق'
+                                      : 'تم التبديل للثيم الفاتح',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-        ],
-      ),
-        ),
     );
   }
 
@@ -558,15 +592,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       return;
     }
 
-    if (_remoteUserController.text.isEmpty || _remotePasswordController.text.isEmpty) {
-      setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور للاتصال البعيد');
+    if (_remoteUserController.text.isEmpty ||
+        _remotePasswordController.text.isEmpty) {
+      setState(() => _errorMessage =
+          'الرجاء إدخال اسم المستخدم وكلمة المرور للاتصال البعيد');
       return;
     }
-    
+
     final input = _remoteServerController.text.trim();
     final ipPattern = RegExp(r'^(\d{1,3}\.){3}\d{1,3}$');
     if (ipPattern.hasMatch(input)) {
-      setState(() => _errorMessage = 'الرجاء إدخال اسم النطاق (Domain) وليس عنوان IP');
+      setState(() =>
+          _errorMessage = 'الرجاء إدخال اسم النطاق (Domain) وليس عنوان IP');
       return;
     }
     setState(() {
@@ -576,7 +613,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
     try {
       await _handleRemoteCredentials();
-      
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('ip', _remoteServerController.text);
       await prefs.setString('port', _remotePortController.text);
@@ -584,12 +621,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       // 🔒 كلمة المرور في flutter_secure_storage (مشفّرة)
       await SecureCredentialsStorageContainer.instance
           .setMikrotikPassword(_remotePasswordController.text);
-      
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
             builder: (context) => HomeScreen(
-              isVersion7OrNewer: true, 
+              isVersion7OrNewer: true,
               username: _remoteUserController.text,
             ),
           ),
@@ -615,7 +652,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               flex: 3,
               child: TextField(
                 controller: _ipController,
-                decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
+                decoration: const InputDecoration(
+                    labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
                 keyboardType: TextInputType.phone,
               ),
             ),
@@ -643,7 +681,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                     )
                   : IconButton(
-                      icon: Icon(Icons.search, color: context.theme.appColors.primary),
+                      icon: Icon(Icons.search,
+                          color: context.theme.appColors.primary),
                       onPressed: _forceDiscoverGateway,
                       tooltip: 'بحث عن البوابة',
                     ),
@@ -653,7 +692,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         const SizedBox(height: 16),
         TextField(
           controller: _userController,
-          decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
+          decoration: const InputDecoration(
+              labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -663,15 +703,19 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             labelText: 'Password',
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(_isPasswordObscured ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+              icon: Icon(_isPasswordObscured
+                  ? Icons.visibility_off
+                  : Icons.visibility),
+              onPressed: () =>
+                  setState(() => _isPasswordObscured = !_isPasswordObscured),
             ),
           ),
         ),
         CheckboxListTile(
           title: const Text("تذكرني"),
           value: _rememberMe,
-          onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
+          onChanged: (newValue) =>
+              setState(() => _rememberMe = newValue ?? false),
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
           activeColor: context.theme.appColors.primary,
@@ -680,7 +724,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ElevatedButton(
           onPressed: _isLoading ? null : _login,
           child: _isLoading
-              ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: context.theme.appColors.onPrimary))
+              ? SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 3, color: context.theme.appColors.onPrimary))
               : const Text('اتصال', style: TextStyle(fontSize: 18)),
         ),
         const SizedBox(height: 8),
@@ -689,9 +737,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           child: Text(
             'سياسة الخصوصية',
             style: TextStyle(
-              color: context.theme.appColors.onBackground.withValues(alpha: 0.7),
+              color:
+                  context.theme.appColors.onBackground.withValues(alpha: 0.7),
               decoration: TextDecoration.underline,
-              decorationColor: context.theme.appColors.onBackground.withValues(alpha: 0.7),
+              decorationColor:
+                  context.theme.appColors.onBackground.withValues(alpha: 0.7),
             ),
           ),
         ),
@@ -724,12 +774,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             Expanded(
               child: TextField(
                 controller: _remotePortController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Port',
                   hintText: '8728 أو 8729',
                   prefixIcon: Icon(Icons.numbers),
                 ),
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 keyboardType: TextInputType.number,
               ),
             ),
@@ -738,7 +789,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         const SizedBox(height: 16),
         TextField(
           controller: _remoteUserController,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Username',
             prefixIcon: Icon(Icons.person_outline),
           ),
@@ -752,8 +803,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             labelText: 'Password',
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(_isRemotePasswordObscured ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _isRemotePasswordObscured = !_isRemotePasswordObscured),
+              icon: Icon(_isRemotePasswordObscured
+                  ? Icons.visibility_off
+                  : Icons.visibility),
+              onPressed: () => setState(
+                  () => _isRemotePasswordObscured = !_isRemotePasswordObscured),
             ),
           ),
           keyboardType: TextInputType.number,
@@ -774,14 +828,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             labelText: 'Password',
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(_isRemotePasswordObscured ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _isRemotePasswordObscured = !_isRemotePasswordObscured),
+              icon: Icon(_isRemotePasswordObscured
+                  ? Icons.visibility_off
+                  : Icons.visibility),
+              onPressed: () => setState(
+                  () => _isRemotePasswordObscured = !_isRemotePasswordObscured),
             ),
           ),
         ),
         const SizedBox(height: 16),
         CheckboxListTile(
-          title: Text('تذكرني', style: TextStyle(color: context.theme.appColors.onSurface)),
+          title: Text('تذكرني',
+              style: TextStyle(color: context.theme.appColors.onSurface)),
           value: _rememberMeRemote,
           onChanged: (bool? value) {
             setState(() {
@@ -828,14 +886,16 @@ class CustomLoadingIndicator extends StatelessWidget {
         children: [
           CircularProgressIndicator(
             strokeWidth: 3,
-            valueColor: AlwaysStoppedAnimation<Color>(context.theme.appColors.primary),
+            valueColor:
+                AlwaysStoppedAnimation<Color>(context.theme.appColors.primary),
           ),
           if (message != null) ...[
             const SizedBox(height: 16),
             Text(
               message!,
               style: TextStyle(
-                color: context.theme.appColors.onBackground.withValues(alpha: 0.7),
+                color:
+                    context.theme.appColors.onBackground.withValues(alpha: 0.7),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -942,7 +1002,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (isLinked) {
         Future.delayed(const Duration(seconds: 1), () {
           if (!mounted) return;
-          context.read<MqttService>().publish({'command': 'get_latest_network_details'});
+          context
+              .read<MqttService>()
+              .publish({'command': 'get_latest_network_details'});
         });
       }
     }
@@ -950,7 +1012,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _loadCachedDashboardStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final cached = prefs.getString('cached_dashboard_status') ?? prefs.getString('cached_stats');
+    final cached = prefs.getString('cached_dashboard_status') ??
+        prefs.getString('cached_stats');
     if (cached == null) return;
     try {
       final decoded = jsonDecode(cached);
@@ -961,7 +1024,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           'cpuUsage': (decoded['cpuUsage'] as num?)?.toDouble() ?? 0.0,
           'memoryUsage': (decoded['memoryUsage'] as num?)?.toDouble() ?? 0.0,
           'uptime': decoded['uptime']?.toString() ?? 'غير متوفر',
-          'dataDownloaded': (decoded['dataDownloaded'] as num?)?.toDouble() ?? 0.0,
+          'dataDownloaded':
+              (decoded['dataDownloaded'] as num?)?.toDouble() ?? 0.0,
           'dataUploaded': (decoded['dataUploaded'] as num?)?.toDouble() ?? 0.0,
           'activeUsers': (decoded['activeUsers'] as num?)?.toInt() ?? 0,
           'version': decoded['version']?.toString() ?? 'غير معروف',
@@ -1003,8 +1067,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       double totalDownload = 0.0;
       double totalUpload = 0.0;
       for (var iface in interfaceResponse) {
-        final rxBytes = double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
-        final txBytes = double.tryParse(iface['tx-byte']?.toString() ?? '0') ?? 0.0;
+        final rxBytes =
+            double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
+        final txBytes =
+            double.tryParse(iface['tx-byte']?.toString() ?? '0') ?? 0.0;
         totalDownload += rxBytes;
         totalUpload += txBytes;
       }
@@ -1012,14 +1078,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       List<Map<String, dynamic>> activeUsers = [];
       try {
         final activeResponse = await client.talk(['/ip/hotspot/active/print']);
-        activeUsers = activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+        activeUsers =
+            activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
       } catch (_) {
         activeUsers = [];
       }
 
-      final cpuLoad = double.tryParse(resourceData['cpu-load']?.toString() ?? '0') ?? 0.0;
-      final totalMemory = double.tryParse(resourceData['total-memory']?.toString() ?? '0') ?? 0.0;
-      final freeMemory = double.tryParse(resourceData['free-memory']?.toString() ?? '0') ?? 0.0;
+      final cpuLoad =
+          double.tryParse(resourceData['cpu-load']?.toString() ?? '0') ?? 0.0;
+      final totalMemory =
+          double.tryParse(resourceData['total-memory']?.toString() ?? '0') ??
+              0.0;
+      final freeMemory =
+          double.tryParse(resourceData['free-memory']?.toString() ?? '0') ??
+              0.0;
       final memoryUsagePercent = totalMemory <= 0
           ? 0.0
           : ((totalMemory - freeMemory) / totalMemory * 100);
@@ -1035,7 +1107,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       };
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('cached_dashboard_status', jsonEncode(updatedStatus));
+      await prefs.setString(
+          'cached_dashboard_status', jsonEncode(updatedStatus));
 
       if (mounted) {
         setState(() {
@@ -1077,12 +1150,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final response = await client.talk([command]);
       if (mounted) {
         setState(() {
-          _profiles = response.map((p) => Map<String, dynamic>.from(p)).toList();
+          _profiles =
+              response.map((p) => Map<String, dynamic>.from(p)).toList();
         });
       }
     } catch (e) {
       if (mounted) {
-        showErrorSnackBar(context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
+        showErrorSnackBar(
+            context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
       }
     } finally {
       client?.close();
@@ -1100,8 +1175,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: AppPalette.primary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
-            builder: (context) =>
-                AddUserScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, customer: widget.username),
+            builder: (context) => AddUserScreen(
+                profiles: _profiles,
+                isVersion7OrNewer: widget.isVersion7OrNewer,
+                customer: widget.username),
           ));
         },
       ),
@@ -1111,8 +1188,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: AppPalette.success,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
-            builder: (context) =>
-                BulkAddScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, username: widget.username),
+            builder: (context) => BulkAddScreen(
+                profiles: _profiles,
+                isVersion7OrNewer: widget.isVersion7OrNewer,
+                username: widget.username),
           ));
         },
       ),
@@ -1121,8 +1200,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.link,
         color: AppPalette.info,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const QahtaniLinkScreen()));
         },
       ),
       ServiceItem(
@@ -1139,8 +1218,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.local_hospital_outlined,
         color: AppPalette.info,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const NetworkDoctorScreen()));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const NetworkDoctorScreen()));
         },
       ),
       ServiceItem(
@@ -1148,8 +1227,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.folder_copy,
         color: AppPalette.warning,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const SavedFilesScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const SavedFilesScreen()));
         },
       ),
       ServiceItem(
@@ -1157,8 +1236,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.picture_as_pdf,
         color: AppPalette.muted,
         onTap: () {
-          Navigator.of(context).push(
-              CustomPageRoute(builder: (context) => PdfTemplatesScreen(profiles: _profiles)));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => PdfTemplatesScreen(profiles: _profiles)));
         },
       ),
       ServiceItem(
@@ -1166,8 +1245,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.document_scanner_outlined,
         color: AppPalette.error,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const ExtractCardsScreen()));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const ExtractCardsScreen()));
         },
       ),
       ServiceItem(
@@ -1175,8 +1254,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.bar_chart,
         color: AppPalette.primary,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const CardsStatisticsScreen()));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const CardsStatisticsScreen()));
         },
       ),
       ServiceItem(
@@ -1184,8 +1263,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.people_outline,
         color: AppPalette.secondary,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const ActiveUsersScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const ActiveUsersScreen()));
         },
       ),
       ServiceItem(
@@ -1193,8 +1272,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.account_circle,
         color: AppPalette.secondaryLight,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const ProfileScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const ProfileScreen()));
         },
       ),
       ServiceItem(
@@ -1202,8 +1281,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.backup,
         color: AppPalette.info,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const BackupSystemScreen()));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const BackupSystemScreen()));
         },
       ),
       // ===== شاشات AI + Terminal + إضافات capy/v2-riverpod =====
@@ -1212,8 +1291,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.smart_toy,
         color: AppPalette.secondary,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const AiDiagnosticsScreen()));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const AiDiagnosticsScreen()));
         },
       ),
       ServiceItem(
@@ -1221,8 +1300,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.terminal,
         color: AppPalette.primary,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const TerminalScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const TerminalScreen()));
         },
       ),
       ServiceItem(
@@ -1230,8 +1309,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.analytics,
         color: AppPalette.success,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const LogAnalysisScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const LogAnalysisScreen()));
         },
       ),
       ServiceItem(
@@ -1239,8 +1318,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.cloud,
         color: AppPalette.info,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const OomolSettingsScreen()));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const OomolSettingsScreen()));
         },
       ),
       ServiceItem(
@@ -1248,8 +1327,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.search,
         color: AppPalette.warning,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const CardSearchScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const CardSearchScreen()));
         },
       ),
       ServiceItem(
@@ -1257,8 +1336,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         icon: Icons.calendar_month,
         color: AppPalette.info,
         onTap: () {
-          Navigator.of(context)
-              .push(CustomPageRoute(builder: (context) => const MonthlyReportScreen()));
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const MonthlyReportScreen()));
         },
       ),
     ];
@@ -1273,10 +1352,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           title: null,
           centerTitle: false,
           leading: Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
               backgroundColor: Theme.of(context).cardColor,
-              child: Icon(Icons.person_outline, color: context.theme.appColors.onSurface),
+              child: Icon(Icons.person_outline,
+                  color: context.theme.appColors.onSurface),
             ),
           ),
           actions: [
@@ -1286,19 +1366,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: Icon(
-                    themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    themeProvider.isDarkMode
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
                     key: ValueKey(themeProvider.isDarkMode),
-                    color: themeProvider.isDarkMode ? Theme.of(context).appColors.warning : Theme.of(context).appColors.primary,
+                    color: themeProvider.isDarkMode
+                        ? Theme.of(context).appColors.warning
+                        : Theme.of(context).appColors.primary,
                   ),
                 ),
-                tooltip: themeProvider.isDarkMode ? 'التبديل للثيم الفاتح' : 'التبديل للثيم الغامق',
+                tooltip: themeProvider.isDarkMode
+                    ? 'التبديل للثيم الفاتح'
+                    : 'التبديل للثيم الغامق',
                 onPressed: () async {
                   await themeProvider.toggleTheme();
-                  if (mounted) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          themeProvider.isDarkMode ? 'تم التبديل للثيم الغامق' : 'تم التبديل للثيم الفاتح',
+                          themeProvider.isDarkMode
+                              ? 'تم التبديل للثيم الغامق'
+                              : 'تم التبديل للثيم الفاتح',
                           style: const TextStyle(fontSize: 14),
                         ),
                         duration: const Duration(seconds: 2),
@@ -1315,7 +1403,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
               tooltip: 'تحديث الحالة',
-              onPressed: _isRefreshingStatus ? null : () => _refreshDashboardStatus(silent: false),
+              onPressed: _isRefreshingStatus
+                  ? null
+                  : () => _refreshDashboardStatus(silent: false),
             ),
             IconButton(
               icon: const Icon(Icons.logout),
@@ -1335,7 +1425,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 12.0),
                       child: _buildDashboardStatusCard(),
                     ),
                     if (_statusError.isNotEmpty)
@@ -1351,7 +1442,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                     GridView.builder(
                       padding: const EdgeInsets.all(16.0),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
@@ -1395,32 +1487,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.start,
-          children: const [
+          children: [
             CircularProgressIndicator(strokeWidth: 2),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Text('جاري تحديث حالة MikroTik...'),
           ],
         ),
       );
     }
 
-    final status = _dashboardStatus ?? {
-      'cpuUsage': 0.0,
-      'memoryUsage': 0.0,
-      'uptime': 'غير متوفر',
-      'dataDownloaded': 0.0,
-      'dataUploaded': 0.0,
-      'activeUsers': 0,
-      'version': 'غير معروف',
-    };
+    final status = _dashboardStatus ??
+        {
+          'cpuUsage': 0.0,
+          'memoryUsage': 0.0,
+          'uptime': 'غير متوفر',
+          'dataDownloaded': 0.0,
+          'dataUploaded': 0.0,
+          'activeUsers': 0,
+          'version': 'غير معروف',
+        };
 
     final cpuUsage = _asDouble(status['cpuUsage']);
     final memoryUsage = _asDouble(status['memoryUsage']);
@@ -1450,7 +1546,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -1486,7 +1583,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isNetworkLinked && _clientName.isNotEmpty ? _clientName : 'حالة MikroTik',
+                            _isNetworkLinked && _clientName.isNotEmpty
+                                ? _clientName
+                                : 'حالة MikroTik',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -1516,7 +1615,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Icon(
                       Icons.router,
                       size: 48,
-                      color: context.theme.appColors.primary.withValues(alpha: 0.8),
+                      color: context.theme.appColors.primary
+                          .withValues(alpha: 0.8),
                     ),
                   ],
                 ),
@@ -1559,7 +1659,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 if (_isRefreshingStatus)
                   const Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
+                    padding: EdgeInsets.only(top: 16.0),
                     child: LinearProgressIndicator(minHeight: 3),
                   ),
               ],
@@ -1579,7 +1679,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isDark
             ? AppPalette.darkCardSecondary.withValues(alpha: 0.8)
@@ -1657,7 +1757,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
               child: Icon(icon, size: 32, color: iconBgColor),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               title,
               textAlign: TextAlign.center,

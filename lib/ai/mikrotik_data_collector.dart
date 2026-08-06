@@ -29,9 +29,10 @@ import 'diagnostics_models.dart';
 ///
 /// ملاحظة: التطبيق يدعم RouterOS v6 فقط. كل الأوامر هنا متوافقة مع v6.
 class _CollectorCommand {
-  final String sectionName;   // يظهر كـ "=== SECTION ===" في السياق
-  final String sshCommand;    // للأمر بصيغة SSH (مثلاً: "ip service print")
-  final List<String> apiArgs; // للأمر بصيغة RouterOS API (مثلاً: ['/ip/service/print', '=.proplist=...'])
+  final String sectionName; // يظهر كـ "=== SECTION ===" في السياق
+  final String sshCommand; // للأمر بصيغة SSH (مثلاً: "ip service print")
+  final List<String>
+      apiArgs; // للأمر بصيغة RouterOS API (مثلاً: ['/ip/service/print', '=.proplist=...'])
 
   const _CollectorCommand({
     required this.sectionName,
@@ -1303,7 +1304,8 @@ class MikrotikDataCollector {
     SSHClient? client;
     SSHSocket? socket;
     try {
-      debugPrint('[MikrotikDataCollector] SSH connect to $host:$port (mode=${mode.name})');
+      debugPrint(
+          '[MikrotikDataCollector] SSH connect to $host:$port (mode=${mode.name})');
       socket = await SSHSocket.connect(
         host,
         port,
@@ -1321,14 +1323,16 @@ class MikrotikDataCollector {
         _executeSafely(client, 'interface print'),
         _executeSafely(client, 'ip route print'),
         _executeSafely(client, 'ip firewall filter print'),
-        _executeSafely(client, 'log print where topics~"error" or topics~"warning"'),
+        _executeSafely(
+            client, 'log print where topics~"error" or topics~"warning"'),
       ]);
 
       // تنفيذ الأوامر الإضافية حسب الوضع (كلها متوافقة مع v6)
       final extraCommands = _modeCommands[mode] ?? const <_CollectorCommand>[];
       final extraData = <String, String>{};
       if (extraCommands.isNotEmpty) {
-        debugPrint('[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name} (v6-only)');
+        debugPrint(
+            '[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name} (v6-only)');
         final extraResults = await Future.wait(
           extraCommands.map((cmd) => _executeSafely(client!, cmd.sshCommand)),
         );
@@ -1395,15 +1399,18 @@ class MikrotikDataCollector {
         final prefs = await SharedPreferences.getInstance();
         final ip = prefs.getString('ip');
         final user = prefs.getString('user');
-        final pass = await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
+        final pass = await SecureCredentialsStorageContainer.instance
+            .getMikrotikPassword();
         final portStr = prefs.getString('port') ?? '8728';
         final port = int.tryParse(portStr) ?? 8728;
 
         if (ip == null || user == null || pass == null) {
-          throw Exception('بيانات اعتماد MikroTik غير موجودة. سجّل الدخول أولاً.');
+          throw Exception(
+              'بيانات اعتماد MikroTik غير موجودة. سجّل الدخول أولاً.');
         }
 
-        debugPrint('[MikrotikDataCollector] RouterOS API connect to $ip:$port (mode=${mode.name})');
+        debugPrint(
+            '[MikrotikDataCollector] RouterOS API connect to $ip:$port (mode=${mode.name})');
         internalClient = RouterOSClient(
           address: ip,
           user: user,
@@ -1441,7 +1448,8 @@ class MikrotikDataCollector {
       final extraCommands = _modeCommands[mode] ?? const <_CollectorCommand>[];
       final extraData = <String, String>{};
       if (extraCommands.isNotEmpty) {
-        debugPrint('[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name} (v6-only)');
+        debugPrint(
+            '[MikrotikDataCollector] Collecting ${extraCommands.length} extra commands for mode=${mode.name} (v6-only)');
         final extraResults = await Future.wait(
           extraCommands.map((cmd) => _talkSafely(internalClient!, cmd.apiArgs)),
         );
@@ -1462,7 +1470,8 @@ class MikrotikDataCollector {
         extraData: extraData,
       );
 
-      debugPrint('[MikrotikDataCollector] RouterOS API collection done, ${extraData.length} extra sections');
+      debugPrint(
+          '[MikrotikDataCollector] RouterOS API collection done, ${extraData.length} extra sections');
       return snapshot;
     } finally {
       if (createdInternally && internalClient != null) {

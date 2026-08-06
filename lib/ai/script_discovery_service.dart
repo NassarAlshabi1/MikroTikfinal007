@@ -50,7 +50,8 @@ class ScriptDiscoveryService {
     if (useCache) {
       final cached = await _loadFromCache();
       if (cached != null) {
-        debugPrint('[ScriptDiscovery] Loaded ${cached.length} scripts from cache');
+        debugPrint(
+            '[ScriptDiscovery] Loaded ${cached.length} scripts from cache');
         return _filterByLevel(cached, userLevel);
       }
     }
@@ -173,11 +174,13 @@ class ScriptDiscoveryService {
   static Future<void> _saveToCache(List<MikrotikScript> scripts) async {
     try {
       final path = await _cachePath;
-      final json = jsonEncode(scripts.map((s) => {
-            'name': s.name,
-            'comment': s.comment,
-            'userLevel': s.userLevel,
-          }).toList());
+      final json = jsonEncode(scripts
+          .map((s) => {
+                'name': s.name,
+                'comment': s.comment,
+                'userLevel': s.userLevel,
+              })
+          .toList());
       await File(path!).writeAsString(json);
       debugPrint('[ScriptDiscovery] Saved ${scripts.length} scripts to cache');
     } catch (e) {

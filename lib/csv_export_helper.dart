@@ -14,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'theme/app_theme.dart';
+
 /// يساعد في تصدير البيانات إلى CSV
 class CsvExportHelper {
   CsvExportHelper._();
@@ -50,8 +51,8 @@ class CsvExportHelper {
       final disabled = card['disabled'] ?? false;
       final expires = card['expires-after'] ?? '';
 
-      csvBuffer.writeln(
-          '$username,$password,$profile,$comment,$disabled,$expires');
+      csvBuffer
+          .writeln('$username,$password,$profile,$comment,$disabled,$expires');
     }
 
     // حفظ الملف
@@ -129,8 +130,8 @@ class CsvExportHelper {
     csvBuffer.writeln('Timestamp,Type,Content,Commands');
 
     for (final diag in diagnostics) {
-      final timestamp = _escapeCsv(
-          diag['timestamp'] ?? DateTime.now().toIso8601String());
+      final timestamp =
+          _escapeCsv(diag['timestamp'] ?? DateTime.now().toIso8601String());
       final type = _escapeCsv(diag['type'] ?? '');
       final content = _escapeCsv(diag['content'] ?? '');
       final commands = _escapeCsv((diag['commands'] as List?)?.join(';') ?? '');
@@ -188,7 +189,8 @@ class CsvExportHelper {
             const SizedBox(height: 8),
             Text(
               path,
-              style: TextStyle(fontSize: 11, color: Theme.of(context).appColors.muted),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).appColors.muted),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -210,10 +212,10 @@ class CsvExportHelper {
                   label: const Text('مشاركة'),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    Share.share(
-                      path,
+                    SharePlus.instance.share(ShareParams(
+                      text: path,
                       subject: 'MikroTik Manager - $title Export',
-                    );
+                    ));
                   },
                 ),
                 TextButton.icon(

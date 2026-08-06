@@ -25,9 +25,9 @@ abstract class AppPalette {
   // ============================================================
   //  Primary — Navy (اللون الأساسي للهوية)
   // ============================================================
-  static const primary = Color(0xFF1A237E);          // Navy 900
-  static const primaryLight = Color(0xFF3949AB);     // Indigo 700
-  static const primaryDark = Color(0xFF0D1457);      // Navy أعمق
+  static const primary = Color(0xFF1A237E); // Navy 900
+  static const primaryLight = Color(0xFF3949AB); // Indigo 700
+  static const primaryDark = Color(0xFF0D1457); // Navy أعمق
   static const primaryContainer = Color(0xFFE8EAF6); // Indigo 50 — light bg
   static const primaryContainerDark = Color(0xFF1A2540); // Navy container dark
   static const onPrimary = Color(0xFFFFFFFF);
@@ -37,9 +37,9 @@ abstract class AppPalette {
   // ============================================================
   //  Secondary — Teal (لون التأكيد والتفاعل)
   // ============================================================
-  static const secondary = Color(0xFF00897B);        // Teal 600
-  static const secondaryLight = Color(0xFF26A69A);   // Teal 400
-  static const secondaryDark = Color(0xFF004D40);    // Teal 800
+  static const secondary = Color(0xFF00897B); // Teal 600
+  static const secondaryLight = Color(0xFF26A69A); // Teal 400
+  static const secondaryDark = Color(0xFF004D40); // Teal 800
   static const secondaryContainer = Color(0xFFB2DFDB); // Teal 100
   static const secondaryContainerDark = Color(0xFF003F36); // Teal 900
   static const onSecondary = Color(0xFFFFFFFF);
@@ -49,8 +49,8 @@ abstract class AppPalette {
   // ============================================================
   //  Accent — Deep Orange (للمميزات النادرة)
   // ============================================================
-  static const accent = Color(0xFFFF7043);            // Deep Orange 400
-  static const accentContainer = Color(0xFFFFCCBC);   // Deep Orange 100
+  static const accent = Color(0xFFFF7043); // Deep Orange 400
+  static const accentContainer = Color(0xFFFFCCBC); // Deep Orange 100
   static const accentContainerDark = Color(0xFF5D2E1E);
   static const onAccent = Color(0xFFFFFFFF);
   static const onAccentContainer = Color(0xFF5D2E1E);
@@ -61,7 +61,7 @@ abstract class AppPalette {
   //  كل عائلة لها: base + container + onContainer
   // ============================================================
   // Success
-  static const success = Color(0xFF26A69A);          // Teal 400
+  static const success = Color(0xFF26A69A); // Teal 400
   static const successContainer = Color(0xFFB2DFDB);
   static const successContainerDark = Color(0xFF003F36);
   static const onSuccess = Color(0xFFFFFFFF);
@@ -69,7 +69,7 @@ abstract class AppPalette {
   static const onSuccessContainerDark = Color(0xFFB2DFDB);
 
   // Warning
-  static const warning = Color(0xFFFFB74D);          // Amber 300
+  static const warning = Color(0xFFFFB74D); // Amber 300
   static const warningContainer = Color(0xFFFFE0B2);
   static const warningContainerDark = Color(0xFF4A3500);
   static const onWarning = Color(0xFF1A1200);
@@ -77,7 +77,7 @@ abstract class AppPalette {
   static const onWarningContainerDark = Color(0xFFFFE0B2);
 
   // Error
-  static const error = Color(0xFFEF5350);            // Red 400
+  static const error = Color(0xFFEF5350); // Red 400
   static const errorContainer = Color(0xFFFFCDD2);
   static const errorContainerDark = Color(0xFF5D1A1A);
   static const onError = Color(0xFFFFFFFF);
@@ -85,7 +85,7 @@ abstract class AppPalette {
   static const onErrorContainerDark = Color(0xFFFFCDD2);
 
   // Info
-  static const info = Color(0xFF4FC3F7);             // Light Blue 300
+  static const info = Color(0xFF4FC3F7); // Light Blue 300
   static const infoContainer = Color(0xFFB3E5FC);
   static const infoContainerDark = Color(0xFF003C5A);
   static const onInfo = Color(0xFF00243A);
@@ -107,36 +107,36 @@ abstract class AppPalette {
   //  Dark Mode — Neutral Surfaces (متناسقة بدون تباين صارخ)
   //  background < surface < surfaceVariant < card < cardInteractive
   // ============================================================
-  static const darkBackground = Color(0xFF0A0E27);       // Navy أعمق مستوى
-  static const darkSurface = Color(0xFF12182E);           // Navy بطاقة عادية
-  static const darkSurfaceVariant = Color(0xFF1A2540);    // Navy بطاقة تفاعلية
-  static const darkCard = Color(0xFF12182E);              // نفس السطح (متوافق)
-  static const darkCardInteractive = Color(0xFF1A2540);   // Navy أفتح
-  static const darkCardHover = Color(0xFF243050);         // Navy أفتح للـ hover
-  static const darkCardSecondary = Color(0xFF1A2540);     // alias للتوافق القديم
+  static const darkBackground = Color(0xFF0A0E27); // Navy أعمق مستوى
+  static const darkSurface = Color(0xFF12182E); // Navy بطاقة عادية
+  static const darkSurfaceVariant = Color(0xFF1A2540); // Navy بطاقة تفاعلية
+  static const darkCard = Color(0xFF12182E); // نفس السطح (متوافق)
+  static const darkCardInteractive = Color(0xFF1A2540); // Navy أفتح
+  static const darkCardHover = Color(0xFF243050); // Navy أفتح للـ hover
+  static const darkCardSecondary = Color(0xFF1A2540); // alias للتوافق القديم
 
   // ============================================================
   //  Outline (borders) — ناعم متناسق
   // ============================================================
-  static const lightOutline = Color(0xFFCFD8DC);          // Blue Grey 200
-  static const lightOutlineVariant = Color(0xFFE0E5EB);   // Blue Grey 100
-  static const darkOutline = Color(0xFF2A3654);           // Navy outline
-  static const darkOutlineVariant = Color(0xFF1F2942);    // Navy outline subtle
+  static const lightOutline = Color(0xFFCFD8DC); // Blue Grey 200
+  static const lightOutlineVariant = Color(0xFFE0E5EB); // Blue Grey 100
+  static const darkOutline = Color(0xFF2A3654); // Navy outline
+  static const darkOutlineVariant = Color(0xFF1F2942); // Navy outline subtle
 
   // ============================================================
   //  Text Hierarchy — 4 مستويات
   // ============================================================
   // Light
-  static const lightTextPrimary = Color(0xFF0A0E27);      // Navy 900 — أغمق
-  static const lightTextSecondary = Color(0xFF455A64);    // Blue Grey 600
-  static const lightTextTertiary = Color(0xFF78909C);     // Blue Grey 400
-  static const lightTextDisabled = Color(0xFFB0BEC5);     // Blue Grey 200
+  static const lightTextPrimary = Color(0xFF0A0E27); // Navy 900 — أغمق
+  static const lightTextSecondary = Color(0xFF455A64); // Blue Grey 600
+  static const lightTextTertiary = Color(0xFF78909C); // Blue Grey 400
+  static const lightTextDisabled = Color(0xFFB0BEC5); // Blue Grey 200
 
   // Dark — كلها فاتحة على الخلفية الداكنة (WCAG AA)
-  static const darkTextPrimary = Color(0xFFECEFF1);       // Grey 50 — أبيض ناعم
-  static const darkTextSecondary = Color(0xFFB0BEC5);     // Blue Grey 200
-  static const darkTextTertiary = Color(0xFF78909C);      // Blue Grey 400
-  static const darkTextDisabled = Color(0xFF4A5568);      // أغمق للنص المعطّل
+  static const darkTextPrimary = Color(0xFFECEFF1); // Grey 50 — أبيض ناعم
+  static const darkTextSecondary = Color(0xFFB0BEC5); // Blue Grey 200
+  static const darkTextTertiary = Color(0xFF78909C); // Blue Grey 400
+  static const darkTextDisabled = Color(0xFF4A5568); // أغمق للنص المعطّل
 
   // ============================================================
   //  تدرّجات

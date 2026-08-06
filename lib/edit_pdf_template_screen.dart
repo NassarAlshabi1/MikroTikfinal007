@@ -36,7 +36,6 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
   double _markerWidth = 100.0;
   double _markerHeight = 25.0;
 
-
   String? _selectedProfile;
   final _cardsPerPageController = TextEditingController();
   bool _isLoading = false;
@@ -68,8 +67,10 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
           _normalizedOffset.dy * imageSize.height,
         );
         if (widget.existingTemplate != null) {
-          _markerWidth = widget.existingTemplate!.markerWidthRatio * imageSize.width;
-          _markerHeight = widget.existingTemplate!.markerHeightRatio * imageSize.height;
+          _markerWidth =
+              widget.existingTemplate!.markerWidthRatio * imageSize.width;
+          _markerHeight =
+              widget.existingTemplate!.markerHeightRatio * imageSize.height;
         }
       });
     }
@@ -86,9 +87,11 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_imageKey.currentContext != null) {
-          final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
+          final RenderBox renderBox =
+              _imageKey.currentContext!.findRenderObject() as RenderBox;
           setState(() {
-            _offset = Offset(renderBox.size.width / 2, renderBox.size.height / 2);
+            _offset =
+                Offset(renderBox.size.width / 2, renderBox.size.height / 2);
           });
         }
       });
@@ -179,14 +182,15 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_imageKey.currentContext != null && _offset == Offset.zero) {
-        final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
+        final RenderBox renderBox =
+            _imageKey.currentContext!.findRenderObject() as RenderBox;
         setState(() {
-          _offset = Offset(renderBox.size.width * _normalizedOffset.dx, renderBox.size.height * _normalizedOffset.dy);
+          _offset = Offset(renderBox.size.width * _normalizedOffset.dx,
+              renderBox.size.height * _normalizedOffset.dy);
         });
       }
     });
@@ -203,7 +207,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text('جاري حفظ القالب...'),
               ],
             ))
@@ -214,20 +218,28 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                 children: [
                   Card(
                     child: Padding(
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
                           DropdownButtonFormField<String>(
-                            value: _selectedProfile,
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
-                            dropdownColor: Theme.of(context).colorScheme.onSurface,
+                            initialValue: _selectedProfile,
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold),
+                            dropdownColor:
+                                Theme.of(context).colorScheme.onSurface,
                             decoration: const InputDecoration(
                                 labelText: 'اختر الفئة (البروفايل)',
                                 prefixIcon: Icon(Icons.category_outlined)),
                             items: widget.profiles
                                 .map((p) => DropdownMenuItem(
                                       value: p['name'] as String,
-                                      child: Text(p['name'] as String, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                                      child: Text(p['name'] as String,
+                                          style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
+                                              fontWeight: FontWeight.bold)),
                                     ))
                                 .toList(),
                             onChanged: (v) =>
@@ -238,10 +250,15 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _cardsPerPageController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                                 labelText: 'عدد الكروت في كل صفحة',
                                 prefixIcon: Icon(Icons.view_module_outlined)),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color ??
+                                    Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (v) {
                               if (v == null || v.isEmpty) return 'الحقل مطلوب';
@@ -263,77 +280,81 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          const Text(
-                              'حرك المربع لتحديد منطقة طباعة الرقم',
+                          const Text('حرك المربع لتحديد منطقة طباعة الرقم',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 12),
                           GestureDetector(
                             onPanUpdate: (details) {
-                               if (_imageKey.currentContext == null) return;
-                               final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
-                               final newOffset = _offset + details.delta;
+                              if (_imageKey.currentContext == null) return;
+                              final RenderBox renderBox =
+                                  _imageKey.currentContext!.findRenderObject()
+                                      as RenderBox;
+                              final newOffset = _offset + details.delta;
 
-                               final constrainedDx = newOffset.dx.clamp(0.0, renderBox.size.width);
-                               final constrainedDy = newOffset.dy.clamp(0.0, renderBox.size.height);
+                              final constrainedDx =
+                                  newOffset.dx.clamp(0.0, renderBox.size.width);
+                              final constrainedDy = newOffset.dy
+                                  .clamp(0.0, renderBox.size.height);
 
-                               setState(() {
-                                 _offset = Offset(constrainedDx, constrainedDy);
-                               });
+                              setState(() {
+                                _offset = Offset(constrainedDx, constrainedDy);
+                              });
                             },
                             child: Container(
-                                constraints:
-                                    const BoxConstraints(maxHeight: 300),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Theme.of(context).appColors.muted),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Stack(
-                                  children: [
-                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: _imageFile == null
-                                          ? const Center(
-                                              child: Text(
-                                                  'اختر صورة للقالب أولاً'))
-                                          : Image.file(
-                                              _imageFile!,
-                                              key: _imageKey,
-                                              fit: BoxFit.contain,
-                                            ),
-                                    ),
-                                    if (_imageFile != null)
-                                      Positioned(
-                                        left: _offset.dx - (_markerWidth / 2),
-                                        top: _offset.dy - (_markerHeight / 2),
-                                        child: IgnorePointer(
-                                          child: Container(
-                                            width: _markerWidth,
-                                            height: _markerHeight,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: context.theme.appColors.error,
-                                                  width: 2),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              color: context.theme.appColors.error
-                                                  .withAlpha((255 * 0.3).round()),
-                                            ),
+                              constraints: const BoxConstraints(maxHeight: 300),
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Theme.of(context).appColors.muted),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: _imageFile == null
+                                        ? const Center(
+                                            child:
+                                                Text('اختر صورة للقالب أولاً'))
+                                        : Image.file(
+                                            _imageFile!,
+                                            key: _imageKey,
+                                            fit: BoxFit.contain,
+                                          ),
+                                  ),
+                                  if (_imageFile != null)
+                                    Positioned(
+                                      left: _offset.dx - (_markerWidth / 2),
+                                      top: _offset.dy - (_markerHeight / 2),
+                                      child: IgnorePointer(
+                                        child: Container(
+                                          width: _markerWidth,
+                                          height: _markerHeight,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                                color: context
+                                                    .theme.appColors.error,
+                                                width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            color: context.theme.appColors.error
+                                                .withAlpha((255 * 0.3).round()),
                                           ),
                                         ),
                                       ),
-                                  ],
-                                ),
+                                    ),
+                                ],
                               ),
+                            ),
                           ),
-
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              const Text('العرض:', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const Text('العرض:',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                               Expanded(
                                 child: Slider(
                                   value: _markerWidth,
@@ -352,7 +373,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           ),
                           Row(
                             children: [
-                              const Text('الارتفاع:', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const Text('الارتفاع:',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                               Expanded(
                                 child: Slider(
                                   value: _markerHeight,
@@ -369,14 +392,14 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: _pickImage,
-                            icon: Icon(Icons.image_outlined),
-                            label: Text('اختر/غير صورة القالب'),
+                            icon: const Icon(Icons.image_outlined),
+                            label: const Text('اختر/غير صورة القالب'),
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).primaryColor),
+                                backgroundColor:
+                                    Theme.of(context).primaryColor),
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(

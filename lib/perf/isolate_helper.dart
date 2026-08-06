@@ -51,8 +51,7 @@ Future<List<dynamic>> parseJsonListInIsolate(String jsonString) async {
 
 /// تحويل List<dynamic> إلى List<Map<String, dynamic>> في isolate
 /// (مهم لاستجابات MikroTik التي قد تحتوي آلاف العناصر)
-Future<List<Map<String, dynamic>>> castListInIsolate(
-    List<dynamic> source) {
+Future<List<Map<String, dynamic>>> castListInIsolate(List<dynamic> source) {
   return runInIsolate(
     (list) => list
         .map((e) => Map<String, dynamic>.from(e as Map))
@@ -62,8 +61,7 @@ Future<List<Map<String, dynamic>>> castListInIsolate(
 }
 
 /// ترتيب قائمة في isolate (مفيد لترتيب آلاف المستخدمين)
-Future<List<T>> sortInIsolate<T>(
-    List<T> items, int Function(T, T) compare) {
+Future<List<T>> sortInIsolate<T>(List<T> items, int Function(T, T) compare) {
   return runInIsolate((list) {
     final copy = List<T>.from(list);
     copy.sort(compare);

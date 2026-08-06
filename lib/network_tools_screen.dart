@@ -12,7 +12,7 @@ class NetworkToolsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('أدوات الشبكة'),
+        title: const Text('أدوات الشبكة'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: RepaintBoundary(
@@ -37,7 +37,8 @@ class NetworkToolsScreen extends StatelessWidget {
                 label: const Text('مراقبة الأجهزة'),
                 onPressed: () {
                   Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => DeviceMonitoringScreen(client: client),
+                    builder: (context) =>
+                        DeviceMonitoringScreen(client: client),
                   ));
                 },
               ),

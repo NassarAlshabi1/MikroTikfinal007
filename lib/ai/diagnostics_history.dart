@@ -86,7 +86,6 @@ class DiagnosticSession {
         executedCommands: const [],
       );
 
-
   String get subtitle {
     final parts = <String>[];
     parts.add(mode.displayName);
@@ -151,10 +150,8 @@ class DiagnosticSession {
                   success: c['success'] as bool,
                   output: c['output'] as String? ?? '',
                   error: c['error'] as String?,
-                  elapsed: Duration(
-                      milliseconds: c['elapsedMs'] as int? ?? 0),
-                  executedAt:
-                      DateTime.parse(c['executedAt'] as String),
+                  elapsed: Duration(milliseconds: c['elapsedMs'] as int? ?? 0),
+                  executedAt: DateTime.parse(c['executedAt'] as String),
                 ))
             .toList() ??
         const [];
@@ -203,10 +200,8 @@ class DiagnosticSession {
         'endedAt': endedAt?.toIso8601String(),
         'mode': mode.name,
         'mikrotikIp': mikrotikIp,
-        'messages':
-            messages.map((m) => _messageToJson(m)).toList(),
-        'executedCommands':
-            executedCommands.map((c) => c.toJson()).toList(),
+        'messages': messages.map((m) => _messageToJson(m)).toList(),
+        'executedCommands': executedCommands.map((c) => c.toJson()).toList(),
         'tokensUsed': tokensUsed,
       };
 }
@@ -322,8 +317,7 @@ class DiagnosticsHistoryService {
     // Fallback
     final prefs = await SharedPreferences.getInstance();
     final existing = await _loadFromPrefs();
-    final filtered =
-        existing.where((s) => s.id != sessionId).toList();
+    final filtered = existing.where((s) => s.id != sessionId).toList();
     final jsonStr = jsonEncode(filtered.map((s) => s.toJson()).toList());
     await prefs.setString(_legacyKey, jsonStr);
   }

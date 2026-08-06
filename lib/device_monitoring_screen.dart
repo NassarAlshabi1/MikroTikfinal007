@@ -32,7 +32,9 @@ class Device {
         id: json['id'],
         name: json['name'],
         ip: json['ip'],
-        status: json['status'] == 'online' ? DeviceStatus.online : DeviceStatus.offline,
+        status: json['status'] == 'online'
+            ? DeviceStatus.online
+            : DeviceStatus.offline,
       );
 }
 
@@ -59,25 +61,33 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   }
 
   Future<void> _loadDevices() async {
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
     final prefs = await SharedPreferences.getInstance();
     final String? devicesJson = prefs.getString('monitored_devices');
     if (devicesJson != null) {
       final List<dynamic> decodedData = jsonDecode(devicesJson);
       _allDevices = decodedData.map((json) => Device.fromJson(json)).toList();
     }
-    _displayedDevices = List.from(_allDevices); // Initially display all loaded devices
-    setState(() { _isLoading = false; });
+    _displayedDevices =
+        List.from(_allDevices); // Initially display all loaded devices
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _saveDevices() async {
     final prefs = await SharedPreferences.getInstance();
-    final String devicesJson = jsonEncode(_allDevices.map((device) => device.toJson()).toList());
+    final String devicesJson =
+        jsonEncode(_allDevices.map((device) => device.toJson()).toList());
     await prefs.setString('monitored_devices', devicesJson);
   }
 
   Future<void> _fetchDevices() async {
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final neighborResponse = await widget.client.talk(['/ip/neighbor/print']);
       Set<String> currentOnlineIps = {};
@@ -117,7 +127,8 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
         if (!currentOnlineIps.contains(device.ip)) {
           device.status = DeviceStatus.offline;
         } else {
-          device.status = DeviceStatus.online; // Ensure it's marked online if it was found
+          device.status =
+              DeviceStatus.online; // Ensure it's marked online if it was found
         }
       }
 
@@ -137,7 +148,9 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
           _isLoading = false;
           // Apply the correct filter after fetching
           if (_showingDisconnectedOnly) {
-            _displayedDevices = _allDevices.where((device) => device.status == DeviceStatus.offline).toList();
+            _displayedDevices = _allDevices
+                .where((device) => device.status == DeviceStatus.offline)
+                .toList();
           } else {
             _displayedDevices = List.from(_allDevices);
           }
@@ -148,7 +161,9 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
 
   void _showDisconnectedDevices() {
     setState(() {
-      _displayedDevices = _allDevices.where((device) => device.status == DeviceStatus.offline).toList();
+      _displayedDevices = _allDevices
+          .where((device) => device.status == DeviceStatus.offline)
+          .toList();
       _showingDisconnectedOnly = true; // Added this line
       if (_displayedDevices.isEmpty) {
         showErrorSnackBar(context, 'لا توجد أجهزة غير متصلة حاليًا.');
@@ -167,7 +182,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('مراقبة الأجهزة'),
+        title: const Text('مراقبة الأجهزة'),
         backgroundColor: Theme.of(context).cardColor,
         actions: [
           IconButton(
@@ -183,7 +198,8 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
-              if (value == 'all') { // Only 'all' option remains here
+              if (value == 'all') {
+                // Only 'all' option remains here
                 _showAllDevices();
               }
             },
@@ -191,7 +207,12 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
               // Removed 'disconnected' option
               PopupMenuItem<String>(
                 value: 'all',
-                child: ListTile(leading: Icon(Icons.devices), title: Text('جميع الأجهزة', style: TextStyle(color: context.theme.appColors.onSurface, fontWeight: FontWeight.bold))),
+                child: ListTile(
+                    leading: const Icon(Icons.devices),
+                    title: Text('جميع الأجهزة',
+                        style: TextStyle(
+                            color: context.theme.appColors.onSurface,
+                            fontWeight: FontWeight.bold))),
               ),
             ],
           ),
@@ -204,20 +225,25 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.devices_other, size: 80, color: context.theme.appColors.muted),
-                      SizedBox(height: 16),
+                      Icon(Icons.devices_other,
+                          size: 80, color: context.theme.appColors.muted),
+                      const SizedBox(height: 16),
                       Text(
                         'لا توجد أجهزة للمراقبة',
                         style: TextStyle(
                           fontSize: 22,
-                          color: Theme.of(context).textTheme.titleLarge?.color ?? context.theme.appColors.onSurface,
+                          color:
+                              Theme.of(context).textTheme.titleLarge?.color ??
+                                  context.theme.appColors.onSurface,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         'اضغط على زر التحديث لجلب الأجهزة',
                         style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium?.color ?? context.theme.appColors.onSurface,
+                          color:
+                              Theme.of(context).textTheme.bodyMedium?.color ??
+                                  context.theme.appColors.onSurface,
                         ),
                       ),
                     ],
@@ -230,35 +256,51 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
                     final device = _displayedDevices[index];
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 4.0),
-                      color: device.status == DeviceStatus.online 
-                          ? context.theme.appColors.success.withValues(alpha: 0.8) 
-                          : context.theme.appColors.muted.withValues(alpha: 0.8),
+                      color: device.status == DeviceStatus.online
+                          ? context.theme.appColors.success
+                              .withValues(alpha: 0.8)
+                          : context.theme.appColors.muted
+                              .withValues(alpha: 0.8),
                       child: ListTile(
                         leading: Icon(
-                          device.status == DeviceStatus.online ? Icons.circle : Icons.circle_outlined,
-                          color: device.status == DeviceStatus.online ? context.theme.appColors.success : context.theme.appColors.muted,
+                          device.status == DeviceStatus.online
+                              ? Icons.circle
+                              : Icons.circle_outlined,
+                          color: device.status == DeviceStatus.online
+                              ? context.theme.appColors.success
+                              : context.theme.appColors.muted,
                         ),
                         title: Text(
                           device.name,
-                          style: TextStyle(fontWeight: FontWeight.bold, color: context.theme.appColors.onSurface),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: context.theme.appColors.onSurface),
                         ),
                         subtitle: Text(
                           device.ip,
-                          style: TextStyle(color: context.theme.appColors.onSurface.withValues(alpha: 0.8), fontSize: 12),
+                          style: TextStyle(
+                              color: context.theme.appColors.onSurface
+                                  .withValues(alpha: 0.8),
+                              fontSize: 12),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              device.status == DeviceStatus.online ? 'متصل' : 'غير متصل',
+                              device.status == DeviceStatus.online
+                                  ? 'متصل'
+                                  : 'غير متصل',
                               style: TextStyle(
-                                color: device.status == DeviceStatus.online ? context.theme.appColors.success : context.theme.appColors.muted,
+                                color: device.status == DeviceStatus.online
+                                    ? context.theme.appColors.success
+                                    : context.theme.appColors.muted,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             if (device.status == DeviceStatus.offline)
                               IconButton(
-                                icon: Icon(Icons.refresh, color: context.theme.appColors.warning),
+                                icon: Icon(Icons.refresh,
+                                    color: context.theme.appColors.warning),
                                 onPressed: () => _checkSingleDevice(device),
                                 tooltip: 'فحص الجهاز',
                               ),
@@ -272,7 +314,9 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
   }
 
   Future<void> _checkSingleDevice(Device device) async {
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('جاري فحص ${device.name}...')),
@@ -287,7 +331,9 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
         }
       }
 
-      final newStatus = onlineIps.contains(device.ip) ? DeviceStatus.online : DeviceStatus.offline;
+      final newStatus = onlineIps.contains(device.ip)
+          ? DeviceStatus.online
+          : DeviceStatus.offline;
 
       // Update status in _allDevices
       final deviceIndexInAll = _allDevices.indexWhere((d) => d.id == device.id);
@@ -298,14 +344,17 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       // Update status in _displayedDevices and re-filter if necessary
       if (mounted) {
         setState(() {
-          final deviceIndexInDisplayed = _displayedDevices.indexWhere((d) => d.id == device.id);
+          final deviceIndexInDisplayed =
+              _displayedDevices.indexWhere((d) => d.id == device.id);
           if (deviceIndexInDisplayed != -1) {
             _displayedDevices[deviceIndexInDisplayed].status = newStatus;
           }
 
           // Re-apply filter to _displayedDevices if currently filtered
           if (_showingDisconnectedOnly) {
-            _displayedDevices = _allDevices.where((d) => d.status == DeviceStatus.offline).toList();
+            _displayedDevices = _allDevices
+                .where((d) => d.status == DeviceStatus.offline)
+                .toList();
           } else {
             _displayedDevices = List.from(_allDevices);
           }
@@ -318,14 +367,15 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       } else {
         showErrorSnackBar(context, 'تم فحص ${device.name}: غير متصل');
       }
-
     } catch (e) {
       if (mounted) {
         showErrorSnackBar(context, 'فشل فحص الجهاز.');
       }
     } finally {
       if (mounted) {
-        setState(() { _isLoading = false; });
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

@@ -89,7 +89,8 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
       }
       return null;
     } catch (e) {
-      AppLogger.error('Failed to read mikrotik_pass', error: e, category: LogCategory.storage);
+      AppLogger.error('Failed to read mikrotik_pass',
+          error: e, category: LogCategory.storage);
       // 🔧 Fallback أخير: حاول SharedPreferences
       try {
         final prefs = await SharedPreferences.getInstance();
@@ -148,7 +149,8 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
       }
       return null;
     } catch (e) {
-      AppLogger.error('Failed to read remote_pass', error: e, category: LogCategory.storage);
+      AppLogger.error('Failed to read remote_pass',
+          error: e, category: LogCategory.storage);
       try {
         final prefs = await SharedPreferences.getInstance();
         return prefs.getString('remote_pass');
@@ -190,7 +192,8 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
       }
       return null;
     } catch (e) {
-      AppLogger.error('Failed to read legacy_integration_api_key', error: e, category: LogCategory.storage);
+      AppLogger.error('Failed to read legacy_integration_api_key',
+          error: e, category: LogCategory.storage);
       try {
         final prefs = await SharedPreferences.getInstance();
         return prefs.getString('legacy_integration_api_key');
@@ -219,7 +222,8 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
       await _storage.delete(key: _keyOomolApiKey);
       AppLogger.security('All credentials cleared');
     } catch (e) {
-      AppLogger.error('Failed to clear credentials', error: e, category: LogCategory.storage);
+      AppLogger.error('Failed to clear credentials',
+          error: e, category: LogCategory.storage);
     }
   }
 
@@ -229,7 +233,8 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
       await _storage.delete(key: _keyMikrotikPass);
       AppLogger.security('mikrotik_pass cleared');
     } catch (e) {
-      AppLogger.error('Failed to clear mikrotik_pass', error: e, category: LogCategory.storage);
+      AppLogger.error('Failed to clear mikrotik_pass',
+          error: e, category: LogCategory.storage);
     }
   }
 
@@ -245,7 +250,8 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
       final prefs = await SharedPreferences.getInstance();
       final migrated = prefs.getBool(_migrationDoneKey) ?? false;
       if (migrated) {
-        AppLogger.debug('SecureStorage already migrated', category: LogCategory.storage);
+        AppLogger.debug('SecureStorage already migrated',
+            category: LogCategory.storage);
         return;
       }
 
@@ -276,9 +282,11 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
 
       // وضع علامة الترحيل
       await prefs.setBool(_migrationDoneKey, true);
-      AppLogger.info('SecureStorage migration complete', category: LogCategory.storage);
+      AppLogger.info('SecureStorage migration complete',
+          category: LogCategory.storage);
     } catch (e) {
-      AppLogger.error('SecureStorage migration failed', error: e, category: LogCategory.storage);
+      AppLogger.error('SecureStorage migration failed',
+          error: e, category: LogCategory.storage);
       // لا نرمي — التطبيق يجب أن يكمل التشغيل حتى لو فشل الترحيل
     }
   }
@@ -372,16 +380,10 @@ class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
 /// ```
 class SecureCredentialsStorageContainer {
   SecureCredentialsStorageContainer._();
-  static SecureCredentialsStorage _instance = SecureCredentialsStorageImpl();
-
-  static SecureCredentialsStorage get instance => _instance;
-
-  static set instance(SecureCredentialsStorage storage) {
-    _instance = storage;
-  }
+  static SecureCredentialsStorage instance = SecureCredentialsStorageImpl();
 
   /// يعيد الضبط للتنفيذ الإنتاجي (يُستخدم بعد الاختبارات)
   static void resetToProduction() {
-    _instance = SecureCredentialsStorageImpl();
+    instance = SecureCredentialsStorageImpl();
   }
 }

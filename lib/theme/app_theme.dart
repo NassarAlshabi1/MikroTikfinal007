@@ -62,7 +62,8 @@ class AppTheme with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedThemeIndex = prefs.getInt(_themeModeKey);
-      if (savedThemeIndex != null && savedThemeIndex < ThemeMode.values.length) {
+      if (savedThemeIndex != null &&
+          savedThemeIndex < ThemeMode.values.length) {
         _themeMode = ThemeMode.values[savedThemeIndex];
         notifyListeners();
       }
@@ -90,7 +91,6 @@ class AppTheme with ChangeNotifier {
     final defaultTheme = ThemeData.light();
 
     return defaultTheme.copyWith(
-      useMaterial3: true,
       scaffoldBackgroundColor: AppPalette.lightBackground,
       colorScheme: ColorScheme.light(
         primary: AppPalette.primary,
@@ -109,11 +109,9 @@ class AppTheme with ChangeNotifier {
         onError: AppPalette.onError,
         errorContainer: AppPalette.errorContainer,
         onErrorContainer: AppPalette.onErrorContainer,
-        background: AppPalette.lightBackground,
-        onBackground: AppPalette.lightTextPrimary,
         surface: AppPalette.lightSurface,
         onSurface: AppPalette.lightTextPrimary,
-        surfaceVariant: AppPalette.lightSurfaceVariant,
+        surfaceContainerHighest: AppPalette.lightSurfaceVariant,
         onSurfaceVariant: AppPalette.lightTextSecondary,
         outline: AppPalette.lightOutline,
         outlineVariant: AppPalette.lightOutlineVariant,
@@ -121,21 +119,36 @@ class AppTheme with ChangeNotifier {
         scrim: Colors.black.withValues(alpha: 0.5),
       ),
       textTheme: TextTheme(
-        displayLarge: AppTypography.displayLarge.copyWith(color: AppPalette.lightTextPrimary),
-        displayMedium: AppTypography.displayMedium.copyWith(color: AppPalette.lightTextPrimary),
-        displaySmall: AppTypography.displaySmall.copyWith(color: AppPalette.lightTextPrimary),
-        headlineLarge: AppTypography.headlineLarge.copyWith(color: AppPalette.lightTextPrimary),
-        headlineMedium: AppTypography.headlineMedium.copyWith(color: AppPalette.lightTextPrimary),
-        headlineSmall: AppTypography.headlineSmall.copyWith(color: AppPalette.lightTextPrimary),
-        titleLarge: AppTypography.titleLarge.copyWith(color: AppPalette.lightTextPrimary),
-        titleMedium: AppTypography.titleMedium.copyWith(color: AppPalette.lightTextPrimary),
-        titleSmall: AppTypography.titleSmall.copyWith(color: AppPalette.lightTextSecondary),
-        bodyLarge: AppTypography.bodyLarge.copyWith(color: AppPalette.lightTextPrimary),
-        bodyMedium: AppTypography.bodyMedium.copyWith(color: AppPalette.lightTextPrimary),
-        bodySmall: AppTypography.bodySmall.copyWith(color: AppPalette.lightTextSecondary),
-        labelLarge: AppTypography.labelLarge.copyWith(color: AppPalette.lightTextPrimary),
-        labelMedium: AppTypography.labelMedium.copyWith(color: AppPalette.lightTextSecondary),
-        labelSmall: AppTypography.labelSmall.copyWith(color: AppPalette.lightTextTertiary),
+        displayLarge: AppTypography.displayLarge
+            .copyWith(color: AppPalette.lightTextPrimary),
+        displayMedium: AppTypography.displayMedium
+            .copyWith(color: AppPalette.lightTextPrimary),
+        displaySmall: AppTypography.displaySmall
+            .copyWith(color: AppPalette.lightTextPrimary),
+        headlineLarge: AppTypography.headlineLarge
+            .copyWith(color: AppPalette.lightTextPrimary),
+        headlineMedium: AppTypography.headlineMedium
+            .copyWith(color: AppPalette.lightTextPrimary),
+        headlineSmall: AppTypography.headlineSmall
+            .copyWith(color: AppPalette.lightTextPrimary),
+        titleLarge: AppTypography.titleLarge
+            .copyWith(color: AppPalette.lightTextPrimary),
+        titleMedium: AppTypography.titleMedium
+            .copyWith(color: AppPalette.lightTextPrimary),
+        titleSmall: AppTypography.titleSmall
+            .copyWith(color: AppPalette.lightTextSecondary),
+        bodyLarge: AppTypography.bodyLarge
+            .copyWith(color: AppPalette.lightTextPrimary),
+        bodyMedium: AppTypography.bodyMedium
+            .copyWith(color: AppPalette.lightTextPrimary),
+        bodySmall: AppTypography.bodySmall
+            .copyWith(color: AppPalette.lightTextSecondary),
+        labelLarge: AppTypography.labelLarge
+            .copyWith(color: AppPalette.lightTextPrimary),
+        labelMedium: AppTypography.labelMedium
+            .copyWith(color: AppPalette.lightTextSecondary),
+        labelSmall: AppTypography.labelSmall
+            .copyWith(color: AppPalette.lightTextTertiary),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppPalette.lightSurface,
@@ -147,7 +160,7 @@ class AppTheme with ChangeNotifier {
           color: AppPalette.lightTextPrimary,
           fontWeight: FontWeight.bold,
         ),
-        iconTheme: IconThemeData(color: AppPalette.lightTextPrimary),
+        iconTheme: const IconThemeData(color: AppPalette.lightTextPrimary),
       ),
       cardTheme: CardThemeData(
         elevation: 1,
@@ -156,7 +169,7 @@ class AppTheme with ChangeNotifier {
         shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: AppPalette.lightOutlineVariant, width: 0.5),
+          side: const BorderSide(color: AppPalette.lightOutlineVariant, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -187,7 +200,7 @@ class AppTheme with ChangeNotifier {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppPalette.primary,
-          side: BorderSide(color: AppPalette.lightOutline, width: 1),
+          side: const BorderSide(color: AppPalette.lightOutline, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -205,31 +218,32 @@ class AppTheme with ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppPalette.lightSurfaceVariant,
-        labelStyle: TextStyle(color: AppPalette.lightTextSecondary),
-        hintStyle: TextStyle(color: AppPalette.lightTextTertiary),
+        labelStyle: const TextStyle(color: AppPalette.lightTextSecondary),
+        hintStyle: const TextStyle(color: AppPalette.lightTextTertiary),
         prefixIconColor: AppPalette.lightTextSecondary,
         suffixIconColor: AppPalette.lightTextSecondary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.lightOutline),
+          borderSide: const BorderSide(color: AppPalette.lightOutline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.lightOutline),
+          borderSide: const BorderSide(color: AppPalette.lightOutline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.primary, width: 2),
+          borderSide: const BorderSide(color: AppPalette.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.error),
+          borderSide: const BorderSide(color: AppPalette.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.error, width: 2),
+          borderSide: const BorderSide(color: AppPalette.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppPalette.primary,
@@ -241,36 +255,37 @@ class AppTheme with ChangeNotifier {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppPalette.lightSurfaceVariant,
-        labelStyle: TextStyle(color: AppPalette.lightTextPrimary),
-        side: BorderSide(color: AppPalette.lightOutlineVariant),
+        labelStyle: const TextStyle(color: AppPalette.lightTextPrimary),
+        side: const BorderSide(color: AppPalette.lightOutlineVariant),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
         selectedColor: AppPalette.primary,
         checkmarkColor: AppPalette.onPrimary,
       ),
-      dividerTheme: DividerThemeData(
+      dividerTheme: const DividerThemeData(
         color: AppPalette.lightOutlineVariant,
         thickness: 1,
         space: 1,
       ),
-      iconTheme: IconThemeData(
+      iconTheme: const IconThemeData(
         color: AppPalette.lightTextPrimary,
         size: 24,
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppPalette.lightSurface,
         selectedItemColor: AppPalette.primary,
         unselectedItemColor: AppPalette.lightTextTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
-      navigationRailTheme: NavigationRailThemeData(
+      navigationRailTheme: const NavigationRailThemeData(
         backgroundColor: AppPalette.lightSurface,
         selectedIconTheme: IconThemeData(color: AppPalette.primary),
         unselectedIconTheme: IconThemeData(color: AppPalette.lightTextTertiary),
         selectedLabelTextStyle: TextStyle(color: AppPalette.primary),
-        unselectedLabelTextStyle: TextStyle(color: AppPalette.lightTextTertiary),
+        unselectedLabelTextStyle:
+            TextStyle(color: AppPalette.lightTextTertiary),
       ),
       drawerTheme: DrawerThemeData(
         backgroundColor: AppPalette.lightSurface,
@@ -278,7 +293,7 @@ class AppTheme with ChangeNotifier {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppPalette.lightTextPrimary,
-        contentTextStyle: TextStyle(color: AppPalette.lightSurface),
+        contentTextStyle: const TextStyle(color: AppPalette.lightSurface),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -352,21 +367,36 @@ class AppTheme with ChangeNotifier {
   );
 
   static final _lightTextTheme = AppTextThemeExtension(
-    displayLarge: AppTypography.displayLarge.copyWith(color: _lightAppColors.textPrimary),
-    displayMedium: AppTypography.displayMedium.copyWith(color: _lightAppColors.textPrimary),
-    displaySmall: AppTypography.displaySmall.copyWith(color: _lightAppColors.textPrimary),
-    headlineLarge: AppTypography.headlineLarge.copyWith(color: _lightAppColors.textPrimary),
-    headlineMedium: AppTypography.headlineMedium.copyWith(color: _lightAppColors.textPrimary),
-    headlineSmall: AppTypography.headlineSmall.copyWith(color: _lightAppColors.textPrimary),
-    titleLarge: AppTypography.titleLarge.copyWith(color: _lightAppColors.textPrimary),
-    titleMedium: AppTypography.titleMedium.copyWith(color: _lightAppColors.textPrimary),
-    titleSmall: AppTypography.titleSmall.copyWith(color: _lightAppColors.textSecondary),
-    bodyLarge: AppTypography.bodyLarge.copyWith(color: _lightAppColors.textPrimary),
-    bodyMedium: AppTypography.bodyMedium.copyWith(color: _lightAppColors.textPrimary),
-    bodySmall: AppTypography.bodySmall.copyWith(color: _lightAppColors.textSecondary),
-    labelLarge: AppTypography.labelLarge.copyWith(color: _lightAppColors.textPrimary),
-    labelMedium: AppTypography.labelMedium.copyWith(color: _lightAppColors.textSecondary),
-    labelSmall: AppTypography.labelSmall.copyWith(color: _lightAppColors.textTertiary),
+    displayLarge:
+        AppTypography.displayLarge.copyWith(color: _lightAppColors.textPrimary),
+    displayMedium: AppTypography.displayMedium
+        .copyWith(color: _lightAppColors.textPrimary),
+    displaySmall:
+        AppTypography.displaySmall.copyWith(color: _lightAppColors.textPrimary),
+    headlineLarge: AppTypography.headlineLarge
+        .copyWith(color: _lightAppColors.textPrimary),
+    headlineMedium: AppTypography.headlineMedium
+        .copyWith(color: _lightAppColors.textPrimary),
+    headlineSmall: AppTypography.headlineSmall
+        .copyWith(color: _lightAppColors.textPrimary),
+    titleLarge:
+        AppTypography.titleLarge.copyWith(color: _lightAppColors.textPrimary),
+    titleMedium:
+        AppTypography.titleMedium.copyWith(color: _lightAppColors.textPrimary),
+    titleSmall:
+        AppTypography.titleSmall.copyWith(color: _lightAppColors.textSecondary),
+    bodyLarge:
+        AppTypography.bodyLarge.copyWith(color: _lightAppColors.textPrimary),
+    bodyMedium:
+        AppTypography.bodyMedium.copyWith(color: _lightAppColors.textPrimary),
+    bodySmall:
+        AppTypography.bodySmall.copyWith(color: _lightAppColors.textSecondary),
+    labelLarge:
+        AppTypography.labelLarge.copyWith(color: _lightAppColors.textPrimary),
+    labelMedium: AppTypography.labelMedium
+        .copyWith(color: _lightAppColors.textSecondary),
+    labelSmall:
+        AppTypography.labelSmall.copyWith(color: _lightAppColors.textTertiary),
   );
 
   // ============================================================
@@ -376,7 +406,6 @@ class AppTheme with ChangeNotifier {
     final defaultTheme = ThemeData.dark();
 
     return defaultTheme.copyWith(
-      useMaterial3: true,
       scaffoldBackgroundColor: AppPalette.darkBackground,
       colorScheme: ColorScheme.dark(
         primary: AppPalette.primaryLight,
@@ -395,11 +424,9 @@ class AppTheme with ChangeNotifier {
         onError: AppPalette.onError,
         errorContainer: AppPalette.errorContainerDark,
         onErrorContainer: AppPalette.onErrorContainerDark,
-        background: AppPalette.darkBackground,
-        onBackground: AppPalette.darkTextPrimary,
         surface: AppPalette.darkSurface,
         onSurface: AppPalette.darkTextPrimary,
-        surfaceVariant: AppPalette.darkSurfaceVariant,
+        surfaceContainerHighest: AppPalette.darkSurfaceVariant,
         onSurfaceVariant: AppPalette.darkTextSecondary,
         outline: AppPalette.darkOutline,
         outlineVariant: AppPalette.darkOutlineVariant,
@@ -407,21 +434,36 @@ class AppTheme with ChangeNotifier {
         scrim: Colors.black.withValues(alpha: 0.7),
       ),
       textTheme: TextTheme(
-        displayLarge: AppTypography.displayLarge.copyWith(color: AppPalette.darkTextPrimary),
-        displayMedium: AppTypography.displayMedium.copyWith(color: AppPalette.darkTextPrimary),
-        displaySmall: AppTypography.displaySmall.copyWith(color: AppPalette.darkTextPrimary),
-        headlineLarge: AppTypography.headlineLarge.copyWith(color: AppPalette.darkTextPrimary),
-        headlineMedium: AppTypography.headlineMedium.copyWith(color: AppPalette.darkTextPrimary),
-        headlineSmall: AppTypography.headlineSmall.copyWith(color: AppPalette.darkTextPrimary),
-        titleLarge: AppTypography.titleLarge.copyWith(color: AppPalette.darkTextPrimary),
-        titleMedium: AppTypography.titleMedium.copyWith(color: AppPalette.darkTextPrimary),
-        titleSmall: AppTypography.titleSmall.copyWith(color: AppPalette.darkTextSecondary),
-        bodyLarge: AppTypography.bodyLarge.copyWith(color: AppPalette.darkTextPrimary),
-        bodyMedium: AppTypography.bodyMedium.copyWith(color: AppPalette.darkTextPrimary),
-        bodySmall: AppTypography.bodySmall.copyWith(color: AppPalette.darkTextSecondary),
-        labelLarge: AppTypography.labelLarge.copyWith(color: AppPalette.darkTextPrimary),
-        labelMedium: AppTypography.labelMedium.copyWith(color: AppPalette.darkTextSecondary),
-        labelSmall: AppTypography.labelSmall.copyWith(color: AppPalette.darkTextTertiary),
+        displayLarge: AppTypography.displayLarge
+            .copyWith(color: AppPalette.darkTextPrimary),
+        displayMedium: AppTypography.displayMedium
+            .copyWith(color: AppPalette.darkTextPrimary),
+        displaySmall: AppTypography.displaySmall
+            .copyWith(color: AppPalette.darkTextPrimary),
+        headlineLarge: AppTypography.headlineLarge
+            .copyWith(color: AppPalette.darkTextPrimary),
+        headlineMedium: AppTypography.headlineMedium
+            .copyWith(color: AppPalette.darkTextPrimary),
+        headlineSmall: AppTypography.headlineSmall
+            .copyWith(color: AppPalette.darkTextPrimary),
+        titleLarge: AppTypography.titleLarge
+            .copyWith(color: AppPalette.darkTextPrimary),
+        titleMedium: AppTypography.titleMedium
+            .copyWith(color: AppPalette.darkTextPrimary),
+        titleSmall: AppTypography.titleSmall
+            .copyWith(color: AppPalette.darkTextSecondary),
+        bodyLarge:
+            AppTypography.bodyLarge.copyWith(color: AppPalette.darkTextPrimary),
+        bodyMedium: AppTypography.bodyMedium
+            .copyWith(color: AppPalette.darkTextPrimary),
+        bodySmall: AppTypography.bodySmall
+            .copyWith(color: AppPalette.darkTextSecondary),
+        labelLarge: AppTypography.labelLarge
+            .copyWith(color: AppPalette.darkTextPrimary),
+        labelMedium: AppTypography.labelMedium
+            .copyWith(color: AppPalette.darkTextSecondary),
+        labelSmall: AppTypography.labelSmall
+            .copyWith(color: AppPalette.darkTextTertiary),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppPalette.darkBackground,
@@ -433,7 +475,7 @@ class AppTheme with ChangeNotifier {
           color: AppPalette.darkTextPrimary,
           fontWeight: FontWeight.bold,
         ),
-        iconTheme: IconThemeData(color: AppPalette.darkTextPrimary),
+        iconTheme: const IconThemeData(color: AppPalette.darkTextPrimary),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -442,7 +484,7 @@ class AppTheme with ChangeNotifier {
         shadowColor: Colors.black.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: AppPalette.darkOutlineVariant, width: 0.5),
+          side: const BorderSide(color: AppPalette.darkOutlineVariant, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -473,7 +515,7 @@ class AppTheme with ChangeNotifier {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppPalette.primaryLight,
-          side: BorderSide(color: AppPalette.darkOutline, width: 1),
+          side: const BorderSide(color: AppPalette.darkOutline, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -491,31 +533,32 @@ class AppTheme with ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppPalette.darkSurfaceVariant,
-        labelStyle: TextStyle(color: AppPalette.darkTextSecondary),
-        hintStyle: TextStyle(color: AppPalette.darkTextTertiary),
+        labelStyle: const TextStyle(color: AppPalette.darkTextSecondary),
+        hintStyle: const TextStyle(color: AppPalette.darkTextTertiary),
         prefixIconColor: AppPalette.darkTextSecondary,
         suffixIconColor: AppPalette.darkTextSecondary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.darkOutline),
+          borderSide: const BorderSide(color: AppPalette.darkOutline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.darkOutline),
+          borderSide: const BorderSide(color: AppPalette.darkOutline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.primaryLight, width: 2),
+          borderSide: const BorderSide(color: AppPalette.primaryLight, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.error),
+          borderSide: const BorderSide(color: AppPalette.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppPalette.error, width: 2),
+          borderSide: const BorderSide(color: AppPalette.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppPalette.primaryLight,
@@ -527,31 +570,31 @@ class AppTheme with ChangeNotifier {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppPalette.darkSurfaceVariant,
-        labelStyle: TextStyle(color: AppPalette.darkTextPrimary),
-        side: BorderSide(color: AppPalette.darkOutlineVariant),
+        labelStyle: const TextStyle(color: AppPalette.darkTextPrimary),
+        side: const BorderSide(color: AppPalette.darkOutlineVariant),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
         selectedColor: AppPalette.primaryLight,
         checkmarkColor: AppPalette.onPrimary,
       ),
-      dividerTheme: DividerThemeData(
+      dividerTheme: const DividerThemeData(
         color: AppPalette.darkOutlineVariant,
         thickness: 1,
         space: 1,
       ),
-      iconTheme: IconThemeData(
+      iconTheme: const IconThemeData(
         color: AppPalette.darkTextPrimary,
         size: 24,
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppPalette.darkSurface,
         selectedItemColor: AppPalette.primaryLight,
         unselectedItemColor: AppPalette.darkTextTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
-      navigationRailTheme: NavigationRailThemeData(
+      navigationRailTheme: const NavigationRailThemeData(
         backgroundColor: AppPalette.darkSurface,
         selectedIconTheme: IconThemeData(color: AppPalette.primaryLight),
         unselectedIconTheme: IconThemeData(color: AppPalette.darkTextTertiary),
@@ -564,7 +607,7 @@ class AppTheme with ChangeNotifier {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppPalette.darkSurfaceVariant,
-        contentTextStyle: TextStyle(color: AppPalette.darkTextPrimary),
+        contentTextStyle: const TextStyle(color: AppPalette.darkTextPrimary),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -638,21 +681,36 @@ class AppTheme with ChangeNotifier {
   );
 
   static final _darkTextTheme = AppTextThemeExtension(
-    displayLarge: AppTypography.displayLarge.copyWith(color: _darkAppColors.textPrimary),
-    displayMedium: AppTypography.displayMedium.copyWith(color: _darkAppColors.textPrimary),
-    displaySmall: AppTypography.displaySmall.copyWith(color: _darkAppColors.textPrimary),
-    headlineLarge: AppTypography.headlineLarge.copyWith(color: _darkAppColors.textPrimary),
-    headlineMedium: AppTypography.headlineMedium.copyWith(color: _darkAppColors.textPrimary),
-    headlineSmall: AppTypography.headlineSmall.copyWith(color: _darkAppColors.textPrimary),
-    titleLarge: AppTypography.titleLarge.copyWith(color: _darkAppColors.textPrimary),
-    titleMedium: AppTypography.titleMedium.copyWith(color: _darkAppColors.textPrimary),
-    titleSmall: AppTypography.titleSmall.copyWith(color: _darkAppColors.textSecondary),
-    bodyLarge: AppTypography.bodyLarge.copyWith(color: _darkAppColors.textPrimary),
-    bodyMedium: AppTypography.bodyMedium.copyWith(color: _darkAppColors.textPrimary),
-    bodySmall: AppTypography.bodySmall.copyWith(color: _darkAppColors.textSecondary),
-    labelLarge: AppTypography.labelLarge.copyWith(color: _darkAppColors.textPrimary),
-    labelMedium: AppTypography.labelMedium.copyWith(color: _darkAppColors.textSecondary),
-    labelSmall: AppTypography.labelSmall.copyWith(color: _darkAppColors.textTertiary),
+    displayLarge:
+        AppTypography.displayLarge.copyWith(color: _darkAppColors.textPrimary),
+    displayMedium:
+        AppTypography.displayMedium.copyWith(color: _darkAppColors.textPrimary),
+    displaySmall:
+        AppTypography.displaySmall.copyWith(color: _darkAppColors.textPrimary),
+    headlineLarge:
+        AppTypography.headlineLarge.copyWith(color: _darkAppColors.textPrimary),
+    headlineMedium: AppTypography.headlineMedium
+        .copyWith(color: _darkAppColors.textPrimary),
+    headlineSmall:
+        AppTypography.headlineSmall.copyWith(color: _darkAppColors.textPrimary),
+    titleLarge:
+        AppTypography.titleLarge.copyWith(color: _darkAppColors.textPrimary),
+    titleMedium:
+        AppTypography.titleMedium.copyWith(color: _darkAppColors.textPrimary),
+    titleSmall:
+        AppTypography.titleSmall.copyWith(color: _darkAppColors.textSecondary),
+    bodyLarge:
+        AppTypography.bodyLarge.copyWith(color: _darkAppColors.textPrimary),
+    bodyMedium:
+        AppTypography.bodyMedium.copyWith(color: _darkAppColors.textPrimary),
+    bodySmall:
+        AppTypography.bodySmall.copyWith(color: _darkAppColors.textSecondary),
+    labelLarge:
+        AppTypography.labelLarge.copyWith(color: _darkAppColors.textPrimary),
+    labelMedium:
+        AppTypography.labelMedium.copyWith(color: _darkAppColors.textSecondary),
+    labelSmall:
+        AppTypography.labelSmall.copyWith(color: _darkAppColors.textTertiary),
   );
 }
 

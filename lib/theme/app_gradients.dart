@@ -9,9 +9,9 @@ abstract class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      AppPalette.gradientSoftStart,   // Slate 50
-      AppPalette.gradientSoftMiddle,  // Blue 50
-      AppPalette.gradientSoftEnd,     // Violet 50
+      AppPalette.gradientSoftStart, // Slate 50
+      AppPalette.gradientSoftMiddle, // Blue 50
+      AppPalette.gradientSoftEnd, // Violet 50
     ],
   );
 
@@ -30,9 +30,9 @@ abstract class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF0F172A),  // Slate 950
-      Color(0xFF1E293B),  // Slate 800
-      Color(0xFF312E81),  // Indigo 900 (لمسة لونية خفيفة)
+      Color(0xFF0F172A), // Slate 950
+      Color(0xFF1E293B), // Slate 800
+      Color(0xFF312E81), // Indigo 900 (لمسة لونية خفيفة)
     ],
     stops: [0.0, 0.6, 1.0],
   );
@@ -63,8 +63,8 @@ abstract class AppGradients {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color(0xE60F172A),  // Slate 950 at 90%
-      Color(0xF01E293B),  // Slate 800 at 94%
+      Color(0xE60F172A), // Slate 950 at 90%
+      Color(0xF01E293B), // Slate 800 at 94%
     ],
   );
 

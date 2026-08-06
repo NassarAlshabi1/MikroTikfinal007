@@ -4,6 +4,7 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'device_capability.dart';
 
 /// صورة مُخبّاة في الذاكرة بدقة مناسبة لحجم العرض
@@ -41,7 +42,7 @@ class CachedImage extends StatelessWidget {
       filterQuality: DeviceCapability.instance.isLowEnd
           ? FilterQuality.low
           : FilterQuality.medium,
-      gaplessPlayback: true,  // لا يومض عند التحميل
+      gaplessPlayback: true, // لا يومض عند التحميل
     );
   }
 }
@@ -66,7 +67,8 @@ class PerfCard extends StatelessWidget {
       child: child,
     );
     // RepaintBoundary يمنع إعادة رسم البطاقة عند تحديث الـ parent
-    return RepaintBoundary(child: onTap != null ? InkWell(onTap: onTap, child: card) : card);
+    return RepaintBoundary(
+        child: onTap != null ? InkWell(onTap: onTap, child: card) : card);
   }
 }
 
@@ -95,14 +97,17 @@ class PerfLoadingIndicator extends StatelessWidget {
             width: size,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).colorScheme.primary),
             ),
           ),
           if (message != null) ...[
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               message!,
-              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ],
@@ -140,12 +145,11 @@ class PerfListView<T> extends StatelessWidget {
     }
     return RepaintBoundary(
       child: ListView.builder(
-        itemCount: items.length,
-        itemExtent: itemExtent,  // مهم: يُسرّع scroll بشكل كبير
+        scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), itemCount: items.length,
+        itemExtent: itemExtent, // مهم: يُسرّع scroll بشكل كبير
         padding: padding,
         controller: controller,
         shrinkWrap: shrinkWrap,
-        cacheExtent: DeviceCapability.instance.listViewCacheExtent,
         addAutomaticKeepAlives: false,
         itemBuilder: (context, i) => itemBuilder(context, items[i], i),
       ),

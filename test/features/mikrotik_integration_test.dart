@@ -113,11 +113,13 @@ void main() {
         expect(CommandExecutor.validateCommand(''), isNotNull);
 
         // أمر بدون /
-        expect(CommandExecutor.validateCommand('system resource print'), isNotNull);
+        expect(CommandExecutor.validateCommand('system resource print'),
+            isNotNull);
       });
 
       test('validateCommand يقبل الأوامر الصالحة', () {
-        expect(CommandExecutor.validateCommand('/system resource print'), isNull);
+        expect(
+            CommandExecutor.validateCommand('/system resource print'), isNull);
         expect(CommandExecutor.validateCommand('/ip address print'), isNull);
         expect(CommandExecutor.validateCommand('/interface print'), isNull);
       });
@@ -139,7 +141,8 @@ void main() {
 
       test('classifyRisk يصنّف الأوامر المتوسطة', () {
         expect(
-          CommandExecutor.classifyRisk('/ip firewall filter add chain=input action=drop'),
+          CommandExecutor.classifyRisk(
+              '/ip firewall filter add chain=input action=drop'),
           CommandRiskLevel.moderate,
         );
         expect(
@@ -270,7 +273,7 @@ void main() {
           system: 'RouterOS 6.49',
           ipAddress: '192.168.1.1',
           collectedAt: DateTime(2026, 7, 29, 18, 0),
-          extraData: {'IP SERVICES': 'telnet, ssh'},
+          extraData: const {'IP SERVICES': 'telnet, ssh'},
         );
 
         final context = snapshot.toAiContext();
@@ -348,30 +351,42 @@ void main() {
   group('🔒 SecureCredentialsStorage + MikroTik Integration', () {
     test('كلمة المرور تُقرأ من secure storage بدل prefs', () async {
       // ضع كلمة المرور في secure storage (وليس prefs)
-      await SecureCredentialsStorageContainer.instance.setMikrotikPassword('secret123');
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword('secret123');
 
       // prefs فارغة من 'pass'
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('pass'), isNull);
 
       // لكن secure storage يحتوي عليها
-      final pass = await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
+      final pass = await SecureCredentialsStorageContainer.instance
+          .getMikrotikPassword();
       expect(pass, 'secret123');
     });
 
     test('clearMikrotikCredentials يحذف كلمة المرور فقط', () async {
-      await SecureCredentialsStorageContainer.instance.setMikrotikPassword('secret');
-      await SecureCredentialsStorageContainer.instance.setRemotePassword('remote');
-      await SecureCredentialsStorageContainer.instance.setOomolApiKey('legacy_integration-key');
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword('secret');
+      await SecureCredentialsStorageContainer.instance
+          .setRemotePassword('remote');
+      await SecureCredentialsStorageContainer.instance
+          .setOomolApiKey('legacy_integration-key');
 
       // امسح mikrotik فقط
-      await SecureCredentialsStorageContainer.instance.clearMikrotikCredentials();
+      await SecureCredentialsStorageContainer.instance
+          .clearMikrotikCredentials();
 
       // mikrotik محذوفة
-      expect(await SecureCredentialsStorageContainer.instance.getMikrotikPassword(), isNull);
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .getMikrotikPassword(),
+          isNull);
       // الباقي موجود
-      expect(await SecureCredentialsStorageContainer.instance.getRemotePassword(), 'remote');
-      expect(await SecureCredentialsStorageContainer.instance.getOomolApiKey(), 'legacy_integration-key');
+      expect(
+          await SecureCredentialsStorageContainer.instance.getRemotePassword(),
+          'remote');
+      expect(await SecureCredentialsStorageContainer.instance.getOomolApiKey(),
+          'legacy_integration-key');
     });
 
     test('clearAll يحذف كل شيء', () async {
@@ -381,33 +396,62 @@ void main() {
 
       await SecureCredentialsStorageContainer.instance.clearAll();
 
-      expect(await SecureCredentialsStorageContainer.instance.getMikrotikPassword(), isNull);
-      expect(await SecureCredentialsStorageContainer.instance.getRemotePassword(), isNull);
-      expect(await SecureCredentialsStorageContainer.instance.getOomolApiKey(), isNull);
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .getMikrotikPassword(),
+          isNull);
+      expect(
+          await SecureCredentialsStorageContainer.instance.getRemotePassword(),
+          isNull);
+      expect(await SecureCredentialsStorageContainer.instance.getOomolApiKey(),
+          isNull);
     });
 
     test('hasStoredCredentials يعمل بشكل صحيح', () async {
-      expect(await SecureCredentialsStorageContainer.instance.hasStoredCredentials(), isFalse);
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .hasStoredCredentials(),
+          isFalse);
 
-      await SecureCredentialsStorageContainer.instance.setMikrotikPassword('secret');
-      expect(await SecureCredentialsStorageContainer.instance.hasStoredCredentials(), isTrue);
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword('secret');
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .hasStoredCredentials(),
+          isTrue);
 
-      await SecureCredentialsStorageContainer.instance.setMikrotikPassword(null);
-      expect(await SecureCredentialsStorageContainer.instance.hasStoredCredentials(), isFalse);
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword(null);
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .hasStoredCredentials(),
+          isFalse);
     });
 
     test('setMikrotikPassword(null) يحذف', () async {
-      await SecureCredentialsStorageContainer.instance.setMikrotikPassword('secret');
-      expect(await SecureCredentialsStorageContainer.instance.getMikrotikPassword(), 'secret');
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword('secret');
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .getMikrotikPassword(),
+          'secret');
 
-      await SecureCredentialsStorageContainer.instance.setMikrotikPassword(null);
-      expect(await SecureCredentialsStorageContainer.instance.getMikrotikPassword(), isNull);
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword(null);
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .getMikrotikPassword(),
+          isNull);
     });
 
     test('setMikrotikPassword("") يحذف', () async {
-      await SecureCredentialsStorageContainer.instance.setMikrotikPassword('secret');
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword('secret');
       await SecureCredentialsStorageContainer.instance.setMikrotikPassword('');
-      expect(await SecureCredentialsStorageContainer.instance.getMikrotikPassword(), isNull);
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .getMikrotikPassword(),
+          isNull);
     });
   });
 }

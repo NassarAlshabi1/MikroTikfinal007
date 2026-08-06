@@ -169,8 +169,10 @@ void main() {
       expect(handleMessage(const ConnectionRefusedMikrotikError()), 'refused');
       expect(handleMessage(const AuthenticationFailedMikrotikError()), 'auth');
       expect(handleMessage(const CredentialsMissingMikrotikError()), 'missing');
-      expect(handleMessage(const NetworkMikrotikError('reset')), 'network: reset');
-      expect(handleMessage(const UnknownMikrotikError('oops')), 'unknown: oops');
+      expect(
+          handleMessage(const NetworkMikrotikError('reset')), 'network: reset');
+      expect(
+          handleMessage(const UnknownMikrotikError('oops')), 'unknown: oops');
     });
   });
 
@@ -211,7 +213,8 @@ void main() {
         Exception('Some weird error'),
       );
       expect(error, isA<UnknownMikrotikError>());
-      expect((error as UnknownMikrotikError).message, contains('Some weird error'));
+      expect((error as UnknownMikrotikError).message,
+          contains('Some weird error'));
     });
   });
 

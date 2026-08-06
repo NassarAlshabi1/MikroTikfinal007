@@ -11,6 +11,7 @@ import 'diagnostics_models.dart';
 import 'diagnostics_provider.dart';
 
 import '../theme/app_theme.dart';
+
 class AiSettingsScreen extends ConsumerStatefulWidget {
   const AiSettingsScreen({super.key});
 
@@ -27,8 +28,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    final settings = ref.read(aiSettingsNotifierProvider).valueOrNull ??
-        AiSettings.default_;
+    final settings =
+        ref.read(aiSettingsNotifierProvider).valueOrNull ?? AiSettings.default_;
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl ?? '');
   }
@@ -49,7 +50,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم حفظ الإعدادات'),
+            content: const Text('تم حفظ الإعدادات'),
             backgroundColor: Theme.of(context).appColors.success,
           ),
         );
@@ -77,7 +78,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('أدخل مفتاح API أولاً'),
+            content: const Text('أدخل مفتاح API أولاً'),
             backgroundColor: Theme.of(context).appColors.warning,
           ),
         );
@@ -91,8 +92,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       dio.options.connectTimeout = const Duration(seconds: 10);
       dio.options.receiveTimeout = const Duration(seconds: 15);
 
-      final url = (baseUrl.isNotEmpty ? baseUrl : 'https://openrouter.ai/api/v1')
-          .replaceAll(RegExp(r'\/+$'), '');
+      final url =
+          (baseUrl.isNotEmpty ? baseUrl : 'https://openrouter.ai/api/v1')
+              .replaceAll(RegExp(r'\/+$'), '');
       final endpoint = '$url/models';
 
       final response = await dio.get(
@@ -126,13 +128,17 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ? '❌ مفتاح API غير صالح'
             : '❌ فشل الاتصال: ${e.message}';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Theme.of(context).appColors.error),
+          SnackBar(
+              content: Text(msg),
+              backgroundColor: Theme.of(context).appColors.error),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Theme.of(context).appColors.error),
+          SnackBar(
+              content: Text('❌ خطأ: $e'),
+              backgroundColor: Theme.of(context).appColors.error),
         );
       }
     } finally {
@@ -181,26 +187,30 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                       '2. يرسلها مع سؤالك إلى الـ AI\n'
                       '3. يحلل الـ AI المشكلة ويقترح أوامر إصلاح\n'
                       '4. تنسخ الأوامر وتنفذها يدوياً',
-                      style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodySmall?.color),
                     ),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // ===== اختيار المزود =====
             Text(
               'مزود الذكاء الاصطناعي',
-              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<AiProvider>(
-              value: settings.provider,
+              initialValue: settings.provider,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: AiProvider.values
                   .map((p) => DropdownMenuItem(
@@ -216,12 +226,14 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 }
               },
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // ===== اختيار الموديل =====
             Text(
               'الموديل',
-              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             // للمزود المخصص: حقل نص لإدخال اسم النموذج يدوياً
@@ -229,20 +241,25 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             if (settings.provider == AiProvider.custom) ...[
               TextField(
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: const OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   hintText: 'مثال: gpt-4o-mini أو llama-3.1-70b',
-                  hintStyle: TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
-                  prefixIcon: Icon(Icons.model_training, size: 18, color: Theme.of(context).hintColor),
+                  hintStyle: TextStyle(
+                      fontSize: 12, color: Theme.of(context).disabledColor),
+                  prefixIcon: Icon(Icons.model_training,
+                      size: 18, color: Theme.of(context).hintColor),
                 ),
                 style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 onChanged: (value) {
-                  ref.read(aiSettingsNotifierProvider.notifier).setModel(value.trim());
+                  ref
+                      .read(aiSettingsNotifierProvider.notifier)
+                      .setModel(value.trim());
                 },
               ),
             ] else ...[
               DropdownButtonFormField<String>(
-                value: settings.model,
+                initialValue: settings.model,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding:
@@ -252,7 +269,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                     .map((m) => DropdownMenuItem(
                           value: m,
                           child: Text(m),
-                      ))
+                        ))
                     .toList(),
                 onChanged: (model) {
                   if (model != null) {
@@ -268,12 +285,14 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             // ===== حد خطوات الاستقصاء (التشخيص الوكيل) =====
             Row(
               children: [
-                Icon(Icons.psychology,
+                const Icon(Icons.psychology,
                     size: 18, color: Colors.deepPurpleAccent),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
                   'حد خطوات الاستقصاء (التشخيص الوكيل)',
-                  style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color),
                 ),
                 const Spacer(),
                 Text(
@@ -301,7 +320,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             Text(
               'كلما زاد العدد، استقصى الـ AI أعمق (أوامر قراءة تلقائية أكثر) '
               'مقابل استهلاك أكبر للـ tokens. الافتراضي 6.',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).disabledColor),
             ),
             const SizedBox(height: 16),
 
@@ -312,7 +332,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                   : settings.provider == AiProvider.openRouter
                       ? 'API Endpoint (الافتراضي: openrouter.ai)'
                       : 'API Endpoint مخصص (اختياري)',
-              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -320,14 +342,16 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 hintText: settings.provider == AiProvider.custom
                     ? 'https://api.xxx.com/v1 (إلزامي)'
                     : settings.provider == AiProvider.openRouter
                         ? 'https://openrouter.ai/api/v1'
                         : 'https://api.openai.com/v1 (اتركه فارغاً للافتراضي)',
-                hintStyle: TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
-                prefixIcon: Icon(Icons.link, size: 18, color: Theme.of(context).hintColor),
+                hintStyle: TextStyle(
+                    fontSize: 12, color: Theme.of(context).disabledColor),
+                prefixIcon: Icon(Icons.link,
+                    size: 18, color: Theme.of(context).hintColor),
               ),
               style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
             ),
@@ -335,33 +359,36 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             Text(
               settings.provider == AiProvider.custom
                   ? 'أدخل عنوان API الكامل للمزود المتوافق مع OpenAI:\n'
-                    '• OpenRouter: https://openrouter.ai/api/v1\n'
-                    '• Ollama (محلي): http://localhost:11434/v1\n'
-                    '• Together AI: https://api.together.xyz/v1\n'
-                    '• Groq: https://api.groq.com/openai/v1\n'
-                    '• أي مزود آخر متوافق مع OpenAI API'
+                      '• OpenRouter: https://openrouter.ai/api/v1\n'
+                      '• Ollama (محلي): http://localhost:11434/v1\n'
+                      '• Together AI: https://api.together.xyz/v1\n'
+                      '• Groq: https://api.groq.com/openai/v1\n'
+                      '• أي مزود آخر متوافق مع OpenAI API'
                   : settings.provider == AiProvider.openRouter
                       ? 'النماذج المتاحة على OpenRouter:\n'
-                        '• gemini-2.5-flash — سريع واقتصادي\n'
-                        '• gemini-2.5-pro — الأذكى\n'
-                        '• llama-3.3-70b — مفتوح المصدر\n'
-                        '• qwen-2.5-72b — دعم عربي ممتاز\n'
-                        '• deepseek-chat — قوي واقتصادي\n'
-                        '• mistral-small-3.1 — سريع وخفيف'
+                          '• gemini-2.5-flash — سريع واقتصادي\n'
+                          '• gemini-2.5-pro — الأذكى\n'
+                          '• llama-3.3-70b — مفتوح المصدر\n'
+                          '• qwen-2.5-72b — دعم عربي ممتاز\n'
+                          '• deepseek-chat — قوي واقتصادي\n'
+                          '• mistral-small-3.1 — سريع وخفيف'
                       : 'استخدم هذا للمزودين المتوافقين مع OpenAI API:\n'
-                        '• OpenRouter: https://openrouter.ai/api/v1\n'
-                        '• Azure OpenAI: https://{resource}.openai.azure.com/openai/deployments/{deployment}\n'
-                        '• Ollama (محلي): http://localhost:11434/v1\n'
-                        '• LocalAI: http://localhost:8080/v1\n'
-                        '• Together AI: https://api.together.xyz/v1',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor),
+                          '• OpenRouter: https://openrouter.ai/api/v1\n'
+                          '• Azure OpenAI: https://{resource}.openai.azure.com/openai/deployments/{deployment}\n'
+                          '• Ollama (محلي): http://localhost:11434/v1\n'
+                          '• LocalAI: http://localhost:8080/v1\n'
+                          '• Together AI: https://api.together.xyz/v1',
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).disabledColor),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // ===== مفتاح API =====
             Text(
               'مفتاح API',
-              style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -377,9 +404,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                         ? 'sk-...'
                         : 'AIza...',
                 suffixIcon: IconButton(
-                  icon: Icon(_obscureApiKey
-                      ? Icons.visibility
-                      : Icons.visibility_off),
+                  icon: Icon(
+                      _obscureApiKey ? Icons.visibility : Icons.visibility_off),
                   onPressed: () =>
                       setState(() => _obscureApiKey = !_obscureApiKey),
                 ),
@@ -430,9 +456,10 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Theme.of(context).appColors.info, size: 18),
+                  Icon(Icons.info_outline,
+                      color: Theme.of(context).appColors.info, size: 18),
                   const SizedBox(width: 8),
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'الاتصال والتنفيذ يتمّان عبر RouterOS API (منفذ 8728/8729) '
                       'باستخدام بيانات الدخول الحالية.',
@@ -477,14 +504,19 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).appColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).appColors.error.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: Theme.of(context)
+                        .appColors
+                        .error
+                        .withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.security, color: Theme.of(context).appColors.error, size: 18),
+                      Icon(Icons.security,
+                          color: Theme.of(context).appColors.error, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'تنبيه أمني',
@@ -495,13 +527,15 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     '• مفتاح الـ API يُخزّن مشفّراً في الجهاز (flutter_secure_storage)\n'
                     '• لا يتم إرساله لأي طرف ثالث\n'
                     '• كل استدعاء للـ AI يكلّفك مالاً حسب سعر المزود\n'
                     '• اقتصر الـ logs على آخر 30 سطر لتوفير tokens',
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ],
               ),

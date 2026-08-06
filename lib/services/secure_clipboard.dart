@@ -65,7 +65,8 @@ class SecureClipboard {
         final current = await Clipboard.getData('text/plain');
         if (current?.text == text) {
           await Clipboard.setData(const ClipboardData(text: ''));
-          debugPrint('[SecureClipboard] Auto-cleared after ${duration.inSeconds}s');
+          debugPrint(
+              '[SecureClipboard] Auto-cleared after ${duration.inSeconds}s');
           onCleared?.call();
         }
       } catch (e) {

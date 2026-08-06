@@ -153,20 +153,28 @@ class AmoloodTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AmoloodColors.primary, width: 1.5),
+          borderSide:
+              const BorderSide(color: AmoloodColors.primary, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: AmoloodColors.textMuted, fontFamily: 'Tajawal'),
-        labelStyle: const TextStyle(color: AmoloodColors.textSecondary, fontFamily: 'Tajawal'),
+        hintStyle: const TextStyle(
+            color: AmoloodColors.textMuted, fontFamily: 'Tajawal'),
+        labelStyle: const TextStyle(
+            color: AmoloodColors.textSecondary, fontFamily: 'Tajawal'),
         prefixIconColor: AmoloodColors.textMuted,
       ),
       dividerColor: AmoloodColors.border,
       iconTheme: const IconThemeData(color: AmoloodColors.textSecondary),
       textTheme: const TextTheme(
-        displayLarge: TextStyle(color: AmoloodColors.textPrimary, fontFamily: 'Tajawal'),
-        displayMedium: TextStyle(color: AmoloodColors.textPrimary, fontFamily: 'Tajawal'),
-        bodyLarge: TextStyle(color: AmoloodColors.textPrimary, fontFamily: 'Tajawal'),
-        bodyMedium: TextStyle(color: AmoloodColors.textSecondary, fontFamily: 'Tajawal'),
-        bodySmall: TextStyle(color: AmoloodColors.textMuted, fontFamily: 'Tajawal'),
+        displayLarge:
+            TextStyle(color: AmoloodColors.textPrimary, fontFamily: 'Tajawal'),
+        displayMedium:
+            TextStyle(color: AmoloodColors.textPrimary, fontFamily: 'Tajawal'),
+        bodyLarge:
+            TextStyle(color: AmoloodColors.textPrimary, fontFamily: 'Tajawal'),
+        bodyMedium: TextStyle(
+            color: AmoloodColors.textSecondary, fontFamily: 'Tajawal'),
+        bodySmall:
+            TextStyle(color: AmoloodColors.textMuted, fontFamily: 'Tajawal'),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AmoloodColors.surfaceElevated,
@@ -192,7 +200,9 @@ class AmoloodTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AmoloodColors.electric;
+          if (states.contains(WidgetState.selected)) {
+            return AmoloodColors.electric;
+          }
           return AmoloodColors.inactive;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
@@ -302,21 +312,35 @@ class AmoloodTheme {
 
   /// AppTextThemeExtension بخط Tajawal وألوان Amolood
   static final _amoloodTextTheme = AppTextThemeExtension(
-    displayLarge: AppTypography.displayLarge.copyWith(color: AmoloodColors.textPrimary),
-    displayMedium: AppTypography.displayMedium.copyWith(color: AmoloodColors.textPrimary),
-    displaySmall: AppTypography.displaySmall.copyWith(color: AmoloodColors.textPrimary),
-    headlineLarge: AppTypography.headlineLarge.copyWith(color: AmoloodColors.textPrimary),
-    headlineMedium: AppTypography.headlineMedium.copyWith(color: AmoloodColors.textPrimary),
-    headlineSmall: AppTypography.headlineSmall.copyWith(color: AmoloodColors.textPrimary),
-    titleLarge: AppTypography.titleLarge.copyWith(color: AmoloodColors.textPrimary),
-    titleMedium: AppTypography.titleMedium.copyWith(color: AmoloodColors.textPrimary),
-    titleSmall: AppTypography.titleSmall.copyWith(color: AmoloodColors.textSecondary),
-    bodyLarge: AppTypography.bodyLarge.copyWith(color: AmoloodColors.textPrimary),
-    bodyMedium: AppTypography.bodyMedium.copyWith(color: AmoloodColors.textSecondary),
+    displayLarge:
+        AppTypography.displayLarge.copyWith(color: AmoloodColors.textPrimary),
+    displayMedium:
+        AppTypography.displayMedium.copyWith(color: AmoloodColors.textPrimary),
+    displaySmall:
+        AppTypography.displaySmall.copyWith(color: AmoloodColors.textPrimary),
+    headlineLarge:
+        AppTypography.headlineLarge.copyWith(color: AmoloodColors.textPrimary),
+    headlineMedium:
+        AppTypography.headlineMedium.copyWith(color: AmoloodColors.textPrimary),
+    headlineSmall:
+        AppTypography.headlineSmall.copyWith(color: AmoloodColors.textPrimary),
+    titleLarge:
+        AppTypography.titleLarge.copyWith(color: AmoloodColors.textPrimary),
+    titleMedium:
+        AppTypography.titleMedium.copyWith(color: AmoloodColors.textPrimary),
+    titleSmall:
+        AppTypography.titleSmall.copyWith(color: AmoloodColors.textSecondary),
+    bodyLarge:
+        AppTypography.bodyLarge.copyWith(color: AmoloodColors.textPrimary),
+    bodyMedium:
+        AppTypography.bodyMedium.copyWith(color: AmoloodColors.textSecondary),
     bodySmall: AppTypography.bodySmall.copyWith(color: AmoloodColors.textMuted),
-    labelLarge: AppTypography.labelLarge.copyWith(color: AmoloodColors.textPrimary),
-    labelMedium: AppTypography.labelMedium.copyWith(color: AmoloodColors.textSecondary),
-    labelSmall: AppTypography.labelSmall.copyWith(color: AmoloodColors.textMuted),
+    labelLarge:
+        AppTypography.labelLarge.copyWith(color: AmoloodColors.textPrimary),
+    labelMedium:
+        AppTypography.labelMedium.copyWith(color: AmoloodColors.textSecondary),
+    labelSmall:
+        AppTypography.labelSmall.copyWith(color: AmoloodColors.textMuted),
   );
 }
 

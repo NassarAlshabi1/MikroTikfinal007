@@ -55,7 +55,7 @@ Future<Dio> createCachedDio({
 /// Dio للأجهزة الضعيفة — timeouts أطول و retry محدود
 Future<Dio> createLowEndDio() async {
   final dio = await createCachedDio(
-    maxAge: const Duration(minutes: 10),  // cache أطول على الأجهزة الضعيفة
+    maxAge: const Duration(minutes: 10), // cache أطول على الأجهزة الضعيفة
     maxStale: const Duration(days: 1),
   );
   // timeouts أطول لأن المعالجة على الجهاز أبطأ

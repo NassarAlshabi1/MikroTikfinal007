@@ -23,79 +23,111 @@ import 'diagnostics_models.dart';
 /// مستوى خطورة حدث في الـ log
 enum LogSeverity {
   critical, // 🔴 خطير جداً
-  warning,  // 🟡 تحذير
-  info,     // 🟢 معلومات
-  debug,    // ⚪ تتبع
+  warning, // 🟡 تحذير
+  info, // 🟢 معلومات
+  debug, // ⚪ تتبع
 }
 
 extension LogSeverityX on LogSeverity {
   String get displayName {
     switch (this) {
-      case LogSeverity.critical: return 'حرج';
-      case LogSeverity.warning:  return 'تحذير';
-      case LogSeverity.info:     return 'معلومة';
-      case LogSeverity.debug:    return 'تتبع';
+      case LogSeverity.critical:
+        return 'حرج';
+      case LogSeverity.warning:
+        return 'تحذير';
+      case LogSeverity.info:
+        return 'معلومة';
+      case LogSeverity.debug:
+        return 'تتبع';
     }
   }
 
   String get emoji {
     switch (this) {
-      case LogSeverity.critical: return '🔴';
-      case LogSeverity.warning:  return '🟡';
-      case LogSeverity.info:     return '🟢';
-      case LogSeverity.debug:    return '⚪';
+      case LogSeverity.critical:
+        return '🔴';
+      case LogSeverity.warning:
+        return '🟡';
+      case LogSeverity.info:
+        return '🟢';
+      case LogSeverity.debug:
+        return '⚪';
     }
   }
 }
 
 /// فئة حدث في الـ log
 enum LogCategory {
-  security,        // هجمات، تسجيل دخول فاشل، firewall drops
-  system,          // إعادة تشغيل، تحديثات، أخطاء kernel
-  interface,       // وصلة منقطعة، link down/up
-  dhcp,            // تعارض IP، lease conflicts
-  wireless,        // roaming، ضعف إشارة
-  vpn,             // فشل اتصال IPsec/OpenVPN
-  routing,         // BGP/OSPF flapping، route loss
-  hotspot,         // login failed، session timeout
-  queue,           // queue overflow، PCQ issues
-  dns,             // DNS failures، cache issues
-  hardware,        // درجة حرارة، voltage، fan
-  other,           // غير مصنّف
+  security, // هجمات، تسجيل دخول فاشل، firewall drops
+  system, // إعادة تشغيل، تحديثات، أخطاء kernel
+  interface, // وصلة منقطعة، link down/up
+  dhcp, // تعارض IP، lease conflicts
+  wireless, // roaming، ضعف إشارة
+  vpn, // فشل اتصال IPsec/OpenVPN
+  routing, // BGP/OSPF flapping، route loss
+  hotspot, // login failed، session timeout
+  queue, // queue overflow، PCQ issues
+  dns, // DNS failures، cache issues
+  hardware, // درجة حرارة، voltage، fan
+  other, // غير مصنّف
 }
 
 extension LogCategoryX on LogCategory {
   String get displayName {
     switch (this) {
-      case LogCategory.security:    return 'أمن';
-      case LogCategory.system:      return 'نظام';
-      case LogCategory.interface:   return 'واجهة';
-      case LogCategory.dhcp:        return 'DHCP';
-      case LogCategory.wireless:    return 'لاسلكي';
-      case LogCategory.vpn:         return 'VPN';
-      case LogCategory.routing:     return 'توجيه';
-      case LogCategory.hotspot:     return 'Hotspot';
-      case LogCategory.queue:       return 'QoS';
-      case LogCategory.dns:         return 'DNS';
-      case LogCategory.hardware:    return 'عتاد';
-      case LogCategory.other:       return 'أخرى';
+      case LogCategory.security:
+        return 'أمن';
+      case LogCategory.system:
+        return 'نظام';
+      case LogCategory.interface:
+        return 'واجهة';
+      case LogCategory.dhcp:
+        return 'DHCP';
+      case LogCategory.wireless:
+        return 'لاسلكي';
+      case LogCategory.vpn:
+        return 'VPN';
+      case LogCategory.routing:
+        return 'توجيه';
+      case LogCategory.hotspot:
+        return 'Hotspot';
+      case LogCategory.queue:
+        return 'QoS';
+      case LogCategory.dns:
+        return 'DNS';
+      case LogCategory.hardware:
+        return 'عتاد';
+      case LogCategory.other:
+        return 'أخرى';
     }
   }
 
   String get emoji {
     switch (this) {
-      case LogCategory.security:    return '🛡️';
-      case LogCategory.system:      return '⚙️';
-      case LogCategory.interface:   return '🔗';
-      case LogCategory.dhcp:        return '🌐';
-      case LogCategory.wireless:    return '📶';
-      case LogCategory.vpn:         return '🔐';
-      case LogCategory.routing:     return '🗺️';
-      case LogCategory.hotspot:     return '📡';
-      case LogCategory.queue:       return '📊';
-      case LogCategory.dns:         return '🔤';
-      case LogCategory.hardware:    return '🔌';
-      case LogCategory.other:       return '📌';
+      case LogCategory.security:
+        return '🛡️';
+      case LogCategory.system:
+        return '⚙️';
+      case LogCategory.interface:
+        return '🔗';
+      case LogCategory.dhcp:
+        return '🌐';
+      case LogCategory.wireless:
+        return '📶';
+      case LogCategory.vpn:
+        return '🔐';
+      case LogCategory.routing:
+        return '🗺️';
+      case LogCategory.hotspot:
+        return '📡';
+      case LogCategory.queue:
+        return '📊';
+      case LogCategory.dns:
+        return '🔤';
+      case LogCategory.hardware:
+        return '🔌';
+      case LogCategory.other:
+        return '📌';
     }
   }
 }
@@ -106,11 +138,11 @@ class AnalyzedLogEvent {
   final String rawLine;
   final LogSeverity severity;
   final LogCategory category;
-  final String topic;       // موضوع محدد (مثلاً "Failed SSH login")
-  final String? source;     // عنوان IP أو interface
+  final String topic; // موضوع محدد (مثلاً "Failed SSH login")
+  final String? source; // عنوان IP أو interface
   final DateTime? timestamp;
   final String? recommendation; // توصية إصلاح (إن أمكن)
-  final List<String> tags;  // وسوم إضافية للبحث
+  final List<String> tags; // وسوم إضافية للبحث
 
   const AnalyzedLogEvent({
     required this.rawLine,
@@ -132,9 +164,9 @@ class LogAnalysisResult {
   final DateTime analyzedAt;
   final Map<LogSeverity, int> severityCounts;
   final Map<LogCategory, int> categoryCounts;
-  final List<String> topIssues;       // أهم المشاكل المكتشفة
+  final List<String> topIssues; // أهم المشاكل المكتشفة
   final List<String> recommendations; // توصيات للإصلاح
-  final String summary;               // ملخص نصي
+  final String summary; // ملخص نصي
 
   const LogAnalysisResult({
     required this.events,
@@ -179,8 +211,18 @@ class MikrotikLogAnalyzer {
   static final RegExp _timestampPattern =
       RegExp(r'(\w{3})/(\d{1,2})/(\d{4})\s+(\d{2}:\d{2}:\d{2})');
   static const List<String> _months = [
-    'jan', 'feb', 'mar', 'apr', 'may', 'jun',
-    'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+    'jan',
+    'feb',
+    'mar',
+    'apr',
+    'may',
+    'jun',
+    'jul',
+    'aug',
+    'sep',
+    'oct',
+    'nov',
+    'dec',
   ];
 
   /// يجمع الـ logs من الراوتر عبر SSH أو RouterOS API
@@ -214,7 +256,8 @@ class MikrotikLogAnalyzer {
   ///
   /// يمكن تمرير logs من MikrotikSnapshot.logs أو من collectLogs()
   static LogAnalysisResult analyze(String rawLogs) {
-    final lines = rawLogs.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    final lines =
+        rawLogs.split('\n').where((l) => l.trim().isNotEmpty).toList();
     final events = <AnalyzedLogEvent>[];
     final severityCounts = <LogSeverity, int>{};
     final categoryCounts = <LogCategory, int>{};
@@ -225,8 +268,10 @@ class MikrotikLogAnalyzer {
       final event = _analyzeLine(line);
       if (event != null) {
         events.add(event);
-        severityCounts[event.severity] = (severityCounts[event.severity] ?? 0) + 1;
-        categoryCounts[event.category] = (categoryCounts[event.category] ?? 0) + 1;
+        severityCounts[event.severity] =
+            (severityCounts[event.severity] ?? 0) + 1;
+        categoryCounts[event.category] =
+            (categoryCounts[event.category] ?? 0) + 1;
         if (event.recommendation != null) {
           recommendations.add(event.recommendation!);
         }
@@ -236,7 +281,8 @@ class MikrotikLogAnalyzer {
     // تجميع أهم المشاكل (top 5)
     final groupedIssues = <String, int>{};
     for (final e in events.where((e) =>
-        e.severity == LogSeverity.critical || e.severity == LogSeverity.warning)) {
+        e.severity == LogSeverity.critical ||
+        e.severity == LogSeverity.warning)) {
       groupedIssues[e.topic] = (groupedIssues[e.topic] ?? 0) + 1;
     }
     final sortedIssues = groupedIssues.entries.toList()
@@ -287,8 +333,10 @@ class MikrotikLogAnalyzer {
         if (monthIdx >= 0) {
           final day = int.parse(tsMatch1.group(2)!);
           final year = int.parse(tsMatch1.group(3)!);
-          final timeParts = tsMatch1.group(4)!.split(':').map(int.parse).toList();
-          ts = DateTime(year, monthIdx + 1, day, timeParts[0], timeParts[1], timeParts[2]);
+          final timeParts =
+              tsMatch1.group(4)!.split(':').map(int.parse).toList();
+          ts = DateTime(year, monthIdx + 1, day, timeParts[0], timeParts[1],
+              timeParts[2]);
         }
       } on FormatException {
         // تجاهل أخطاء parse — ليست مهمة
@@ -309,7 +357,8 @@ class MikrotikLogAnalyzer {
         topic: 'محاولة تسجيل دخول فاشلة',
         source: source,
         timestamp: ts,
-        recommendation: 'فعّل limit على /ip firewall filter للـ SSH/Winbox/API. '
+        recommendation:
+            'فعّل limit على /ip firewall filter للـ SSH/Winbox/API. '
             'اقتراح: add chain=input protocol=tcp dst-port=22 action=add-src-to-address-list '
             'address-list=ssh_blacklist address-list-timeout=1d',
         tags: ['brute-force', ...tags],
@@ -329,7 +378,8 @@ class MikrotikLogAnalyzer {
       );
     }
 
-    if (lower.contains('firewall') && (lower.contains('drop') || lower.contains('reject'))) {
+    if (lower.contains('firewall') &&
+        (lower.contains('drop') || lower.contains('reject'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.info,
@@ -354,14 +404,16 @@ class MikrotikLogAnalyzer {
       );
     }
 
-    if (lower.contains('kernel') && (lower.contains('error') || lower.contains('panic'))) {
+    if (lower.contains('kernel') &&
+        (lower.contains('error') || lower.contains('panic'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.critical,
         category: LogCategory.system,
         topic: 'خطأ في kernel',
         timestamp: ts,
-        recommendation: 'حدّث RouterOS لأحدث إصدار stable. أبلغ عن الـ panic إذا تكرر.',
+        recommendation:
+            'حدّث RouterOS لأحدث إصدار stable. أبلغ عن الـ panic إذا تكرر.',
         tags: tags,
       );
     }
@@ -373,7 +425,8 @@ class MikrotikLogAnalyzer {
         category: LogCategory.system,
         topic: 'نفاد الذاكرة (OOM)',
         timestamp: ts,
-        recommendation: 'قلّل connection-tracking active-max. راجع /tool profile print.',
+        recommendation:
+            'قلّل connection-tracking active-max. راجع /tool profile print.',
         tags: tags,
       );
     }
@@ -386,7 +439,8 @@ class MikrotikLogAnalyzer {
         category: LogCategory.interface,
         topic: 'انقطاع وصلة (link down)',
         timestamp: ts,
-        recommendation: 'تحقق من الكابل و PoE. راجع /interface ethernet monitor.',
+        recommendation:
+            'تحقق من الكابل و PoE. راجع /interface ethernet monitor.',
         tags: tags,
       );
     }
@@ -403,7 +457,8 @@ class MikrotikLogAnalyzer {
     }
 
     // 4. DHCP — conflicts, lease issues
-    if (lower.contains('dhcp') && (lower.contains('conflict') || lower.contains('duplicate'))) {
+    if (lower.contains('dhcp') &&
+        (lower.contains('conflict') || lower.contains('duplicate'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.warning,
@@ -411,7 +466,8 @@ class MikrotikLogAnalyzer {
         topic: 'تعارض DHCP',
         source: source,
         timestamp: ts,
-        recommendation: 'فعّل /ip dhcp-server configuration add-conflicts-to-conflict-list=yes',
+        recommendation:
+            'فعّل /ip dhcp-server configuration add-conflicts-to-conflict-list=yes',
         tags: tags,
       );
     }
@@ -430,7 +486,8 @@ class MikrotikLogAnalyzer {
     }
 
     // 5. WIRELESS — signal, roaming
-    if (lower.contains('wireless') && (lower.contains('disconnect') || lower.contains('deauth'))) {
+    if (lower.contains('wireless') &&
+        (lower.contains('disconnect') || lower.contains('deauth'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.info,
@@ -443,8 +500,13 @@ class MikrotikLogAnalyzer {
     }
 
     // 6. VPN — IPsec/OpenVPN failures
-    if ((lower.contains('ipsec') || lower.contains('openvpn') || lower.contains('l2tp') || lower.contains('sstp')) &&
-        (lower.contains('fail') || lower.contains('error') || lower.contains('timeout'))) {
+    if ((lower.contains('ipsec') ||
+            lower.contains('openvpn') ||
+            lower.contains('l2tp') ||
+            lower.contains('sstp')) &&
+        (lower.contains('fail') ||
+            lower.contains('error') ||
+            lower.contains('timeout'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.warning,
@@ -452,14 +514,17 @@ class MikrotikLogAnalyzer {
         topic: 'فشل اتصال VPN',
         source: source,
         timestamp: ts,
-        recommendation: 'تحقق من مفاتيح IPsec / شهادات OpenVPN / NAT traversal.',
+        recommendation:
+            'تحقق من مفاتيح IPsec / شهادات OpenVPN / NAT traversal.',
         tags: tags,
       );
     }
 
     // 7. ROUTING — BGP/OSPF flapping
     if ((lower.contains('bgp') || lower.contains('ospf')) &&
-        (lower.contains('down') || lower.contains('lost') || lower.contains('flap'))) {
+        (lower.contains('down') ||
+            lower.contains('lost') ||
+            lower.contains('flap'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.warning,
@@ -473,7 +538,8 @@ class MikrotikLogAnalyzer {
     }
 
     // 8. HOTSPOT — login failed, session timeout
-    if (lower.contains('hotspot') && (lower.contains('login') || lower.contains('timeout'))) {
+    if (lower.contains('hotspot') &&
+        (lower.contains('login') || lower.contains('timeout'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.info,
@@ -486,8 +552,12 @@ class MikrotikLogAnalyzer {
     }
 
     // 9. HARDWARE — temperature, voltage, fan
-    if (lower.contains('temperature') || lower.contains('voltage') || lower.contains('fan')) {
-      final sev = lower.contains('high') || lower.contains('critical') || lower.contains('over')
+    if (lower.contains('temperature') ||
+        lower.contains('voltage') ||
+        lower.contains('fan')) {
+      final sev = lower.contains('high') ||
+              lower.contains('critical') ||
+              lower.contains('over')
           ? LogSeverity.critical
           : LogSeverity.warning;
       return AnalyzedLogEvent(
@@ -496,13 +566,15 @@ class MikrotikLogAnalyzer {
         category: LogCategory.hardware,
         topic: 'تنبيه عتاد',
         timestamp: ts,
-        recommendation: 'راجع /system health print. تحقق من التهوية ومصدر الطاقة.',
+        recommendation:
+            'راجع /system health print. تحقق من التهوية ومصدر الطاقة.',
         tags: tags,
       );
     }
 
     // 10. DNS failures
-    if (lower.contains('dns') && (lower.contains('fail') || lower.contains('timeout'))) {
+    if (lower.contains('dns') &&
+        (lower.contains('fail') || lower.contains('timeout'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.warning,
@@ -515,7 +587,8 @@ class MikrotikLogAnalyzer {
     }
 
     // 11. QUEUE overflow
-    if (lower.contains('queue') && (lower.contains('overflow') || lower.contains('drop'))) {
+    if (lower.contains('queue') &&
+        (lower.contains('overflow') || lower.contains('drop'))) {
       return AnalyzedLogEvent(
         rawLine: line,
         severity: LogSeverity.warning,
@@ -605,7 +678,8 @@ class MikrotikLogAnalyzer {
       final sortedCats = categoryCounts.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value));
       for (final cat in sortedCats) {
-        buffer.writeln('   ${cat.key.emoji} ${cat.key.displayName}: ${cat.value}');
+        buffer.writeln(
+            '   ${cat.key.emoji} ${cat.key.displayName}: ${cat.value}');
       }
     }
 
@@ -634,9 +708,11 @@ class MikrotikLogAnalyzer {
     if (criticalEvents.isNotEmpty) {
       buffer.writeln('=== CRITICAL EVENTS (${criticalEvents.length}) ===');
       for (final e in criticalEvents) {
-        buffer.writeln('[${e.category.emoji} ${e.category.displayName}] ${e.topic}');
+        buffer.writeln(
+            '[${e.category.emoji} ${e.category.displayName}] ${e.topic}');
         if (e.source != null) buffer.writeln('  Source: ${e.source}');
-        buffer.writeln('  Raw: ${e.rawLine.substring(0, e.rawLine.length > 200 ? 200 : e.rawLine.length)}');
+        buffer.writeln(
+            '  Raw: ${e.rawLine.substring(0, e.rawLine.length > 200 ? 200 : e.rawLine.length)}');
       }
       buffer.writeln();
     }
@@ -649,7 +725,8 @@ class MikrotikLogAnalyzer {
     if (warningEvents.isNotEmpty) {
       buffer.writeln('=== WARNING EVENTS (${warningEvents.length}) ===');
       for (final e in warningEvents) {
-        buffer.writeln('[${e.category.emoji}] ${e.topic}: ${e.rawLine.substring(0, e.rawLine.length > 150 ? 150 : e.rawLine.length)}');
+        buffer.writeln(
+            '[${e.category.emoji}] ${e.topic}: ${e.rawLine.substring(0, e.rawLine.length > 150 ? 150 : e.rawLine.length)}');
       }
       buffer.writeln();
     }

@@ -25,8 +25,7 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
   }
 
   /// تحديث كرت
-  Future<bool> updateCard(Card card) =>
-      update(cards).replace(card);
+  Future<bool> updateCard(Card card) => update(cards).replace(card);
 
   /// حذف كرت
   Future<int> deleteCard(int id) =>
@@ -54,17 +53,14 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
 
   /// الكروت النشطة فقط
   Future<List<Card>> getActiveCards() =>
-      (select(cards)..where((c) => c.status.equals('active')))
-          .get();
+      (select(cards)..where((c) => c.status.equals('active'))).get();
 
   /// الكروت المنتهية
   Future<List<Card>> getExpiredCards() =>
-      (select(cards)..where((c) => c.status.equals('expired')))
-          .get();
+      (select(cards)..where((c) => c.status.equals('expired'))).get();
 
   /// الكروت المنتهية هذا الشهر
-  Future<List<Card>> getCardsExpiringBetween(
-      DateTime start, DateTime end) =>
+  Future<List<Card>> getCardsExpiringBetween(DateTime start, DateTime end) =>
       (select(cards)
             ..where((c) =>
                 c.expiresAt.isBetweenValues(start, end) &
@@ -72,13 +68,11 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
           .get();
 
   /// أعلى N مستخدمين استهلاكاً
-  Future<List<Card>> getTopConsumers(int limit) =>
-      (select(cards)
-            ..where((c) => c.status.equals('active'))
-            ..orderBy([(c) => OrderingTerm.desc(
-                c.uploadBytes + c.downloadBytes)])
-            ..limit(limit))
-          .get();
+  Future<List<Card>> getTopConsumers(int limit) => (select(cards)
+        ..where((c) => c.status.equals('active'))
+        ..orderBy([(c) => OrderingTerm.desc(c.uploadBytes + c.downloadBytes)])
+        ..limit(limit))
+      .get();
 
   // ============================================================
   //  Stream Queries (reactive — يتحدث تلقائياً عند تغيير البيانات)
@@ -86,18 +80,15 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
 
   /// Stream لكل الكروت (للـ reactive UI)
   Stream<List<Card>> watchAllCards() =>
-      (select(cards)..orderBy([(c) => OrderingTerm.desc(c.createdAt)]))
-          .watch();
+      (select(cards)..orderBy([(c) => OrderingTerm.desc(c.createdAt)])).watch();
 
   /// Stream للكروت النشطة
   Stream<List<Card>> watchActiveCards() =>
-      (select(cards)..where((c) => c.status.equals('active')))
-          .watch();
+      (select(cards)..where((c) => c.status.equals('active'))).watch();
 
   /// Stream لكرت واحد
   Stream<Card?> watchCardById(int id) =>
-      (select(cards)..where((c) => c.id.equals(id)))
-          .watchSingleOrNull();
+      (select(cards)..where((c) => c.id.equals(id))).watchSingleOrNull();
 
   // ============================================================
   //  Statistics (SQL aggregations — أسرع بكثير من Dart)
@@ -183,12 +174,10 @@ class CardsDao extends DatabaseAccessor<AppDatabase> with _$CardsDaoMixin {
   }
 
   /// حذف الكروت المنتهية قبل تاريخ محدد
-  Future<int> deleteExpiredBefore(DateTime date) =>
-      (delete(cards)
-            ..where((c) =>
-                c.status.equals('expired') &
-                c.expiresAt.isSmallerThanValue(date)))
-          .go();
+  Future<int> deleteExpiredBefore(DateTime date) => (delete(cards)
+        ..where((c) =>
+            c.status.equals('expired') & c.expiresAt.isSmallerThanValue(date)))
+      .go();
 }
 
 /// إحصائيات الكروت (من SQL aggregation)

@@ -7,7 +7,8 @@ void showErrorSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onSurface, size: 24),
+          Icon(Icons.error_outline,
+              color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -23,7 +24,7 @@ void showErrorSnackBar(BuildContext context, String message) {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       action: SnackBarAction(
         label: 'إغلاق',
         textColor: Theme.of(context).colorScheme.onSurface,
@@ -39,7 +40,8 @@ void showSuccessSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          Icon(Icons.check_circle_outline, color: Theme.of(context).colorScheme.onSurface, size: 24),
+          Icon(Icons.check_circle_outline,
+              color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

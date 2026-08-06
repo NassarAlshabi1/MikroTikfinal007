@@ -155,16 +155,19 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
               decoration: BoxDecoration(
                 color: colors.warningContainer,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: colors.warning.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: colors.warning, size: 20),
+                  Icon(Icons.warning_amber_rounded,
+                      color: colors.warning, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'الخطة تحتوي على تغييرات — سيُنشأ snapshot تلقائياً قبل التنفيذ.',
-                      style: TextStyle(fontSize: 12, color: colors.onWarningContainer),
+                      style: TextStyle(
+                          fontSize: 12, color: colors.onWarningContainer),
                     ),
                   ),
                 ],
@@ -207,8 +210,8 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
             children: [
               _buildStatItem(colors, Icons.build_circle, '${plan.length}',
                   'إصلاح', colors.primary),
-              _buildStatItem(colors, Icons.code, '${plan.totalCommands}',
-                  'أمر', colors.secondary),
+              _buildStatItem(colors, Icons.code, '${plan.totalCommands}', 'أمر',
+                  colors.secondary),
               _buildStatItem(colors, Icons.check_circle,
                   '${plan.autoApplySafeCount}', 'آمن تلقائي', colors.success),
             ],
@@ -218,8 +221,12 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
             children: [
               _buildStatItem(colors, Icons.dangerous, '${plan.dangerousCount}',
                   'خطير', colors.error),
-              _buildStatItem(colors, Icons.save, plan.needsSnapshot ? 'نعم' : 'لا',
-                  'snapshot', plan.needsSnapshot ? colors.warning : colors.success),
+              _buildStatItem(
+                  colors,
+                  Icons.save,
+                  plan.needsSnapshot ? 'نعم' : 'لا',
+                  'snapshot',
+                  plan.needsSnapshot ? colors.warning : colors.success),
               _buildStatItem(colors, Icons.category,
                   '${plan.categoriesPresent.length}', 'فئات', colors.info),
             ],
@@ -277,12 +284,18 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
         ),
         title: Row(
           children: [
-            Text('$idx. ', style: TextStyle(
-                fontWeight: FontWeight.bold, color: colors.textTertiary, fontSize: 12)),
+            Text('$idx. ',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colors.textTertiary,
+                    fontSize: 12)),
             Expanded(
               child: Text(
                 fix.title,
-                style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    fontSize: 13,
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w500),
               ),
             ),
           ],
@@ -297,7 +310,8 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
               ),
               child: Text(
                 fix.risk.displayName,
-                style: TextStyle(fontSize: 9, color: riskColor, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 9, color: riskColor, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 6),
@@ -436,7 +450,8 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
                       const SizedBox(height: 2),
                       Text(
                         'نجاح: ${result.successCount} | فشل: ${result.failureCount} من ${result.plan.length}',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        style: TextStyle(
+                            fontSize: 12, color: colors.textSecondary),
                       ),
                     ],
                   ),
@@ -465,7 +480,7 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
                     ),
                   ),
                   Text(
-                    '${result.snapshot!.createdAt.toLocal().toString().substring(0, 19)}',
+                    result.snapshot!.createdAt.toLocal().toString().substring(0, 19),
                     style: TextStyle(fontSize: 10, color: colors.textSecondary),
                   ),
                 ],
@@ -521,7 +536,8 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
                   const SizedBox(height: 6),
                   Text(
                     'اضغط زر "استعادة" بالأسفل لتنفيذ rollback من الـ snapshot.',
-                    style: TextStyle(fontSize: 12, color: colors.onErrorContainer),
+                    style:
+                        TextStyle(fontSize: 12, color: colors.onErrorContainer),
                   ),
                 ],
               ),
@@ -557,7 +573,10 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
               children: [
                 Text(
                   '$idx. ${fix.title}',
-                  style: TextStyle(fontSize: 12, color: colors.textPrimary, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w500),
                 ),
                 Text(
                   '✅ ${res.successCount} نجح، ❌ ${res.failureCount} فشل • ${res.totalElapsed.inMilliseconds}ms',
@@ -578,7 +597,8 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+          borderRadius:
+              const BorderRadius.vertical(bottom: Radius.circular(28)),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -620,7 +640,8 @@ class _FixPlanDialogState extends ConsumerState<FixPlanDialog> {
             TextButton.icon(
               onPressed: _showDryRun,
               icon: Icon(Icons.science_outlined, color: colors.info),
-              label: Text('معاينة (dry-run)', style: TextStyle(color: colors.info)),
+              label: Text('معاينة (dry-run)',
+                  style: TextStyle(color: colors.info)),
             ),
             const SizedBox(width: 8),
             FilledButton.icon(

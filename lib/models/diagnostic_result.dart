@@ -1,4 +1,3 @@
-
 class DiagnosticResult {
   final ConnectivityStatus connectivity;
   final SystemResources resources;
@@ -158,8 +157,7 @@ class SystemResources {
         memoryTotal: json['memoryTotal'] ?? '',
         memoryUsage: json['memoryUsage'],
         uptime: json['uptime'] ?? '',
-        performanceIssues:
-            List<String>.from(json['performanceIssues'] ?? []),
+        performanceIssues: List<String>.from(json['performanceIssues'] ?? []),
       );
 }
 
@@ -244,8 +242,7 @@ class SecurityStatus {
         'issues': issues,
       };
 
-  factory SecurityStatus.fromJson(Map<String, dynamic> json) =>
-      SecurityStatus(
+  factory SecurityStatus.fromJson(Map<String, dynamic> json) => SecurityStatus(
         failedLogins: json['failedLogins'],
         firewallRules: json['firewallRules'],
         enabledServices: List<String>.from(json['enabledServices']),

@@ -1,7 +1,6 @@
 // ملف: pdf_generator.dart
 
 import 'dart:io';
-import 'dart:typed_data';
 // --- ✨ إصلاح: تم تصحيح الأخطاء الإملائية في الـ import ---
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +10,6 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'pdf_templates_screen.dart';
-
 
 Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   final cardUsernames = data['cardUsernames'] as List<String>;
@@ -24,14 +22,13 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   final markerWidthRatio = data['markerWidthRatio'] as double;
   final markerHeightRatio = data['markerHeightRatio'] as double;
 
-
   final doc = pw.Document();
   final imageBytes = await File(imagePath).readAsBytes();
   final imageProvider = pw.MemoryImage(imageBytes);
 
   int step = cardsPerPage;
   for (var i = 0; i < cardUsernames.length || i == 0; i += step) {
-     if (i > cardUsernames.length && i!=0) break;
+    if (i > cardUsernames.length && i != 0) break;
 
     final pageCards = cardUsernames.sublist(
         i, i + step > cardUsernames.length ? cardUsernames.length : i + step);
@@ -41,7 +38,6 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
         margin: const pw.EdgeInsets.all(20),
         pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
-
           final List<pw.Widget> gridChildren = [];
 
           for (var user in pageCards) {
@@ -75,7 +71,7 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
                             child: pw.Text(
                               user,
                               textAlign: pw.TextAlign.center,
-                              style: pw.TextStyle(
+                              style: const pw.TextStyle(
                                 color: PdfColors.black,
                                 fontSize: 10,
                               ),
@@ -95,7 +91,6 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
             gridChildren.add(pw.SizedBox.shrink());
           }
 
-
           return pw.GridView(
             crossAxisSpacing: 5,
             mainAxisSpacing: 5,
@@ -110,7 +105,6 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
 
   return doc.save();
 }
-
 
 class PdfGenerator {
   static Future<void> sharePdf(
@@ -139,12 +133,13 @@ class PdfGenerator {
 
       final pdfBytes = await compute(_generatePdfInBackground, generationData);
 
-      if(context.mounted) Navigator.of(context).pop();
+      if (context.mounted) Navigator.of(context).pop();
       await Printing.sharePdf(bytes: pdfBytes, filename: 'wifi-cards.pdf');
     } catch (e) {
-      if(context.mounted) {
+      if (context.mounted) {
         Navigator.of(context).pop();
-        showErrorSnackBar(context, 'فشل إنشاء ملف PDF. تأكد من القالب وصلاحية الصورة.');
+        showErrorSnackBar(
+            context, 'فشل إنشاء ملف PDF. تأكد من القالب وصلاحية الصورة.');
       }
     }
   }
@@ -182,7 +177,8 @@ class PdfGenerator {
       final file = File(savePath);
       await file.writeAsBytes(pdfBytes, flush: true);
 
-      if (context.mounted) Navigator.of(context).pop();
+      if (!context.mounted) return null;
+      Navigator.of(context).pop();
       showSuccessSnackBar(context, 'تم حفظ PDF في: $savePath');
       return savePath;
     } catch (e) {

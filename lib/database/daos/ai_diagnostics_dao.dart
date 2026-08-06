@@ -38,21 +38,18 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
 
   /// كل الجلسات (مرتبة بالأحدث)
   Future<List<AiDiagnostic>> getAllDiagnostics() =>
-      (select(aiDiagnostics)
-            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
+      (select(aiDiagnostics)..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .get();
 
   /// جلسة واحدة بالـ ID
   Future<AiDiagnostic?> getDiagnosticById(int id) =>
-      (select(aiDiagnostics)..where((d) => d.id.equals(id)))
-          .getSingleOrNull();
+      (select(aiDiagnostics)..where((d) => d.id.equals(id))).getSingleOrNull();
 
   /// الجلسات المفضلة فقط
-  Future<List<AiDiagnostic>> getFavoriteDiagnostics() =>
-      (select(aiDiagnostics)
-            ..where((d) => d.isFavorite.equals(true))
-            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
-          .get();
+  Future<List<AiDiagnostic>> getFavoriteDiagnostics() => (select(aiDiagnostics)
+        ..where((d) => d.isFavorite.equals(true))
+        ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
+      .get();
 
   /// الجلسات حسب الـ mode
   Future<List<AiDiagnostic>> getDiagnosticsByMode(String mode) =>
@@ -72,8 +69,7 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
   Future<List<AiDiagnostic>> searchDiagnostics(String query) =>
       (select(aiDiagnostics)
             ..where((d) =>
-                d.userQuery.like('%$query%') |
-                d.aiResponse.like('%$query%'))
+                d.userQuery.like('%$query%') | d.aiResponse.like('%$query%'))
             ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .get();
 
@@ -82,8 +78,7 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
   // ============================================================
 
   Stream<List<AiDiagnostic>> watchAllDiagnostics() =>
-      (select(aiDiagnostics)
-            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
+      (select(aiDiagnostics)..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
           .watch();
 
   Stream<List<AiDiagnostic>> watchFavoriteDiagnostics() =>
@@ -154,10 +149,9 @@ class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
   // ============================================================
 
   /// حذف الجلسات الأقدم من تاريخ محدد (للحفاظ على حجم الـ DB)
-  Future<int> deleteOlderThan(DateTime date) =>
-      (delete(aiDiagnostics)
-            ..where((d) => d.startedAt.isSmallerThanValue(date)))
-          .go();
+  Future<int> deleteOlderThan(DateTime date) => (delete(aiDiagnostics)
+        ..where((d) => d.startedAt.isSmallerThanValue(date)))
+      .go();
 
   /// الاحتفاظ بآخر N جلسة فقط (حذف الباقي)
   Future<void> keepOnlyLatest(int keepCount) async {

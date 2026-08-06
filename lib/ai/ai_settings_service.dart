@@ -30,8 +30,10 @@ class AiSettingsService {
   Future<AiSettings> load() async {
     try {
       final apiKey = await _storage.read(key: _keyApiKey) ?? '';
-      final providerStr = await _storage.read(key: _keyProvider) ?? 'openRouter';
-      final model = await _storage.read(key: _keyModel) ?? 'google/gemini-2.5-flash';
+      final providerStr =
+          await _storage.read(key: _keyProvider) ?? 'openRouter';
+      final model =
+          await _storage.read(key: _keyModel) ?? 'google/gemini-2.5-flash';
       final baseUrl = await _storage.read(key: _keyBaseUrl);
       final methodStr =
           await _storage.read(key: _keyConnectionMethod) ?? 'routerOS';
@@ -79,7 +81,8 @@ class AiSettingsService {
       await _storage.write(key: _keyMode, value: settings.mode.name);
       await _storage.write(
           key: _keyAgenticMaxSteps, value: settings.agenticMaxSteps.toString());
-      debugPrint('[AiSettingsService] Settings saved (mode=${settings.mode.name})');
+      debugPrint(
+          '[AiSettingsService] Settings saved (mode=${settings.mode.name})');
     } catch (e) {
       debugPrint('[AiSettingsService] Save error: $e');
       rethrow;

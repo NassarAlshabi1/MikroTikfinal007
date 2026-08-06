@@ -77,7 +77,8 @@ class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
 
   Future<void> setBaseUrl(String baseUrl) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings = current.copyWith(baseUrl: baseUrl.isEmpty ? null : baseUrl);
+    final newSettings =
+        current.copyWith(baseUrl: baseUrl.isEmpty ? null : baseUrl);
     state = AsyncData(newSettings);
     await AiSettingsService.instance.save(newSettings);
   }
@@ -122,7 +123,8 @@ final historyManagerProvider =
   return HistoryManager();
 });
 
-class HistoryManager extends StateNotifier<AsyncValue<List<DiagnosticSession>>> {
+class HistoryManager
+    extends StateNotifier<AsyncValue<List<DiagnosticSession>>> {
   HistoryManager() : super(const AsyncValue.loading()) {
     _load();
   }
@@ -151,7 +153,8 @@ class HistoryManager extends StateNotifier<AsyncValue<List<DiagnosticSession>>> 
 
 final diagnosticsProvider =
     StateNotifierProvider<DiagnosticsNotifier, DiagnosticsState>((ref) {
-  final settings = ref.watch(aiSettingsProvider).valueOrNull ?? AiSettings.default_;
+  final settings =
+      ref.watch(aiSettingsProvider).valueOrNull ?? AiSettings.default_;
   // نمرّر ref للـ notifier لكي يستطيع تحديث الـ historyManagerProvider
   return DiagnosticsNotifier(settings, ref);
 });
@@ -270,7 +273,8 @@ class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
           loadingStage: 'جاري عمل backup قبل التنفيذ...',
         );
         final backupScript = ScriptExecutor.createBackupScript(
-          label: 'before-${script.category ?? "fix"}-${DateTime.now().millisecondsSinceEpoch}',
+          label:
+              'before-${script.category ?? "fix"}-${DateTime.now().millisecondsSinceEpoch}',
         );
         for (final cmd in backupScript.commands) {
           try {

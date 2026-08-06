@@ -27,10 +27,9 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
   // ============================================================
 
   /// كل الأوامر (مرتبة بالأحدث)
-  Future<List<ExecutedCommand>> getAllCommands() =>
-      (select(executedCommands)
-            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
-          .get();
+  Future<List<ExecutedCommand>> getAllCommands() => (select(executedCommands)
+        ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
+      .get();
 
   /// آخر N أمر
   Future<List<ExecutedCommand>> getRecentCommands(int limit) =>
@@ -47,11 +46,10 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
           .get();
 
   /// الأوامر الفاشلة فقط
-  Future<List<ExecutedCommand>> getFailedCommands() =>
-      (select(executedCommands)
-            ..where((c) => c.success.equals(false))
-            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
-          .get();
+  Future<List<ExecutedCommand>> getFailedCommands() => (select(executedCommands)
+        ..where((c) => c.success.equals(false))
+        ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
+      .get();
 
   /// الأوامر حسب مستوى الخطورة
   Future<List<ExecutedCommand>> getCommandsByRisk(String riskLevel) =>
@@ -71,10 +69,9 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
   //  Stream
   // ============================================================
 
-  Stream<List<ExecutedCommand>> watchAllCommands() =>
-      (select(executedCommands)
-            ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
-          .watch();
+  Stream<List<ExecutedCommand>> watchAllCommands() => (select(executedCommands)
+        ..orderBy([(c) => OrderingTerm.desc(c.executedAt)]))
+      .watch();
 
   Stream<List<ExecutedCommand>> watchRecentCommands(int limit) =>
       (select(executedCommands)
@@ -157,10 +154,9 @@ class ExecutedCommandsDao extends DatabaseAccessor<AppDatabase>
   // ============================================================
 
   /// حذف الأوامر الأقدم من تاريخ محدد
-  Future<int> deleteOlderThan(DateTime date) =>
-      (delete(executedCommands)
-            ..where((c) => c.executedAt.isSmallerThanValue(date)))
-          .go();
+  Future<int> deleteOlderThan(DateTime date) => (delete(executedCommands)
+        ..where((c) => c.executedAt.isSmallerThanValue(date)))
+      .go();
 }
 
 class CommandsStatistics {

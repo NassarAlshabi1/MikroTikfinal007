@@ -28,7 +28,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     try {
       client = await MikrotikConnector.connect();
       final response = await client.talk(['/file/print']);
-      
+
       if (mounted) {
         setState(() {
           _backups = response
@@ -38,7 +38,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               })
               .map((file) => Map<String, dynamic>.from(file))
               .toList();
-          
+
           _backups.sort((a, b) {
             final timeA = a['creation-time']?.toString() ?? '';
             final timeB = b['creation-time']?.toString() ?? '';
@@ -59,6 +59,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   Future<void> _createNewBackup() async {
     final backupName = await _showBackupNameDialog();
     if (backupName == null || backupName.isEmpty) return;
+    if (!mounted) return;
 
     setState(() => _isCreatingBackup = true);
 
@@ -71,14 +72,15 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(context.theme.appColors.onPrimary),
+                valueColor:
+                    AlwaysStoppedAnimation(context.theme.appColors.onPrimary),
               ),
             ),
             const SizedBox(width: 16),
-            Text('جاري إنشاء النسخة الاحتياطية...'),
+            const Text('جاري إنشاء النسخة الاحتياطية...'),
           ],
         ),
-        duration: Duration(minutes: 5),
+        duration: const Duration(minutes: 5),
       ),
     );
 
@@ -113,7 +115,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
   Future<String?> _showBackupNameDialog() async {
     final TextEditingController controller = TextEditingController(
-      text: 'backup_${DateTime.now().day}-${DateTime.now().month}_${DateTime.now().hour}-${DateTime.now().minute}',
+      text:
+          'backup_${DateTime.now().day}-${DateTime.now().month}_${DateTime.now().hour}-${DateTime.now().minute}',
     );
 
     return showDialog<String>(
@@ -163,7 +166,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: Icon(Icons.info_outline, color: context.theme.appColors.info),
+              leading:
+                  Icon(Icons.info_outline, color: context.theme.appColors.info),
               title: const Text('معلومات النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -171,7 +175,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.restore, color: context.theme.appColors.warning),
+              leading:
+                  Icon(Icons.restore, color: context.theme.appColors.warning),
               title: const Text('استعادة النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -208,7 +213,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
             const SizedBox(height: 8),
             _buildInfoRow('الحجم', '${backup['size'] ?? '0'} بايت'),
             const SizedBox(height: 8),
-            _buildInfoRow('تاريخ الإنشاء', backup['creation-time'] ?? 'غير معروف'),
+            _buildInfoRow(
+                'تاريخ الإنشاء', backup['creation-time'] ?? 'غير معروف'),
           ],
         ),
         actions: [
@@ -244,7 +250,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           children: [
             Icon(Icons.warning, color: context.theme.appColors.warning),
             const SizedBox(width: 8),
-            Text('تحذير'),
+            const Text('تحذير'),
           ],
         ),
         content: const Text(
@@ -279,7 +285,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ]);
 
       if (mounted) {
-        showSuccessSnackBar(context, 'تم بدء عملية الاستعادة. سيعيد الراوتر التشغيل الآن...');
+        showSuccessSnackBar(
+            context, 'تم بدء عملية الاستعادة. سيعيد الراوتر التشغيل الآن...');
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
@@ -397,7 +404,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
     final isUserManager = type == 'user manager database';
     final backupType = isUserManager ? 'يوزر متجر' : 'ويوكس';
-    final typeColor = isUserManager ? context.theme.appColors.success : context.theme.appColors.secondary;
+    final typeColor = isUserManager
+        ? context.theme.appColors.success
+        : context.theme.appColors.secondary;
 
     final timeAgo = _calculateTimeAgo(creationTime);
 
@@ -407,7 +416,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         : '${sizeKB.toStringAsFixed(2)} ك.ب';
 
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -438,7 +447,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                     Text(
                       backupType,
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface,
+                        color: Theme.of(context).textTheme.bodySmall?.color ??
+                            Theme.of(context).colorScheme.onSurface,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -461,7 +471,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       child: Text(
                         name,
                         style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface,
+                          color:
+                              Theme.of(context).textTheme.bodyMedium?.color ??
+                                  Theme.of(context).colorScheme.onSurface,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -479,13 +491,18 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: context.theme.appColors.secondary.withValues(alpha: 0.3),
+                            color: context.theme.appColors.secondary
+                                .withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             sizeText,
                             style: TextStyle(
-                              color: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).textTheme.bodySmall?.color,
+                              color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color ??
+                                  Theme.of(context).textTheme.bodySmall?.color,
                               fontSize: 12,
                             ),
                           ),
@@ -497,11 +514,16 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       children: [
                         const Icon(Icons.access_time,
                             size: 16, color: null), // استخدام اللون الافتراضي
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           timeAgo,
                           style: TextStyle(
-                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Theme.of(context).textTheme.bodySmall?.color,
+                            color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                Theme.of(context).textTheme.bodySmall?.color,
                             fontSize: 12,
                           ),
                         ),
@@ -511,7 +533,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.more_vert, color: Theme.of(context).iconTheme.color),
+                icon: Icon(Icons.more_vert,
+                    color: Theme.of(context).iconTheme.color),
                 onPressed: () => _showBackupOptions(backup),
               ),
             ],
@@ -548,7 +571,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
             const SizedBox(height: 16),
             Text(
               'لا توجد نسخ احتياطية',
-              style: TextStyle(fontSize: 20, color: context.theme.appColors.muted),
+              style:
+                  TextStyle(fontSize: 20, color: context.theme.appColors.muted),
             ),
             const SizedBox(height: 8),
             Text(
@@ -577,7 +601,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('نظام النسخ الاحتياطي الكامل'),
+        title: const Text('نظام النسخ الاحتياطي الكامل'),
         backgroundColor: Theme.of(context).cardColor,
         actions: [
           IconButton(
@@ -597,14 +621,15 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(context.theme.appColors.onSurface),
+                  valueColor:
+                      AlwaysStoppedAnimation(context.theme.appColors.onSurface),
                 ),
               ),
             )
           : FloatingActionButton.extended(
               onPressed: _createNewBackup,
-              icon: Icon(Icons.add),
-              label: Text('إنشاء نسخة جديدة'),
+              icon: const Icon(Icons.add),
+              label: const Text('إنشاء نسخة جديدة'),
               backgroundColor: Theme.of(context).primaryColor,
             ),
     );

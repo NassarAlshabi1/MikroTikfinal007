@@ -90,28 +90,32 @@ sealed class MikrotikError {
 final class TimeoutMikrotikError extends MikrotikError {
   const TimeoutMikrotikError();
   @override
-  String get userMessage => 'انتهت مهلة الاتصال. تأكد من أن الراوتر يعمل وقابل للوصول.';
+  String get userMessage =>
+      'انتهت مهلة الاتصال. تأكد من أن الراوتر يعمل وقابل للوصول.';
 }
 
 /// رفض الاتصال
 final class ConnectionRefusedMikrotikError extends MikrotikError {
   const ConnectionRefusedMikrotikError();
   @override
-  String get userMessage => 'تم رفض الاتصال. تأكد من أن المنفذ (8728) مفتوح على الراوتر.';
+  String get userMessage =>
+      'تم رفض الاتصال. تأكد من أن المنفذ (8728) مفتوح على الراوتر.';
 }
 
 /// فشل المصادقة
 final class AuthenticationFailedMikrotikError extends MikrotikError {
   const AuthenticationFailedMikrotikError();
   @override
-  String get userMessage => 'بيانات اعتماد خاطئة. تحقق من اسم المستخدم وكلمة المرور.';
+  String get userMessage =>
+      'بيانات اعتماد خاطئة. تحقق من اسم المستخدم وكلمة المرور.';
 }
 
 /// بيانات اعتماد ناقصة
 final class CredentialsMissingMikrotikError extends MikrotikError {
   const CredentialsMissingMikrotikError();
   @override
-  String get userMessage => 'بيانات اعتماد MikroTik غير مكتملة. سجّل الدخول أولاً.';
+  String get userMessage =>
+      'بيانات اعتماد MikroTik غير مكتملة. سجّل الدخول أولاً.';
 }
 
 /// خطأ شبكي عام

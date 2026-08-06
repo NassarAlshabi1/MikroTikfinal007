@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_pdf_template_screen.dart';
 
 import 'theme/app_theme.dart';
+
 // موديل بسيط لتسهيل التعامل مع بيانات القالب
 class PdfTemplate {
   final String profileName;
@@ -18,7 +19,6 @@ class PdfTemplate {
   // --- ✨ تعديل: إضافة متغيرات لحفظ أبعاد المربع ---
   final double markerWidthRatio;
   final double markerHeightRatio;
-
 
   PdfTemplate({
     required this.profileName,
@@ -105,8 +105,8 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               child: const Text('إلغاء')),
           TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child:
-                  Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error))),
+              child: Text('حذف',
+                  style: TextStyle(color: Theme.of(context).appColors.error))),
         ],
       ),
     );
@@ -122,7 +122,8 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
       // تجاهل الخطأ
     }
 
-    _templates.removeWhere((t) => t.profileName == templateToDelete.profileName);
+    _templates
+        .removeWhere((t) => t.profileName == templateToDelete.profileName);
     final prefs = await SharedPreferences.getInstance();
     final updatedTemplatesJson =
         _templates.map((t) => jsonEncode(t.toJson())).toList();
@@ -143,7 +144,7 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('إدارة قوالب PDF'),
+        title: const Text('إدارة قوالب PDF'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: _isLoading
@@ -162,8 +163,8 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
                   ),
                 ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            _navigateAndReload(EditPdfTemplateScreen(profiles: widget.profiles)),
+        onPressed: () => _navigateAndReload(
+            EditPdfTemplateScreen(profiles: widget.profiles)),
         tooltip: 'إضافة قالب جديد',
         child: const Icon(Icons.add),
       ),
@@ -194,7 +195,8 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
                   errorBuilder: (context, error, stackTrace) {
                     return Center(
                         child: Icon(Icons.image_not_supported,
-                            color: Theme.of(context).appColors.muted, size: 40));
+                            color: Theme.of(context).appColors.muted,
+                            size: 40));
                   },
                 ),
               ),
@@ -205,11 +207,14 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               'قالب فئة: ${template.profileName}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             // --- عدد الكروت ---
             Text(
               'عدد الكروت بالصفحة: ${template.cardsPerPage}',
-              style: TextStyle(fontSize: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 15,
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      Theme.of(context).colorScheme.onSurface),
             ),
             const Divider(height: 24),
             // --- أزرار الإجراءات ---
@@ -221,7 +226,8 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
                   icon: Icon(Icons.delete_outline,
                       color: Theme.of(context).appColors.error, size: 20),
                   label: Text('حذف',
-                      style: TextStyle(color: Theme.of(context).appColors.error)),
+                      style:
+                          TextStyle(color: Theme.of(context).appColors.error)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
@@ -248,17 +254,21 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.style_outlined, size: 80, color: Theme.of(context).appColors.muted),
+            Icon(Icons.style_outlined,
+                size: 80, color: Theme.of(context).appColors.muted),
             const SizedBox(height: 20),
             const Text(
               'لا توجد قوالب محفوظة',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'اضغط على زر الإضافة (+) في الأسفل لإنشاء قالب PDF جديد خاص بك.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      Theme.of(context).colorScheme.onSurface),
             ),
           ],
         ),

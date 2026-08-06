@@ -19,58 +19,76 @@ import 'package:flutter/foundation.dart';
 
 /// مستوى السجل
 enum LogLevel {
-  debug,    // ⚪ تتبع — يُسجّل فقط في وضع debug
-  info,     // 🟢 معلومات عامة
-  warning,  // 🟡 تحذير
-  error,    // 🔴 خطأ
+  debug, // ⚪ تتبع — يُسجّل فقط في وضع debug
+  info, // 🟢 معلومات عامة
+  warning, // 🟡 تحذير
+  error, // 🔴 خطأ
   security, // 🔒 حدث أمني (دائماً يُسجّل)
 }
 
 extension LogLevelX on LogLevel {
   String get emoji {
     switch (this) {
-      case LogLevel.debug:    return '⚪';
-      case LogLevel.info:     return '🟢';
-      case LogLevel.warning:  return '🟡';
-      case LogLevel.error:    return '🔴';
-      case LogLevel.security: return '🔒';
+      case LogLevel.debug:
+        return '⚪';
+      case LogLevel.info:
+        return '🟢';
+      case LogLevel.warning:
+        return '🟡';
+      case LogLevel.error:
+        return '🔴';
+      case LogLevel.security:
+        return '🔒';
     }
   }
 
   String get label {
     switch (this) {
-      case LogLevel.debug:    return 'DEBUG';
-      case LogLevel.info:     return 'INFO';
-      case LogLevel.warning:  return 'WARN';
-      case LogLevel.error:    return 'ERROR';
-      case LogLevel.security: return 'SECURITY';
+      case LogLevel.debug:
+        return 'DEBUG';
+      case LogLevel.info:
+        return 'INFO';
+      case LogLevel.warning:
+        return 'WARN';
+      case LogLevel.error:
+        return 'ERROR';
+      case LogLevel.security:
+        return 'SECURITY';
     }
   }
 }
 
 /// تصنيف السجل
 enum LogCategory {
-  network,    // اتصالات MikroTik + SSH
-  ui,         // واجهة المستخدم
-  ai,         // AI diagnostics + LLM calls
-  security,   // عمليات أمنية
-  storage,    // تخزين محلي
-  system,     // نظام + lifecycle
-  mcp,        // legacy integration integration client
+  network, // اتصالات MikroTik + SSH
+  ui, // واجهة المستخدم
+  ai, // AI diagnostics + LLM calls
+  security, // عمليات أمنية
+  storage, // تخزين محلي
+  system, // نظام + lifecycle
+  mcp, // legacy integration integration client
   other,
 }
 
 extension LogCategoryX on LogCategory {
   String get tag {
     switch (this) {
-      case LogCategory.network:  return 'NET';
-      case LogCategory.ui:       return 'UI';
-      case LogCategory.ai:       return 'AI';
-      case LogCategory.security: return 'SEC';
-      case LogCategory.storage:  return 'STORE';
-      case LogCategory.system:   return 'SYS';
-      case LogCategory.mcp:      return 'integration';
-      case LogCategory.other:    return 'GEN';
+      case LogCategory.network:
+        return 'NET';
+      case LogCategory.ui:
+        return 'UI';
+      case LogCategory.ai:
+        return 'AI';
+      case LogCategory.security:
+        return 'SEC';
+      case LogCategory.storage:
+        return 'STORE';
+      case LogCategory.system:
+        return 'SYS';
+      case LogCategory.mcp:
+        return 'integration';
+      case LogCategory.other:
+        return 'GEN';
     }
   }
 }
@@ -161,15 +179,18 @@ class AppLogger {
   // ============================================================
 
   /// سجل debug (يُسجَّل فقط في وضع debug)
-  static void debug(String message, {LogCategory category = LogCategory.other, String? tag}) =>
+  static void debug(String message,
+          {LogCategory category = LogCategory.other, String? tag}) =>
       log(message, level: LogLevel.debug, category: category, tag: tag);
 
   /// سجل info
-  static void info(String message, {LogCategory category = LogCategory.other, String? tag}) =>
+  static void info(String message,
+          {LogCategory category = LogCategory.other, String? tag}) =>
       log(message, level: LogLevel.info, category: category, tag: tag);
 
   /// سجل warning
-  static void warning(String message, {LogCategory category = LogCategory.other, String? tag}) =>
+  static void warning(String message,
+          {LogCategory category = LogCategory.other, String? tag}) =>
       log(message, level: LogLevel.warning, category: category, tag: tag);
 
   /// سجل error (مع stackTrace اختياري)
@@ -180,9 +201,14 @@ class AppLogger {
     LogCategory category = LogCategory.other,
     String? tag,
   }) =>
-      log(message, level: LogLevel.error, category: category, error: error, stackTrace: stackTrace, tag: tag);
+      log(message,
+          level: LogLevel.error,
+          category: category,
+          error: error,
+          stackTrace: stackTrace,
+          tag: tag);
 
   /// سجل security (دائماً يُسجَّل، حتى في release)
-  static void security(String message, {String? tag}) =>
-      log(message, level: LogLevel.security, category: LogCategory.security, tag: tag);
+  static void security(String message, {String? tag}) => log(message,
+      level: LogLevel.security, category: LogCategory.security, tag: tag);
 }

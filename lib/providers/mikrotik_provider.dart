@@ -194,14 +194,16 @@ class MikrotikNotifier extends StateNotifier<MikrotikState> {
         '/interface/print',
         '=.proplist=name,type,running,rx-byte,tx-byte,rx-error,tx-error',
       ]);
-      final interfaces = ifaceResp.map((d) => diag.InterfaceInfo(
-            name: d['name'] ?? 'unknown',
-            isActive: d['running'] == 'true',
-            rxErrors: d['rx-error'] ?? '0',
-            txErrors: d['tx-error'] ?? '0',
-            speed: d['rx-byte'] ?? '0',
-            type: d['type'] ?? 'unknown',
-          )).toList();
+      final interfaces = ifaceResp
+          .map((d) => diag.InterfaceInfo(
+                name: d['name'] ?? 'unknown',
+                isActive: d['running'] == 'true',
+                rxErrors: d['rx-error'] ?? '0',
+                txErrors: d['tx-error'] ?? '0',
+                speed: d['rx-byte'] ?? '0',
+                type: d['type'] ?? 'unknown',
+              ))
+          .toList();
 
       // 3) الأمان
       onProgress?.call('الأمان...');
@@ -209,16 +211,16 @@ class MikrotikNotifier extends StateNotifier<MikrotikState> {
         '/ip/service/print',
         '=.proplist=name,port,disabled',
       ]);
-      final services = svcResp.map((d) => diag.ServiceInfo(
-            name: d['name'] ?? 'unknown',
-            disabled: d['disabled'] == 'true',
-            port: d['port'] ?? '',
-          )).toList();
-
-      final enabledServices = services
-          .where((s) => !s.disabled)
-          .map((s) => s.name)
+      final services = svcResp
+          .map((d) => diag.ServiceInfo(
+                name: d['name'] ?? 'unknown',
+                disabled: d['disabled'] == 'true',
+                port: d['port'] ?? '',
+              ))
           .toList();
+
+      final enabledServices =
+          services.where((s) => !s.disabled).map((s) => s.name).toList();
 
       final secIssues = <String>[];
       if (enabledServices.contains('telnet')) {
@@ -293,9 +295,9 @@ class MikrotikNotifier extends StateNotifier<MikrotikState> {
       // 6) الملخص
       final criticalCount =
           issues.where((i) => i.severity == 'critical').length;
-      final warningCount =
-          issues.where((i) => i.severity == 'high' || i.severity == 'medium')
-              .length;
+      final warningCount = issues
+          .where((i) => i.severity == 'high' || i.severity == 'medium')
+          .length;
       final status = criticalCount > 0
           ? 'CRITICAL'
           : warningCount > 0
@@ -339,27 +341,44 @@ class MikrotikNotifier extends StateNotifier<MikrotikState> {
     } catch (e) {
       return diag.DiagnosticResult(
         connectivity: diag.ConnectivityStatus(
-          pingSuccess: false, pingTimeMs: 0, status: '❌ $e',
+          pingSuccess: false,
+          pingTimeMs: 0,
+          status: '❌ $e',
         ),
         resources: diag.SystemResources(
-          cpuLoad: '0%', cpuFrequency: '', cpuTemperature: '',
-          memoryFree: '', memoryTotal: '', memoryUsage: '0%',
-          uptime: '', performanceIssues: [],
+          cpuLoad: '0%',
+          cpuFrequency: '',
+          cpuTemperature: '',
+          memoryFree: '',
+          memoryTotal: '',
+          memoryUsage: '0%',
+          uptime: '',
+          performanceIssues: [],
         ),
         interfaces: [],
         quality: diag.ConnectionQuality(
-          wirelessIssues: [], activeConnections: 0, networkCongestion: '',
+          wirelessIssues: [],
+          activeConnections: 0,
+          networkCongestion: '',
         ),
         security: diag.SecurityStatus(
-          failedLogins: 0, firewallRules: 0, enabledServices: [], issues: [],
+          failedLogins: 0,
+          firewallRules: 0,
+          enabledServices: [],
+          issues: [],
         ),
         services: [],
-        issues: [diag.DiagnosticIssue(
-          type: 'Connection', severity: 'critical',
-          message: '$e', solution: 'تحقق من الاتصال',
-        )],
+        issues: [
+          diag.DiagnosticIssue(
+            type: 'Connection',
+            severity: 'critical',
+            message: '$e',
+            solution: 'تحقق من الاتصال',
+          )
+        ],
         recentLogs: [],
-        summary: diag.Summary(criticalIssues: 1, warnings: 0, status: 'CRITICAL'),
+        summary:
+            diag.Summary(criticalIssues: 1, warnings: 0, status: 'CRITICAL'),
       );
     }
   }
