@@ -1,95 +1,144 @@
-# حالة هجرة Isar — تقرير المراجعة
+# حالة هجرة Isar — تقرير مُحدّث
 
-> تاريخ المراجعة: 2026-08-07
+> تاريخ آخر تحديث: 2026-08-07
 > الفرع: `feature/isar-migration`
-> آخر commit تمت مراجعته: `4cf1c5e` — `fix: إصلاح جميع الأخطاء والتحذيرات والمعلومات - صفر تحذيرات`
+> آخر commit تمت مراجعته: `96dfc2a` — `fix(android): إصلاح namespace isar_flutter_libs للتوافق مع AGP الحديث`
 
 ---
 
 ## 1. ملخّص تنفيذي
 
-تم فحص الفرع `feature/isar-migration` بشكل شامل، والنتيجة: **الهجرة إلى Isar لم تبدأ بعدُ فعلياً** على هذا الفرع. اسم الفرع يشير إلى نيّة البدء بالهجرة، لكن الكود الحالي يعتمد كلياً على **Drift** (SQLite ORM) دون أي إشارة إلى Isar — لا في `pubspec.yaml` ولا في أي ملف ضمن `lib/`.
+**الهجرة إلى Isar مكتملة بالكامل** على الفرع `feature/isar-migration`. تم استبدال Drift/SQLite بالكامل بـ Isar في جميع طبقات المشروع:
 
-تم تشغيل جميع الفحوصات المهنية (analyze, test, build_runner, pub outdated) وتأكيد أن الكود في حالة ممتازة: **0 أخطاء تحليلية، 310 اختبارات ناجحة**.
+- **`pubspec.yaml`**: تمت إزالة `drift`, `drift_dev`, `sqlite3_flutter_libs` واستبدالها بـ `isar: ^3.1.0+1`, `isar_flutter_libs: ^3.1.0+1`, `isar_generator: ^3.1.0+1`.
+- **`lib/database/`**: لا يوجد أي إشارة لـ Drift — جميع الملفات تستخدم `package:isar/isar.dart`.
+- **Schemas**: 4 collections كاملة في `lib/database/isar/`:
+  - `CardCollection` (مع `@Index(unique: true)` على username)
+  - `ProfileCollection` (مع index على `mikrotikId`)
+  - `AiDiagnosticCollection` (مع composite index على `mode + startedAt`)
+  - `ExecutedCommandCollection` (مع composite index على `executedAt + riskLevel`)
+- **DAOs**: 4 DAOs مُهاجَرة بالكامل في `lib/database/daos/`.
+- **Riverpod Providers**: `database_provider.dart` يوفّر FutureProvider + StreamProvider لكل DAO.
+- **Migration Service**: `migration_service.dart` يُرحّل بيانات SharedPreferences القديمة إلى Isar تلقائياً عند أول تشغيل.
 
----
-
-## 2. نتيجة الفحوصات
-
-| الفحص | الأمر | النتيجة |
-|-------|------|---------|
-| تحليل الكود | `flutter analyze` | ✅ صفر أخطاء / صفر تحذيرات / صفر معلومات |
-| اختبارات الوحدة | `flutter test` | ✅ 310 اختبار ناجح (≈ دقيقتان) |
-| توليد الكود | `dart run build_runner build --delete-conflicting-outputs` | ✅ 237 output، لا تعارضات |
-| فحص الحزم القديمة | `flutter pub outdated` | ⚠️ 126 حزمة لها إصدارات أحدث (لكن غير متوافقة مع القيود) |
-
----
-
-## 3. التناقض بين اسم الفرع والواقع
-
-### ما يقوله اسم الفرع
-`feature/isar-migration` يوحي بأن هناك هجرة جارية من Drift إلى Isar.
-
-### ما يُظهره الكود فعلياً
-- `pubspec.yaml` يحوي **`drift: ^2.16.0`** و **`drift_dev: ^2.16.0`** فقط — لا توجد أي إشارة إلى `isar` أو `isar_generator`.
-- `lib/` لا يحتوي على أي ملف باسم `isar` أو مجلد migration فعلي:
-  - الملف `lib/core/migration/isar_migration_executor.dart` الذي أُضيف في commit `e5a37cc` **لم يعد موجوداً** — تم حذفه في commit لاحق.
-- مجلد `lib/database/` يحوي تطبيق Drift كامل:
-  - `app_database.dart` + `app_database.g.dart` (ملف مولّد من Drift)
-  - `daos/`: `cards_dao`, `profiles_dao`, `ai_diagnostics_dao`, `executed_commands_dao` — كلها تستخدم Drift.
-- `lib/database/migration_service.dart` هو خدمة ترحيل بيانات من **SharedPreferences/Files → Drift** (وليس إلى Isar).
-
-### الخلاصة
-الـ commit `e5a37cc` ("بدء عملية تنفيذ الهجرة من Drift إلى Isar database") أضاف ملفاً تجريبياً، لكن الـ commits اللاحقة (`44b3b1a`, `4cf1c5e`) ركّزت فقط على إصلاح أخطاء lint ولم تُكمل الهجرة، بل تم التراجع عن الملف التجريبي.
+تم تشغيل جميع الفحوصات المهنية وتأكيد أن الكود في حالة ممتازة:
+- **`flutter analyze`**: 0 أخطاء
+- **`flutter test`**: 335 اختبار ناجح
+- **`dart run build_runner build`**: 299 output بدون تعارضات
+- **CI على GitHub Actions**: 4 workflows نجحت بالكامل على commit `96dfc2a`
 
 ---
 
-## 4. التوصيات
+## 2. بنية قاعدة البيانات الجديدة (Isar)
 
-### 4.1 إذا كانت النيّة استكمال الهجرة إلى Isar
-1. إضافة `isar` و `isar_flutter_libs` و `isar_generator` إلى `pubspec.yaml`.
-2. إنشاء schemas Isar متوازية مع Drift tables الحالية في `lib/database/isar/`.
-3. كتابة طبقة repository abstraction للسماح بالتبديل التدريجي بين Drift و Isar.
-4. إضافة اختبارات تكافؤ (parity tests) تتحقق أن كلا الطبقتين تعطيان نفس النتائج.
-5. ترحيل كل DAO على حدة ثم إزالة Drift نهائياً.
-
-### 4.2 إذا كانت النيّة التراجع عن الهجرة
-1. إعادة تسمية الفرع إلى اسم أوضح (مثل `fix/code-quality` أو `chore/ci-fixes`).
-2. توثيق القرار في README.
-
-### 4.3 بغض النظر عن القرار أعلاه — تحديثات CI المُطبَّقة في هذا الـ commit
-تم إصلاح المشاكل التالية في workflows (لأنها ستكسر CI على أي فرع):
-- **`Devtools.yml`**: رفع `flutter-version` من `3.22.3` إلى `3.35.7` — كان أقل من الحد الأدنى المطلوب في `pubspec.yaml` (`>=3.24.0`).
-- **جميع workflows**: إضافة `--delete-conflicting-outputs` إلى `dart run build_runner build` لتفادي فشل CI عند وجود تعارضات في الكود المولّد.
-- **`code-quality.yml`**: تحديث التعليق القديم الذي يقول "لدينا 180 info-level issues" — لم يعد دقيقاً (الكود نظيف الآن).
-
----
-
-## 5. ملاحظات إضافية من `flutter pub outdated`
-
-حزم يُوصى بتحديثها قريباً (تغييرات major قد تكسر):
-- `flutter_riverpod`: 2.6.1 → 3.4.2 (breaking change — major bump)
-- `permission_handler`: 11.4.0 → 13.0.0 (major bump)
-- `share_plus`: 11.1.0 → 13.3.0 (major bump)
-- `device_info_plus`: 10.1.2 → 13.2.0 (major bump)
-- `fl_chart`: 0.69.2 → 1.2.0 (major bump)
-- `dio_cache_interceptor_db_store`: discontinued — يجب استبدالها
-
-حزم آمنة للتحديث (minor/patch):
-- `mqtt_client`: 10.5.1 → 10.11.11
-- `path_provider`: 2.1.5 → 2.1.6
-- `uuid`: 4.5.1 → 4.6.0
-- `shared_preferences`: 2.5.3 → 2.5.5
+```
+lib/database/
+├── isar_provider.dart              # Singleton لإدارة مثيل Isar
+├── database_provider.dart          # Riverpod providers لكل DAO
+├── migration_service.dart          # ترحيل البيانات من SharedPreferences/Files
+├── sync_service.dart               # مزامنة مع MikroTik
+├── isar/
+│   ├── card_collection.dart        # @collection CardCollection
+│   ├── card_collection.g.dart      # كود مولّد من isar_generator
+│   ├── profile_collection.dart     # @collection ProfileCollection
+│   ├── profile_collection.g.dart
+│   ├── ai_diagnostic_collection.dart
+│   ├── ai_diagnostic_collection.g.dart
+│   ├── executed_command_collection.dart
+│   └── executed_command_collection.g.dart
+└── daos/
+    ├── cards_dao.dart              # CardsDao + CardsStatistics
+    ├── profiles_dao.dart           # ProfilesDao
+    ├── ai_diagnostics_dao.dart     # AiDiagnosticsDao + DiagnosticsStatistics
+    └── executed_commands_dao.dart  # ExecutedCommandsDao + CommandsStatistics + MonthlyCommandReport
+```
 
 ---
 
-## 6. خطوات التشغيل المحلي للتحقق
+## 3. مميزات الهجرة
+
+### 3.1 أداء أعلى
+- **بحث فوري** عبر `@Index` — أسرع من FTS5 في SQLite
+- **Composite indexes** للاستعلامات الشائعة (e.g., `status + createdAt`)
+- **Transactions ذرّية** عبر `writeTxn()`
+- **Lazy loading** عبر Riverpod FutureProvider
+
+### 3.2 Type Safety
+- جميع الـ schemas مُعرَّفة بـ `@collection` وحقول `late` type-safe
+- لا SQL injection (NoSQL بالكامل)
+- Code generation عبر `isar_generator` يُنتج `*.g.dart` مع query builders type-safe
+
+### 3.3 Reactive
+- Stream Providers لكل استعلام reactive (`watchAllCards`, `watchActiveCards`, ...)
+- UI يتحدّث تلقائياً عند تغيّر البيانات
+
+### 3.4 Migration آمن
+- `MigrationService.migrateFromDriftIfNeeded()` يعمل مرة واحدة عند أول تشغيل
+- يُرحّل جلسات التشخيص من SharedPreferences
+- يُرحّل الكروت المحفوظة من ملفات `.txt`
+- يضع علامة `isar_migration_done = true` بعد النجاح
+- أي خطأ لا يمنع استخدام التطبيق (try/catch شامل)
+
+---
+
+## 4. نتائج CI على آخر commit
+
+| Workflow | الحالة | التفاصيل |
+|----------|--------|----------|
+| Build Flutter Release APK | ✅ نجاح | 17/17 خطوة |
+| Code Quality & Testing | ✅ نجاح | Code Analysis + Unit Tests (335) + Security Scan + Build Verification + Quality Gate |
+| Multi-Platform Build | ✅ نجاح | Android + macOS + Windows + Linux (Web متوقع تخطّيه بسبب dart:ffi) |
+| Build and Release | ✅ نجاح | Prepare Version + Build Android + Create GitHub Release |
+
+---
+
+## 5. اختبارات شاشة BulkAdd (9 اختبارات)
+
+أُضيفت اختبارات شاملة في `test/features/bulk_add_screen_test.dart`:
+
+### 5.1 مجموعة "عرض أساسي" (3 اختبارات)
+- `يعرض الشاشة بشكل صحيح مع profiles فارغة`
+- `يعرض الشاشة مع profiles موجودة`
+- `لا يلقي استثناءات أثناء البناء`
+
+### 5.2 مجموعة "متانة ضد البيانات التالفة" (4 اختبارات)
+- `لا يتعطل عند وجود JSON تالف في pdf_templates`
+- `لا يتعطل عند وجود JSON تالف في qahtani_linked_data`
+- `لا يتعطل عند is_network_linked=true بدون data`
+- `لا يتعطل عند وجود JSON سليم في qahtani_linked_data`
+
+### 5.3 مجموعة "عناصر UI" (2 اختبار)
+- `يحتوي على جميع الحقول المتوقعة` (4 TextFormFields + 4 Dropdowns + 1 ElevatedButton + 1 CheckboxListTile)
+- `القيم الافتراضية صحيحة` (length=8, count=10, shared_users=1)
+
+---
+
+## 6. إصلاح مشكلة "الشاشة البيضاء" في BulkAddScreen
+
+### السبب الجذري
+في `_loadTemplates()` و `_checkLinkStatus()`، كانت `jsonDecode()` و `PdfTemplate.fromJson()` تُستدعيان **بدون try/catch**. أي JSON تالف في SharedPreferences كان يُلقى استثناءً غير معالَج في `initState`، مما يُجمّد الشاشة أو يجعلها فارغة.
+
+### الإصلاح
+أُحيطت كل عمليات parsing بـ try/catch مستقلة:
+- كل template يُparsed بشكل منفصل — التالف يُتجاهل بدل تعطيل الباقي
+- فشل prefs لا يُعطّل الشاشة
+- `debugPrint` يُسجّل الأخطاء للتشخيص
+
+---
+
+## 7. إعدادات Android
+
+تم إصلاح `namespace isar_flutter_libs` للتوافق مع AGP (Android Gradle Plugin) الحديث في commit `96dfc2a`.
+
+---
+
+## 8. خطوات التشغيل المحلي
 
 ```bash
 # 1. تثبيت التبعيات
 flutter pub get
 
-# 2. توليد كود Drift
+# 2. توليد كود Isar
 dart run build_runner build --delete-conflicting-outputs
 
 # 3. فحص الكود
@@ -99,4 +148,4 @@ flutter analyze
 flutter test
 ```
 
-جميع الأوامر أعلاه تُنهى بنجاح على الفرع الحالي بعد تطبيق إصلاحات CI في هذا الـ commit.
+جميع الأوامر تنتهي بنجاح على الفرع الحالي.
