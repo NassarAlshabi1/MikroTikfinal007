@@ -70,7 +70,7 @@ void main() {
     test('توليد 100 اسم بـ prefix يجب أن ينتج أسماء فريدة', () {
       final names = <String>{};
       for (int i = 0; i < 100; i++) {
-        names.add('user_' + _invokeGenerateRandomString(6, 'mixed'));
+        names.add('user_${_invokeGenerateRandomString(6, 'mixed')}');
       }
       expect(names.length, greaterThan(95),
           reason: 'يجب أن يكون أغلبية الأسماء فريدة');
@@ -155,7 +155,7 @@ void main() {
 
       final usernames = <String>[];
       for (int i = 0; i < count; i++) {
-        final randomPartLength = length - prefix.length;
+        const randomPartLength = length - prefix.length;
         expect(randomPartLength, greaterThan(0),
             reason: 'عندما prefix أقصر من total length، يجب أن يكون الجزء العشوائي > 0');
         final username = prefix + _invokeGenerateRandomString(randomPartLength, charType);
@@ -178,7 +178,7 @@ void main() {
 
       final usernames = <String>[];
       for (int i = 0; i < count; i++) {
-        final randomPartLength = length - prefix.length;
+        const randomPartLength = length - prefix.length;
         expect(randomPartLength, 5);
         final username = prefix + _invokeGenerateRandomString(randomPartLength, charType);
         usernames.add(username);
@@ -238,7 +238,7 @@ void main() {
     test('prefix أطول من length ينتج randomPartLength سالب', () {
       const length = 5;
       const prefix = 'very_long_prefix';
-      final randomPartLength = length - prefix.length;
+      const randomPartLength = length - prefix.length;
       expect(randomPartLength, lessThan(0),
           reason: 'عندما prefix أطول من length، يجب أن يكون randomPartLength سالباً');
       // في الـ isolate الفعلي، هذا يرمي Exception
@@ -247,7 +247,7 @@ void main() {
     test('prefix == length ينتج randomPartLength = 0', () {
       const length = 5;
       const prefix = '12345';
-      final randomPartLength = length - prefix.length;
+      const randomPartLength = length - prefix.length;
       expect(randomPartLength, 0);
       // في الـ isolate الفعلي، هذا يرمي Exception (randomPartLength < 1)
     });

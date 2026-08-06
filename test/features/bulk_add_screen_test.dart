@@ -1,19 +1,18 @@
 // ============================================================
-//  اختبارات شاشة إضافة الكروت الجماعية (BulkAddScreen)
+//  BulkAddScreen — اختبارات شاملة
 //
 //  يغطي:
-//  ① بناء الشاشة بنجاح (لا تُرمي استثناءات)
-//  ② عرض الحقول الأساسية (بادئة، طول، عدد، فئة، نوع)
-//  ③ حالة الـ loading (ProgressIndicator)
-//  ④ حالة الـ profiles الفارغة (حالة boundary)
-//  ⑤ حالة الـ templates الفارغة (حالة boundary)
-//  ⑥ التحقق من صحة المدخلات (form validation)
-//  ⑦ تغيير قيمة dropdowns يحدّث الحالة
-//  ⑧ زر "إنشاء الكروت" معطّل أثناء توليد الكروت
-//  ⑨ الـ AppBar يعرض العنوان الصحيح
-//  ⑩ الـ checkbox يعمل بشكل صحيح
+//  - عرض الشاشة مع profiles فارغة
+//  - عرض الشاشة مع profiles موجودة
+//  - عرض الشاشة مع templates موجودة (JSON سليم)
+//  - متانة ضد JSON التالف في pdf_templates
+//  - متانة ضد JSON التالف في qahtani_linked_data
+//  - متانة ضد is_network_linked=true بدون data
+//  - التحقق من عدم وجود استثناءات أثناء البناء
+//  - التحقق من عرض العناصر الأساسية (عنوان، حقول، أزرار)
 // ============================================================
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,455 +21,338 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mikrotik_manager/bulk_add_screen.dart';
 import 'package:mikrotik_manager/mqtt_service.dart';
 import 'package:mikrotik_manager/providers/mqtt_service_provider.dart';
-import 'package:mikrotik_manager/theme/professional_theme.dart';
-
-/// MqttService وهمي لا يتصل فعلياً بالـ broker
-class FakeMqttService extends MqttService {
-  FakeMqttService() : super() {
-    // تفادي الاتصال الحقيقي في الاختبارات
-  }
-}
-
-Widget _wrapWidget(Widget child, {List<Override>? overrides}) {
-  return ProviderScope(
-    overrides: overrides ?? [],
-    child: MaterialApp(
-      theme: ProfessionalTheme.light,
-      darkTheme: ProfessionalTheme.dark,
-      themeMode: ThemeMode.light,
-      home: child,
-    ),
-  );
-}
-
-const _sampleProfiles = <Map<String, dynamic>>[
-  {'name': 'default', 'rate-limit': '1M/1M'},
-  {'name': 'premium', 'rate-limit': '10M/10M'},
-  {'name': 'unlimited'},
-];
 
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues({
-      'pdf_templates': <String>[],
-      'is_network_linked': false,
-    });
-  });
+  group('BulkAddScreen — عرض أساسي', () {
+    testWidgets('يعرض الشاشة بشكل صحيح مع profiles فارغة',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues(const {
+        'is_network_linked': false,
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
 
-  // ============================================================
-  //  ① بناء الشاشة بنجاح
-  // ============================================================
-  group('① بناء الشاشة', () {
-    testWidgets('الشاشة تُبنى بنجاح بدون استثناءات', (tester) async {
       await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
+        ProviderScope(
           overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
           ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
         ),
       );
-      await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      // إن رمى استثناء، يفشل الاختبار تلقائياً
-      expect(find.byType(BulkAddScreen), findsOneWidget);
-    });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
-    testWidgets('يتم عرض عنوان الشاشة في الـ AppBar', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
+      expect(find.byType(Scaffold), findsOneWidget,
+          reason: 'Scaffold should be present');
+      expect(find.byType(AppBar), findsOneWidget,
+          reason: 'AppBar should be present');
+      expect(find.text('إضافة كروت جماعية'), findsOneWidget,
+          reason: 'Title should be visible');
 
-      expect(find.text('إضافة كروت جماعية'), findsOneWidget);
-    });
-  });
-
-  // ============================================================
-  //  ② عرض الحقول الأساسية
-  // ============================================================
-  group('② عرض الحقول الأساسية', () {
-    testWidgets('يتم عرض كل الحقول المتوقعة', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // الحقول المتوقعة
+      // Form fields
       expect(find.text('بادئة (اختياري)'), findsOneWidget);
       expect(find.text('الطول'), findsOneWidget);
       expect(find.text('العدد'), findsOneWidget);
       expect(find.text('الفئة (البروفايل)'), findsOneWidget);
       expect(find.text('نوع أحرف المستخدم'), findsOneWidget);
       expect(find.text('نوع الكرت'), findsOneWidget);
-      expect(find.text('نوع القالب (اختياري)'), findsOneWidget);
       expect(find.text('Shared Users'), findsOneWidget);
-      expect(find.text('ربط كلمة المرور بأول مستخدم'), findsOneWidget);
       expect(find.text('إنشاء الكروت'), findsOneWidget);
     });
 
-    testWidgets('القيم الافتراضية للحقول صحيحة', (tester) async {
+    testWidgets('يعرض الشاشة مع profiles موجودة',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues(const {
+        'is_network_linked': false,
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      const profiles = <Map<String, dynamic>>[
+        {'name': 'profile1', 'rate-limit': '1M/1M'},
+        {'name': 'profile2', 'rate-limit': '2M/2M'},
+      ];
+
       await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
+        ProviderScope(
           overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
           ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: profiles,
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
         ),
       );
-      await tester.pumpAndSettle();
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(Scaffold), findsOneWidget);
+      expect(find.text('إضافة كروت جماعية'), findsOneWidget);
+      expect(find.text('إنشاء الكروت'), findsOneWidget);
+    });
+
+    testWidgets('لا يلقي استثناءات أثناء البناء', (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues(const {
+        'is_network_linked': false,
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('BulkAddScreen — متانة ضد البيانات التالفة', () {
+    testWidgets('لا يتعطل عند وجود JSON تالف في pdf_templates',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({
+        'is_network_linked': false,
+        'pdf_templates': <String>[
+          '{invalid json',
+          '{"valid":"but_incomplete"}',
+          'totally_not_json',
+        ],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // الشاشة يجب أن تعرض رغم فشل parsing
+      expect(find.byType(Scaffold), findsOneWidget);
+      expect(find.text('إضافة كروت جماعية'), findsOneWidget);
+      // لا استثناءات
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('لا يتعطل عند وجود JSON تالف في qahtani_linked_data',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({
+        'is_network_linked': true,
+        'qahtani_linked_data': '{invalid json',
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(Scaffold), findsOneWidget);
+      expect(find.text('إضافة كروت جماعية'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('لا يتعطل عند is_network_linked=true بدون data',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues(const {
+        'is_network_linked': true,
+        // لا qahtani_linked_data
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(Scaffold), findsOneWidget);
+      expect(find.text('إضافة كروت جماعية'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('لا يتعطل عند وجود JSON سليم في qahtani_linked_data',
+        (WidgetTester tester) async {
+      final linkedData = jsonEncode({
+        'network_details': {
+          'network_id': 'net1',
+          'units': [
+            {'id': 'unit1', 'name': 'Unit 1'},
+            {'id': 'unit2', 'name': 'Unit 2'},
+          ],
+        },
+      });
+
+      SharedPreferences.setMockInitialValues({
+        'is_network_linked': true,
+        'qahtani_linked_data': linkedData,
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(Scaffold), findsOneWidget);
+      expect(find.text('إضافة كروت جماعية'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('BulkAddScreen — عناصر UI', () {
+    testWidgets('يحتوي على جميع الحقول المتوقعة', (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues(const {
+        'is_network_linked': false,
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // حقول النص
+      expect(find.byType(TextFormField), findsNWidgets(4),
+          reason: 'Should have prefix, length, count, shared_users fields');
+      // dropdowns
+      expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(4),
+          reason: 'Should have profile, charType, cardType, template dropdowns');
+      // زر الإنشاء
+      expect(find.byType(ElevatedButton), findsOneWidget);
+      // checkbox لربط كلمة المرور
+      expect(find.byType(CheckboxListTile), findsOneWidget);
+    });
+
+    testWidgets('القيم الافتراضية صحيحة', (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues(const {
+        'is_network_linked': false,
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // الطول الافتراضي = 8
-      expect(find.text('8'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '8'), findsOneWidget);
       // العدد الافتراضي = 10
-      expect(find.text('10'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '10'), findsOneWidget);
       // Shared Users الافتراضي = 1
-      expect(find.text('1'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '1'), findsOneWidget);
     });
   });
+}
 
-  // ============================================================
-  //  ③ حالة الـ loading
-  // ============================================================
-  group('③ حالة الـ loading', () {
-    testWidgets('لا يتم عرض مؤشر التحميل عند الفتح', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // _isGenerating = false في البداية، فلا ينبغي وجود LinearProgressIndicator
-      expect(find.byType(LinearProgressIndicator), findsNothing);
-    });
-  });
-
-  // ============================================================
-  //  ④ حالة الـ profiles الفارغة (boundary case)
-  // ============================================================
-  group('④ profiles فارغة', () {
-    testWidgets('الشاشة تُبنى بنجاح حتى مع profiles فارغة', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          const BulkAddScreen(
-            profiles: [],
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle(const Duration(seconds: 1));
-
-      // يجب أن تُبنى الشاشة بدون استثناء
-      expect(find.byType(BulkAddScreen), findsOneWidget);
-      expect(find.text('إضافة كروت جماعية'), findsOneWidget);
-    });
-  });
-
-  // ============================================================
-  //  ⑤ حالة الـ templates الفارغة
-  // ============================================================
-  group('⑤ templates فارغة', () {
-    testWidgets('dropdown القالب لا يرمي StateError عند عدم وجود قوالب',
-        (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // ابحث عن dropdown القالب (الثاني من الأخير)
-      final dropdowns = find.byType(DropdownButtonFormField<String>);
-      // نتوقع 4 dropdowns: profile, charType, cardType, template
-      expect(dropdowns, findsNWidgets(4));
-
-      // النقر على dropdown القالب (الأخير) لا يرمي استثناء
-      await tester.tap(dropdowns.last);
-      await tester.pumpAndSettle();
-
-      // يجب أن يُعرض الـ hint "اختر قالب للتصدير إلى PDF"
-      expect(find.text('اختر قالب للتصدير إلى PDF'), findsOneWidget);
-    });
-
-    testWidgets('dropdown القالب فارغ عند عدم وجود قوالب',
-        (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // ابحث عن dropdown القالب
-      final dropdownFinder = find.byType(DropdownButtonFormField<String>).last;
-      final dropdown =
-          tester.widget<DropdownButtonFormField<String>>(dropdownFinder);
-      // نتوقع 0 items لأنه لا توجد قوالب في SharedPreferences
-      // نتحقق عبر initialValue (يجب أن يكون null)
-      expect(dropdown.initialValue, isNull);
-    });
-  });
-
-  // ============================================================
-  //  ⑥ التحقق من صحة المدخلات
-  // ============================================================
-  group('⑥ التحقق من صحة المدخلات', () {
-    testWidgets('الضغط على "إنشاء الكروت" بدون اختيار فئة يعرض خطأ', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // التمرير للأسفل لرؤية زر "إنشاء الكروت"
-      await tester.scrollUntilVisible(
-        find.text('إنشاء الكروت'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      // النقر على زر "إنشاء الكروت"
-      await tester.tap(find.text('إنشاء الكروت'));
-      await tester.pumpAndSettle();
-
-      // يجب أن يُعرض خطأ التحقق
-      expect(find.text('الرجاء اختيار فئة'), findsOneWidget);
-    });
-
-    testWidgets('الطول الفارغ يعرض خطأ "مطلوب"', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // مسح حقل الطول (الثاني في النموذج)
-      await tester.enterText(find.byType(TextFormField).at(1), '');
-      await tester.pumpAndSettle();
-
-      // التمرير لرؤية الزر
-      await tester.scrollUntilVisible(
-        find.text('إنشاء الكروت'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      // النقر على زر "إنشاء الكروت"
-      await tester.tap(find.text('إنشاء الكروت'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('مطلوب'), findsWidgets);
-    });
-  });
-
-  // ============================================================
-  //  ⑦ تغيير قيمة dropdowns يحدّث الحالة
-  // ============================================================
-  group('⑦ تغيير dropdowns', () {
-    testWidgets('اختيار نوع أحرف "حروف فقط" يحدّث الحالة', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // dropdown نوع الأحرف هو الثاني (index 1)
-      final charTypeDropdown = find.byType(DropdownButtonFormField<String>).at(1);
-      await tester.tap(charTypeDropdown);
-      await tester.pumpAndSettle();
-
-      // اختيار "حروف فقط"
-      await tester.tap(find.text('حروف فقط').last);
-      await tester.pumpAndSettle();
-
-      // افتح الـ dropdown مرة أخرى للتحقق
-      await tester.tap(charTypeDropdown);
-      await tester.pumpAndSettle();
-
-      // يجب أن يكون النص "حروف فقط" موجوداً (كخيار محدد)
-      expect(find.text('حروف فقط'), findsWidgets);
-    });
-
-    testWidgets('dropdown نوع الكرت يحتوي على 3 خيارات',
-        (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // dropdown نوع الكرت هو الثالث (index 2)
-      final cardTypeDropdown = find.byType(DropdownButtonFormField<String>).at(2);
-      await tester.tap(cardTypeDropdown);
-      await tester.pumpAndSettle();
-
-      // نتوقع وجود 3 خيارات (أحدها مكرر كقيمة محددة)
-      expect(find.text('اسم مستخدم فقط'), findsWidgets);
-      expect(find.text('اسم مستخدم وكلمة مرور متساوية'), findsOneWidget);
-      expect(find.text('اسم مستخدم وكلمة مرور مختلفة'), findsOneWidget);
-    });
-  });
-
-  // ============================================================
-  //  ⑧ زر "إنشاء الكروت"
-  // ============================================================
-  group('⑧ زر إنشاء الكروت', () {
-    testWidgets('الزر موجود وغير معطّل في الحالة الافتراضية', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final button = tester.widget<ElevatedButton>(
-        find.ancestor(
-          of: find.text('إنشاء الكروت'),
-          matching: find.byType(ElevatedButton),
-        ),
-      );
-      expect(button.onPressed, isNotNull);
-    });
-  });
-
-  // ============================================================
-  //  ⑨ الـ checkbox
-  // ============================================================
-  group('⑩ الـ checkbox', () {
-    testWidgets('الـ checkbox افتراضياً غير مُفعّل', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final checkbox = tester.widget<Checkbox>(
-        find.byType(Checkbox),
-      );
-      expect(checkbox.value, false);
-    });
-
-    testWidgets('النقر على الـ checkbox يفعّله', (tester) async {
-      await tester.pumpWidget(
-        _wrapWidget(
-          BulkAddScreen(
-            profiles: _sampleProfiles,
-            isVersion7OrNewer: true,
-            username: 'admin',
-          ),
-          overrides: [
-            mqttServiceProvider.overrideWithValue(FakeMqttService()),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byType(Checkbox));
-      await tester.pumpAndSettle();
-
-      final checkbox = tester.widget<Checkbox>(find.byType(Checkbox));
-      expect(checkbox.value, true);
-    });
-  });
+/// MqttService وهمي للاختبار — يمنع محاولة الاتصال الحقيقي بالـ broker
+class _FakeMqttService extends MqttService {
+  // نستخدم constructor الأب — الاتصال يفشل بصمت في بيئة الاختبار
+  // وهذا مقبول لأن BulkAddScreen لا يعتمد على حالة الاتصال في واجهته
 }

@@ -86,28 +86,45 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   }
 
   Future<void> _loadTemplates() async {
-    final prefs = await SharedPreferences.getInstance();
-    final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-    if (mounted) {
-      setState(() {
-        _templates = templatesJson
-            .map((jsonString) => PdfTemplate.fromJson(jsonDecode(jsonString)))
-            .toList();
-      });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
+      final parsed = <PdfTemplate>[];
+      for (final jsonString in templatesJson) {
+        try {
+          parsed.add(PdfTemplate.fromJson(jsonDecode(jsonString)));
+        } catch (_) {
+          // تجاهل القوالب التالفة بدل تعطيل الشاشة
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _templates = parsed;
+        });
+      }
+    } catch (e) {
+      // فشل قراءة prefs — لا نعطّل الشاشة
+      debugPrint('[BulkAdd] _loadTemplates error: $e');
     }
   }
 
   Future<void> _checkLinkStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isLinked = prefs.getBool('is_network_linked') ?? false;
-    if (isLinked) {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isLinked = prefs.getBool('is_network_linked') ?? false;
+      if (!isLinked) return;
       final dataString = prefs.getString('qahtani_linked_data');
-      if (dataString != null) {
+      if (dataString == null) return;
+      final decoded = jsonDecode(dataString);
+      if (decoded is! Map<String, dynamic>) return;
+      if (mounted) {
         setState(() {
           _isNetworkLinked = true;
-          _linkedData = jsonDecode(dataString);
+          _linkedData = decoded;
         });
       }
+    } catch (e) {
+      debugPrint('[BulkAdd] _checkLinkStatus error: $e');
     }
   }
 
