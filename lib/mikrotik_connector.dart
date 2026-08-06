@@ -40,8 +40,7 @@ class MikrotikConnectionException implements Exception {
 
 /// استثناء: فشل تسجيل الدخول (credentials خاطئة)
 class MikrotikLoginException extends MikrotikConnectionException {
-  const MikrotikLoginException(String message, [dynamic original])
-      : super(message, original);
+  const MikrotikLoginException(super.message, [super.original]);
 }
 
 /// استثناء: خطأ من RouterOS (trap error)
@@ -100,7 +99,8 @@ class MikrotikConnector {
     final ip = prefs.getString('ip');
     final user = prefs.getString('user');
     // 🔒 قراءة كلمة المرور من flutter_secure_storage (مشفّرة)
-    final pass = await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
+    final pass =
+        await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
     final portString = prefs.getString('port');
     final useSslString = prefs.getString('use_ssl');
     final useSsl = useSslString == 'true';
@@ -124,7 +124,8 @@ class MikrotikConnector {
           return _cachedClient!;
         }
       }
-      throw const MikrotikConnectionException('Connection already in progress.');
+      throw const MikrotikConnectionException(
+          'Connection already in progress.');
     }
 
     _isConnecting = true;
@@ -154,7 +155,8 @@ class MikrotikConnector {
             '${useSsl ? " (SSL)" : ""}');
         return client;
       } else {
-        throw const MikrotikLoginException('Login failed - invalid credentials.');
+        throw const MikrotikLoginException(
+            'Login failed - invalid credentials.');
       }
     } on TimeoutException {
       throw const MikrotikConnectionException(
@@ -276,11 +278,12 @@ class MikrotikConnectionStatus {
 }
 
 /// StateNotifier لإدارة حالة اتصال MikroTik عبر Riverpod
-class MikrotikConnectionNotifier extends StateNotifier<MikrotikConnectionStatus> {
+class MikrotikConnectionNotifier
+    extends StateNotifier<MikrotikConnectionStatus> {
   MikrotikConnectionNotifier() : super(const MikrotikConnectionStatus());
 
   Future<void> connect() async {
-    state = MikrotikConnectionStatus(
+    state = const MikrotikConnectionStatus(
       state: MikrotikConnectionState.connecting,
     );
 

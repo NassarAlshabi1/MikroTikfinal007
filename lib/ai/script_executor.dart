@@ -19,11 +19,11 @@ import 'diagnostics_models.dart';
 /// يمثل سكربت RouterOS — مجموعة أوامر مع metadata
 @immutable
 class RouterOsScript {
-  final String title;            // عنوان السكربت
-  final String description;      // وصف مختصر
-  final List<String> commands;   // قائمة الأوامر
+  final String title; // عنوان السكربت
+  final String description; // وصف مختصر
+  final List<String> commands; // قائمة الأوامر
   final CommandRiskLevel overallRisk; // أعلى مستوى خطورة بين الأوامر
-  final String? category;        // تصنيف (security, qos, vpn, ...)
+  final String? category; // تصنيف (security, qos, vpn, ...)
 
   const RouterOsScript({
     required this.title,
@@ -119,7 +119,8 @@ class RouterOsScript {
       overallRisk == CommandRiskLevel.dangerous;
 
   @override
-  String toString() => 'RouterOsScript($title, ${commands.length} cmds, risk=$overallRisk)';
+  String toString() =>
+      'RouterOsScript($title, ${commands.length} cmds, risk=$overallRisk)';
 }
 
 /// نتيجة تنفيذ سكربت كامل
@@ -127,10 +128,10 @@ class RouterOsScript {
 class ScriptExecutionResult {
   final RouterOsScript script;
   final List<CommandResult> results; // نتائج كل أمر على حدة
-  final bool overallSuccess;  // نجاح كل الأوامر
+  final bool overallSuccess; // نجاح كل الأوامر
   final Duration totalElapsed;
   final DateTime executedAt;
-  final String summary;       // ملخص قابل للعرض
+  final String summary; // ملخص قابل للعرض
 
   const ScriptExecutionResult({
     required this.script,
@@ -173,7 +174,8 @@ class ScriptExecutor {
       final block = match.group(1) ?? '';
 
       // تجاهل الكتل التي لا تحتوي على أوامر RouterOS (لا يوجد / بداية سطر)
-      final hasRouterOsCmd = RegExp(r'^\s*/\w+', multiLine: true).hasMatch(block);
+      final hasRouterOsCmd =
+          RegExp(r'^\s*/\w+', multiLine: true).hasMatch(block);
       if (!hasRouterOsCmd) continue;
 
       // ابحث عن عنوان قبل الكتلة (آخر سطر غير فارغ قبلها)
@@ -203,7 +205,9 @@ class ScriptExecutor {
         if (description.isEmpty && trimmed.length > 10) {
           description = trimmed;
         }
-        if (trimmed.startsWith('###') || trimmed.startsWith('##') || trimmed.startsWith('**')) {
+        if (trimmed.startsWith('###') ||
+            trimmed.startsWith('##') ||
+            trimmed.startsWith('**')) {
           break;
         }
       }
@@ -241,7 +245,8 @@ class ScriptExecutor {
       if (inlineCommands.isNotEmpty) {
         final script = RouterOsScript.fromText(
           title: 'سكربت AI',
-          description: 'سكربت مُولّد من رد الـ AI (${inlineCommands.length} أوامر)',
+          description:
+              'سكربت مُولّد من رد الـ AI (${inlineCommands.length} أوامر)',
           text: inlineCommands.join('\n'),
           category: category,
         );
@@ -263,7 +268,8 @@ class ScriptExecutor {
     MikrotikConnectionMethod method = MikrotikConnectionMethod.routerOS,
     bool stopOnError = false,
     Duration perCommandTimeout = const Duration(seconds: 30),
-    void Function(int currentIndex, int total, CommandResult result)? onProgress,
+    void Function(int currentIndex, int total, CommandResult result)?
+        onProgress,
   }) async {
     final stopwatch = Stopwatch()..start();
     final results = <CommandResult>[];
@@ -421,10 +427,9 @@ class ScriptExecutor {
     String? label,
     String? correlationId,
   }) async {
-    final stamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
-    final name = label != null
-        ? '$label-$stamp'
-        : 'snapshot-$stamp';
+    final stamp =
+        DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
+    final name = label != null ? '$label-$stamp' : 'snapshot-$stamp';
 
     final backupScript = RouterOsScript(
       title: 'إنشاء snapshot',
@@ -445,10 +450,12 @@ class ScriptExecutor {
     );
 
     if (!result.overallSuccess) {
-      throw Exception('فشل إنشاء snapshot: ${result.results.where((r) => !r.success).map((r) => r.error).join(", ")}');
+      throw Exception(
+          'فشل إنشاء snapshot: ${result.results.where((r) => !r.success).map((r) => r.error).join(", ")}');
     }
 
-    debugPrint('[ScriptExecutor] Snapshot created: $name (corrId=$correlationId)');
+    debugPrint(
+        '[ScriptExecutor] Snapshot created: $name (corrId=$correlationId)');
     return ChangeSnapshot(
       backupName: name,
       exportFileName: '$name-export',
@@ -517,9 +524,9 @@ class ScriptExecutor {
     }
     // set/remove/enable/disable على [find ...] = idempotent
     if ((lc.contains('set [find') ||
-         lc.contains('remove [find') ||
-         lc.contains('enable [find') ||
-         lc.contains('disable [find'))) {
+        lc.contains('remove [find') ||
+        lc.contains('enable [find') ||
+        lc.contains('disable [find'))) {
       return true;
     }
     // add مع comment يعتبر semi-idempotent
@@ -550,7 +557,8 @@ class ScriptExecutor {
     bool requireSnapshot = true,
     String? correlationId,
     Duration perCommandTimeout = const Duration(seconds: 30),
-    void Function(int currentIndex, int total, CommandResult result)? onProgress,
+    void Function(int currentIndex, int total, CommandResult result)?
+        onProgress,
   }) async {
     // تحليل قبل التنفيذ
     final dryRunReport = dryRun(script);
@@ -618,10 +626,10 @@ class ScriptExecutor {
 /// يمثل snapshot قبل التغيير — يحوي backup + export
 @immutable
 class ChangeSnapshot {
-  final String backupName;       // اسم ملف الـ backup
-  final String exportFileName;   // اسم ملف الـ export
-  final DateTime createdAt;      // وقت الإنشاء
-  final String? correlationId;   // معرّف لتتبع العملية
+  final String backupName; // اسم ملف الـ backup
+  final String exportFileName; // اسم ملف الـ export
+  final DateTime createdAt; // وقت الإنشاء
+  final String? correlationId; // معرّف لتتبع العملية
 
   const ChangeSnapshot({
     required this.backupName,
@@ -670,8 +678,8 @@ class DryRunCommandAnalysis {
 class DryRunReport {
   final RouterOsScript script;
   final List<DryRunCommandAnalysis> commandAnalysis;
-  final bool needsSnapshot;     // هل يحتاج snapshot قبل التنفيذ؟
-  final bool hasIdempotency;    // هل كل الأوامر idempotent؟
+  final bool needsSnapshot; // هل يحتاج snapshot قبل التنفيذ؟
+  final bool hasIdempotency; // هل كل الأوامر idempotent؟
 
   const DryRunReport({
     required this.script,
@@ -681,14 +689,16 @@ class DryRunReport {
   });
 
   /// عدد الأوامر القابلة للتنفيذ (بدون أخطاء تحقق)
-  int get executableCount => commandAnalysis.where((c) => c.isExecutable).length;
+  int get executableCount =>
+      commandAnalysis.where((c) => c.isExecutable).length;
 
   /// عدد الأوامر الخطرة
-  int get dangerousCount => commandAnalysis.where((c) =>
-      c.risk == CommandRiskLevel.dangerous).length;
+  int get dangerousCount =>
+      commandAnalysis.where((c) => c.risk == CommandRiskLevel.dangerous).length;
 
   /// عدد الأوامر غير idempotent
-  int get nonIdempotentCount => commandAnalysis.where((c) => !c.isIdempotent).length;
+  int get nonIdempotentCount =>
+      commandAnalysis.where((c) => !c.isIdempotent).length;
 
   /// نص التقرير للعرض
   String get displayReport {
@@ -734,24 +744,27 @@ class DryRunReport {
 
 /// حالة تنفيذ آمن
 enum SafeExecutionStatus {
-  success,                // نجح كل الأوامر
-  failedWithRollbackReady,// فشل ولكن snapshot جاهز للاستعادة
-  failedNoSnapshot,       // فشل ولا snapshot متاح
-  snapshotFailed,         // فشل إنشاء snapshot قبل التنفيذ
+  success, // نجح كل الأوامر
+  failedWithRollbackReady, // فشل ولكن snapshot جاهز للاستعادة
+  failedNoSnapshot, // فشل ولا snapshot متاح
+  snapshotFailed, // فشل إنشاء snapshot قبل التنفيذ
 }
 
 extension SafeExecutionStatusX on SafeExecutionStatus {
   String get displayName {
     switch (this) {
-      case SafeExecutionStatus.success: return 'نجاح';
-      case SafeExecutionStatus.failedWithRollbackReady: return 'فشل (snapshot جاهز)';
-      case SafeExecutionStatus.failedNoSnapshot: return 'فشل (بدون snapshot)';
-      case SafeExecutionStatus.snapshotFailed: return 'فشل إنشاء snapshot';
+      case SafeExecutionStatus.success:
+        return 'نجاح';
+      case SafeExecutionStatus.failedWithRollbackReady:
+        return 'فشل (snapshot جاهز)';
+      case SafeExecutionStatus.failedNoSnapshot:
+        return 'فشل (بدون snapshot)';
+      case SafeExecutionStatus.snapshotFailed:
+        return 'فشل إنشاء snapshot';
     }
   }
 
-  bool get isRecoverable =>
-      this == SafeExecutionStatus.failedWithRollbackReady;
+  bool get isRecoverable => this == SafeExecutionStatus.failedWithRollbackReady;
 }
 
 /// نتيجة تنفيذ آمن — تحتوي على snapshot + execution + rollback

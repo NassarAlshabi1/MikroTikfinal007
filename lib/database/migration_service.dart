@@ -62,7 +62,8 @@ class MigrationService {
 
     try {
       final List<dynamic> sessions = jsonDecode(sessionsJson);
-      debugPrint('[Migration] Migrating ${sessions.length} diagnostic sessions...');
+      debugPrint(
+          '[Migration] Migrating ${sessions.length} diagnostic sessions...');
 
       await db.batch((b) {
         for (final sessionData in sessions) {
@@ -87,8 +88,9 @@ class MigrationService {
             }
           }
 
-          final startedAt = DateTime.tryParse(session['startedAt'] as String? ?? '') ??
-              DateTime.now();
+          final startedAt =
+              DateTime.tryParse(session['startedAt'] as String? ?? '') ??
+                  DateTime.now();
           final endedAt = session['endedAt'] != null
               ? DateTime.tryParse(session['endedAt'] as String)
               : null;
@@ -142,10 +144,8 @@ class MigrationService {
           if (usernames.isEmpty) continue;
 
           // اسم الملف يحتوي عادة على اسم الفئة
-          final profileName = entity.path
-              .split('/')
-              .last
-              .replaceAll('.txt', '');
+          final profileName =
+              entity.path.split('/').last.replaceAll('.txt', '');
 
           // إضافة profile إن لم يكن موجوداً
           final existingProfile = await (db.select(db.profiles)

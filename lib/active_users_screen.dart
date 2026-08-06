@@ -45,8 +45,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Future<void> _fetchActiveUsers({bool force = false}) async {
     if (!mounted) return;
-    
-    if (!force && _lastActiveFetch != null && DateTime.now().difference(_lastActiveFetch!) < _minRefreshGap) {
+
+    if (!force &&
+        _lastActiveFetch != null &&
+        DateTime.now().difference(_lastActiveFetch!) < _minRefreshGap) {
       setState(() {
         _isLoading = false;
       });
@@ -61,13 +63,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      
+
       try {
         final hotspotResponse = await client.talk([
           '/ip/hotspot/active/print',
           '=.proplist=user,address,uptime',
         ]);
-        _activeUsers = hotspotResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+        _activeUsers =
+            hotspotResponse.map((e) => Map<String, dynamic>.from(e)).toList();
         _activeCount = _activeUsers.length;
         _isHotspotMode = true;
       } catch (e) {
@@ -76,7 +79,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             '/tool/user-manager/session/print',
             '=.proplist=user,session-time-left,framed-ip-address,uptime',
           ]);
-          _activeUsers = userManagerResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+          _activeUsers = userManagerResponse
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
           _activeCount = _activeUsers.length;
           _isHotspotMode = false;
         } catch (e) {
@@ -86,7 +91,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       }
 
       try {
-        if (_lastTotalUsersFetch == null || DateTime.now().difference(_lastTotalUsersFetch!) > const Duration(seconds: 90)) {
+        if (_lastTotalUsersFetch == null ||
+            DateTime.now().difference(_lastTotalUsersFetch!) >
+                const Duration(seconds: 90)) {
           final allUsers = await client.talk([
             '/tool/user-manager/user/print',
             '=.proplist=.id',
@@ -134,9 +141,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final minutes = RegExp(r'(\d+)m').firstMatch(uptime)?.group(1);
     final seconds = RegExp(r'(\d+)s').firstMatch(uptime)?.group(1);
     final parts = <String>[];
-    if (hours != null && int.parse(hours) > 0) parts.add('${hours}س');
-    if (minutes != null && int.parse(minutes) > 0) parts.add('${minutes}د');
-    if (seconds != null && int.parse(seconds) > 0) parts.add('${seconds}ث');
+    if (hours != null && int.parse(hours) > 0) parts.add('$hoursس');
+    if (minutes != null && int.parse(minutes) > 0) parts.add('$minutesد');
+    if (seconds != null && int.parse(seconds) > 0) parts.add('$secondsث');
     return parts.isEmpty ? uptime : parts.join(' ');
   }
 
@@ -146,7 +153,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       appBar: AppBar(
         backgroundColor: context.theme.appColors.primary,
         elevation: 0,
-        title: const Text('المستخدمين النشطين', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('المستخدمين النشطين',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -171,12 +179,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: context.theme.appColors.error),
+              Icon(Icons.error_outline,
+                  size: 64, color: context.theme.appColors.error),
               const SizedBox(height: 16),
               Text(
                 _errorMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.theme.appColors.error, fontSize: 12),
+                style: TextStyle(
+                    color: context.theme.appColors.error, fontSize: 12),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -299,11 +309,16 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 size: 80,
                 color: context.theme.appColors.onSurface.withValues(alpha: 0.3),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'لا توجد مستخدمين نشطين حالياً',
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Theme.of(context).textTheme.bodySmall?.color,
+                  color: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.color
+                          ?.withValues(alpha: 0.7) ??
+                      Theme.of(context).textTheme.bodySmall?.color,
                   fontSize: 16,
                 ),
               ),
@@ -336,7 +351,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: context.theme.appColors.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -375,13 +391,13 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         OutlinedButton(
-          onPressed: _page > 0
-              ? () => setState(() => _page = _page - 1)
-              : null,
-          child: Text('السابق'),
+          onPressed: _page > 0 ? () => setState(() => _page = _page - 1) : null,
+          child: const Text('السابق'),
         ),
-        SizedBox(width: 12),
-        Text('صفحة ${_page + 1} من $totalPages', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+        const SizedBox(width: 12),
+        Text('صفحة ${_page + 1} من $totalPages',
+            style:
+                TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
         const SizedBox(width: 12),
         OutlinedButton(
           onPressed: (_page + 1) < totalPages
@@ -395,11 +411,12 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Widget _buildUserCard(Map<String, dynamic> user, int index) {
     final username = user['user'] ?? user['name'] ?? 'غير محدد';
-    final ipAddress = user['address'] ?? user['framed-ip-address'] ?? 'غير متاح';
+    final ipAddress =
+        user['address'] ?? user['framed-ip-address'] ?? 'غير متاح';
     final uptime = user['uptime'] ?? user['session-time-left'] ?? '';
-    
+
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -497,7 +514,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: context.theme.appColors.onSurface.withValues(alpha: 0.3),
+                  color:
+                      context.theme.appColors.onSurface.withValues(alpha: 0.3),
                 ),
               ],
             ),
@@ -551,7 +569,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                         child: Text(
                           entry.key,
                           style: TextStyle(
-                            color: context.theme.appColors.onSurface.withValues(alpha: 0.6),
+                            color: context.theme.appColors.onSurface
+                                .withValues(alpha: 0.6),
                             fontSize: 14,
                           ),
                         ),
@@ -570,7 +589,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ],
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

@@ -1,4 +1,5 @@
 enum QueueType { simple, queueTree, pcq }
+
 enum TrafficType { http, streaming, gaming, voip, p2p, other }
 
 class QosConfig {
@@ -55,8 +56,7 @@ class QosConfig {
   factory QosConfig.fromJson(Map<String, dynamic> json) => QosConfig(
         enabled: json['enabled'],
         totalBandwidth: json['totalBandwidth'],
-        rules:
-            (json['rules'] as List).map((e) => QosRule.fromJson(e)).toList(),
+        rules: (json['rules'] as List).map((e) => QosRule.fromJson(e)).toList(),
         queueType: QueueType.values.firstWhere(
           (e) => e.name == json['queueType'],
           orElse: () => QueueType.simple,

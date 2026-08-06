@@ -55,20 +55,25 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     // 🔒 قراءة API key من flutter_secure_storage (مشفّر)
-    final apiKey = await SecureCredentialsStorageContainer.instance.getOomolApiKey() ?? '';
+    final apiKey =
+        await SecureCredentialsStorageContainer.instance.getOomolApiKey() ?? '';
     setState(() {
       _apiKeyController.text = apiKey;
       _packageNameController.text = prefs.getString('oomol_package_name') ?? '';
-      _packageVersionController.text = prefs.getString('oomol_package_version') ?? 'latest';
+      _packageVersionController.text =
+          prefs.getString('oomol_package_version') ?? 'latest';
     });
   }
 
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     // 🔒 حفظ API key في flutter_secure_storage (مشفّر)
-    await SecureCredentialsStorageContainer.instance.setOomolApiKey(_apiKeyController.text.trim());
-    await prefs.setString('oomol_package_name', _packageNameController.text.trim());
-    await prefs.setString('oomol_package_version', _packageVersionController.text.trim());
+    await SecureCredentialsStorageContainer.instance
+        .setOomolApiKey(_apiKeyController.text.trim());
+    await prefs.setString(
+        'oomol_package_name', _packageNameController.text.trim());
+    await prefs.setString(
+        'oomol_package_version', _packageVersionController.text.trim());
     if (mounted) showSuccessSnackBar(context, 'تم حفظ إعدادات OOMOL');
   }
 
@@ -176,7 +181,8 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
                 onPressed: _connecting ? null : _testConnection,
                 icon: _connecting
                     ? const SizedBox(
-                        width: 16, height: 16,
+                        width: 16,
+                        height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.electrical_services),
@@ -192,7 +198,8 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
                 decoration: BoxDecoration(
                   color: colors.errorContainer,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                  border:
+                      Border.all(color: colors.error.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -308,7 +315,8 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
               hintStyle: TextStyle(fontSize: 12, color: colors.textTertiary),
               prefixIcon: const Icon(Icons.key),
               suffixIcon: IconButton(
-                icon: Icon(_obscureKey ? Icons.visibility_off : Icons.visibility),
+                icon:
+                    Icon(_obscureKey ? Icons.visibility_off : Icons.visibility),
                 onPressed: () => setState(() => _obscureKey = !_obscureKey),
               ),
               border: OutlineInputBorder(
@@ -498,7 +506,10 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
           child: OutlinedButton.icon(
             onPressed: _loading ? null : _pauseQueue,
             icon: _loading
-                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.pause),
             label: const Text('إيقاف الطابور'),
           ),
@@ -508,7 +519,10 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
           child: FilledButton.icon(
             onPressed: _loading ? null : _resumeQueue,
             icon: _loading
-                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.play_arrow),
             label: const Text('استئناف'),
           ),
@@ -567,7 +581,11 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
       leading: CircleAvatar(
         backgroundColor: statusColor.withValues(alpha: 0.15),
         child: Icon(
-          t.isSuccess ? Icons.check : t.isFailed ? Icons.close : Icons.hourglass_top,
+          t.isSuccess
+              ? Icons.check
+              : t.isFailed
+                  ? Icons.close
+                  : Icons.hourglass_top,
           color: statusColor,
           size: 18,
         ),
@@ -590,7 +608,8 @@ class _OomolSettingsScreenState extends State<OomolSettingsScreen> {
             ),
             child: Text(
               t.status,
-              style: TextStyle(fontSize: 9, color: statusColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 9, color: statusColor, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 6),

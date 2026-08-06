@@ -18,7 +18,8 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    SecureCredentialsStorageContainer.instance = InMemorySecureCredentialsStorage();
+    SecureCredentialsStorageContainer.instance =
+        InMemorySecureCredentialsStorage();
   });
 
   tearDown(() {

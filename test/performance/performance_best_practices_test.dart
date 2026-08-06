@@ -8,6 +8,7 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// اختبار 1: التحقق من أن الـ widgets الثابتة تُستخدم كـ const
@@ -135,8 +136,7 @@ void main() {
                 body: SizedBox(
                   height: 200, // viewport محدود
                   child: ListView.builder(
-                    itemCount: 10000, // قائمة كبيرة جداً
-                    cacheExtent: 100,
+                    scrollCacheExtent: const ScrollCacheExtent.pixels(100), itemCount: 10000,
                     itemBuilder: (context, index) {
                       buildCount++;
                       return ListTile(

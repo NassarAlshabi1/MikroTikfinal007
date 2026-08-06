@@ -38,7 +38,7 @@ void main() {
       test('factory .assistant ينشئ رسالة مساعد مع أوامر', () {
         final msg = DiagnosticMessage.assistant(
           'إليك الحل',
-          commands: ['/ip address add', '/ip route add'],
+          commands: const ['/ip address add', '/ip route add'],
         );
         expect(msg.type, MessageType.assistant);
         expect(msg.content, 'إليك الحل');
@@ -119,7 +119,7 @@ void main() {
           system: '',
           ipAddress: '10.0.0.1',
           collectedAt: DateTime.now(),
-          extraData: {
+          extraData: const {
             'IP SERVICES': 'telnet, ftp',
             'USERS': 'admin',
           },
@@ -181,7 +181,8 @@ void main() {
           mode: DiagnosticMode.general,
           agenticMaxSteps: 5,
         );
-        expect(gemini.effectiveBaseUrl, 'https://generativelanguage.googleapis.com/v1beta');
+        expect(gemini.effectiveBaseUrl,
+            'https://generativelanguage.googleapis.com/v1beta');
 
         const openAiSettings = AiSettings(
           provider: AiProvider.openAI,
@@ -229,8 +230,10 @@ void main() {
         );
         expect(script.commands, hasLength(2));
         // fromText يحافظ على الصيغة الأصلية (لا يحوّل المسافات إلى /)
-        expect(script.commands[0], '/ip address add address=192.168.1.1/24 interface=ether1');
-        expect(script.commands[1], '/ip route add dst-address=0.0.0.0/0 gateway=192.168.1.1');
+        expect(script.commands[0],
+            '/ip address add address=192.168.1.1/24 interface=ether1');
+        expect(script.commands[1],
+            '/ip route add dst-address=0.0.0.0/0 gateway=192.168.1.1');
       });
 
       test('fromText يتجاهل الأسطر الفارغة والتعليقات', () {
@@ -455,7 +458,8 @@ def foo():
           ipAddress: '',
           collectedAt: DateTime.now(),
         );
-        final fixes = AutoFixService.analyze(snapshot, mode: DiagnosticMode.security);
+        final fixes =
+            AutoFixService.analyze(snapshot, mode: DiagnosticMode.security);
         for (final fix in fixes) {
           expect(fix.id, isNotEmpty);
           expect(fix.title, isNotEmpty);
@@ -474,9 +478,12 @@ def foo():
     // ============================================================
     group('⑦ CommandExecutor', () {
       test('classifyRisk: print = safe', () {
-        expect(CommandExecutor.classifyRisk('/ip address print'), CommandRiskLevel.safe);
-        expect(CommandExecutor.classifyRisk('/interface print'), CommandRiskLevel.safe);
-        expect(CommandExecutor.classifyRisk('/system resource print'), CommandRiskLevel.safe);
+        expect(CommandExecutor.classifyRisk('/ip address print'),
+            CommandRiskLevel.safe);
+        expect(CommandExecutor.classifyRisk('/interface print'),
+            CommandRiskLevel.safe);
+        expect(CommandExecutor.classifyRisk('/system resource print'),
+            CommandRiskLevel.safe);
       });
 
       test('classifyRisk: add/set = moderate', () {
@@ -485,7 +492,8 @@ def foo():
           CommandRiskLevel.moderate,
         );
         expect(
-          CommandExecutor.classifyRisk('/interface ethernet set ether1 name=wan'),
+          CommandExecutor.classifyRisk(
+              '/interface ethernet set ether1 name=wan'),
           CommandRiskLevel.moderate,
         );
       });
@@ -657,7 +665,7 @@ def foo():
       testWidgets('رسالة المساعد مع أوامر تُعرض الأوامر', (tester) async {
         final msg = DiagnosticMessage.assistant(
           'إليك الحل',
-          commands: ['/ip address print', '/interface print'],
+          commands: const ['/ip address print', '/interface print'],
         );
 
         await tester.pumpWidget(

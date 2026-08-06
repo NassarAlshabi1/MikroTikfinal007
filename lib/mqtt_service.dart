@@ -45,24 +45,23 @@ class MqttService with ChangeNotifier {
         return iosInfo.identifierForVendor;
       }
     } catch (e) {
-      
+      // تجاهل: فشل قراءة معرف الجهاز (اختياري)
     }
     return null;
   }
 
   void _connect() async {
     if (_deviceId == null) {
-      
       return;
     }
 
     if (_client?.connectionStatus?.state == MqttConnectionState.connecting ||
         _client?.connectionStatus?.state == MqttConnectionState.connected) {
-      
       return;
     }
 
-    _client = MqttServerClient.withPort(_broker, 'flutter_client_$_deviceId', _port);
+    _client =
+        MqttServerClient.withPort(_broker, 'flutter_client_$_deviceId', _port);
     _client!.secure = true;
     _client!.securityContext = SecurityContext.defaultContext;
     _client!.keepAlivePeriod = 60;
@@ -82,67 +81,55 @@ class MqttService with ChangeNotifier {
     _client!.connectionMessage = connMessage;
 
     try {
-      
       await _client!.connect();
     } catch (e) {
-      
       _client!.disconnect();
     }
   }
-  
+
   void checkAndReconnect() {
-    
     if (_client?.connectionStatus?.state != MqttConnectionState.connected) {
-      
       _connect();
-    } else {
-      
-    }
+    } else {}
   }
 
   void _onConnected() {
-    
     _client!.subscribe(_responseTopic!, MqttQos.atLeastOnce);
 
     _client!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> c) {
       final MqttPublishMessage recMess = c[0].payload as MqttPublishMessage;
-      final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-      
+      final pt =
+          MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+
       try {
         final messageJson = jsonDecode(pt) as Map<String, dynamic>;
         _messageStreamController.add(messageJson);
       } catch (e) {
-        
+        // تجاهل: رسالة غير JSON صالحة
       }
     });
   }
 
-  void _onDisconnected() {
-    
-  }
+  void _onDisconnected() {}
 
-  void _onSubscribed(String topic) {
-    
-  }
+  void _onSubscribed(String topic) {}
 
-  void _pong() {
-    
-  }
+  void _pong() {}
 
   void publish(Map<String, dynamic> message) {
     if (_client?.connectionStatus?.state != MqttConnectionState.connected) {
-      
       // لا تعيد المحاولة تلقائياً هنا، اترك المنطق في الواجهة يقرر إعادة الإرسال
       checkAndReconnect();
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text('فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.'),
-          backgroundColor: const Color(0xFFFFB74D), // warning
+        const SnackBar(
+          content:
+              Text('فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.'),
+          backgroundColor: Color(0xFFFFB74D), // warning
         ),
       );
       return;
     }
-    
+
     message['reply_to'] = _responseTopic;
     message['device_id'] = _deviceId;
 
@@ -163,4 +150,3 @@ class MqttService with ChangeNotifier {
     super.dispose();
   }
 }
-

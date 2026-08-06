@@ -10,16 +10,16 @@ import 'command_executor.dart' show CommandResult;
 
 /// نوع/وضع التشخيص — يحدّد الـ System Prompt المُستخدم
 enum DiagnosticMode {
-  general,        // تشخيص عام شامل
-  security,       // فحص أمني
-  performance,    // تحسين الأداء
-  hotspot,        // مشاكل Hotspot و User Manager
-  vpn,            // VPN و tunneling
-  routing,        // مشاكل التوجيه و BGP/OSPF
-  wifi,           // Wireless و CAPsMAN
-  qos,            // QoS و Queue management
-  dhcp,           // DHCP و IP allocation (مستوحى من Mikrotik-AI-Cloud)
-  monitoring,     // Netwatch, SNMP, logs, health check
+  general, // تشخيص عام شامل
+  security, // فحص أمني
+  performance, // تحسين الأداء
+  hotspot, // مشاكل Hotspot و User Manager
+  vpn, // VPN و tunneling
+  routing, // مشاكل التوجيه و BGP/OSPF
+  wifi, // Wireless و CAPsMAN
+  qos, // QoS و Queue management
+  dhcp, // DHCP و IP allocation (مستوحى من Mikrotik-AI-Cloud)
+  monitoring, // Netwatch, SNMP, logs, health check
   infrastructure, // Bridge, VLAN, Bonding, Tunnels, IPv6
 }
 
@@ -108,10 +108,10 @@ extension DiagnosticModeExtension on DiagnosticMode {
 
 /// مزود خدمة الـ AI
 enum AiProvider {
-  openAI,    // GPT-4o, GPT-4o-mini
-  gemini,    // gemini-2.5-flash, gemini-2.5-pro
+  openAI, // GPT-4o, GPT-4o-mini
+  gemini, // gemini-2.5-flash, gemini-2.5-pro
   openRouter, // OpenRouter — نماذج متعددة (Gemini, Claude, Llama, Qwen...)
-  custom,    // مزود مخصص (اسم نموذج + baseUrl + API key يدوياً)
+  custom, // مزود مخصص (اسم نموذج + baseUrl + API key يدوياً)
 }
 
 extension AiProviderExtension on AiProvider {
@@ -146,7 +146,12 @@ extension AiProviderExtension on AiProvider {
       case AiProvider.openAI:
         return ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'];
       case AiProvider.gemini:
-        return ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+        return [
+          'gemini-2.5-flash',
+          'gemini-2.5-pro',
+          'gemini-1.5-flash',
+          'gemini-1.5-pro'
+        ];
       case AiProvider.openRouter:
         return [
           'google/gemini-2.5-flash',
@@ -164,8 +169,8 @@ extension AiProviderExtension on AiProvider {
 
 /// طريقة الاتصال بـ MikroTik
 enum MikrotikConnectionMethod {
-  routerOS,  // API على منفذ 8728/8729 (موجود مسبقاً)
-  ssh,       // SSH على منفذ 22 (أوامر نصية كاملة)
+  routerOS, // API على منفذ 8728/8729 (موجود مسبقاً)
+  ssh, // SSH على منفذ 22 (أوامر نصية كاملة)
 }
 
 extension MikrotikConnectionMethodExtension on MikrotikConnectionMethod {
@@ -273,9 +278,8 @@ class MikrotikSnapshot {
     final extraSections = StringBuffer();
     if (extraData.isNotEmpty) {
       for (final entry in extraData.entries) {
-        final value = entry.value.trim().isEmpty
-            ? '(empty)'
-            : entry.value.trim();
+        final value =
+            entry.value.trim().isEmpty ? '(empty)' : entry.value.trim();
         extraSections.writeln('\n=== ${entry.key} ===');
         extraSections.writeln(value);
       }
@@ -314,10 +318,10 @@ class AiSettings {
   final AiProvider provider;
   final String model;
   final String apiKey;
-  final String? baseUrl;  // عنوان API مخصص (OpenRouter, Azure, Ollama, إلخ)
+  final String? baseUrl; // عنوان API مخصص (OpenRouter, Azure, Ollama, إلخ)
   final MikrotikConnectionMethod connectionMethod;
   final int maxTokens;
-  final DiagnosticMode mode;  // نوع/وضع التشخيص
+  final DiagnosticMode mode; // نوع/وضع التشخيص
 
   /// أقصى عدد خطوات استقصاء في التشخيص الوكيل (Agentic Loop).
   /// كل خطوة = طلب الـ AI أوامر قراءة آمنة + تنفيذها تلقائياً + إعادة النتائج إليه.
@@ -400,9 +404,7 @@ class AiSettings {
   bool get isConfigured {
     if (apiKey.isEmpty) return false;
     if (provider == AiProvider.custom) {
-      return model.isNotEmpty &&
-          baseUrl != null &&
-          baseUrl!.isNotEmpty;
+      return model.isNotEmpty && baseUrl != null && baseUrl!.isNotEmpty;
     }
     return true;
   }
@@ -480,10 +482,10 @@ class AgentDecision {
 class DiagnosticsState {
   final List<DiagnosticMessage> messages;
   final bool isLoading;
-  final String? loadingStage;  // "جاري جمع البيانات..." | "جاري التحليل..."
+  final String? loadingStage; // "جاري جمع البيانات..." | "جاري التحليل..."
   final MikrotikSnapshot? lastSnapshot;
   final AiSettings settings;
-  final CommandResult? lastCommandResult;  // نتيجة آخر أمر منفّذ
+  final CommandResult? lastCommandResult; // نتيجة آخر أمر منفّذ
 
   const DiagnosticsState({
     required this.messages,

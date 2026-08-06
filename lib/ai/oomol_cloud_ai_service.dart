@@ -32,10 +32,10 @@ import 'mikrotik_log_analyzer.dart';
 /// إعدادات OOMOL Cloud AI
 class OomolAiSettings {
   final String apiKey;
-  final String? packageName;     // اسم الـ package المنشور على OOMOL
+  final String? packageName; // اسم الـ package المنشور على OOMOL
   final String? packageVersion;
   final String? baseUrl;
-  final String blockName;        // اسم الـ block (افتراضي: main)
+  final String blockName; // اسم الـ block (افتراضي: main)
 
   const OomolAiSettings({
     required this.apiKey,
@@ -54,7 +54,7 @@ class OomolAnalysisResult {
   final String? taskId;
   final String content;
   final String? error;
-  final bool usedFallback;  // هل استخدم تحليل محلي بدلاً من cloud؟
+  final bool usedFallback; // هل استخدم تحليل محلي بدلاً من cloud؟
   final LogAnalysisResult? fallbackResult; // النتيجة المحلية (إن استُخدمت)
   final DateTime completedAt;
 
@@ -156,8 +156,8 @@ class OomolCloudAiService {
         final resultData = result['resultData'];
         final content = resultData is Map
             ? (resultData['analysis'] as String? ??
-               resultData['text'] as String? ??
-               resultData.toString())
+                resultData['text'] as String? ??
+                resultData.toString())
             : resultData.toString();
         return OomolAnalysisResult(
           success: true,

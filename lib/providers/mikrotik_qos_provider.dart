@@ -182,7 +182,6 @@ class MikrotikQosNotifier extends StateNotifier<QosState> {
   }
 }
 
-final qosProvider =
-    StateNotifierProvider<MikrotikQosNotifier, QosState>((ref) {
+final qosProvider = StateNotifierProvider<MikrotikQosNotifier, QosState>((ref) {
   return MikrotikQosNotifier();
 });

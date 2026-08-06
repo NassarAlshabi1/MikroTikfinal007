@@ -230,7 +230,8 @@ interface ether1 link up
 ''';
         final result = MikrotikLogAnalyzer.analyze(logs);
         expect(result.severityCounts[LogSeverity.critical], 1); // login failure
-        expect(result.severityCounts[LogSeverity.warning], 2); // reboot + link down
+        expect(result.severityCounts[LogSeverity.warning],
+            2); // reboot + link down
         expect(result.severityCounts[LogSeverity.info], 1); // link up
       });
 
@@ -255,7 +256,8 @@ interface ether1 link down
 
       test('healthScore لا يتجاوز 0', () {
         // 30 critical events → penalty = 150 → clamped to 0
-        final logs = List.generate(30, (i) => 'login failure from 1.2.3.$i').join('\n');
+        final logs =
+            List.generate(30, (i) => 'login failure from 1.2.3.$i').join('\n');
         final result = MikrotikLogAnalyzer.analyze(logs);
         expect(result.healthScore, 0);
       });
@@ -286,9 +288,8 @@ interface ether1 link down
 
       test('يأخذ أعلى 5 مشاكل فقط', () {
         // إنشاء 10 مشاكل مختلفة
-        final logs = List.generate(10, (i) => 'login failure from 1.2.3.$i').join('\n') +
-            '\n' +
-            List.generate(10, (i) => 'interface ether$i link down').join('\n');
+        final logs = '${List.generate(10, (i) => 'login failure from 1.2.3.$i')
+                .join('\n')}\n${List.generate(10, (i) => 'interface ether$i link down').join('\n')}';
         final result = MikrotikLogAnalyzer.analyze(logs);
         expect(result.topIssues.length, lessThanOrEqualTo(5));
       });

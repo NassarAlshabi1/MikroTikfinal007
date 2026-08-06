@@ -15,7 +15,8 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    SecureCredentialsStorageContainer.instance = InMemorySecureCredentialsStorage();
+    SecureCredentialsStorageContainer.instance =
+        InMemorySecureCredentialsStorage();
   });
 
   tearDown(() {
@@ -56,14 +57,16 @@ void main() {
     testWidgets('يعرض زر "اختبار الاتصال"', (tester) async {
       await tester.pumpWidget(buildApp());
       await tester.pump();
-      expect(find.widgetWithText(FilledButton, 'اختبار الاتصال'), findsOneWidget);
+      expect(
+          find.widgetWithText(FilledButton, 'اختبار الاتصال'), findsOneWidget);
     });
 
     testWidgets('يعرض حقل API key مع obscure افتراضي', (tester) async {
       await tester.pumpWidget(buildApp());
       await tester.pump();
       // TextField موجود
-      expect(find.byType(TextField), findsNWidgets(3)); // apiKey + packageName + version
+      expect(find.byType(TextField),
+          findsNWidgets(3)); // apiKey + packageName + version
       // زر إظهار/إخفاء
       expect(find.byIcon(Icons.visibility_off), findsOneWidget);
     });
@@ -102,14 +105,16 @@ void main() {
       await tester.pump();
 
       // أدخل API key في الحقل الأول
-      await tester.enterText(find.byType(TextField).first, 'api-test-key-12345');
+      await tester.enterText(
+          find.byType(TextField).first, 'api-test-key-12345');
 
       // اضغط زر الحفظ
       await tester.tap(find.byTooltip('حفظ'));
       await tester.pump();
 
       // تحقق من الحفظ في secure storage
-      final stored = await SecureCredentialsStorageContainer.instance.getOomolApiKey();
+      final stored =
+          await SecureCredentialsStorageContainer.instance.getOomolApiKey();
       expect(stored, 'api-test-key-12345');
     });
   });

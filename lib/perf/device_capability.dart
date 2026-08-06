@@ -67,7 +67,7 @@ class DeviceCapability {
   Duration get animationDuration {
     switch (_tier) {
       case DeviceTier.low:
-        return const Duration(milliseconds: 120);  // أسرع بكثير
+        return const Duration(milliseconds: 120); // أسرع بكثير
       case DeviceTier.mid:
         return const Duration(milliseconds: 200);
       case DeviceTier.high:
@@ -82,7 +82,7 @@ class DeviceCapability {
   double get listViewCacheExtent {
     switch (_tier) {
       case DeviceTier.low:
-        return 100;     // فقط ما يظهر + قليل
+        return 100; // فقط ما يظهر + قليل
       case DeviceTier.mid:
         return 250;
       case DeviceTier.high:

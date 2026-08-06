@@ -7,8 +7,6 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  plugins:
-    - custom_lint
   language:
     strict-casts: false
     strict-inference: false

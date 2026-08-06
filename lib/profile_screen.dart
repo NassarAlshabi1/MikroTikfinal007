@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('الملف الشخصي للشبكة'),
+        title: const Text('الملف الشخصي للشبكة'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: _isLoading
@@ -57,12 +57,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileView() {
     final clientInfo = _profileData['client_info'] ?? {};
     final networkDetails = _profileData['network_details'] ?? {};
-    
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
         children: [
-          Icon(Icons.account_circle, size: 100, color: context.theme.appColors.primary),
+          Icon(Icons.account_circle,
+              size: 100, color: context.theme.appColors.primary),
           const SizedBox(height: 16),
           _buildInfoCard(
             context,
@@ -88,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             subtitle: 'اسم الشبكة المرتبطة',
             icon: Icons.wifi_outlined,
           ),
-           _buildInfoCard(
+          _buildInfoCard(
             context,
             title: networkDetails['network_id'] ?? 'غير متوفر',
             subtitle: 'معرّف الشبكة (Network ID)',
@@ -99,19 +100,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, {required String title, required String subtitle, required IconData icon}) {
+  Widget _buildInfoCard(BuildContext context,
+      {required String title,
+      required String subtitle,
+      required IconData icon}) {
     return Card(
       elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         leading: Icon(icon, color: Theme.of(context).primaryColor, size: 30),
         title: Text(
           title,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).textTheme.bodySmall?.color),
+          style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color ??
+                  Theme.of(context).textTheme.bodySmall?.color),
         ),
       ),
     );
@@ -124,17 +130,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_amber_rounded, size: 80, color: context.theme.appColors.warning),
+            Icon(Icons.warning_amber_rounded,
+                size: 80, color: context.theme.appColors.warning),
             const SizedBox(height: 20),
             const Text(
               'لم يتم ربط الشبكة!',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'الرجاء الذهاب إلى شاشة "ربط الشبكة بـ م/نصار الشعبي" لإكمال عملية الربط أولاً.',
-              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      Theme.of(context).colorScheme.onSurface),
               textAlign: TextAlign.center,
             ),
           ],

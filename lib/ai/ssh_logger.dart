@@ -139,8 +139,9 @@ class SshLogger {
 
     final success = _entries.where((e) => e.success).length;
     final failed = _entries.where((e) => !e.success).length;
-    final avgDuration = _entries.map((e) => e.durationMs).reduce((a, b) => a + b) ~/
-        _entries.length;
+    final avgDuration =
+        _entries.map((e) => e.durationMs).reduce((a, b) => a + b) ~/
+            _entries.length;
 
     return {
       'total': _entries.length,
@@ -182,7 +183,8 @@ class SshLogger {
       final file = File(path);
       if (!await file.exists()) return;
 
-      final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      final json =
+          jsonDecode(await file.readAsString()) as Map<String, dynamic>;
       final entriesJson = json['entries'] as List;
       _entries = entriesJson
           .map((e) => AuditLogEntry.fromJson(e as Map<String, dynamic>))
@@ -219,7 +221,8 @@ class SshLogger {
 
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final path = '${dir.path}/exports/audit_log_${DateTime.now().millisecondsSinceEpoch}.csv';
+      final path =
+          '${dir.path}/exports/audit_log_${DateTime.now().millisecondsSinceEpoch}.csv';
       final file = File(path);
       await file.parent.create(recursive: true);
       await file.writeAsString(buffer.toString());

@@ -7,7 +7,6 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ai/command_executor.dart';
@@ -17,6 +16,7 @@ import 'snackbar_helpers.dart';
 import 'theme/app_theme.dart';
 import 'theme/amolood_theme.dart';
 import 'services/secure_clipboard.dart';
+
 /// نوع سطر في مخرجات التيرمنال
 enum _LineKind { prompt, output, error, info, header }
 
@@ -29,34 +29,46 @@ class _TermLine {
 
 /// فئات الأوامر السريعة في التيرمنال
 enum _CmdCategory {
-  system,    // معلومات النظام
-  security,  // تدقيق أمني (firewall, services, users)
-  qos,       // طباعة QoS / Queues
-  network,   // واجهات وعناوين IP
+  system, // معلومات النظام
+  security, // تدقيق أمني (firewall, services, users)
+  qos, // طباعة QoS / Queues
+  network, // واجهات وعناوين IP
   diagnostics, // تشخيص شبكي (ping/traceroute/bandwidth-test من الموجّه)
-  advanced,  // أدوات متقدمة (VRRP/certificates/interface lists/backup)
+  advanced, // أدوات متقدمة (VRRP/certificates/interface lists/backup)
 }
 
 extension _CmdCategoryX on _CmdCategory {
   String get displayName {
     switch (this) {
-      case _CmdCategory.system:       return 'النظام';
-      case _CmdCategory.security:     return 'تدقيق أمني';
-      case _CmdCategory.qos:          return 'QoS';
-      case _CmdCategory.network:      return 'الشبكة';
-      case _CmdCategory.diagnostics:  return 'تشخيص شبكي';
-      case _CmdCategory.advanced:     return 'أدوات متقدمة';
+      case _CmdCategory.system:
+        return 'النظام';
+      case _CmdCategory.security:
+        return 'تدقيق أمني';
+      case _CmdCategory.qos:
+        return 'QoS';
+      case _CmdCategory.network:
+        return 'الشبكة';
+      case _CmdCategory.diagnostics:
+        return 'تشخيص شبكي';
+      case _CmdCategory.advanced:
+        return 'أدوات متقدمة';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case _CmdCategory.system:       return Icons.memory;
-      case _CmdCategory.security:     return Icons.security;
-      case _CmdCategory.qos:          return Icons.speed;
-      case _CmdCategory.network:      return Icons.lan;
-      case _CmdCategory.diagnostics:  return Icons.network_ping;
-      case _CmdCategory.advanced:     return Icons.engineering;
+      case _CmdCategory.system:
+        return Icons.memory;
+      case _CmdCategory.security:
+        return Icons.security;
+      case _CmdCategory.qos:
+        return Icons.speed;
+      case _CmdCategory.network:
+        return Icons.lan;
+      case _CmdCategory.diagnostics:
+        return Icons.network_ping;
+      case _CmdCategory.advanced:
+        return Icons.engineering;
     }
   }
 }
@@ -363,7 +375,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            Icon(_activeCategory.icon, color: Theme.of(context).colorScheme.primary),
+            Icon(_activeCategory.icon,
+                color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
             Text('تدقيق ${_activeCategory.displayName}'),
           ],
@@ -385,7 +398,10 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 padding: const EdgeInsets.all(8),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: ListView.separated(
@@ -394,7 +410,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 2),
                   itemBuilder: (_, i) => Text(
                     '${i + 1}. ${commands[i]}',
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    style:
+                        const TextStyle(fontFamily: 'monospace', fontSize: 12),
                   ),
                 ),
               ),
@@ -423,8 +440,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
         title: Row(
           children: [
             Icon(Icons.dangerous, color: Theme.of(context).appColors.error),
-            SizedBox(width: 8),
-            Text('أمر خطير'),
+            const SizedBox(width: 8),
+            const Text('أمر خطير'),
           ],
         ),
         content: Column(
@@ -443,7 +460,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
               child: Text(
                 command,
                 style: TextStyle(
-                    fontFamily: 'monospace', color: Theme.of(context).appColors.warning),
+                    fontFamily: 'monospace',
+                    color: Theme.of(context).appColors.warning),
               ),
             ),
           ],
@@ -454,7 +472,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
             child: const Text('إلغاء'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
+            style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).appColors.error),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('تنفيذ'),
           ),
@@ -466,9 +485,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
   void _recallHistory(int direction) {
     if (_history.isEmpty) return;
     _historyCursor = (_historyCursor + direction).clamp(0, _history.length);
-    final text = _historyCursor < _history.length
-        ? _history[_historyCursor]
-        : '';
+    final text =
+        _historyCursor < _history.length ? _history[_historyCursor] : '';
     _inputController.value = TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
@@ -568,7 +586,9 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 const SizedBox(width: 6),
                 Text(
                   _method.displayName,
-                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
+                  style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: 12),
                 ),
                 const Spacer(),
                 if (_busy)
@@ -625,7 +645,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 return Center(
                   child: ActionChip(
                     backgroundColor: AmoloodColors.surfaceElevated,
-                    side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
+                    side: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.1)),
                     label: Text(
                       cmd,
                       style: TextStyle(
@@ -678,7 +702,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
                         cat.displayName,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              selected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       onSelected: _busy
@@ -692,7 +717,10 @@ class _TerminalScreenState extends State<TerminalScreen> {
                       ),
                       backgroundColor: AmoloodColors.surfaceElevated,
                       side: BorderSide(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.1),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -731,8 +759,10 @@ class _TerminalScreenState extends State<TerminalScreen> {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _historyButton(Icons.keyboard_arrow_up, () => _recallHistory(-1)),
-                _historyButton(Icons.keyboard_arrow_down, () => _recallHistory(1)),
+                _historyButton(
+                    Icons.keyboard_arrow_up, () => _recallHistory(-1)),
+                _historyButton(
+                    Icons.keyboard_arrow_down, () => _recallHistory(1)),
               ],
             ),
             const SizedBox(width: 4),
@@ -757,7 +787,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
                     fontSize: 14,
                   ),
                   hintText: 'اكتب أمر RouterOS...',
-                  hintStyle: TextStyle(color: Theme.of(context).dividerColor, fontSize: 13),
+                  hintStyle: TextStyle(
+                      color: Theme.of(context).dividerColor, fontSize: 13),
                   filled: true,
                   fillColor: AmoloodColors.background,
                   contentPadding:
@@ -773,10 +804,12 @@ class _TerminalScreenState extends State<TerminalScreen> {
             ),
             const SizedBox(width: 6),
             CircleAvatar(
-              backgroundColor:
-                  _busy ? Theme.of(context).appColors.muted : Theme.of(context).primaryColor,
+              backgroundColor: _busy
+                  ? Theme.of(context).appColors.muted
+                  : Theme.of(context).primaryColor,
               child: IconButton(
-                icon: Icon(Icons.play_arrow, color: Theme.of(context).colorScheme.onSurface),
+                icon: Icon(Icons.play_arrow,
+                    color: Theme.of(context).colorScheme.onSurface),
                 onPressed: _busy ? null : () => _runCommand(),
               ),
             ),
@@ -794,7 +827,9 @@ class _TerminalScreenState extends State<TerminalScreen> {
         child: Icon(
           icon,
           size: 18,
-          color: _history.isEmpty ? Theme.of(context).dividerColor : Theme.of(context).hintColor,
+          color: _history.isEmpty
+              ? Theme.of(context).dividerColor
+              : Theme.of(context).hintColor,
         ),
       ),
     );

@@ -52,7 +52,12 @@ class RouterService {
     int limit = 20,
     int skip = 0,
   }) async {
-    final args = [path, '=.proplist=$proplist', '=.limit=$limit', '=.skip=$skip'];
+    final args = [
+      path,
+      '=.proplist=$proplist',
+      '=.limit=$limit',
+      '=.skip=$skip'
+    ];
     try {
       return await talk(args);
     } catch (_) {
@@ -79,5 +84,6 @@ class AsyncMemoizer<T> {
     _future ??= computation();
     return _future!;
   }
+
   Future<T> get future => _future ?? Future.error(StateError('No future'));
 }

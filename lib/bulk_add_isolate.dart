@@ -51,7 +51,8 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     for (int i = 0; i < data.count; i++) {
       final randomPartLength = data.length - data.prefix.length;
       if (randomPartLength < 1) {
-        throw Exception('Prefix length cannot be longer than the total length.');
+        throw Exception(
+            'Prefix length cannot be longer than the total length.');
       }
 
       final username =
@@ -90,18 +91,40 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       newlyCreatedUsers.add({'username': username, 'password': password});
       successCount++;
 
-      sendPort.send({'type': 'progress', 'progress': (i + 1) / data.count, 'status': 'Generating user ${i + 1} of ${data.count}'});
+      sendPort.send({
+        'type': 'progress',
+        'progress': (i + 1) / data.count,
+        'status': 'Generating user ${i + 1} of ${data.count}'
+      });
     }
 
-    sendPort.send({'type': 'success', 'users': newlyCreatedUsers, 'count': successCount, 'address': client.address});
+    sendPort.send({
+      'type': 'success',
+      'users': newlyCreatedUsers,
+      'count': successCount,
+      'address': client.address
+    });
   } on MikrotikCredentialsMissingException catch (e) {
-    sendPort.send({'type': 'error', 'message': 'خطأ في بيانات الدخول: ${e.message}', 'count': successCount});
+    sendPort.send({
+      'type': 'error',
+      'message': 'خطأ في بيانات الدخول: ${e.message}',
+      'count': successCount
+    });
   } on MikrotikConnectionException catch (e) {
-    sendPort.send({'type': 'error', 'message': 'خطأ في الاتصال: ${e.message}', 'count': successCount});
+    sendPort.send({
+      'type': 'error',
+      'message': 'خطأ في الاتصال: ${e.message}',
+      'count': successCount
+    });
   } on TimeoutException {
-    sendPort.send({'type': 'error', 'message': 'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).', 'count': successCount});
+    sendPort.send({
+      'type': 'error',
+      'message': 'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).',
+      'count': successCount
+    });
   } catch (e) {
-    sendPort.send({'type': 'error', 'message': e.toString(), 'count': successCount});
+    sendPort.send(
+        {'type': 'error', 'message': e.toString(), 'count': successCount});
   } finally {
     client?.close();
   }

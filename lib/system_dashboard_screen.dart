@@ -71,7 +71,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   final double _cpuThreshold = 80.0;
   final double _memoryThreshold = 90.0;
   final double _temperatureThreshold = 70.0;
-  
+
   // Track last alert times to avoid spam
   DateTime? _lastCpuAlertTime;
   DateTime? _lastMemoryAlertTime;
@@ -145,10 +145,14 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         String userMessage;
         final errorStr = e.toString().toLowerCase();
         if (errorStr.contains('credentials') || errorStr.contains('password')) {
-          userMessage = 'بيانات الاعتماد غير مكتملة. تأكد من تسجيل الدخول أولاً.';
-        } else if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
-          userMessage = 'انتهت مهلة الاتصال. تأكد من أن الراوتر يعمل وقابل للوصول.';
-        } else if (errorStr.contains('socket') || errorStr.contains('connection refused')) {
+          userMessage =
+              'بيانات الاعتماد غير مكتملة. تأكد من تسجيل الدخول أولاً.';
+        } else if (errorStr.contains('timeout') ||
+            errorStr.contains('timed out')) {
+          userMessage =
+              'انتهت مهلة الاتصال. تأكد من أن الراوتر يعمل وقابل للوصول.';
+        } else if (errorStr.contains('socket') ||
+            errorStr.contains('connection refused')) {
           userMessage = 'تعذّر الاتصال بالراوتر. تحقق من الـ IP والمنفذ.';
         } else if (errorStr.contains('login')) {
           userMessage = 'فشل تسجيل الدخول. تحقق من اسم المستخدم وكلمة المرور.';
@@ -178,9 +182,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _cpuFrequency = data['cpu-frequency'] ?? '';
         _cpuLoad = int.tryParse(data['cpu-load']?.toString() ?? '0') ?? 0;
         _freeMemory = int.tryParse(data['free-memory']?.toString() ?? '0') ?? 0;
-        _totalMemory = int.tryParse(data['total-memory']?.toString() ?? '0') ?? 0;
-        _freeHddSpace = int.tryParse(data['free-hdd-space']?.toString() ?? '0') ?? 0;
-        _totalHddSpace = int.tryParse(data['total-hdd-space']?.toString() ?? '0') ?? 0;
+        _totalMemory =
+            int.tryParse(data['total-memory']?.toString() ?? '0') ?? 0;
+        _freeHddSpace =
+            int.tryParse(data['free-hdd-space']?.toString() ?? '0') ?? 0;
+        _totalHddSpace =
+            int.tryParse(data['total-hdd-space']?.toString() ?? '0') ?? 0;
         _architectureName = data['architecture-name'] ?? '';
         _platform = data['platform'] ?? '';
       }
@@ -225,12 +232,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     try {
       // جلب قائمة الـ interfaces
       final interfaces = await client.talk(['/interface/print']);
-      
+
       // البحث عن Interface مناسب (ether1 أو أول interface نشط)
       String? targetInterface;
       for (var iface in interfaces) {
         final name = iface['name']?.toString() ?? '';
-        if (name.toLowerCase().contains('ether1') || name.toLowerCase().contains('wan')) {
+        if (name.toLowerCase().contains('ether1') ||
+            name.toLowerCase().contains('wan')) {
           targetInterface = name;
           break;
         }
@@ -250,8 +258,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
         if (response.isNotEmpty) {
           final data = response.first;
-          _rxBitsPerSecond = int.tryParse(data['rx-bits-per-second']?.toString() ?? '0') ?? 0;
-          _txBitsPerSecond = int.tryParse(data['tx-bits-per-second']?.toString() ?? '0') ?? 0;
+          _rxBitsPerSecond =
+              int.tryParse(data['rx-bits-per-second']?.toString() ?? '0') ?? 0;
+          _txBitsPerSecond =
+              int.tryParse(data['tx-bits-per-second']?.toString() ?? '0') ?? 0;
         }
       }
     } catch (e) {
@@ -270,7 +280,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       } catch (e) {
         // إذا فشل Hotspot، جرب User Manager
         try {
-          final userManagerResponse = await client.talk(['/tool/user-manager/session/print']);
+          final userManagerResponse =
+              await client.talk(['/tool/user-manager/session/print']);
           _activeUsers = userManagerResponse.length;
         } catch (e) {
           _activeUsers = 0;
@@ -380,7 +391,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         : 0.0;
 
     _cpuHistory.add(FlSpot(_dataPointIndex.toDouble(), cpuValue));
-    _memoryHistory.add(FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage));
+    _memoryHistory
+        .add(FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage));
 
     // Keep only last 20 data points using sublist to avoid repeated removals
     if (_cpuHistory.length > 20) {
@@ -395,11 +407,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   void _checkAlerts() {
     final now = DateTime.now();
-    
+
     // Check CPU Alert
     if (_cpuLoad >= _cpuThreshold) {
       _cpuAlert = true;
-      if (_lastCpuAlertTime == null || 
+      if (_lastCpuAlertTime == null ||
           now.difference(_lastCpuAlertTime!).inMinutes >= 5) {
         _showAlert(
           'تحذير: استخدام المعالج مرتفع!',
@@ -417,10 +429,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     final memoryUsedPercentage = _totalMemory > 0
         ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
         : 0.0;
-    
+
     if (memoryUsedPercentage >= _memoryThreshold) {
       _memoryAlert = true;
-      if (_lastMemoryAlertTime == null || 
+      if (_lastMemoryAlertTime == null ||
           now.difference(_lastMemoryAlertTime!).inMinutes >= 5) {
         _showAlert(
           'تحذير: الذاكرة ممتلئة!',
@@ -439,7 +451,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       final temp = double.tryParse(_temperature);
       if (temp != null && temp >= _temperatureThreshold) {
         _temperatureAlert = true;
-        if (_lastTempAlertTime == null || 
+        if (_lastTempAlertTime == null ||
             now.difference(_lastTempAlertTime!).inMinutes >= 5) {
           _showAlert(
             'تحذير: حرارة الجهاز مرتفعة!',
@@ -457,12 +469,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   void _showAlert(String title, String message, IconData icon, Color color) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 28),
+            Icon(icon,
+                color: Theme.of(context).colorScheme.onSurface, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -511,7 +524,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Theme.of(context).appColors.error),
+              Icon(Icons.error_outline,
+                  size: 64, color: Theme.of(context).appColors.error),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
@@ -557,7 +571,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildAlertBanner(),
               if (_cpuAlert || _memoryAlert || _temperatureAlert)
                 const SizedBox(height: 16),
-              
+
               // بطاقة معلومات النظام الرئيسية
               _buildMainSystemCard(theme),
               const SizedBox(height: 16),
@@ -567,7 +581,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildChartCard(
                   title: 'استخدام المعالج (CPU)',
                   data: _cpuHistory,
-                  color: _cpuAlert ? Theme.of(context).appColors.error : Colors.purple,
+                  color: _cpuAlert
+                      ? Theme.of(context).appColors.error
+                      : Colors.purple,
                   unit: '%',
                   isAlert: _cpuAlert,
                 ),
@@ -575,7 +591,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildChartCard(
                   title: 'استخدام الذاكرة (RAM)',
                   data: _memoryHistory,
-                  color: _memoryAlert ? Theme.of(context).appColors.error : Theme.of(context).appColors.info,
+                  color: _memoryAlert
+                      ? Theme.of(context).appColors.error
+                      : Theme.of(context).appColors.info,
                   unit: '%',
                   isAlert: _memoryAlert,
                 ),
@@ -632,7 +650,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     const SizedBox(width: 12),
                     const Text(
                       'البحث عن المشاكل',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -715,16 +734,18 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      padding: EdgeInsets.all(32),
+      padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          Icon(Icons.router, size: 64, color: Theme.of(context).colorScheme.onSurface),
+          Icon(Icons.router,
+              size: 64, color: Theme.of(context).colorScheme.onSurface),
           const SizedBox(height: 16),
           Text(
             _boardName.isEmpty ? _model : _boardName,
@@ -735,7 +756,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             _version,
             style: TextStyle(
@@ -754,15 +775,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 Theme.of(context).appColors.warning,
                 false,
               ),
-              Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
+              Container(
+                  width: 1, height: 40, color: Theme.of(context).dividerColor),
               _buildMiniInfoCard(
                 'الحرارة',
                 _temperature == 'غير متاح' ? _temperature : '$_temperature°',
                 Icons.thermostat,
-                _temperatureAlert ? Theme.of(context).appColors.error : Theme.of(context).appColors.warning,
+                _temperatureAlert
+                    ? Theme.of(context).appColors.error
+                    : Theme.of(context).appColors.warning,
                 _temperatureAlert,
               ),
-              Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
+              Container(
+                  width: 1, height: 40, color: Theme.of(context).dividerColor),
               _buildMiniInfoCard(
                 'المعالج',
                 '$_cpuLoad%',
@@ -777,7 +802,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildMiniInfoCard(String label, String value, IconData icon, Color color, bool isAlert) {
+  Widget _buildMiniInfoCard(
+      String label, String value, IconData icon, Color color, bool isAlert) {
     return Expanded(
       child: Column(
         children: [
@@ -800,7 +826,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             label,
             style: TextStyle(
@@ -812,15 +838,22 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isAlert ? context.theme.appColors.error.withValues(alpha: 0.9) : context.theme.appColors.secondary,
+              color: isAlert
+                  ? context.theme.appColors.error.withValues(alpha: 0.9)
+                  : context.theme.appColors.secondary,
               borderRadius: BorderRadius.circular(8),
-              boxShadow: isAlert ? [
-                BoxShadow(
-                  color: Theme.of(context).appColors.error.withValues(alpha: 0.5),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ] : null,
+              boxShadow: isAlert
+                  ? [
+                      BoxShadow(
+                        color: Theme.of(context)
+                            .appColors
+                            .error
+                            .withValues(alpha: 0.5),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
             ),
             child: Text(
               value,
@@ -836,7 +869,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
+  Widget _buildInfoCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -851,12 +885,17 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 40, color: color),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             title,
             style: TextStyle(
               fontSize: 14,
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Theme.of(context).textTheme.bodySmall?.color,
+              color: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.color
+                      ?.withValues(alpha: 0.7) ??
+                  Theme.of(context).textTheme.bodySmall?.color,
             ),
             textAlign: TextAlign.center,
           ),
@@ -886,13 +925,14 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Widget _buildNetworkTimeCard() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.onSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -901,8 +941,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.access_time, color: Theme.of(context).textTheme.bodySmall?.color),
-          SizedBox(width: 8),
+          Icon(Icons.access_time,
+              color: Theme.of(context).textTheme.bodySmall?.color),
+          const SizedBox(width: 8),
           Text(
             'وقت الشبكة: $_date $_time',
             style: TextStyle(
@@ -916,7 +957,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildActionButton(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionButton(
+      String title, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -1006,13 +1048,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isAlert ? color.withValues(alpha: 0.9) : context.theme.appColors.secondary,
+                  color: isAlert
+                      ? color.withValues(alpha: 0.9)
+                      : context.theme.appColors.secondary,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: (isAlert ? color : Theme.of(context).colorScheme.onSurface).withOpacity(0.3),
+                      color: (isAlert
+                              ? color
+                              : Theme.of(context).colorScheme.onSurface)
+                          .withValues(alpha: 0.3),
                       blurRadius: isAlert ? 6 : 4,
                       offset: const Offset(0, 2),
                     ),
@@ -1040,7 +1088,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   horizontalInterval: 25,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.1),
                       strokeWidth: 1,
                     );
                   },
@@ -1064,7 +1115,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         return Text(
                           '${value.toInt()}$unit',
                           style: TextStyle(
-                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Theme.of(context).disabledColor,
+                            color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                Theme.of(context).disabledColor,
                             fontSize: 12,
                           ),
                         );
@@ -1139,11 +1195,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildChartStat('الحد الأدنى', minY, unit, Theme.of(context).appColors.success),
-              _buildChartStat('الحد الأقصى', maxY, unit, Theme.of(context).appColors.error),
-              _buildChartStat('المتوسط', 
-                data.map((e) => e.y).reduce((a, b) => a + b) / data.length, 
-                unit, Theme.of(context).appColors.warning),
+              _buildChartStat('الحد الأدنى', minY, unit,
+                  Theme.of(context).appColors.success),
+              _buildChartStat(
+                  'الحد الأقصى', maxY, unit, Theme.of(context).appColors.error),
+              _buildChartStat(
+                  'المتوسط',
+                  data.map((e) => e.y).reduce((a, b) => a + b) / data.length,
+                  unit,
+                  Theme.of(context).appColors.warning),
             ],
           ),
         ],
@@ -1158,7 +1218,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6) ?? Theme.of(context).textTheme.bodySmall?.color,
+            color: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.color
+                    ?.withValues(alpha: 0.6) ??
+                Theme.of(context).textTheme.bodySmall?.color,
           ),
         ),
         const SizedBox(height: 4),
@@ -1187,7 +1252,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Widget _buildAlertBanner() {
     final alerts = <Map<String, dynamic>>[];
-    
+
     if (_cpuAlert) {
       alerts.add({
         'title': 'استخدام المعالج مرتفع',
@@ -1196,7 +1261,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'color': Theme.of(context).appColors.warning,
       });
     }
-    
+
     if (_memoryAlert) {
       final memoryUsedPercentage = _totalMemory > 0
           ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
@@ -1208,7 +1273,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'color': Theme.of(context).appColors.error,
       });
     }
-    
+
     if (_temperatureAlert) {
       alerts.add({
         'title': 'الحرارة مرتفعة',
@@ -1244,9 +1309,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1268,7 +1336,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'تم الكشف عن مشكلات في الأداء',
                       style: TextStyle(
@@ -1283,54 +1351,64 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           ),
           const SizedBox(height: 16),
           ...alerts.map((alert) => Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-                  width: 1,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        alert['icon'] as IconData,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          alert['title'] as String,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          alert['value'] as String,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    alert['icon'] as IconData,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      alert['title'] as String,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      alert['value'] as String,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )),
+              )),
         ],
       ),
     );

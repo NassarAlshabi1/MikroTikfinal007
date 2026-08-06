@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/cards_stats_provider.dart';
 import '../../perf/device_capability.dart';
@@ -38,10 +39,9 @@ class CardsStatisticsV2 extends ConsumerWidget {
       body: loading && users.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
-              padding: const EdgeInsets.all(12),
+              scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), padding: const EdgeInsets.all(12),
               // إجمالي العناصر: بطاقتان إحصائيتان + عنوان + عينة 10 مستخدمين
               itemCount: 2 + 1 + sampleUsers.length,
-              cacheExtent: DeviceCapability.instance.listViewCacheExtent,
               addAutomaticKeepAlives: false,
               itemBuilder: (context, index) {
                 // البطاقتان الأوليان

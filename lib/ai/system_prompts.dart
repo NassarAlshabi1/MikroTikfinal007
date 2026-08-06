@@ -893,4 +893,3 @@ class SystemPrompts {
 - مثال خاطئ: 10 users × 10M limit-at = 100M > 50M (starvation)
 ''';
 }
-

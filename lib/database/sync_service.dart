@@ -38,8 +38,10 @@ class SyncService {
       onProgress?.call(0.1, 'جاري جلب الملفات الشخصية...');
       final profilesResponse = await _safeTalk(
         client,
-        ['/tool/user-manager/profile/print',
-         '=.proplist=name,shared-users,rate-limit,uptime-used,upload-used,download-used'],
+        [
+          '/tool/user-manager/profile/print',
+          '=.proplist=name,shared-users,rate-limit,uptime-used,upload-used,download-used'
+        ],
       );
       profilesSynced = await _syncProfiles(db, profilesResponse);
       onProgress?.call(0.3, 'تمت مزامنة $profilesSynced ملف شخصي');
@@ -48,8 +50,10 @@ class SyncService {
       onProgress?.call(0.4, 'جاري جلب المستخدمين...');
       final usersResponse = await _safeTalk(
         client,
-        ['/tool/user-manager/user/print',
-         '=.proplist=username,password,disabled,actual-profile,shared-users,upload-used,download-used,uptime-used,uptime-limit'],
+        [
+          '/tool/user-manager/user/print',
+          '=.proplist=username,password,disabled,actual-profile,shared-users,upload-used,download-used,uptime-used,uptime-limit'
+        ],
       );
       cardsSynced = await _syncCards(db, usersResponse);
       onProgress?.call(0.7, 'تمت مزامنة $cardsSynced كرت');
@@ -58,8 +62,10 @@ class SyncService {
       onProgress?.call(0.8, 'جاري جلب الجلسات النشطة...');
       final sessionsResponse = await _safeTalk(
         client,
-        ['/ip/hotspot/active/print',
-         '=.proplist=user,address,uptime,session-time-left,bytes-in,bytes-out'],
+        [
+          '/ip/hotspot/active/print',
+          '=.proplist=user,address,uptime,session-time-left,bytes-in,bytes-out'
+        ],
       );
       sessionsSynced = await _syncSessions(db, sessionsResponse);
       onProgress?.call(0.9, 'تمت مزامنة $sessionsSynced جلسة نشطة');
@@ -138,20 +144,18 @@ class SyncService {
         name: Value(name),
         mikrotikId: Value(p['.id'] as String?),
         rateLimit: Value(p['rate-limit'] as String?),
-        sharedUsers: Value(
-            int.tryParse(p['shared-users'] as String? ?? '1') ?? 1),
-        uploadUsedBytes: Value(
-            int.tryParse(p['upload-used'] as String? ?? '0') ?? 0),
-        downloadUsedBytes: Value(
-            int.tryParse(p['download-used'] as String? ?? '0') ?? 0),
-        uptimeUsedSeconds: Value(
-            _parseDuration(p['uptime-used'] as String?)),
+        sharedUsers:
+            Value(int.tryParse(p['shared-users'] as String? ?? '1') ?? 1),
+        uploadUsedBytes:
+            Value(int.tryParse(p['upload-used'] as String? ?? '0') ?? 0),
+        downloadUsedBytes:
+            Value(int.tryParse(p['download-used'] as String? ?? '0') ?? 0),
+        uptimeUsedSeconds: Value(_parseDuration(p['uptime-used'] as String?)),
         lastSyncedAt: Value(DateTime.now()),
       );
 
       if (existing != null) {
-        await (db.update(db.profiles)
-              ..where((pr) => pr.id.equals(existing.id)))
+        await (db.update(db.profiles)..where((pr) => pr.id.equals(existing.id)))
             .write(companion);
       } else {
         await db.into(db.profiles).insert(
@@ -184,9 +188,8 @@ class SyncService {
       }
       // لو لم نجد الـ profile، نستخدم أول profile أو ننشئ default
       if (profileId == null) {
-        final defaultProfile = await (db.select(db.profiles)
-              ..limit(1))
-            .getSingleOrNull();
+        final defaultProfile =
+            await (db.select(db.profiles)..limit(1)).getSingleOrNull();
         if (defaultProfile != null) {
           profileId = defaultProfile.id;
         } else {
@@ -210,22 +213,20 @@ class SyncService {
         username: Value(username),
         password: Value(u['password'] as String?),
         profileId: Value(profileId),
-        sharedUsers: Value(
-            int.tryParse(u['shared-users'] as String? ?? '1') ?? 1),
+        sharedUsers:
+            Value(int.tryParse(u['shared-users'] as String? ?? '1') ?? 1),
         status: Value(isDisabled ? 'disabled' : 'active'),
-        uploadBytes: Value(
-            int.tryParse(u['upload-used'] as String? ?? '0') ?? 0),
-        downloadBytes: Value(
-            int.tryParse(u['download-used'] as String? ?? '0') ?? 0),
-        uptimeSeconds: Value(
-            _parseDuration(u['uptime-used'] as String?)),
+        uploadBytes:
+            Value(int.tryParse(u['upload-used'] as String? ?? '0') ?? 0),
+        downloadBytes:
+            Value(int.tryParse(u['download-used'] as String? ?? '0') ?? 0),
+        uptimeSeconds: Value(_parseDuration(u['uptime-used'] as String?)),
         mikrotikUserId: Value(u['.id'] as String?),
         lastUsedAt: Value(DateTime.now()),
       );
 
       if (existing != null) {
-        await (db.update(db.cards)
-              ..where((c) => c.id.equals(existing.id)))
+        await (db.update(db.cards)..where((c) => c.id.equals(existing.id)))
             .write(companion);
       } else {
         await db.into(db.cards).insert(
@@ -255,9 +256,8 @@ class SyncService {
 
       // ابحث عن جلسة نشطة موجودة
       final existingSession = await (db.select(db.sessions)
-            ..where((sess) =>
-                sess.cardId.equals(card.id) &
-                sess.endedAt.isNull()))
+            ..where(
+                (sess) => sess.cardId.equals(card.id) & sess.endedAt.isNull()))
           .getSingleOrNull();
 
       final bytesIn = int.tryParse(s['bytes-in'] as String? ?? '0') ?? 0;
@@ -314,8 +314,7 @@ class SyncService {
         if (profile?.uptimeLimitSeconds != null &&
             profile!.uptimeLimitSeconds! > 0 &&
             card.uptimeSeconds >= profile.uptimeLimitSeconds!) {
-          await (db.update(db.cards)
-                ..where((c) => c.id.equals(card.id)))
+          await (db.update(db.cards)..where((c) => c.id.equals(card.id)))
               .write(const CardsCompanion(status: Value('expired')));
         }
       }

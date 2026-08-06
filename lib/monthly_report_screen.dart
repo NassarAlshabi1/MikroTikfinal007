@@ -10,6 +10,7 @@ import 'database/daos/ai_diagnostics_dao.dart';
 import 'main.dart';
 
 import 'theme/app_theme.dart';
+
 class MonthlyReportScreen extends StatefulWidget {
   const MonthlyReportScreen({super.key});
 
@@ -105,16 +106,16 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     // ===== تقرير الأوامر الشهري =====
                     const Text(
                       'تقرير الأوامر المنفّذة (آخر 12 شهر)',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     if (_report == null || _report!.isEmpty)
                       Card(
                         child: ListTile(
                           leading: Icon(Icons.info_outline,
                               color: Theme.of(context).hintColor),
-                          title: Text('لا توجد أوامر منفّذة بعد'),
+                          title: const Text('لا توجد أوامر منفّذة بعد'),
                         ),
                       )
                     else
@@ -130,8 +131,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
-                      ..._stats!.byRisk.entries.map(
-                          (e) => _buildRiskBar(e.key, e.value, _stats!.totalCommands)),
+                      ..._stats!.byRisk.entries.map((e) =>
+                          _buildRiskBar(e.key, e.value, _stats!.totalCommands)),
                     ],
                   ],
                 ),
@@ -192,10 +193,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               title,
-              style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).textTheme.bodySmall?.color),
               textAlign: TextAlign.center,
             ),
           ],
@@ -205,9 +208,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
 
   Widget _buildMonthCard(MonthlyCommandReport report) {
-    final successRate = report.total > 0
-        ? (report.successful / report.total * 100).round()
-        : 0;
+    final successRate =
+        report.total > 0 ? (report.successful / report.total * 100).round() : 0;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -258,10 +260,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: report.total > 0
-                        ? report.successful / report.total
-                        : 0,
-                    backgroundColor: Theme.of(context).appColors.error.withValues(alpha: 0.3),
+                    value:
+                        report.total > 0 ? report.successful / report.total : 0,
+                    backgroundColor: Theme.of(context)
+                        .appColors
+                        .error
+                        .withValues(alpha: 0.3),
                     color: Theme.of(context).appColors.success,
                     minHeight: 8,
                   ),
@@ -276,11 +280,13 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   Widget _buildDetailRow(String label, String value, {Color? color}) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+          Text(label,
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color)),
           Text(
             value,
             style: TextStyle(
@@ -319,12 +325,15 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   style: TextStyle(color: color, fontWeight: FontWeight.bold)),
             ],
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: total > 0 ? count / total : 0,
-              backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.1),
               color: color,
               minHeight: 6,
             ),

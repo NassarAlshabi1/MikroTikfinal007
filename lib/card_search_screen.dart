@@ -6,10 +6,12 @@
 
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'database/app_database.dart' as db;
 import 'main.dart';
 
 import 'theme/app_theme.dart';
+
 class CardSearchScreen extends StatefulWidget {
   const CardSearchScreen({super.key});
 
@@ -112,7 +114,9 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
           ),
 
           // ===== عدد النتائج =====
-          if (!_isSearching && _error == null && _searchController.text.isNotEmpty)
+          if (!_isSearching &&
+              _error == null &&
+              _searchController.text.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Align(
@@ -137,7 +141,8 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.error_outline,
-                                size: 48, color: Theme.of(context).appColors.error),
+                                size: 48,
+                                color: Theme.of(context).appColors.error),
                             const SizedBox(height: 16),
                             Text(_error!),
                           ],
@@ -146,8 +151,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                     : _results.isEmpty
                         ? _buildEmptyState()
                         : ListView.builder(
-                            itemCount: _results.length,
-                            cacheExtent: 250,
+                            scrollCacheExtent: const ScrollCacheExtent.pixels(250), itemCount: _results.length,
                             itemBuilder: (context, index) {
                               final card = _results[index];
                               return _buildCardTile(card);
@@ -165,23 +169,23 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            _searchController.text.isEmpty
-                ? Icons.search
-                : Icons.search_off,
+            _searchController.text.isEmpty ? Icons.search : Icons.search_off,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             _searchController.text.isEmpty
                 ? 'ابدأ الكتابة للبحث الفوري'
                 : 'لا توجد نتائج',
             style: TextStyle(fontSize: 16, color: Theme.of(context).hintColor),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'البحث يستخدم FTS5 — أسرع 1000x من البحث العادي',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
+            style:
+                TextStyle(fontSize: 12, color: Theme.of(context).disabledColor),
           ),
         ],
       ),
@@ -203,7 +207,8 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
           child: Text(
             card.username.isNotEmpty ? card.username[0].toUpperCase() : '?',
             style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold),
           ),
         ),
         title: Text(
@@ -239,8 +244,9 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
             const PopupMenuItem(value: 'copy', child: Text('نسخ اسم المستخدم')),
             PopupMenuItem(
                 value: 'delete',
-                child:
-                    Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error))),
+                child: Text('حذف',
+                    style:
+                        TextStyle(color: Theme.of(context).appColors.error))),
           ],
         ),
         isThreeLine: true,
@@ -265,7 +271,8 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
     if (bytes == 0) return '0 B';
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     final size = bytes.toDouble();
-    final unitIndex = (log(size) / log(1024)).floor().clamp(0, units.length - 1);
+    final unitIndex =
+        (log(size) / log(1024)).floor().clamp(0, units.length - 1);
     final value = size / pow(1024, unitIndex);
     return '${value.toStringAsFixed(1)} ${units[unitIndex]}';
   }
@@ -282,13 +289,16 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).appColors.error),
             onPressed: () async {
               Navigator.of(ctx).pop();
               await appDatabase.cardsDao.deleteCard(card.id);
               _performSearch(_searchController.text);
             },
-            child: Text('حذف', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            child: Text('حذف',
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),

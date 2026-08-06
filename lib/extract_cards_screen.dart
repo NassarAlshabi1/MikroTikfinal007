@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/app_theme.dart';
 import 'snackbar_helpers.dart';
-import 'package:flutter/services.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'providers/mqtt_service_provider.dart';
@@ -14,6 +14,7 @@ import 'process_image_screen.dart';
 import 'mqtt_service.dart';
 
 import 'services/secure_clipboard.dart';
+
 class ExtractCardsScreen extends ConsumerStatefulWidget {
   const ExtractCardsScreen({super.key});
 
@@ -95,13 +96,13 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
     _mqttSubscription?.cancel();
     _mqttSubscription = _mqttService.messages.listen((message) {
       if (!mounted) return;
-      
+
       final jobId = message['job_id'];
       if (_addCardsJobId == null || jobId != _addCardsJobId) return;
 
       final status = message['status'];
 
-      switch(status) {
+      switch (status) {
         case 'acknowledged':
           _addCardsTimer?.cancel();
           if (mounted) {
@@ -109,33 +110,35 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
               _isJobAcknowledged = true;
             });
             Navigator.of(context, rootNavigator: true).pop();
-            _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
+            _showWaitingDialog(
+                "تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
           }
           break;
-        
+
         case 'job_status_response':
-           final jobStatus = message['job_status'];
-           if (jobStatus == 'not_found') {
-             _addCardsTimer?.cancel();
-             if (mounted) {
-               Navigator.of(context, rootNavigator: true).pop(); 
-               _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
-             }
-           }
-           break;
+          final jobStatus = message['job_status'];
+          if (jobStatus == 'not_found') {
+            _addCardsTimer?.cancel();
+            if (mounted) {
+              Navigator.of(context, rootNavigator: true).pop();
+              _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
+            }
+          }
+          break;
 
         case 'cards_added_success':
           _addCardsTimer?.cancel();
           if (mounted) {
-            Navigator.of(context, rootNavigator: true).pop(); 
-            showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
+            Navigator.of(context, rootNavigator: true).pop();
+            showSuccessSnackBar(
+                context, message['message'] ?? 'تمت العملية بنجاح.');
           }
           break;
 
         case 'error':
           _addCardsTimer?.cancel();
           if (mounted) {
-            Navigator.of(context, rootNavigator: true).pop(); 
+            Navigator.of(context, rootNavigator: true).pop();
             _showErrorDialog(message['message'] ?? 'حدث خطأ.');
           }
           break;
@@ -156,15 +159,23 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('اختر فئة م/نصار الشعبي'),
+          title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold),
             dropdownColor: Theme.of(context).colorScheme.onSurface,
-            hint: Text('اختر الفئة', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold)),
+            hint: Text('اختر الفئة',
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                    fontWeight: FontWeight.bold)),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name'], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                child: Text(unit['name'],
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (value) {
@@ -193,27 +204,27 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
   }
 
   void _sendCardsToQahtani(List<String> cards, String selectedUnitId) {
-      _showWaitingDialog("جاري إرسال الكروت...");
+    _showWaitingDialog("جاري إرسال الكروت...");
 
-      if (mounted) {
-        setState(() {
-          _addCardsJobId = _mqttService.generateUniqueId();
-          _isJobAcknowledged = false;
-        });
-      }
-
-      _addCardsTimer?.cancel();
-      _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
-
-      final String cardsAsString = cards.join('\n');
-
-      _mqttService.publish({
-        'command': 'add_wifi_cards',
-        'network_id': _linkedData['network_details']?['network_id'],
-        'unit_id': selectedUnitId,
-        'cards': cardsAsString,
-        'job_id': _addCardsJobId,
+    if (mounted) {
+      setState(() {
+        _addCardsJobId = _mqttService.generateUniqueId();
+        _isJobAcknowledged = false;
       });
+    }
+
+    _addCardsTimer?.cancel();
+    _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
+
+    final String cardsAsString = cards.join('\n');
+
+    _mqttService.publish({
+      'command': 'add_wifi_cards',
+      'network_id': _linkedData['network_details']?['network_id'],
+      'unit_id': selectedUnitId,
+      'cards': cardsAsString,
+      'job_id': _addCardsJobId,
+    });
   }
 
   void _checkAddCardsStatus() {
@@ -226,8 +237,8 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
   }
 
   void _showWaitingDialog(String message) {
-     if (!mounted) return;
-     showDialog(
+    if (!mounted) return;
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -252,7 +263,8 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
       return;
     }
     try {
-      final DocumentScanningResult result = await _documentScanner.scanDocument();
+      final DocumentScanningResult result =
+          await _documentScanner.scanDocument();
       if (result.images.isNotEmpty) {
         setState(() {
           _imagePaths.addAll(result.images);
@@ -318,15 +330,16 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('استخراج الكروت'),
+        title: const Text('استخراج الكروت'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: Center(
         child: _extractedCardNumbers.isNotEmpty
-            ? Column( // --- RESULTS VIEW ---
+            ? Column(
+                // --- RESULTS VIEW ---
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.all(12.0),
                     child: Text(
                       'تم العثور على ${_extractedCardNumbers.length} كرت:',
                       style: Theme.of(context).textTheme.titleMedium,
@@ -349,7 +362,8 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                           elevation: 2,
                           margin: EdgeInsets.zero,
                           child: InkWell(
-                            onTap: () => _copyToClipboard(cardNumber, 'تم نسخ الرقم: $cardNumber'),
+                            onTap: () => _copyToClipboard(
+                                cardNumber, 'تم نسخ الرقم: $cardNumber'),
                             child: Center(
                               child: Padding(
                                 padding: const EdgeInsets.all(4.0),
@@ -382,7 +396,8 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                       children: [
                         ElevatedButton.icon(
                           icon: const Icon(Icons.refresh, size: 16),
-                          label: const Text('البدء من جديد', style: TextStyle(fontSize: 11)),
+                          label: const Text('البدء من جديد',
+                              style: TextStyle(fontSize: 11)),
                           onPressed: () => setState(() {
                             _extractedCardNumbers = [];
                             _prefixController.clear();
@@ -390,27 +405,34 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                             _totalController.clear();
                           }),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                           ),
                         ),
                         ElevatedButton.icon(
-                          icon: Icon(Icons.add_to_queue, size: 16),
-                          label: Text('إضافة للقحطاني', style: TextStyle(fontSize: 11)),
-                          onPressed: () => _showAddCardsToQahtaniDialog(_extractedCardNumbers),
-                           style: ElevatedButton.styleFrom(
+                          icon: const Icon(Icons.add_to_queue, size: 16),
+                          label: const Text('إضافة للقحطاني',
+                              style: TextStyle(fontSize: 11)),
+                          onPressed: () => _showAddCardsToQahtaniDialog(
+                              _extractedCardNumbers),
+                          style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).primaryColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                           ),
                         ),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.copy_all, size: 16),
-                          label: const Text('نسخ الكل', style: TextStyle(fontSize: 11)),
+                          label: const Text('نسخ الكل',
+                              style: TextStyle(fontSize: 11)),
                           onPressed: () {
                             final allCards = _extractedCardNumbers.join('\n');
-                            _copyToClipboard(allCards, 'تم نسخ جميع الكروت (${_extractedCardNumbers.length})');
+                            _copyToClipboard(allCards,
+                                'تم نسخ جميع الكروت (${_extractedCardNumbers.length})');
                           },
-                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                           ),
                         ),
                       ],
@@ -419,7 +441,8 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                 ],
               )
             : _imagePaths.isNotEmpty
-                ? Column( // --- IMAGE PREVIEW VIEW ---
+                ? Column(
+                    // --- IMAGE PREVIEW VIEW ---
                     children: [
                       Expanded(
                         child: GridView.builder(
@@ -447,7 +470,8 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                           left: 16.0,
                           right: 16.0,
                           top: 8.0,
-                          bottom: 16.0 + MediaQuery.of(context).viewPadding.bottom,
+                          bottom:
+                              16.0 + MediaQuery.of(context).viewPadding.bottom,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -455,27 +479,34 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                             ElevatedButton.icon(
                               onPressed: _processImages,
                               icon: const Icon(Icons.check, size: 18),
-                              label: const Text('استخراج', style: TextStyle(fontSize: 12)),
-                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () => _scanDocument(skipValidation: true),
-                              icon: const Icon(Icons.add_a_photo, size: 18),
-                              label: const Text('إضافة', style: TextStyle(fontSize: 12)),
-                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              label: const Text('استخراج',
+                                  style: TextStyle(fontSize: 12)),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                               ),
                             ),
                             ElevatedButton.icon(
                               onPressed: () =>
-                                  setState(() => _imagePaths = []),
-                              icon: const Icon(Icons.clear, size: 18),
-                              label: const Text('مسح', style: TextStyle(fontSize: 12)),
+                                  _scanDocument(skipValidation: true),
+                              icon: const Icon(Icons.add_a_photo, size: 18),
+                              label: const Text('إضافة',
+                                  style: TextStyle(fontSize: 12)),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).appColors.error,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => setState(() => _imagePaths = []),
+                              icon: const Icon(Icons.clear, size: 18),
+                              label: const Text('مسح',
+                                  style: TextStyle(fontSize: 12)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Theme.of(context).appColors.error,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                               ),
                             ),
                           ],
@@ -483,7 +514,8 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                       ),
                     ],
                   )
-                : SingleChildScrollView( // --- INITIAL FORM VIEW ---
+                : SingleChildScrollView(
+                    // --- INITIAL FORM VIEW ---
                     padding: const EdgeInsets.all(24.0),
                     child: Form(
                       key: _formKey,
@@ -493,20 +525,31 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                         children: [
                           Icon(Icons.camera_alt_outlined,
                               size: 80, color: context.theme.appColors.primary),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Text(
                             'أدخل شروط المسح الضوئي للكروت',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                                fontSize: 18,
+                                color: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.color ??
+                                    Theme.of(context).colorScheme.onSurface),
                           ),
                           const SizedBox(height: 32),
                           TextFormField(
                             controller: _prefixController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'بادئة الكرت (بماذا يبدأ الرقم)',
                               prefixIcon: Icon(Icons.looks_one_outlined),
                             ),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color ??
+                                    Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -518,11 +561,16 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _lengthController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'طول رقم الكرت (عدد الأرقام)',
                               prefixIcon: Icon(Icons.format_list_numbered),
                             ),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color ??
+                                    Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -537,11 +585,16 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _totalController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'العدد الإجمالي للكروت في الورقة',
                               prefixIcon: Icon(Icons.calculate_outlined),
                             ),
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color ??
+                                    Theme.of(context).colorScheme.onSurface),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -558,19 +611,25 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               ElevatedButton.icon(
-                                icon: const Icon(Icons.document_scanner, size: 18),
-                                label: const Text('مسح ضوئي', style: TextStyle(fontSize: 12)),
+                                icon: const Icon(Icons.document_scanner,
+                                    size: 18),
+                                label: const Text('مسح ضوئي',
+                                    style: TextStyle(fontSize: 12)),
                                 onPressed: _scanDocument,
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
                                 ),
                               ),
                               ElevatedButton.icon(
-                                icon: const Icon(Icons.picture_as_pdf, size: 18),
-                                label: const Text('PDF', style: TextStyle(fontSize: 12)),
+                                icon:
+                                    const Icon(Icons.picture_as_pdf, size: 18),
+                                label: const Text('PDF',
+                                    style: TextStyle(fontSize: 12)),
                                 onPressed: _pickPdf,
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
                                 ),
                               ),
                             ],

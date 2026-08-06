@@ -21,7 +21,8 @@ void main() {
         // الحل: نختبر السلوك العام عبر logs.
         // هنا نتحقق فقط من عدم رمي استثناء.
         expect(
-          () => AppLogger.info('api-0946bf1ab4b50eaf9cd57af05671e7928ea51948e44a6ee8cc125cd439dac3d3'),
+          () => AppLogger.info(
+              'api-0946bf1ab4b50eaf9cd57af05671e7928ea51948e44a6ee8cc125cd439dac3d3'),
           returnsNormally,
         );
       });
@@ -35,14 +36,16 @@ void main() {
 
       test('يخفي bearer tokens', () {
         expect(
-          () => AppLogger.info('Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature'),
+          () => AppLogger.info(
+              'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature'),
           returnsNormally,
         );
       });
 
       test('يخفي JWT tokens', () {
         expect(
-          () => AppLogger.info('Token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc123def456'),
+          () => AppLogger.info(
+              'Token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc123def456'),
           returnsNormally,
         );
       });
@@ -68,7 +71,8 @@ void main() {
       });
 
       test('warning() لا يرمي استثناء', () {
-        expect(() => AppLogger.warning('test warning message'), returnsNormally);
+        expect(
+            () => AppLogger.warning('test warning message'), returnsNormally);
       });
 
       test('error() لا يرمي استثناء مع error object', () {

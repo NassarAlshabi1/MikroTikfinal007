@@ -12,6 +12,7 @@ import 'theme/app_gradients.dart';
 import 'mikrotik_connector.dart';
 
 import 'theme/app_theme.dart';
+
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
 
@@ -24,7 +25,7 @@ class _StatsScreenState extends State<StatsScreen> {
   bool _isRefreshing = false;
   bool _hasLoadedOnce = false;
   String _errorMessage = '';
-  
+
   Map<String, dynamic> _stats = {
     'totalSessions': 0,
     'dataDownloaded': 0.0,
@@ -62,7 +63,8 @@ class _StatsScreenState extends State<StatsScreen> {
       setState(() {
         _stats = {
           'totalSessions': (decoded['totalSessions'] as num?)?.toInt() ?? 0,
-          'dataDownloaded': (decoded['dataDownloaded'] as num?)?.toDouble() ?? 0.0,
+          'dataDownloaded':
+              (decoded['dataDownloaded'] as num?)?.toDouble() ?? 0.0,
           'dataUploaded': (decoded['dataUploaded'] as num?)?.toDouble() ?? 0.0,
           'cpuUsage': (decoded['cpuUsage'] as num?)?.toDouble() ?? 0.0,
           'memoryUsage': (decoded['memoryUsage'] as num?)?.toDouble() ?? 0.0,
@@ -124,10 +126,12 @@ class _StatsScreenState extends State<StatsScreen> {
       ]);
       double totalDownload = 0.0;
       double totalUpload = 0.0;
-      
+
       for (var iface in interfaceResponse) {
-        final rxBytes = double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
-        final txBytes = double.tryParse(iface['tx-byte']?.toString() ?? '0') ?? 0.0;
+        final rxBytes =
+            double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
+        final txBytes =
+            double.tryParse(iface['tx-byte']?.toString() ?? '0') ?? 0.0;
         totalDownload += rxBytes;
         totalUpload += txBytes;
       }
@@ -135,7 +139,8 @@ class _StatsScreenState extends State<StatsScreen> {
       List<Map<String, dynamic>> activeUsers = [];
       try {
         final activeResponse = await client.talk(['/ip/hotspot/active/print']);
-        activeUsers = activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+        activeUsers =
+            activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
       } catch (e) {
         activeUsers = [];
       }
@@ -145,16 +150,22 @@ class _StatsScreenState extends State<StatsScreen> {
         sessions = List<Map<String, dynamic>>.from(activeUsers);
       } else {
         try {
-          final sessionResponse = await client.talk(['/tool/user-manager/session/print']);
-          sessions = sessionResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+          final sessionResponse =
+              await client.talk(['/tool/user-manager/session/print']);
+          sessions =
+              sessionResponse.map((e) => Map<String, dynamic>.from(e)).toList();
         } catch (e) {
           sessions = [];
         }
       }
 
       final cpuLoad = resourceData['cpu-load']?.toString() ?? '0';
-      final totalMemory = double.tryParse(resourceData['total-memory']?.toString() ?? '0') ?? 0.0;
-      final freeMemory = double.tryParse(resourceData['free-memory']?.toString() ?? '0') ?? 0.0;
+      final totalMemory =
+          double.tryParse(resourceData['total-memory']?.toString() ?? '0') ??
+              0.0;
+      final freeMemory =
+          double.tryParse(resourceData['free-memory']?.toString() ?? '0') ??
+              0.0;
       final memoryUsagePercent = totalMemory <= 0
           ? 0.0
           : ((totalMemory - freeMemory) / totalMemory * 100);
@@ -180,15 +191,16 @@ class _StatsScreenState extends State<StatsScreen> {
         });
       }
 
-      await prefs.setString('mikrotik_version', resourceData['version']?.toString() ?? '6');
+      await prefs.setString(
+          'mikrotik_version', resourceData['version']?.toString() ?? '6');
       await prefs.setString('cached_stats', jsonEncode(updatedStats));
-
     } on MikrotikCredentialsMissingException catch (e) {
       _handleFetchError('خطأ في بيانات الدخول: ${e.message}', useLoadingState);
     } on MikrotikConnectionException catch (e) {
       _handleFetchError('خطأ في الاتصال: ${e.message}', useLoadingState);
     } catch (e) {
-      _handleFetchError('حدث خطأ أثناء جلب البيانات: ${e.toString()}', useLoadingState);
+      _handleFetchError(
+          'حدث خطأ أثناء جلب البيانات: ${e.toString()}', useLoadingState);
     } finally {
       client?.close();
     }
@@ -229,9 +241,7 @@ class _StatsScreenState extends State<StatsScreen> {
         final dataString = prefs.getString('qahtani_linked_data');
         if (dataString != null) {
           try {
-            final data = Map<String, dynamic>.from(
-              jsonDecode(dataString)
-            );
+            final data = Map<String, dynamic>.from(jsonDecode(dataString));
             clientName = data['client_info']?['name'] ?? 'غير محدد';
           } catch (e) {
             clientName = 'غير محدد';
@@ -249,31 +259,45 @@ class _StatsScreenState extends State<StatsScreen> {
                 pw.Center(
                   child: pw.Text(
                     'تقرير إحصائيات MikroTik',
-                    style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                    style: pw.TextStyle(
+                        fontSize: 24, fontWeight: pw.FontWeight.bold),
                   ),
                 ),
                 pw.SizedBox(height: 20),
                 pw.Divider(),
                 pw.SizedBox(height: 20),
-                
-                pw.Text('معلومات التقرير:', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.Text('معلومات التقرير:',
+                    style: pw.TextStyle(
+                        fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 10),
                 pw.Text('التاريخ والوقت: ${dateFormat.format(now)}'),
                 pw.Text('اسم العميل: $clientName'),
                 pw.Text('إصدار MikroTik: ${_stats['version']}'),
                 pw.SizedBox(height: 20),
-                
-                pw.Text('الإحصائيات الرئيسية:', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.Text('الإحصائيات الرئيسية:',
+                    style: pw.TextStyle(
+                        fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 10),
-                
-                pw.Table.fromTextArray(
+                pw.TableHelper.fromTextArray(
                   headers: ['المؤشر', 'القيمة'],
                   data: [
                     ['إجمالي الجلسات', '${_stats['totalSessions']}'],
-                    ['البيانات المحملة', '${_stats['dataDownloaded'].toStringAsFixed(2)} MB'],
-                    ['البيانات المرفوعة', '${_stats['dataUploaded'].toStringAsFixed(2)} MB'],
-                    ['استخدام المعالج', '${_stats['cpuUsage'].toStringAsFixed(1)}%'],
-                    ['استخدام الذاكرة', '${_stats['memoryUsage'].toStringAsFixed(1)}%'],
+                    [
+                      'البيانات المحملة',
+                      '${_stats['dataDownloaded'].toStringAsFixed(2)} MB'
+                    ],
+                    [
+                      'البيانات المرفوعة',
+                      '${_stats['dataUploaded'].toStringAsFixed(2)} MB'
+                    ],
+                    [
+                      'استخدام المعالج',
+                      '${_stats['cpuUsage'].toStringAsFixed(1)}%'
+                    ],
+                    [
+                      'استخدام الذاكرة',
+                      '${_stats['memoryUsage'].toStringAsFixed(1)}%'
+                    ],
                     ['وقت التشغيل', _stats['uptime']],
                     ['المستخدمين النشطين', '${_stats['activeUsers']}'],
                   ],
@@ -281,14 +305,14 @@ class _StatsScreenState extends State<StatsScreen> {
                   headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   cellHeight: 30,
                 ),
-                
                 pw.SizedBox(height: 30),
                 pw.Divider(),
                 pw.SizedBox(height: 10),
                 pw.Center(
                   child: pw.Text(
                     'تم إنشاء هذا التقرير بواسطة MikroTik Manager',
-                    style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+                    style:
+                        const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
                   ),
                 ),
               ],
@@ -298,12 +322,13 @@ class _StatsScreenState extends State<StatsScreen> {
       );
 
       final bytes = await pdf.save();
-      
+
       if (mounted) {
         Navigator.of(context).pop();
         await Printing.sharePdf(
           bytes: bytes,
-          filename: 'mikrotik_stats_${DateFormat('yyyyMMdd_HHmmss').format(now)}.pdf',
+          filename:
+              'mikrotik_stats_${DateFormat('yyyyMMdd_HHmmss').format(now)}.pdf',
         );
       }
     } catch (e) {
@@ -317,28 +342,29 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(gradient: AppGradients.softBackground),
+      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text('الإحصائيات'),
+          title: const Text('الإحصائيات'),
           backgroundColor: Theme.of(context).cardColor,
           actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: (_isLoading || _isRefreshing)
-                ? null
-                : () => _fetchMikrotikStats(showLoading: false),
-            tooltip: 'تحديث',
-          ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: (_isLoading || _isRefreshing || _errorMessage.isNotEmpty)
-                ? null
-                : _generatePdfReport,
-            tooltip: 'تصدير PDF',
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: (_isLoading || _isRefreshing)
+                  ? null
+                  : () => _fetchMikrotikStats(showLoading: false),
+              tooltip: 'تحديث',
+            ),
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              onPressed:
+                  (_isLoading || _isRefreshing || _errorMessage.isNotEmpty)
+                      ? null
+                      : _generatePdfReport,
+              tooltip: 'تصدير PDF',
+            ),
+          ],
         ),
         body: _buildBody(),
       ),
@@ -351,8 +377,8 @@ class _StatsScreenState extends State<StatsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
             Text(
               'جاري تحميل الإحصائيات...',
               style: TextStyle(
@@ -401,8 +427,7 @@ class _StatsScreenState extends State<StatsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_isRefreshing)
-          const LinearProgressIndicator(minHeight: 3),
+        if (_isRefreshing) const LinearProgressIndicator(minHeight: 3),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -436,7 +461,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 size: 48,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'لا توجد بيانات استخدام متاحة',
                 style: TextStyle(
@@ -504,8 +529,10 @@ class _StatsScreenState extends State<StatsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildLegendItem('التحميل', Theme.of(context).appColors.info, download),
-                _buildLegendItem('الرفع', Theme.of(context).appColors.success, upload),
+                _buildLegendItem(
+                    'التحميل', Theme.of(context).appColors.info, download),
+                _buildLegendItem(
+                    'الرفع', Theme.of(context).appColors.success, upload),
               ],
             ),
           ],
@@ -604,7 +631,8 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -626,7 +654,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               label,
               style: TextStyle(
@@ -642,7 +670,8 @@ class _StatsScreenState extends State<StatsScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.titleLarge?.color ?? Theme.of(context).colorScheme.onSurface,
+                color: Theme.of(context).textTheme.titleLarge?.color ??
+                    Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -662,10 +691,11 @@ class _StatsScreenState extends State<StatsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).appColors.info.withOpacity(0.2),
+                color: Theme.of(context).appColors.info.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.access_time, color: Theme.of(context).appColors.info, size: 28),
+              child: Icon(Icons.access_time,
+                  color: Theme.of(context).appColors.info, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -685,7 +715,8 @@ class _StatsScreenState extends State<StatsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.titleMedium?.color ?? Theme.of(context).colorScheme.onSurface,
+                      color: Theme.of(context).textTheme.titleMedium?.color ??
+                          Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -699,7 +730,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
   String _formatUptime(String uptime) {
     if (uptime.isEmpty || uptime == 'غير متوفر') return uptime;
-    
+
     return uptime
         .replaceAll('w', ' أسبوع ')
         .replaceAll('d', ' يوم ')

@@ -16,6 +16,7 @@ import 'package:share_plus/share_plus.dart';
 import 'mikrotik_connector.dart';
 
 import 'theme/app_theme.dart';
+
 enum DeviceStatus { unknown, online, offline }
 
 class DeviceNode {
@@ -79,11 +80,10 @@ class ManualPositioningSugiyamaAlgorithm extends SugiyamaAlgorithm {
         deviceNode.dy = node.y;
       }
     }
-    
+
     return size;
   }
 }
-
 
 class NetworkMapScreen extends StatefulWidget {
   const NetworkMapScreen({super.key});
@@ -96,7 +96,8 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   final Graph _graph = Graph();
   final SugiyamaConfiguration _builder = SugiyamaConfiguration();
   late final ManualPositioningSugiyamaAlgorithm _algorithm;
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
   late final Paint _edgePaint;
   DeviceNode? _rootNode;
   bool _isLoading = true;
@@ -120,7 +121,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     _algorithm = ManualPositioningSugiyamaAlgorithm(_builder);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitialData());
   }
-  
+
   @override
   void dispose() {
     _transformationController.dispose();
@@ -131,10 +132,12 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   }
 
   Future<void> _loadInitialData() async {
-     if (!mounted) return;
-     setState(() { _isLoading = true; });
-     final prefs = await SharedPreferences.getInstance();
-     
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
+    final prefs = await SharedPreferences.getInstance();
+
     final mapJson = prefs.getString('network_map_json');
     if (mapJson != null) {
       _rootNode = DeviceNode.fromJson(jsonDecode(mapJson));
@@ -143,14 +146,16 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     }
     _rebuildGraph();
     if (!mounted) return;
-    setState(() { _isLoading = false; });
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _saveMap() async {
     if (_rootNode == null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('network_map_json');
-      if(mounted) {
+      if (mounted) {
         showSuccessSnackBar(context, 'تم حذف الخريطة.');
       }
       return;
@@ -158,11 +163,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     final prefs = await SharedPreferences.getInstance();
     final mapJson = jsonEncode(_rootNode!.toJson());
     await prefs.setString('network_map_json', mapJson);
-    if(mounted) {
+    if (mounted) {
       showSuccessSnackBar(context, 'تم حفظ الخريطة بنجاح.');
     }
   }
-  
+
   void _rebuildGraph() {
     _graph.nodes.clear();
     _graph.edges.clear();
@@ -195,48 +200,52 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     );
     await _performCheck(deviceNode);
   }
-  
+
   Future<void> _performCheck(DeviceNode nodeToCheck) async {
     if (!mounted) return;
-    setState(() { _isCheckingStatus = true; });
+    setState(() {
+      _isCheckingStatus = true;
+    });
 
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
 
       Set<String> onlineIps = {};
-      
+
       final neighborResponse = await client.talk(['/ip/neighbor/print']);
-      
+
       for (var neighbor in neighborResponse) {
         if (neighbor['address'] != null) {
           onlineIps.add(neighbor['address']!);
         }
       }
-      
-      _updateNodeStatusFromNeighbors(nodeToCheck, onlineIps);
 
+      _updateNodeStatusFromNeighbors(nodeToCheck, onlineIps);
     } on MikrotikCredentialsMissingException catch (e) {
-      if(mounted) {
+      if (mounted) {
         showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
       }
     } on MikrotikConnectionException catch (e) {
-      if(mounted) {
+      if (mounted) {
         showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
       }
     } on TimeoutException {
-       if(mounted) {
-        showErrorSnackBar(context, 'انتهت مهلة الفحص. قد تكون الشبكة بطيئة أو بعض الأجهزة لا تستجيب.');
+      if (mounted) {
+        showErrorSnackBar(context,
+            'انتهت مهلة الفحص. قد تكون الشبكة بطيئة أو بعض الأجهزة لا تستجيب.');
       }
     } catch (e) {
-      if(mounted) {
+      if (mounted) {
         showErrorSnackBar(context, 'حدث خطأ أثناء الفحص.');
       }
     } finally {
       // لا نغلق الاتصال - تجمع الاتصالات يديره تلقائياً
-      if(mounted) {
+      if (mounted) {
         _rebuildGraph();
-        setState(() { _isCheckingStatus = false; });
+        setState(() {
+          _isCheckingStatus = false;
+        });
       }
     }
   }
@@ -247,7 +256,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     } else {
       node.status = DeviceStatus.offline;
     }
-    
+
     for (var child in node.children) {
       _updateNodeStatusFromNeighbors(child, onlineIps);
     }
@@ -263,7 +272,8 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     }
   }
 
-  Future<void> _showAddEditDialog({DeviceNode? existingNode, DeviceNode? parentNode}) async {
+  Future<void> _showAddEditDialog(
+      {DeviceNode? existingNode, DeviceNode? parentNode}) async {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: existingNode?.name);
     final ipController = TextEditingController(text: existingNode?.ip);
@@ -280,21 +290,28 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             children: [
               TextFormField(
                 controller: nameController,
-                decoration: InputDecoration(labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+                decoration:
+                    const InputDecoration(labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        Theme.of(context).colorScheme.onSurface),
                 validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
               ),
               TextFormField(
                 controller: ipController,
-                decoration: InputDecoration(labelText: 'عنوان IP'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface),
+                decoration: const InputDecoration(labelText: 'عنوان IP'),
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        Theme.of(context).colorScheme.onSurface),
                 validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('إلغاء')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('إلغاء')),
           ElevatedButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
@@ -329,9 +346,12 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('تأكيد الحذف'),
-        content: Text('هل أنت متأكد من حذف "${nodeToDelete.name}" وكل الأجهزة المتفرعة منه؟'),
+        content: Text(
+            'هل أنت متأكد من حذف "${nodeToDelete.name}" وكل الأجهزة المتفرعة منه؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('إلغاء')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('إلغاء')),
           TextButton(
             onPressed: () {
               if (_rootNode?.id == nodeToDelete.id) {
@@ -342,23 +362,24 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
               _rebuildGraph();
               Navigator.of(context).pop();
             },
-            child: Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error)),
+            child: Text('حذف',
+                style: TextStyle(color: Theme.of(context).appColors.error)),
           ),
         ],
       ),
     );
   }
-  
+
   bool _findAndRemoveNode(DeviceNode? currentNode, String targetId) {
     if (currentNode == null) return false;
     for (int i = 0; i < currentNode.children.length; i++) {
-        if (currentNode.children[i].id == targetId) {
-            currentNode.children.removeAt(i);
-            return true;
-        }
-        if (_findAndRemoveNode(currentNode.children[i], targetId)) {
-            return true;
-        }
+      if (currentNode.children[i].id == targetId) {
+        currentNode.children.removeAt(i);
+        return true;
+      }
+      if (_findAndRemoveNode(currentNode.children[i], targetId)) {
+        return true;
+      }
     }
     return false;
   }
@@ -368,12 +389,13 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       showErrorSnackBar(context, 'لا توجد خريطة لتصديرها.');
       return;
     }
-    
+
     try {
       final directory = await getTemporaryDirectory();
-      final fileName = 'network_map_backup_${DateTime.now().millisecondsSinceEpoch}.json';
+      final fileName =
+          'network_map_backup_${DateTime.now().millisecondsSinceEpoch}.json';
       final file = File('${directory.path}/$fileName');
-      
+
       final mapJson = jsonEncode(_rootNode!.toJson());
       await file.writeAsString(mapJson);
 
@@ -382,7 +404,6 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         files: [xFile],
         text: 'ملف النسخ الاحتياطي لخريطة الشبكة',
       ));
-
     } catch (e) {
       // ignore: use_build_context_synchronously
       showErrorSnackBar(context, 'فشلت عملية التصدير.');
@@ -399,21 +420,28 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!);
         final content = await file.readAsString();
-        
+
         // ignore: use_build_context_synchronously
         final confirm = await showDialog<bool>(
           // ignore: use_build_context_synchronously
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('تأكيد الاستيراد'),
-            content: const Text('سيتم استبدال الخريطة الحالية بالخريطة الجديدة. هل أنت متأكد؟'),
+            content: const Text(
+                'سيتم استبدال الخريطة الحالية بالخريطة الجديدة. هل أنت متأكد؟'),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('إلغاء')),
-              TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text('تأكيد', style: TextStyle(color: Theme.of(context).appColors.warning))),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('إلغاء')),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('تأكيد',
+                      style: TextStyle(
+                          color: Theme.of(context).appColors.warning))),
             ],
           ),
         );
-        
+
         if (confirm == true) {
           if (!mounted) return;
           setState(() {
@@ -422,11 +450,12 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           _rebuildGraph();
           await _saveMap();
         }
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
       }
     } catch (e) {
-      // ignore: use_build_context_synchronously
-      showErrorSnackBar(context, 'فشل الاستيراد: ملف غير صالح أو خطأ في القراءة.');
+      if (!context.mounted) return;
+      showErrorSnackBar(
+          context, 'فشل الاستيراد: ملف غير صالح أو خطأ في القراءة.');
     }
   }
 
@@ -435,9 +464,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'تعديل خريطة الشبكة' : 'خريطة الشبكة'),
-        backgroundColor: _isEditMode ? Theme.of(context).colorScheme.surfaceContainerHighest : Theme.of(context).cardColor,
+        backgroundColor: _isEditMode
+            ? Theme.of(context).colorScheme.surfaceContainerHighest
+            : Theme.of(context).cardColor,
         actions: [
-           PopupMenuButton<String>(
+          PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'export') {
                 _exportMap();
@@ -448,17 +479,27 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
                 value: 'export',
-                child: ListTile(leading: Icon(Icons.file_upload), title: Text('تصدير / مشاركة', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
+                child: ListTile(
+                    leading: const Icon(Icons.file_upload),
+                    title: Text('تصدير / مشاركة',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.bold))),
               ),
               PopupMenuItem<String>(
                 value: 'import',
-                child: ListTile(leading: Icon(Icons.file_download), title: Text('استيراد خريطة', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
+                child: ListTile(
+                    leading: const Icon(Icons.file_download),
+                    title: Text('استيراد خريطة',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.bold))),
               ),
             ],
           ),
           if (!_isEditMode)
             IconButton(
-              icon: Icon(Icons.sync),
+              icon: const Icon(Icons.sync),
               tooltip: 'فحص حالة الأجهزة',
               onPressed: _isCheckingStatus ? null : _checkAllStatuses,
               color: Theme.of(context).colorScheme.onSurface,
@@ -474,7 +515,8 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
                 _isEditMode = !_isEditMode;
               });
             },
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.onSurface),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.onSurface),
           ),
           const SizedBox(width: 8),
         ],
@@ -496,7 +538,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         transformationController: _transformationController,
         constrained: false,
         boundaryMargin: const EdgeInsets.all(double.infinity),
-        minScale: 0.01, 
+        minScale: 0.01,
         maxScale: 5.0,
         child: GraphView(
           graph: _graph,
@@ -510,7 +552,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       ),
     );
   }
-  
+
   Widget _buildNodeWidget(DeviceNode deviceNode) {
     Color nodeColor;
     switch (deviceNode.status) {
@@ -525,7 +567,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     }
 
     final nodeContent = Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: nodeColor,
         borderRadius: BorderRadius.circular(8),
@@ -538,30 +580,39 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           RepaintBoundary(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(deviceNode.name, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-                  Text(deviceNode.ip, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12)),
-                  if (!_isEditMode && deviceNode.status == DeviceStatus.offline)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.refresh, size: 18),
-                        label: Text('فحص', style: TextStyle(fontSize: 12)),
-                        onPressed: () => _checkSpecificDeviceStatus(deviceNode),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).appColors.warning,
-                          foregroundColor: Theme.of(context).colorScheme.onSurface,
-                          minimumSize: Size.zero, // Set this
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // and this
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap, // and this
-                        ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(deviceNode.name,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface)),
+                Text(deviceNode.ip,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 12)),
+                if (!_isEditMode && deviceNode.status == DeviceStatus.offline)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('فحص', style: TextStyle(fontSize: 12)),
+                      onPressed: () => _checkSpecificDeviceStatus(deviceNode),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).appColors.warning,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onSurface,
+                        minimumSize: Size.zero, // Set this
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4), // and this
+                        tapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap, // and this
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -577,75 +628,93 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           _showEditMenu(context, deviceNode);
         }
       },
-      onPanUpdate: _isEditMode ? (details) {
-        final currentScale = _transformationController.value.getMaxScaleOnAxis();
-        setState(() {
-          deviceNode.dx = (deviceNode.dx ?? 0) + (details.delta.dx / currentScale);
-          deviceNode.dy = (deviceNode.dy ?? 0) + (details.delta.dy / currentScale);
-        });
-      } : null,
+      onPanUpdate: _isEditMode
+          ? (details) {
+              final currentScale =
+                  _transformationController.value.getMaxScaleOnAxis();
+              setState(() {
+                deviceNode.dx =
+                    (deviceNode.dx ?? 0) + (details.delta.dx / currentScale);
+                deviceNode.dy =
+                    (deviceNode.dy ?? 0) + (details.delta.dy / currentScale);
+              });
+            }
+          : null,
       child: nodeContent,
     );
   }
 
   void _showEditMenu(BuildContext context, DeviceNode deviceNode) {
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
     final RenderBox widgetBox = context.findRenderObject() as RenderBox;
     final offset = widgetBox.localToGlobal(Offset.zero, ancestor: overlay);
 
     showMenu(
-      context: context, 
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + widgetBox.size.height,
-        offset.dx + widgetBox.size.width,
-        offset.dy,
-      ),
-      items: [
-        PopupMenuItem(
-          value: 'add',
-          child: ListTile(
-            leading: Icon(Icons.add_circle_outline),
-            title: Text('إضافة جهاز فرعي', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
-          ),
+        context: context,
+        position: RelativeRect.fromLTRB(
+          offset.dx,
+          offset.dy + widgetBox.size.height,
+          offset.dx + widgetBox.size.width,
+          offset.dy,
         ),
-        PopupMenuItem(
-          value: 'edit',
-          child: ListTile(
-            leading: Icon(Icons.edit_outlined),
-            title: Text('تعديل الجهاز', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        items: [
+          PopupMenuItem(
+            value: 'add',
+            child: ListTile(
+              leading: const Icon(Icons.add_circle_outline),
+              title: Text('إضافة جهاز فرعي',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold)),
+            ),
           ),
-        ),
-        PopupMenuItem(
-          value: 'delete',
-          child: ListTile(
-            leading: Icon(Icons.delete_outline, color: Theme.of(context).appColors.error),
-            title: Text('حذف الجهاز', style: TextStyle(color: Theme.of(context).appColors.error, fontWeight: FontWeight.bold)),
+          PopupMenuItem(
+            value: 'edit',
+            child: ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text('تعديل الجهاز',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold)),
+            ),
           ),
-        ),
-      ]
-    ).then((value) {
-        if (value == 'add') {
-           _showAddEditDialog(parentNode: deviceNode);
-        } else if (value == 'edit') {
-           _showAddEditDialog(existingNode: deviceNode);
-        } else if (value == 'delete') {
-           _handleDelete(deviceNode);
-        }
+          PopupMenuItem(
+            value: 'delete',
+            child: ListTile(
+              leading: Icon(Icons.delete_outline,
+                  color: Theme.of(context).appColors.error),
+              title: Text('حذف الجهاز',
+                  style: TextStyle(
+                      color: Theme.of(context).appColors.error,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ]).then((value) {
+      if (value == 'add') {
+        _showAddEditDialog(parentNode: deviceNode);
+      } else if (value == 'edit') {
+        _showAddEditDialog(existingNode: deviceNode);
+      } else if (value == 'delete') {
+        _handleDelete(deviceNode);
+      }
     });
   }
-
 
   Widget _buildEmptyView() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.hub_outlined, size: 80, color: Theme.of(context).appColors.muted),
-          SizedBox(height: 16),
-          Text('الخريطة فارغة', style: TextStyle(fontSize: 22)),
-          SizedBox(height: 8),
-          Text('ابدأ ببناء خريطة شبكتك الآن', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Theme.of(context).colorScheme.onSurface)),
+          Icon(Icons.hub_outlined,
+              size: 80, color: Theme.of(context).appColors.muted),
+          const SizedBox(height: 16),
+          const Text('الخريطة فارغة', style: TextStyle(fontSize: 22)),
+          const SizedBox(height: 8),
+          Text('ابدأ ببناء خريطة شبكتك الآن',
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: () => _showAddEditDialog(),
@@ -656,7 +725,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
       ),
     );
   }
-  
+
   Widget _buildLoadingOverlay() {
     return Container(
       color: const Color(0xB3000000),
@@ -665,7 +734,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             CircularProgressIndicator(),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text('جاري فحص حالة الأجهزة...', style: TextStyle(fontSize: 16)),
           ],
         ),

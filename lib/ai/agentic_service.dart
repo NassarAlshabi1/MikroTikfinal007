@@ -29,16 +29,44 @@ class AgenticService {
 
   /// أفعال تعديل ممنوعة من التنفيذ التلقائي (defense in depth)
   static const List<String> _mutatingTokens = [
-    'set ', 'add ', 'remove', 'unset', 'reset', 'reboot', 'shutdown',
-    'disable', 'enable', 'move ', 'edit', 'import', 'upgrade', 'downgrade',
-    'delete', 'password', 'scheduler', '/tool fetch', 'deauthenticate',
-    'make-backup', 'run ', 'clear ', 'comment', 'sniffer save', 'gen-key',
-    'create', 'restore', 'reset-configuration', 'blink',
+    'set ',
+    'add ',
+    'remove',
+    'unset',
+    'reset',
+    'reboot',
+    'shutdown',
+    'disable',
+    'enable',
+    'move ',
+    'edit',
+    'import',
+    'upgrade',
+    'downgrade',
+    'delete',
+    'password',
+    'scheduler',
+    '/tool fetch',
+    'deauthenticate',
+    'make-backup',
+    'run ',
+    'clear ',
+    'comment',
+    'sniffer save',
+    'gen-key',
+    'create',
+    'restore',
+    'reset-configuration',
+    'blink',
   ];
 
   /// أفعال قراءة مسموح بها للتنفيذ التلقائي
   static const List<String> _readVerbs = [
-    'print', 'export', 'get', 'monitor', 'find',
+    'print',
+    'export',
+    'get',
+    'monitor',
+    'find',
   ];
 
   /// هل الأمر آمن للتنفيذ التلقائي (قراءة فقط)؟
@@ -221,8 +249,7 @@ class AgenticService {
     final actionStr = (jsonMap['action'] ?? '').toString().toLowerCase();
     final thought = (jsonMap['thought'] ?? '').toString();
 
-    final isInvestigate =
-        actionStr == 'investigate' && !forceFinal;
+    final isInvestigate = actionStr == 'investigate' && !forceFinal;
 
     if (isInvestigate) {
       final commands = _asStringList(jsonMap['commands']);

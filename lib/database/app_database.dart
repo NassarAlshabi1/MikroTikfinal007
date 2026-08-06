@@ -34,7 +34,8 @@ class Cards extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get username => text().withLength(min: 1, max: 100)();
   TextColumn get password => text().nullable()();
-  IntColumn get profileId => integer().customConstraint('NOT NULL REFERENCES profiles(id)')();
+  IntColumn get profileId =>
+      integer().customConstraint('NOT NULL REFERENCES profiles(id)')();
   IntColumn get sharedUsers => integer().withDefault(const Constant(1))();
   TextColumn get status => text().withDefault(const Constant('active'))();
   DateTimeColumn get createdAt => dateTime()();
@@ -74,7 +75,8 @@ class Profiles extends Table {
 /// جدول جلسات الاتصال (Sessions) — للمراقبة التاريخية
 class Sessions extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get cardId => integer().customConstraint('NOT NULL REFERENCES cards(id) ON DELETE CASCADE')();
+  IntColumn get cardId => integer()
+      .customConstraint('NOT NULL REFERENCES cards(id) ON DELETE CASCADE')();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get endedAt => dateTime().nullable()();
   IntColumn get uploadBytes => integer().withDefault(const Constant(0))();
@@ -103,7 +105,8 @@ class AiDiagnostics extends Table {
 class ExecutedCommands extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get command => text()();
-  TextColumn get riskLevel => text().nullable()(); // 'safe', 'moderate', 'dangerous'
+  TextColumn get riskLevel =>
+      text().nullable()(); // 'safe', 'moderate', 'dangerous'
   BoolColumn get success => boolean()();
   TextColumn get output => text().nullable()();
   TextColumn get error => text().nullable()();
@@ -163,7 +166,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   /// للـ testing — يمرر اتصال in-memory
-  AppDatabase.forTesting(QueryExecutor e) : super(e);
+  AppDatabase.forTesting(super.e);
 
   @override
   int get schemaVersion => 1;
@@ -173,14 +176,22 @@ class AppDatabase extends _$AppDatabase {
         onCreate: (m) async {
           await m.createAll();
           // إنشاء indexes
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_cards_status ON cards(status)');
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_cards_profile ON cards(profile_id)');
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_cards_created ON cards(created_at DESC)');
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_sessions_card ON sessions(card_id)');
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_sessions_active ON sessions(ended_at) WHERE ended_at IS NULL');
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_diagnostics_mode ON ai_diagnostics(mode)');
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_diagnostics_started ON ai_diagnostics(started_at DESC)');
-          await customStatement('CREATE INDEX IF NOT EXISTS idx_commands_executed ON executed_commands(executed_at DESC)');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_cards_status ON cards(status)');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_cards_profile ON cards(profile_id)');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_cards_created ON cards(created_at DESC)');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_sessions_card ON sessions(card_id)');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_sessions_active ON sessions(ended_at) WHERE ended_at IS NULL');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_diagnostics_mode ON ai_diagnostics(mode)');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_diagnostics_started ON ai_diagnostics(started_at DESC)');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_commands_executed ON executed_commands(executed_at DESC)');
 
           // تفعيل WAL mode للأداء المتزامن
           await customStatement('PRAGMA journal_mode = WAL');

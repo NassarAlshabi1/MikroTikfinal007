@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'perf/device_capability.dart';
 
 import 'theme/app_theme.dart';
+
 class ProcessImageScreen extends StatefulWidget {
   final String imagePath;
   final String prefix;
@@ -155,7 +156,7 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('معالجة الصورة'),
+        title: const Text('معالجة الصورة'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: RepaintBoundary(

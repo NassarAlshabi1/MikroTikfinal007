@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/active_users_provider.dart';
 import '../../perf/device_capability.dart';
@@ -70,9 +71,7 @@ class ActiveUsersV2 extends ConsumerWidget {
                     child: ListView.builder(
                       // itemExtent يمنع حساب الارتفاع لكل عنصر → تحسن أداء scroll
                       // بشكل كبير على الأجهزة الضعيفة
-                      itemExtent: 72,
-                      // cacheExtent صغير على الأجهزة الضعيفة لتقليل استهلاك الذاكرة
-                      cacheExtent: DeviceCapability.instance.listViewCacheExtent,
+                      scrollCacheExtent: ScrollCacheExtent.pixels(DeviceCapability.instance.listViewCacheExtent), itemExtent: 72,
                       // addAutomaticKeepAlives خاطئ لأن العناصر خفيفة
                       addAutomaticKeepAlives: false,
                       // لا نُبقي العناصر حية عند الـ scroll-out

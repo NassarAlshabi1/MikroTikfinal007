@@ -270,7 +270,7 @@ class AiService {
         'model': settings.effectiveModel,
         'messages': messages,
         'max_tokens': settings.maxTokens,
-        'temperature': 0.4,  // منخفض لإجابات تقنية دقيقة
+        'temperature': 0.4, // منخفض لإجابات تقنية دقيقة
       },
     );
 
@@ -280,8 +280,7 @@ class AiService {
       throw AiServiceException(
           'خطأ من الـ AI: ${error['message'] ?? error['code'] ?? 'خطأ غير معروف'}');
     }
-    final content =
-        data['choices'][0]['message']['content'] as String;
+    final content = data['choices'][0]['message']['content'] as String;
     final commands = _extractCommands(content);
 
     return AiAnalysisResult(

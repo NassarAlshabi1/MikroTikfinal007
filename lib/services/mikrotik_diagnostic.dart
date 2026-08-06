@@ -49,8 +49,8 @@ class MikrotikDiagnostic {
         verbose: false,
       );
       final loggedIn = await client.login().timeout(
-        const Duration(seconds: 10),
-      );
+            const Duration(seconds: 10),
+          );
       if (!loggedIn) {
         return _errorResult('فشل تسجيل الدخول');
       }
@@ -95,9 +95,9 @@ class MikrotikDiagnostic {
       // 9) الملخص
       final criticalCount =
           issues.where((i) => i.severity == 'critical').length;
-      final warningCount =
-          issues.where((i) => i.severity == 'high' || i.severity == 'medium')
-              .length;
+      final warningCount = issues
+          .where((i) => i.severity == 'high' || i.severity == 'medium')
+          .length;
 
       final status = criticalCount > 0
           ? 'CRITICAL'
@@ -134,12 +134,12 @@ class MikrotikDiagnostic {
   }
 
   /// فحص الاتصال عبر ping
-  Future<diag.ConnectivityStatus> _checkConnectivity(RouterOSClient client) async {
+  Future<diag.ConnectivityStatus> _checkConnectivity(
+      RouterOSClient client) async {
     try {
       final stopwatch = Stopwatch()..start();
       final response = await client
-          .talk(['/system/resource/print'])
-          .timeout(const Duration(seconds: 5));
+          .talk(['/system/resource/print']).timeout(const Duration(seconds: 5));
       stopwatch.stop();
 
       if (response.isNotEmpty) {
@@ -164,7 +164,8 @@ class MikrotikDiagnostic {
   }
 
   /// جمع موارد النظام
-  Future<diag.SystemResources> _getSystemResources(RouterOSClient client) async {
+  Future<diag.SystemResources> _getSystemResources(
+      RouterOSClient client) async {
     try {
       final response = await client.talk([
         '/system/resource/print',
@@ -172,11 +173,18 @@ class MikrotikDiagnostic {
             'architecture-name,platform,board-name',
       ]);
 
-      if (response.isEmpty) return diag.SystemResources(
-        cpuLoad: '0%', cpuFrequency: '', cpuTemperature: '',
-        memoryFree: '', memoryTotal: '', memoryUsage: '0%',
-        uptime: '', performanceIssues: [],
-      );
+      if (response.isEmpty) {
+        return diag.SystemResources(
+          cpuLoad: '0%',
+          cpuFrequency: '',
+          cpuTemperature: '',
+          memoryFree: '',
+          memoryTotal: '',
+          memoryUsage: '0%',
+          uptime: '',
+          performanceIssues: [],
+        );
+      }
 
       final data = response.first;
       final cpuLoad = data['cpu-load'] ?? '0';
@@ -222,9 +230,14 @@ class MikrotikDiagnostic {
     } catch (e) {
       debugPrint('[MikrotikDiagnostic] Resources error: $e');
       return diag.SystemResources(
-        cpuLoad: 'ERR', cpuFrequency: '', cpuTemperature: '',
-        memoryFree: '', memoryTotal: '', memoryUsage: 'ERR',
-        uptime: '', performanceIssues: [],
+        cpuLoad: 'ERR',
+        cpuFrequency: '',
+        cpuTemperature: '',
+        memoryFree: '',
+        memoryTotal: '',
+        memoryUsage: 'ERR',
+        uptime: '',
+        performanceIssues: [],
       );
     }
   }
@@ -286,7 +299,8 @@ class MikrotikDiagnostic {
               int.tryParse(signal.replaceAll('-dbm', '')) != null) {
             final signalVal = int.parse(signal.replaceAll('-dbm', ''));
             if (signalVal > 80) {
-              wirelessIssues.add('إشارة ضعيفة على ${entry['interface'] ?? 'wlan'}: $signal');
+              wirelessIssues.add(
+                  'إشارة ضعيفة على ${entry['interface'] ?? 'wlan'}: $signal');
             }
           }
         }
@@ -336,7 +350,7 @@ class MikrotikDiagnostic {
       for (final svc in servicesResp) {
         final name = svc['name'] ?? '';
         final disabled = svc['disabled'] == 'true';
-      // ignore: unused_local_variable
+        // ignore: unused_local_variable
         final port = svc['port'] ?? '';
 
         if (!disabled) {
@@ -395,11 +409,13 @@ class MikrotikDiagnostic {
         '=.proplist=name,port,disabled',
       ]);
 
-      return response.map((data) => diag.ServiceInfo(
-            name: data['name'] ?? 'unknown',
-            disabled: data['disabled'] == 'true',
-            port: data['port'] ?? '',
-          )).toList();
+      return response
+          .map((data) => diag.ServiceInfo(
+                name: data['name'] ?? 'unknown',
+                disabled: data['disabled'] == 'true',
+                port: data['port'] ?? '',
+              ))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -486,7 +502,8 @@ class MikrotikDiagnostic {
           type: 'Interface',
           severity: 'high',
           message: 'أخطاء عالية على ${iface.name}: RX=$rxErr, TX=$txErr',
-          solution: 'تحقق من الكابل أو: /interface ethernet set ${iface.name} auto-negotiation=yes',
+          solution:
+              'تحقق من الكابل أو: /interface ethernet set ${iface.name} auto-negotiation=yes',
         ));
       }
     }
@@ -497,7 +514,8 @@ class MikrotikDiagnostic {
         type: 'Security',
         severity: 'high',
         message: secIssue,
-        solution: 'عطّل الخدمة غير الآمنة:\n/ip service disable telnet\n/ip service disable ftp',
+        solution:
+            'عطّل الخدمة غير الآمنة:\n/ip service disable telnet\n/ip service disable ftp',
       ));
     }
 
@@ -528,16 +546,26 @@ class MikrotikDiagnostic {
         status: '❌ $message',
       ),
       resources: diag.SystemResources(
-        cpuLoad: '0%', cpuFrequency: '', cpuTemperature: '',
-        memoryFree: '', memoryTotal: '', memoryUsage: '0%',
-        uptime: '', performanceIssues: [],
+        cpuLoad: '0%',
+        cpuFrequency: '',
+        cpuTemperature: '',
+        memoryFree: '',
+        memoryTotal: '',
+        memoryUsage: '0%',
+        uptime: '',
+        performanceIssues: [],
       ),
       interfaces: [],
       quality: diag.ConnectionQuality(
-        wirelessIssues: [], activeConnections: 0, networkCongestion: '',
+        wirelessIssues: [],
+        activeConnections: 0,
+        networkCongestion: '',
       ),
       security: diag.SecurityStatus(
-        failedLogins: 0, firewallRules: 0, enabledServices: [], issues: [],
+        failedLogins: 0,
+        firewallRules: 0,
+        enabledServices: [],
+        issues: [],
       ),
       services: [],
       issues: [

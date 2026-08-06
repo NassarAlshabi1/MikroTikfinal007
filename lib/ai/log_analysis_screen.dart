@@ -11,7 +11,6 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,6 +26,7 @@ import 'oomol_mcp_client.dart';
 import '../snackbar_helpers.dart';
 
 import '../services/secure_clipboard.dart';
+
 class LogAnalysisScreen extends ConsumerStatefulWidget {
   const LogAnalysisScreen({super.key});
 
@@ -60,7 +60,8 @@ class _LogAnalysisScreenState extends ConsumerState<LogAnalysisScreen> {
     if (diagState.lastSnapshot?.logs.isNotEmpty == true) {
       setState(() => _loading = true);
       try {
-        final result = MikrotikLogAnalyzer.analyze(diagState.lastSnapshot!.logs);
+        final result =
+            MikrotikLogAnalyzer.analyze(diagState.lastSnapshot!.logs);
         setState(() {
           _result = result;
           _loading = false;
@@ -119,7 +120,7 @@ class _LogAnalysisScreenState extends ConsumerState<LogAnalysisScreen> {
       }
 
       final localContext = MikrotikLogAnalyzer.toAiContext(_result!);
-      final userQuery = 'حلل هذه الـ logs من MikroTik واكتشف المشاكل الأمنية '
+      const userQuery = 'حلل هذه الـ logs من MikroTik واكتشف المشاكل الأمنية '
           'والأدائية. اقترح أوامر RouterOS v6 للإصلاح.';
 
       final snapshotContext = '''$localContext
@@ -156,13 +157,17 @@ Time: ${DateTime.now().toIso8601String()}
 
     try {
       // 🔒 قراءة API key من flutter_secure_storage + باقي الإعدادات من prefs
-      final apiKey = await SecureCredentialsStorageContainer.instance.getOomolApiKey() ?? '';
+      final apiKey =
+          await SecureCredentialsStorageContainer.instance.getOomolApiKey() ??
+              '';
       final prefs = await SharedPreferences.getInstance();
       final packageName = prefs.getString('oomol_package_name');
       final packageVersion = prefs.getString('oomol_package_version');
 
+      if (!mounted) return;
       if (apiKey.isEmpty) {
-        showSuccessSnackBar(context, 'ضبط OOMOL API key أولاً من شاشة OOMOL Settings');
+        showSuccessSnackBar(
+            context, 'ضبط OOMOL API key أولاً من شاشة OOMOL Settings');
         setState(() => _analyzingCloud = false);
         return;
       }
@@ -191,7 +196,8 @@ Time: ${DateTime.now().toIso8601String()}
         setState(() {
           _cloudAnalysis = result.content;
           if (result.usedFallback) {
-            _errorMessage = result.error ?? 'استُخدم التحليل المحلي (cloud غير متاح)';
+            _errorMessage =
+                result.error ?? 'استُخدم التحليل المحلي (cloud غير متاح)';
           }
         });
       } finally {
@@ -226,8 +232,9 @@ Time: ${DateTime.now().toIso8601String()}
             onPressed: _result == null
                 ? null
                 : () async {
-                    await SecureClipboard.copy(_result!.summary, sensitive: false);
-                    if (mounted) showSuccessSnackBar(context, 'تم نسخ التقرير');
+                    await SecureClipboard.copy(_result!.summary,
+                        sensitive: false);
+                    if (context.mounted) showSuccessSnackBar(context, 'تم نسخ التقرير');
                   },
           ),
         ],
@@ -248,7 +255,8 @@ Time: ${DateTime.now().toIso8601String()}
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.analytics_outlined, size: 80, color: colors.textTertiary),
+            Icon(Icons.analytics_outlined,
+                size: 80, color: colors.textTertiary),
             const SizedBox(height: 16),
             Text(
               'تحليل Logs MikroTik',
@@ -336,7 +344,8 @@ Time: ${DateTime.now().toIso8601String()}
                   Expanded(
                     child: SelectableText(
                       _errorMessage!,
-                      style: TextStyle(fontSize: 12, color: colors.onErrorContainer),
+                      style: TextStyle(
+                          fontSize: 12, color: colors.onErrorContainer),
                     ),
                   ),
                 ],
@@ -483,9 +492,9 @@ Time: ${DateTime.now().toIso8601String()}
             spacing: 6,
             runSpacing: 6,
             children: (_result!.categoryCounts.entries
-                .where((e) => e.value > 0)
-                .toList()
-              ..sort((a, b) => b.value.compareTo(a.value)))
+                    .where((e) => e.value > 0)
+                    .toList()
+                  ..sort((a, b) => b.value.compareTo(a.value)))
                 .map((e) => _buildCategoryChip(colors, e.key, e.value))
                 .toList(),
           ),
@@ -494,7 +503,8 @@ Time: ${DateTime.now().toIso8601String()}
     );
   }
 
-  Widget _buildStatChip(AppColorsExtension colors, {
+  Widget _buildStatChip(
+    AppColorsExtension colors, {
     required String emoji,
     required String label,
     required int count,
@@ -528,7 +538,8 @@ Time: ${DateTime.now().toIso8601String()}
     );
   }
 
-  Widget _buildCategoryChip(AppColorsExtension colors, LogCategory cat, int count) {
+  Widget _buildCategoryChip(
+      AppColorsExtension colors, LogCategory cat, int count) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -568,10 +579,14 @@ Time: ${DateTime.now().toIso8601String()}
 
   Color _severityColor(AppColorsExtension colors, LogSeverity s) {
     switch (s) {
-      case LogSeverity.critical: return colors.error;
-      case LogSeverity.warning:  return colors.warning;
-      case LogSeverity.info:     return colors.success;
-      case LogSeverity.debug:    return colors.textTertiary;
+      case LogSeverity.critical:
+        return colors.error;
+      case LogSeverity.warning:
+        return colors.warning;
+      case LogSeverity.info:
+        return colors.success;
+      case LogSeverity.debug:
+        return colors.textTertiary;
     }
   }
 
@@ -584,7 +599,8 @@ Time: ${DateTime.now().toIso8601String()}
             onPressed: _analyzingAi ? null : _analyzeWithAi,
             icon: _analyzingAi
                 ? const SizedBox(
-                    width: 16, height: 16,
+                    width: 16,
+                    height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.psychology),
@@ -597,7 +613,8 @@ Time: ${DateTime.now().toIso8601String()}
             onPressed: _analyzingCloud ? null : _analyzeWithOomolCloud,
             icon: _analyzingCloud
                 ? const SizedBox(
-                    width: 16, height: 16,
+                    width: 16,
+                    height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.cloud),
@@ -640,12 +657,15 @@ Time: ${DateTime.now().toIso8601String()}
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('•', style: TextStyle(color: colors.error, fontWeight: FontWeight.bold)),
+                    Text('•',
+                        style: TextStyle(
+                            color: colors.error, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         issue,
-                        style: TextStyle(fontSize: 12, color: colors.onErrorContainer),
+                        style: TextStyle(
+                            fontSize: 12, color: colors.onErrorContainer),
                       ),
                     ),
                   ],
@@ -788,12 +808,14 @@ Time: ${DateTime.now().toIso8601String()}
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.arrow_circle_right, size: 14, color: colors.warning),
+                    Icon(Icons.arrow_circle_right,
+                        size: 14, color: colors.warning),
                     const SizedBox(width: 6),
                     Expanded(
                       child: SelectableText(
                         rec,
-                        style: TextStyle(fontSize: 12, color: colors.onWarningContainer),
+                        style: TextStyle(
+                            fontSize: 12, color: colors.onWarningContainer),
                       ),
                     ),
                   ],
@@ -905,7 +927,8 @@ Time: ${DateTime.now().toIso8601String()}
             ),
             child: Text(
               '${e.severity.emoji} ${e.severity.displayName}',
-              style: TextStyle(fontSize: 9, color: sevColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 9, color: sevColor, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 6),
@@ -959,7 +982,8 @@ Time: ${DateTime.now().toIso8601String()}
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.lightbulb_outline, size: 14, color: colors.warning),
+                    Icon(Icons.lightbulb_outline,
+                        size: 14, color: colors.warning),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(

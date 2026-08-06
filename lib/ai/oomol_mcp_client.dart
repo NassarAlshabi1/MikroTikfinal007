@@ -81,7 +81,8 @@ class OomolTask {
   final String ownerId;
   final String? subscriptionId;
   final String? packageId;
-  final String status; // queued | scheduling | scheduled | running | success | failed
+  final String
+      status; // queued | scheduling | scheduled | running | success | failed
   final int progress;
   final String workload; // serverless
   final String workloadId;
@@ -130,18 +131,20 @@ class OomolTask {
 
   bool get isSuccess => status == 'success';
   bool get isFailed => status == 'failed';
-  bool get isRunning => status == 'running' || status == 'queued' || status == 'scheduling' || status == 'scheduled';
+  bool get isRunning =>
+      status == 'running' ||
+      status == 'queued' ||
+      status == 'scheduling' ||
+      status == 'scheduled';
 
   DateTime? get createdAtDate =>
       createdAt > 0 ? DateTime.fromMillisecondsSinceEpoch(createdAt) : null;
-  DateTime? get startTimeDate =>
-      startTime != null && startTime! > 0
-          ? DateTime.fromMillisecondsSinceEpoch(startTime!)
-          : null;
-  DateTime? get endTimeDate =>
-      endTime != null && endTime! > 0
-          ? DateTime.fromMillisecondsSinceEpoch(endTime!)
-          : null;
+  DateTime? get startTimeDate => startTime != null && startTime! > 0
+      ? DateTime.fromMillisecondsSinceEpoch(startTime!)
+      : null;
+  DateTime? get endTimeDate => endTime != null && endTime! > 0
+      ? DateTime.fromMillisecondsSinceEpoch(endTime!)
+      : null;
 }
 
 /// نتيجة استدعاء أداة MCP
@@ -265,9 +268,7 @@ class OomolMcpClient {
     });
 
     // الاستماع للـ stderr (للتشخيص)
-    _process!.stderr
-        .transform(utf8.decoder)
-        .listen((data) {
+    _process!.stderr.transform(utf8.decoder).listen((data) {
       // stderr يحوي logs تشخيصية (لا تعتبر أخطاء حقيقية)
       debugPrint('[OomolMcpClient] server stderr: ${data.trim()}');
     });
@@ -494,12 +495,15 @@ class OomolMcpClient {
     required String blockName,
     Map<String, dynamic> inputValues = const {},
   }) async {
-    final r = await callTool('create_task', {
-      'packageName': packageName,
-      'packageVersion': packageVersion,
-      'blockName': blockName,
-      'inputValues': inputValues,
-    }, timeout: const Duration(seconds: 30));
+    final r = await callTool(
+        'create_task',
+        {
+          'packageName': packageName,
+          'packageVersion': packageVersion,
+          'blockName': blockName,
+          'inputValues': inputValues,
+        },
+        timeout: const Duration(seconds: 30));
     if (r.isError) throw OomolMcpException(r.text);
     final data = r.asJson;
     if (data is Map<String, dynamic>) {
@@ -518,14 +522,17 @@ class OomolMcpClient {
     int intervalMs = 2000,
     int timeoutMs = 300000,
   }) async {
-    final r = await callTool('execute_task', {
-      'packageName': packageName,
-      'packageVersion': packageVersion,
-      'blockName': blockName,
-      'inputValues': inputValues,
-      'intervalMs': intervalMs,
-      'timeoutMs': timeoutMs,
-    }, timeout: Duration(milliseconds: timeoutMs + 30000));
+    final r = await callTool(
+        'execute_task',
+        {
+          'packageName': packageName,
+          'packageVersion': packageVersion,
+          'blockName': blockName,
+          'inputValues': inputValues,
+          'intervalMs': intervalMs,
+          'timeoutMs': timeoutMs,
+        },
+        timeout: Duration(milliseconds: timeoutMs + 30000));
     if (r.isError) throw OomolMcpException(r.text);
     final data = r.asJson;
     if (data is Map<String, dynamic>) return data;
@@ -549,11 +556,14 @@ class OomolMcpClient {
     int intervalMs = 2000,
     int timeoutMs = 300000,
   }) async {
-    final r = await callTool('await_result', {
-      'taskID': taskId,
-      'intervalMs': intervalMs,
-      'timeoutMs': timeoutMs,
-    }, timeout: Duration(milliseconds: timeoutMs + 30000));
+    final r = await callTool(
+        'await_result',
+        {
+          'taskID': taskId,
+          'intervalMs': intervalMs,
+          'timeoutMs': timeoutMs,
+        },
+        timeout: Duration(milliseconds: timeoutMs + 30000));
     if (r.isError) throw OomolMcpException(r.text);
     final data = r.asJson;
     if (data is Map<String, dynamic>) return data;
@@ -568,11 +578,14 @@ class OomolMcpClient {
     required String base64Data,
     String mimeType = 'application/octet-stream',
   }) async {
-    final r = await callTool('upload_file', {
-      'fileName': fileName,
-      'fileData': base64Data,
-      'mimeType': mimeType,
-    }, timeout: const Duration(seconds: 120));
+    final r = await callTool(
+        'upload_file',
+        {
+          'fileName': fileName,
+          'fileData': base64Data,
+          'mimeType': mimeType,
+        },
+        timeout: const Duration(seconds: 120));
     if (r.isError) throw OomolMcpException(r.text);
     final data = r.asJson;
     if (data is Map<String, dynamic>) {

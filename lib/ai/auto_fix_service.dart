@@ -21,49 +21,71 @@ import 'script_executor.dart';
 
 /// نوع الإصلاح
 enum FixCategory {
-  security,     // إصلاحات أمنية
-  performance,  // تحسينات أداء
-  qos,         // إعدادات QoS
-  routing,     // مشاكل توجيه
-  vpn,         // إعدادات VPN
-  wifi,        // إعدادات Wireless
-  hotspot,     // إعدادات Hotspot
-  safety,      // نسخ احتياطي/استعادة
-  dhcp,        // إعدادات DHCP (مستوحى من Mikrotik-AI-Cloud)
-  monitoring,  // Netwatch, SNMP, NTP (مستوحى من Mikrotik-AI-Cloud)
+  security, // إصلاحات أمنية
+  performance, // تحسينات أداء
+  qos, // إعدادات QoS
+  routing, // مشاكل توجيه
+  vpn, // إعدادات VPN
+  wifi, // إعدادات Wireless
+  hotspot, // إعدادات Hotspot
+  safety, // نسخ احتياطي/استعادة
+  dhcp, // إعدادات DHCP (مستوحى من Mikrotik-AI-Cloud)
+  monitoring, // Netwatch, SNMP, NTP (مستوحى من Mikrotik-AI-Cloud)
   infrastructure, // Bridge, VLAN, IPv6 (مستوحى من Mikrotik-AI-Cloud)
 }
 
 extension FixCategoryExtension on FixCategory {
   String get displayName {
     switch (this) {
-      case FixCategory.security:    return 'أمن';
-      case FixCategory.performance: return 'أداء';
-      case FixCategory.qos:         return 'QoS';
-      case FixCategory.routing:     return 'توجيه';
-      case FixCategory.vpn:         return 'VPN';
-      case FixCategory.wifi:        return 'Wireless';
-      case FixCategory.hotspot:     return 'Hotspot';
-      case FixCategory.safety:      return 'أمان البيانات';
-      case FixCategory.dhcp:        return 'DHCP';
-      case FixCategory.monitoring:  return 'مراقبة';
-      case FixCategory.infrastructure: return 'بنية تحتية';
+      case FixCategory.security:
+        return 'أمن';
+      case FixCategory.performance:
+        return 'أداء';
+      case FixCategory.qos:
+        return 'QoS';
+      case FixCategory.routing:
+        return 'توجيه';
+      case FixCategory.vpn:
+        return 'VPN';
+      case FixCategory.wifi:
+        return 'Wireless';
+      case FixCategory.hotspot:
+        return 'Hotspot';
+      case FixCategory.safety:
+        return 'أمان البيانات';
+      case FixCategory.dhcp:
+        return 'DHCP';
+      case FixCategory.monitoring:
+        return 'مراقبة';
+      case FixCategory.infrastructure:
+        return 'بنية تحتية';
     }
   }
 
   String get icon {
     switch (this) {
-      case FixCategory.security:    return '🛡️';
-      case FixCategory.performance: return '⚡';
-      case FixCategory.qos:         return '📊';
-      case FixCategory.routing:     return '🗺️';
-      case FixCategory.vpn:         return '🔐';
-      case FixCategory.wifi:        return '📶';
-      case FixCategory.hotspot:     return '📡';
-      case FixCategory.safety:      return '💾';
-      case FixCategory.dhcp:        return '🌐';
-      case FixCategory.monitoring:  return '👁️';
-      case FixCategory.infrastructure: return '🏗️';
+      case FixCategory.security:
+        return '🛡️';
+      case FixCategory.performance:
+        return '⚡';
+      case FixCategory.qos:
+        return '📊';
+      case FixCategory.routing:
+        return '🗺️';
+      case FixCategory.vpn:
+        return '🔐';
+      case FixCategory.wifi:
+        return '📶';
+      case FixCategory.hotspot:
+        return '📡';
+      case FixCategory.safety:
+        return '💾';
+      case FixCategory.dhcp:
+        return '🌐';
+      case FixCategory.monitoring:
+        return '👁️';
+      case FixCategory.infrastructure:
+        return '🏗️';
     }
   }
 }
@@ -71,14 +93,14 @@ extension FixCategoryExtension on FixCategory {
 /// إصلاح مقترح
 @immutable
 class ProposedFix {
-  final String id;            // معرّف فريد
-  final String title;         // عنوان مختصر
-  final String description;   // وصف المشكلة
-  final String impact;        // الأثر المتوقع
+  final String id; // معرّف فريد
+  final String title; // عنوان مختصر
+  final String description; // وصف المشكلة
+  final String impact; // الأثر المتوقع
   final FixCategory category; // التصنيف
   final CommandRiskLevel risk; // مستوى الخطورة
   final RouterOsScript script; // السكربت الذي يصلح المشكلة
-  final bool autoApplySafe;   // هل يمكن تطبيقه تلقائياً (آمن جداً)؟
+  final bool autoApplySafe; // هل يمكن تطبيقه تلقائياً (آمن جداً)؟
 
   const ProposedFix({
     required this.id,
@@ -96,7 +118,8 @@ class AutoFixService {
   AutoFixService._();
 
   /// يحلل snapshot ويُرجع قائمة الإصلاحات المقترحة
-  static List<ProposedFix> analyze(MikrotikSnapshot snapshot, {DiagnosticMode? mode}) {
+  static List<ProposedFix> analyze(MikrotikSnapshot snapshot,
+      {DiagnosticMode? mode}) {
     final fixes = <ProposedFix>[];
 
     // استدعاء المحللات حسب الوضع (إن وُجد) + التحليل العام دائماً
@@ -143,7 +166,7 @@ class AutoFixService {
     // 1) فحص Default Route
     if (!snapshot.routes.toLowerCase().contains('0.0.0.0/0') &&
         !snapshot.routes.toLowerCase().contains('::/0')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'missing-default-route',
         title: 'لا يوجد Default Route',
         description: 'لم يتم العثور على default route (0.0.0.0/0). '
@@ -156,7 +179,7 @@ class AutoFixService {
           description: 'يضيف default route عبر gateway محدد. عدّل IP يدوياً.',
           overallRisk: CommandRiskLevel.moderate,
           category: 'routing',
-          commands: const [
+          commands: [
             '/ip route add dst-address=0.0.0.0/0 gateway=YOUR_GATEWAY_IP comment="default-route"',
           ],
         ),
@@ -168,9 +191,8 @@ class AutoFixService {
         !snapshot.extraData.containsKey('IP FIREWALL NAT')) {
       // نتحقق من NAT إن وُجدت في extraData
       final natData = snapshot.extraData['IP FIREWALL NAT'] ?? '';
-      if (!natData.toLowerCase().contains('masquerade') &&
-          natData.isNotEmpty) {
-        fixes.add(ProposedFix(
+      if (!natData.toLowerCase().contains('masquerade') && natData.isNotEmpty) {
+        fixes.add(const ProposedFix(
           id: 'missing-nat-masquerade',
           title: 'NAT masquerade مفقود',
           description: 'لا توجد قاعدة masquerade في الـ NAT. '
@@ -180,10 +202,11 @@ class AutoFixService {
           risk: CommandRiskLevel.moderate,
           script: RouterOsScript(
             title: 'إضافة NAT masquerade',
-            description: 'يضيف masquerade على WAN interface. عدّل ether1 اسم الـ WAN.',
+            description:
+                'يضيف masquerade على WAN interface. عدّل ether1 اسم الـ WAN.',
             overallRisk: CommandRiskLevel.moderate,
             category: 'routing',
-            commands: const [
+            commands: [
               '/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade comment="default-masquerade"',
             ],
           ),
@@ -210,10 +233,10 @@ class AutoFixService {
         !RegExp(r'telnet.*false', caseSensitive: false).hasMatch(services)) {
       // التحقق إن telnet مُفعّل (لا توجد علامة disabled)
       if (RegExp(r'telnet\b.*\b(?:true|enabled)?\s*$', caseSensitive: false)
-          .hasMatch(services) ||
+              .hasMatch(services) ||
           (services.toLowerCase().contains('telnet') &&
               !services.toLowerCase().contains('telnet') == false)) {
-        fixes.add(ProposedFix(
+        fixes.add(const ProposedFix(
           id: 'disable-telnet',
           title: 'Telnet مُفعّل — غير آمن',
           description: 'Telnet يرسل البيانات (بما فيها كلمات المرور) '
@@ -227,7 +250,7 @@ class AutoFixService {
             description: 'يعطّل خدمة Telnet غير الآمنة',
             overallRisk: CommandRiskLevel.moderate,
             category: 'security',
-            commands: const [
+            commands: [
               '/ip service disable telnet',
             ],
           ),
@@ -238,7 +261,7 @@ class AutoFixService {
     // 2) FTP مُفعّل
     if (services.toLowerCase().contains('ftp') &&
         RegExp(r'ftp\b', caseSensitive: false).hasMatch(services)) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'disable-ftp',
         title: 'FTP مُفعّل — غير آمن',
         description: 'FTP غير مشفّر ويجب تعطيله إن لم يُستخدم.',
@@ -251,7 +274,7 @@ class AutoFixService {
           description: 'يعطّل خدمة FTP',
           overallRisk: CommandRiskLevel.moderate,
           category: 'security',
-          commands: const [
+          commands: [
             '/ip service disable ftp',
           ],
         ),
@@ -259,9 +282,8 @@ class AutoFixService {
     }
 
     // 3) API بدون HTTPS (8728)
-    if (services.contains('8728') &&
-        !services.contains('8729')) {
-      fixes.add(ProposedFix(
+    if (services.contains('8728') && !services.contains('8729')) {
+      fixes.add(const ProposedFix(
         id: 'disable-api-plaintext',
         title: 'API على منفذ 8728 بدون تشفير',
         description: 'خدمة API على المنفذ 8728 تستخدم plain text. '
@@ -275,7 +297,7 @@ class AutoFixService {
           description: 'يعطّل api على 8728 ويترك api-ssl على 8729',
           overallRisk: CommandRiskLevel.moderate,
           category: 'security',
-          commands: const [
+          commands: [
             '/ip service disable api',
             '/ip service enable api-ssl',
           ],
@@ -286,7 +308,7 @@ class AutoFixService {
     // 4) UPnP مُفعّل
     if (upnp.toLowerCase().contains('enabled=true') ||
         upnp.toLowerCase().contains('yes')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'disable-upnp',
         title: 'UPnP مُفعّل — خطر أمني',
         description: 'UPnP يسمح للتطبيقات بفتح منافذ تلقائياً بدون موافقة. '
@@ -300,7 +322,7 @@ class AutoFixService {
           description: 'يعطّل UPnP نهائياً',
           overallRisk: CommandRiskLevel.moderate,
           category: 'security',
-          commands: const [
+          commands: [
             '/ip upnp set enabled=no',
           ],
         ),
@@ -330,7 +352,7 @@ class AutoFixService {
     // 1) لا يوجد أي queue — إعداد QoS أساسي
     if ((queueSimple.isEmpty || queueSimple == '(empty)') &&
         (queueTree.isEmpty || queueTree == '(empty)')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'setup-basic-qos',
         title: 'لا يوجد إعدادات QoS — حركة المرور بدون تنظيم',
         description: 'لا يوجد أي queue simple أو queue tree. كل المستخدمين '
@@ -345,7 +367,7 @@ class AutoFixService {
               'شامل لـ LAN. عدّل IP والـ bandwidth حسب شبكتك.',
           overallRisk: CommandRiskLevel.moderate,
           category: 'qos',
-          commands: const [
+          commands: [
             '/queue type add name="pcq-upload" kind=pcq pcq-rate=5M pcq-classifier=src-address',
             '/queue type add name="pcq-download" kind=pcq pcq-rate=20M pcq-classifier=dst-address',
             '/queue simple add name="lan-users" target=192.168.88.0/24 queue=pcq-upload/pcq-download max-limit=10M/50M comment="auto-qos"',
@@ -360,7 +382,7 @@ class AutoFixService {
     if (!queueType.toLowerCase().contains('pcq') &&
         queueType.isNotEmpty &&
         queueType != '(empty)') {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'add-pcq-types',
         title: 'لا يوجد PCQ queue types — عدالة ضعيفة',
         description: 'بدون PCQ، تتم معاملة كل مستخدم بنفس الـ queue وقد يحصل '
@@ -373,7 +395,7 @@ class AutoFixService {
           description: 'ينشئ PCQ types للرفع والتحميل',
           overallRisk: CommandRiskLevel.moderate,
           category: 'qos',
-          commands: const [
+          commands: [
             '/queue type add name="pcq-upload" kind=pcq pcq-rate=5M pcq-classifier=src-address',
             '/queue type add name="pcq-download" kind=pcq pcq-rate=20M pcq-classifier=dst-address',
           ],
@@ -384,7 +406,7 @@ class AutoFixService {
     // 3) queue simple بدون queue type محدد (default)
     if (queueSimple.toLowerCase().contains('queue=default') ||
         queueSimple.toLowerCase().contains('queue=default-small')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'replace-default-queue',
         title: 'استخدام queue type افتراضي (default)',
         description: 'استخدام default queue type بدل PCQ يقلل العدالة. '
@@ -397,7 +419,7 @@ class AutoFixService {
           description: 'يحدّث queue simple الحالية لاستخدام PCQ',
           overallRisk: CommandRiskLevel.moderate,
           category: 'qos',
-          commands: const [
+          commands: [
             '/queue simple set [find] queue=pcq-upload/pcq-download',
           ],
         ),
@@ -415,10 +437,11 @@ class AutoFixService {
 
     // 1) Fasttrack غير مُفعّل
     if (!snapshot.firewall.toLowerCase().contains('fasttrack-connection')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'enable-fasttrack',
         title: 'Fasttrack غير مُفعّل — throughput أقل',
-        description: 'Fasttrack (RouterOS v6.29+) يتيح تجاوز firewall للاتصالات '
+        description:
+            'Fasttrack (RouterOS v6.29+) يتيح تجاوز firewall للاتصالات '
             'المُنشأة، مما يضاعف throughput بـ 2-3x.',
         impact: 'throughput أقل بـ 50-70% من الإمكانيات.',
         category: FixCategory.performance,
@@ -428,7 +451,7 @@ class AutoFixService {
           description: 'يضيف قاعدتي fasttrack + accept للاتصالات المُنشأة',
           overallRisk: CommandRiskLevel.moderate,
           category: 'performance',
-          commands: const [
+          commands: [
             '/ip firewall filter add chain=forward action=fasttrack-connection connection-state=established,related comment="fasttrack"',
             '/ip firewall filter add chain=forward action=accept connection-state=established,related comment="accept-established"',
           ],
@@ -451,12 +474,12 @@ class AutoFixService {
             impact: 'latency عالٍ، فقدان حزم، انخفاض throughput.',
             category: FixCategory.performance,
             risk: CommandRiskLevel.safe,
-            script: RouterOsScript(
+            script: const RouterOsScript(
               title: 'فحص أسباب CPU العالي',
               description: 'يجمع بيانات تشخيصية للأداء',
               overallRisk: CommandRiskLevel.safe,
               category: 'performance',
-              commands: const [
+              commands: [
                 '/system resource print',
                 '/system resource cpu print',
                 '/tool profile print',
@@ -485,7 +508,7 @@ class AutoFixService {
     // 1) DHCP server معطّل
     if (dhcpServers.toLowerCase().contains('disabled=true') ||
         dhcpServers.toLowerCase().contains('X ')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'enable-dhcp-server',
         title: 'DHCP server معطّل',
         description: 'أحد خوادم DHCP معطّل. الأجهزة لن تحصل على IP تلقائياً.',
@@ -498,7 +521,7 @@ class AutoFixService {
           description: 'يفعّل كل خوادم DHCP المعطّلة',
           overallRisk: CommandRiskLevel.moderate,
           category: 'dhcp',
-          commands: const [
+          commands: [
             '/ip dhcp-server enable [find disabled=yes]',
           ],
         ),
@@ -508,10 +531,11 @@ class AutoFixService {
     // 2) DHCP server بدون authoritative
     if (dhcpServers.isNotEmpty &&
         !dhcpServers.toLowerCase().contains('authoritative=yes')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'set-dhcp-authoritative',
         title: 'DHCP بدون authoritative=yes',
-        description: 'بدون authoritative=yes، قد يستجيب الجهاز بـ NAK للأجهزة التي '
+        description:
+            'بدون authoritative=yes، قد يستجيب الجهاز بـ NAK للأجهزة التي '
             'تطلب IP قديم، مما يسبب تأخيراً في الاتصال.',
         impact: 'تأخر في حصول الأجهزة على IP، مشاكل تجديد الـ lease.',
         category: FixCategory.dhcp,
@@ -521,7 +545,7 @@ class AutoFixService {
           description: 'يجعل كل خوادم DHCP authoritative',
           overallRisk: CommandRiskLevel.moderate,
           category: 'dhcp',
-          commands: const [
+          commands: [
             '/ip dhcp-server set [find] authoritative=yes',
           ],
         ),
@@ -530,7 +554,8 @@ class AutoFixService {
 
     // 3) DHCP leases كثيرة مع حالة "waiting" أو "offered"
     if (dhcpLeases.isNotEmpty) {
-      final waitingCount = 'waiting'.allMatches(dhcpLeases.toLowerCase()).length;
+      final waitingCount =
+          'waiting'.allMatches(dhcpLeases.toLowerCase()).length;
       if (waitingCount > 5) {
         fixes.add(ProposedFix(
           id: 'cleanup-dhcp-waiting',
@@ -540,12 +565,12 @@ class AutoFixService {
           impact: 'استنزاف الـ IP pool، تأخر في توزيع الـ IPs.',
           category: FixCategory.dhcp,
           risk: CommandRiskLevel.moderate,
-          script: RouterOsScript(
+          script: const RouterOsScript(
             title: 'تنظيف DHCP leases المعلّقة',
             description: 'يحذف الـ leases في حالة waiting',
             overallRisk: CommandRiskLevel.moderate,
             category: 'dhcp',
-            commands: const [
+            commands: [
               '/ip dhcp-server lease remove [find status=waiting]',
             ],
           ),
@@ -556,7 +581,7 @@ class AutoFixService {
     // 4) DHCP lease time قصير جداً
     if (dhcpServers.toLowerCase().contains('lease-time=00:0') ||
         dhcpServers.toLowerCase().contains('lease-time=00:1')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'fix-short-lease-time',
         title: 'DHCP lease time قصير جداً',
         description: 'lease time أقل من 10 دقائق يسبب تجديدات متكررة وحمل زائد '
@@ -569,7 +594,7 @@ class AutoFixService {
           description: 'يضبط lease-time على 10:00:00 لكل خوادم DHCP',
           overallRisk: CommandRiskLevel.moderate,
           category: 'dhcp',
-          commands: const [
+          commands: [
             '/ip dhcp-server set [find] lease-time=10:00:00',
           ],
         ),
@@ -585,17 +610,18 @@ class AutoFixService {
         fixes.add(ProposedFix(
           id: 'expand-dhcp-pool',
           title: 'DHCP pool ممتلئ ($activeLeases lease نشط)',
-          description: 'عدد كبير من الـ leases النشطة قد يقترب من حدود الـ pool. '
-            'وسّع الـ pool أو استخدم subnet أصغر.',
+          description:
+              'عدد كبير من الـ leases النشطة قد يقترب من حدود الـ pool. '
+              'وسّع الـ pool أو استخدم subnet أصغر.',
           impact: 'أجهزة جديدة لن تحصل على IP، انقطاع الاتصال.',
           category: FixCategory.dhcp,
           risk: CommandRiskLevel.moderate,
-          script: RouterOsScript(
+          script: const RouterOsScript(
             title: 'فحص إشغال DHCP pool',
             description: 'يجمع بيانات إشعار الـ pool لاتخاذ قرار التوسعة',
             overallRisk: CommandRiskLevel.safe,
             category: 'dhcp',
-            commands: const [
+            commands: [
               '/ip pool print',
               '/ip dhcp-server lease print count-only',
               '/ip dhcp-server lease print count-only where status=bound',
@@ -624,7 +650,7 @@ class AutoFixService {
     if (ntpClient.toLowerCase().contains('enabled=no') ||
         ntpClient.toLowerCase().contains('disabled=true') ||
         !ntpClient.toLowerCase().contains('server')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'enable-ntp-client',
         title: 'NTP client غير مُفعّل',
         description: 'بدون NTP، ساعة الجهاز قد تنحرف، مما يسبب مشاكل في: '
@@ -638,7 +664,7 @@ class AutoFixService {
           description: 'يضبط NTP على pool.ntp.org (مجاني وموثوق)',
           overallRisk: CommandRiskLevel.moderate,
           category: 'monitoring',
-          commands: const [
+          commands: [
             '/system ntp client set enabled=yes servers=0.pool.ntp.org,1.pool.ntp.org,2.pool.ntp.org',
           ],
         ),
@@ -651,7 +677,7 @@ class AutoFixService {
       // check if time-zone is +00:00 (UTC) which might be wrong
       final tzMatch = RegExp(r'time-zone=([+-]\d{2}:\d{2})').firstMatch(clock);
       if (tzMatch != null && tzMatch.group(1) == '+00:00') {
-        fixes.add(ProposedFix(
+        fixes.add(const ProposedFix(
           id: 'set-time-zone',
           title: 'الوقت UTC (+00:00) — قد يكون خاطئاً',
           description: 'ضبط الوقت على UTC قد يسبب ارتباكاً في قراءة الـ logs. '
@@ -665,7 +691,7 @@ class AutoFixService {
             description: 'يضبط التوقيت تلقائياً',
             overallRisk: CommandRiskLevel.moderate,
             category: 'monitoring',
-            commands: const [
+            commands: [
               '/system clock set time-zone-autodetect=yes',
             ],
           ),
@@ -676,8 +702,8 @@ class AutoFixService {
     // 3) SNMP مُفعّل بدون community قوي
     if (snmp.toLowerCase().contains('enabled=yes') &&
         (snmp.toLowerCase().contains('community=public') ||
-         snmp.toLowerCase().contains('community=private'))) {
-      fixes.add(ProposedFix(
+            snmp.toLowerCase().contains('community=private'))) {
+      fixes.add(const ProposedFix(
         id: 'snmp-weak-community',
         title: 'SNMP مُفعّل بـ community ضعيف (public/private)',
         description: 'استخدام public أو private كـ SNMP community يسمح لأي شخص '
@@ -687,10 +713,11 @@ class AutoFixService {
         risk: CommandRiskLevel.moderate,
         script: RouterOsScript(
           title: 'تغيير SNMP community لقيمة قوية',
-          description: 'يغيّر community من public لقيمة قوية. عدّل الـ community الجديد.',
+          description:
+              'يغيّر community من public لقيمة قوية. عدّل الـ community الجديد.',
           overallRisk: CommandRiskLevel.moderate,
           category: 'monitoring',
-          commands: const [
+          commands: [
             '/snmp community set [find name=public] name=CHANGE_ME_STRONG_COMMUNITY read-access=yes write-access=no',
           ],
         ),
@@ -699,10 +726,11 @@ class AutoFixService {
 
     // 4) لا يوجد Netwatch — ينصح بإضافته للمراقبة
     if (netwatch.isEmpty || netwatch == '(empty)') {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'add-netwatch-gateway',
         title: 'لا يوجد Netwatch — مراقبة الـ gateway مفقودة',
-        description: 'Netwatch يراقب توفر الـ gateway وينفّذ scripts عند انقطاعه. '
+        description:
+            'Netwatch يراقب توفر الـ gateway وينفّذ scripts عند انقطاعه. '
             'مفيد للـ failover التلقائي.',
         impact: 'لا يوجد تنبيه عند انقطاع الإنترنت، لا failover تلقائي.',
         category: FixCategory.monitoring,
@@ -712,7 +740,7 @@ class AutoFixService {
           description: 'يراقب الـ gateway كل 10 ثواني. عدّل IP الـ gateway.',
           overallRisk: CommandRiskLevel.moderate,
           category: 'monitoring',
-          commands: const [
+          commands: [
             '/tool netwatch add host=YOUR_GATEWAY_IP interval=10s timeout=1s comment="gateway-monitor"',
           ],
         ),
@@ -721,7 +749,7 @@ class AutoFixService {
 
     // 5) لا يوجد scheduler للنسخ الاحتياطي التلقائي
     if (!scheduler.toLowerCase().contains('backup')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'add-auto-backup-scheduler',
         title: 'لا يوجد نسخ احتياطي تلقائي مجدول',
         description: 'بدون backup مجدول، ستفقد الإعدادات عند فشل الجهاز. '
@@ -735,7 +763,7 @@ class AutoFixService {
           description: 'ينشئ backup كل يوم أحد الساعة 3 صباحاً',
           overallRisk: CommandRiskLevel.moderate,
           category: 'monitoring',
-          commands: const [
+          commands: [
             '/system scheduler add name=auto-backup interval=7d start-time=03:00:00 on-event="/system backup save name=auto-weekly"',
           ],
         ),
@@ -760,12 +788,15 @@ class AutoFixService {
     final gre = snapshot.extraData['INTERFACE GRE'] ?? '';
 
     // 1) Bridge بدون vlan-filtering (إن كان يستخدم VLANs)
-    if (bridge.isNotEmpty && !bridge.toLowerCase().contains('vlan-filtering=true') &&
-        vlans.isNotEmpty && vlans != '(empty)') {
-      fixes.add(ProposedFix(
+    if (bridge.isNotEmpty &&
+        !bridge.toLowerCase().contains('vlan-filtering=true') &&
+        vlans.isNotEmpty &&
+        vlans != '(empty)') {
+      fixes.add(const ProposedFix(
         id: 'enable-bridge-vlan-filtering',
         title: 'Bridge بدون vlan-filtering بالرغم من وجود VLANs',
-        description: 'عند استخدام VLANs مع bridge، يجب تفعيل vlan-filtering لمنع '
+        description:
+            'عند استخدام VLANs مع bridge، يجب تفعيل vlan-filtering لمنع '
             'تسريب VLAN tags بين المنافذ.',
         impact: 'تسريب VLANs، مشاكل أمنية، عزل شبكي ضعيف.',
         category: FixCategory.infrastructure,
@@ -775,7 +806,7 @@ class AutoFixService {
           description: 'يفعّل vlan-filtering على كل الـ bridges',
           overallRisk: CommandRiskLevel.moderate,
           category: 'infrastructure',
-          commands: const [
+          commands: [
             '/interface bridge set [find] vlan-filtering=yes',
           ],
         ),
@@ -786,7 +817,7 @@ class AutoFixService {
     if (bridgePorts.isNotEmpty &&
         !bridgePorts.toLowerCase().contains('pvid=') &&
         bridge.toLowerCase().contains('vlan-filtering=true')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'set-bridge-port-pvid',
         title: 'Bridge ports بدون PVID',
         description: 'عند تفعيل vlan-filtering، كل منفذ يجب أن يكون له PVID '
@@ -799,7 +830,7 @@ class AutoFixService {
           description: 'يجمع بيانات الـ ports لاتخاذ قرار PVID',
           overallRisk: CommandRiskLevel.safe,
           category: 'infrastructure',
-          commands: const [
+          commands: [
             '/interface bridge port print detail',
             '/interface bridge port print where pvid=1',
           ],
@@ -810,9 +841,9 @@ class AutoFixService {
     // 3) IPv6 مُفعّل بدون عنوان (قد يسبب مشاكل)
     if (ipv6Addresses.isEmpty ||
         ipv6Addresses == '(empty)' &&
-        packages.toLowerCase().contains('ipv6') &&
-        !packages.toLowerCase().contains('ipv6.*disabled')) {
-      fixes.add(ProposedFix(
+            packages.toLowerCase().contains('ipv6') &&
+            !packages.toLowerCase().contains('ipv6.*disabled')) {
+      fixes.add(const ProposedFix(
         id: 'disable-ipv6-if-unused',
         title: 'IPv6 مُفعّل لكن غير مُستخدم',
         description: 'تفعيل IPv6 بدون إعداد عناوين قد يسبب مشاكل routing غريبة '
@@ -826,7 +857,7 @@ class AutoFixService {
           description: 'يعطّل حزمة IPv6 بالكامل',
           overallRisk: CommandRiskLevel.moderate,
           category: 'infrastructure',
-          commands: const [
+          commands: [
             '/system package disable ipv6',
           ],
         ),
@@ -835,10 +866,11 @@ class AutoFixService {
 
     // 4) EoIP/GRE tunnels بدون keepalive (zombie tunnels)
     if (eoip.isNotEmpty && !eoip.toLowerCase().contains('keepalive')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'eoip-keepalive',
         title: 'EoIP tunnels بدون keepalive',
-        description: 'بدون keepalive، تبقى tunnels في حالة "up" حتى لو كان الطرف '
+        description:
+            'بدون keepalive، تبقى tunnels في حالة "up" حتى لو كان الطرف '
             'الآخر غير متاح، مما يسبب black holes.',
         impact: 'حركة مرور تُرسل لنفق ميت، مشاكل routing.',
         category: FixCategory.infrastructure,
@@ -848,7 +880,7 @@ class AutoFixService {
           description: 'يضبط keepalive=10s على كل EoIP tunnels',
           overallRisk: CommandRiskLevel.moderate,
           category: 'infrastructure',
-          commands: const [
+          commands: [
             '/interface eoip set [find] keepalive=10s,3',
           ],
         ),
@@ -856,7 +888,7 @@ class AutoFixService {
     }
 
     if (gre.isNotEmpty && !gre.toLowerCase().contains('keepalive')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'gre-keepalive',
         title: 'GRE tunnels بدون keepalive',
         description: 'بدون keepalive، تبقى GRE tunnels في حالة "up" حتى لو كان '
@@ -869,7 +901,7 @@ class AutoFixService {
           description: 'يضبط keepalive=10s على كل GRE tunnels',
           overallRisk: CommandRiskLevel.moderate,
           category: 'infrastructure',
-          commands: const [
+          commands: [
             '/interface gre set [find] keepalive=10s,3',
           ],
         ),
@@ -878,10 +910,11 @@ class AutoFixService {
 
     // 5) حزمة معطّلة من الحزم الأساسية
     if (packages.toLowerCase().contains('disabled=true')) {
-      fixes.add(ProposedFix(
+      fixes.add(const ProposedFix(
         id: 'review-disabled-packages',
         title: 'بعض حزم RouterOS معطّلة',
-        description: 'وجود حزم معطّلة قد يكون مقصوداً (لتقليل الهجوم) أو غير مقصود. '
+        description:
+            'وجود حزم معطّلة قد يكون مقصوداً (لتقليل الهجوم) أو غير مقصود. '
             'راجع القائمة لاتخاذ قرار.',
         impact: 'ميزات غير متاحة، مشاكل غير متوقعة.',
         category: FixCategory.infrastructure,
@@ -891,7 +924,7 @@ class AutoFixService {
           description: 'يجمع قائمة بالحزم المعطّلة للمراجعة',
           overallRisk: CommandRiskLevel.safe,
           category: 'infrastructure',
-          commands: const [
+          commands: [
             '/system package print where disabled=yes',
           ],
         ),
@@ -916,11 +949,11 @@ class AutoFixService {
 /// يمثل خطة إصلاح شاملة — تجمع عدة ProposedFix في وحدة واحدة
 @immutable
 class FixPlan {
-  final String id;                   // معرّف فريد للخطة
-  final String title;                // عنوان الخطة
-  final DateTime createdAt;          // وقت الإنشاء
-  final List<ProposedFix> fixes;     // قائمة الإصلاحات
-  final MikrotikSnapshot snapshot;   // الـ snapshot الذي حلّلته الخطة
+  final String id; // معرّف فريد للخطة
+  final String title; // عنوان الخطة
+  final DateTime createdAt; // وقت الإنشاء
+  final List<ProposedFix> fixes; // قائمة الإصلاحات
+  final MikrotikSnapshot snapshot; // الـ snapshot الذي حلّلته الخطة
 
   const FixPlan({
     required this.id,
@@ -934,8 +967,7 @@ class FixPlan {
   int get length => fixes.length;
 
   /// عدد الإصلاحات الآمنة للتطبيق التلقائي
-  int get autoApplySafeCount =>
-      fixes.where((f) => f.autoApplySafe).length;
+  int get autoApplySafeCount => fixes.where((f) => f.autoApplySafe).length;
 
   /// عدد الإصلاحات الخطرة
   int get dangerousCount =>
@@ -954,8 +986,7 @@ class FixPlan {
       fixes.map((f) => f.category).toSet();
 
   /// هل الخطة تحتاج snapshot قبل التنفيذ؟
-  bool get needsSnapshot =>
-      fixes.any((f) => f.risk != CommandRiskLevel.safe);
+  bool get needsSnapshot => fixes.any((f) => f.risk != CommandRiskLevel.safe);
 
   /// نص الخطة للعرض على المستخدم قبل التأكيد
   String get displayPlan {
@@ -971,7 +1002,8 @@ class FixPlan {
       ..writeln('   • آمنة تلقائياً: $autoApplySafeCount')
       ..writeln('   • خطرة: $dangerousCount')
       ..writeln('   • يحتاج snapshot: ${needsSnapshot ? "✅ نعم" : "❌ لا"}')
-      ..writeln('   • الفئات: ${categoriesPresent.map((c) => "${c.icon} ${c.displayName}").join(", ")}')
+      ..writeln(
+          '   • الفئات: ${categoriesPresent.map((c) => "${c.icon} ${c.displayName}").join(", ")}')
       ..writeln('───────────────────────────────────────────────────')
       ..writeln();
 
@@ -984,7 +1016,8 @@ class FixPlan {
               : '✅';
       final autoIcon = fix.autoApplySafe ? '🟢' : '🟡';
       buffer
-        ..writeln('${i + 1}. $riskIcon $autoIcon [${fix.category.icon} ${fix.category.displayName}] ${fix.title}')
+        ..writeln(
+            '${i + 1}. $riskIcon $autoIcon [${fix.category.icon} ${fix.category.displayName}] ${fix.title}')
         ..writeln('   📝 ${fix.description}')
         ..writeln('   💥 الأثر: ${fix.impact}')
         ..writeln('   📦 الأوامر (${fix.script.commands.length}):');
@@ -1011,10 +1044,10 @@ class FixPlan {
 @immutable
 class PlanApplyResult {
   final FixPlan plan;
-  final ChangeSnapshot? snapshot;        // snapshot قبل التطبيق (إن وُجد)
+  final ChangeSnapshot? snapshot; // snapshot قبل التطبيق (إن وُجد)
   final List<ScriptExecutionResult> fixResults; // نتائج كل fix على حدة
-  final RouterOsScript? rollbackScript;  // سكربت الاستعادة (إن فشل البعض)
-  final PlanApplyStatus status;          // الحالة النهائية
+  final RouterOsScript? rollbackScript; // سكربت الاستعادة (إن فشل البعض)
+  final PlanApplyStatus status; // الحالة النهائية
   final String? errorMessage;
 
   const PlanApplyResult({
@@ -1027,12 +1060,10 @@ class PlanApplyResult {
   });
 
   /// عدد الإصلاحات الناجحة
-  int get successCount =>
-      fixResults.where((r) => r.overallSuccess).length;
+  int get successCount => fixResults.where((r) => r.overallSuccess).length;
 
   /// عدد الإصلاحات الفاشلة
-  int get failureCount =>
-      fixResults.where((r) => !r.overallSuccess).length;
+  int get failureCount => fixResults.where((r) => !r.overallSuccess).length;
 
   /// هل كل الإصلاحات نجحت
   bool get isSuccess => status == PlanApplyStatus.success;
@@ -1043,28 +1074,33 @@ class PlanApplyResult {
 
 /// حالة تطبيق خطة
 enum PlanApplyStatus {
-  success,                  // نجحت كل الإصلاحات
-  partialSuccess,           // بعضها نجح وبعضها فشل
-  failedWithRollbackReady,  // فشل وsnapshot جاهز
-  failedNoSnapshot,         // فشل ولا snapshot
-  snapshotFailed,           // فشل إنشاء snapshot
-  dryRunRejected,           // رفض المستخدم بعد dry-run
+  success, // نجحت كل الإصلاحات
+  partialSuccess, // بعضها نجح وبعضها فشل
+  failedWithRollbackReady, // فشل وsnapshot جاهز
+  failedNoSnapshot, // فشل ولا snapshot
+  snapshotFailed, // فشل إنشاء snapshot
+  dryRunRejected, // رفض المستخدم بعد dry-run
 }
 
 extension PlanApplyStatusX on PlanApplyStatus {
   String get displayName {
     switch (this) {
-      case PlanApplyStatus.success:                 return 'نجاح كامل';
-      case PlanApplyStatus.partialSuccess:          return 'نجاح جزئي';
-      case PlanApplyStatus.failedWithRollbackReady: return 'فشل (rollback جاهز)';
-      case PlanApplyStatus.failedNoSnapshot:        return 'فشل (بدون snapshot)';
-      case PlanApplyStatus.snapshotFailed:          return 'فشل snapshot';
-      case PlanApplyStatus.dryRunRejected:          return 'مرفوض بعد dry-run';
+      case PlanApplyStatus.success:
+        return 'نجاح كامل';
+      case PlanApplyStatus.partialSuccess:
+        return 'نجاح جزئي';
+      case PlanApplyStatus.failedWithRollbackReady:
+        return 'فشل (rollback جاهز)';
+      case PlanApplyStatus.failedNoSnapshot:
+        return 'فشل (بدون snapshot)';
+      case PlanApplyStatus.snapshotFailed:
+        return 'فشل snapshot';
+      case PlanApplyStatus.dryRunRejected:
+        return 'مرفوض بعد dry-run';
     }
   }
 
-  bool get isRecoverable =>
-      this == PlanApplyStatus.failedWithRollbackReady;
+  bool get isRecoverable => this == PlanApplyStatus.failedWithRollbackReady;
 }
 
 /// خدمة Plan/Apply — تنفّذ خطط إصلاح بأمان
@@ -1089,8 +1125,7 @@ class PlanService {
     required String title,
     String? id,
   }) {
-    final planId = id ??
-        'plan-${DateTime.now().millisecondsSinceEpoch}';
+    final planId = id ?? 'plan-${DateTime.now().millisecondsSinceEpoch}';
     return FixPlan(
       id: planId,
       title: title,
@@ -1116,7 +1151,8 @@ class PlanService {
     bool requireSnapshot = true,
     Duration perCommandTimeout = const Duration(seconds: 30),
     void Function(int index, int total, ProposedFix fix)? onFixStart,
-    void Function(int index, int total, ScriptExecutionResult result)? onFixComplete,
+    void Function(int index, int total, ScriptExecutionResult result)?
+        onFixComplete,
   }) async {
     debugPrint('[PlanService] Applying plan ${plan.id} '
         '(${plan.length} fixes, snapshot=${plan.needsSnapshot})');
@@ -1188,9 +1224,8 @@ class PlanService {
       fixResults: fixResults,
       rollbackScript: rollbackScript,
       status: status,
-      errorMessage: anyFailed
-          ? 'فشل تنفيذ خطة ${plan.id} — توقفت عند أول خطأ'
-          : null,
+      errorMessage:
+          anyFailed ? 'فشل تنفيذ خطة ${plan.id} — توقفت عند أول خطأ' : null,
     );
   }
 
@@ -1214,11 +1249,13 @@ class PlanService {
       final fixDryRun = ScriptExecutor.dryRun(fix.script);
       buffer
         ..writeln()
-        ..writeln('${i + 1}. 📦 [${fix.category.icon} ${fix.category.displayName}] ${fix.title}')
+        ..writeln(
+            '${i + 1}. 📦 [${fix.category.icon} ${fix.category.displayName}] ${fix.title}')
         ..writeln('   • أوامر: ${fix.script.commands.length}')
         ..writeln('   • خطرة: ${fixDryRun.dangerousCount}')
         ..writeln('   • غير idempotent: ${fixDryRun.nonIdempotentCount}')
-        ..writeln('   • يحتاج snapshot: ${fixDryRun.needsSnapshot ? "نعم" : "لا"}');
+        ..writeln(
+            '   • يحتاج snapshot: ${fixDryRun.needsSnapshot ? "نعم" : "لا"}');
 
       // عرض تفاصيل كل أمر
       for (final cmd in fixDryRun.commandAnalysis) {

@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/mqtt_service_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,6 +15,7 @@ import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
 
 import 'services/secure_clipboard.dart';
+
 class CardListScreen extends ConsumerStatefulWidget {
   final List<String> cardList;
   final bool isNetworkLinked;
@@ -57,41 +58,44 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
       text: 'الكروت المضافة حديثاً',
     ));
   }
+
   void _setupMqttListener() {
     _mqttSubscription?.cancel();
     _mqttSubscription = _mqttService.messages.listen((message) {
       if (!mounted) return;
-      
+
       final jobId = message['job_id'];
       if (_addCardsJobId == null || jobId != _addCardsJobId) return;
 
       final status = message['status'];
 
-      switch(status) {
+      switch (status) {
         case 'acknowledged':
           _addCardsTimer?.cancel();
           setState(() => _isJobAcknowledged = true);
           Navigator.of(context, rootNavigator: true).pop();
-          _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
+          _showWaitingDialog(
+              "تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
           break;
-        
+
         case 'job_status_response':
-           if (message['job_status'] == 'not_found') {
-             _addCardsTimer?.cancel();
-             Navigator.of(context, rootNavigator: true).pop(); 
-             _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
-           }
-           break;
+          if (message['job_status'] == 'not_found') {
+            _addCardsTimer?.cancel();
+            Navigator.of(context, rootNavigator: true).pop();
+            _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
+          }
+          break;
 
         case 'cards_added_success':
           _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
-          showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
+          Navigator.of(context, rootNavigator: true).pop();
+          showSuccessSnackBar(
+              context, message['message'] ?? 'تمت العملية بنجاح.');
           break;
 
         case 'error':
           _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
+          Navigator.of(context, rootNavigator: true).pop();
           _showErrorDialog(message['message'] ?? 'حدث خطأ.');
           break;
       }
@@ -111,7 +115,8 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
 
   void _showAddCardsToQahtaniDialog() {
     String? selectedUnitId;
-    final units = (widget.linkedData['network_details']?['units'] as List?) ?? const [];
+    final units =
+        (widget.linkedData['network_details']?['units'] as List?) ?? const [];
 
     // بناء عناصر القائمة المنسدلة بـ for loop بدلاً من map.toList()
     final List<DropdownMenuItem<String>> unitItems = [
@@ -120,7 +125,8 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
           value: unit['id'],
           child: Text(unit['name'],
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.bold)),
         )
     ];
 
@@ -128,17 +134,24 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('اختر فئة م/نصار الشعبي'),
+          title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold),
             dropdownColor: Theme.of(context).colorScheme.onSurface,
-            hint: Text('اختر الفئة', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold)),
+            hint: Text('اختر الفئة',
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                    fontWeight: FontWeight.bold)),
             items: unitItems,
             onChanged: (value) => selectedUnitId = value,
             validator: (value) => value == null ? 'الرجاء اختيار فئة' : null,
           ),
           actions: [
-            TextButton(child: const Text('إلغاء'), onPressed: () => Navigator.of(context).pop()),
+            TextButton(
+                child: const Text('إلغاء'),
+                onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               child: const Text('تأكيد وإضافة'),
               onPressed: () {
@@ -155,38 +168,39 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
   }
 
   void _sendCardsToQahtani(String selectedUnitId) {
-      _showWaitingDialog("جاري إرسال الكروت...");
+    _showWaitingDialog("جاري إرسال الكروت...");
 
-      setState(() {
-        _addCardsJobId = _mqttService.generateUniqueId();
-        _isJobAcknowledged = false;
-      });
+    setState(() {
+      _addCardsJobId = _mqttService.generateUniqueId();
+      _isJobAcknowledged = false;
+    });
 
-      _addCardsTimer?.cancel();
-      _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
+    _addCardsTimer?.cancel();
+    _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
 
-      // بناء القائمة بـ for loop بدلاً من map.toList()
-      final List<String> cardUsernamesOnly = [
-        for (final cardLine in widget.cardList) _extractUsername(cardLine),
-      ];
-      final String cardsAsString = cardUsernamesOnly.join('\n');
+    // بناء القائمة بـ for loop بدلاً من map.toList()
+    final List<String> cardUsernamesOnly = [
+      for (final cardLine in widget.cardList) _extractUsername(cardLine),
+    ];
+    final String cardsAsString = cardUsernamesOnly.join('\n');
 
-      _mqttService.publish({
-        'command': 'add_wifi_cards',
-        'network_id': widget.linkedData['network_details']?['network_id'],
-        'unit_id': selectedUnitId,
-        'cards': cardsAsString,
-        'job_id': _addCardsJobId, // <-- هذا هو السطر الذي تم تصحيحه
-      });
+    _mqttService.publish({
+      'command': 'add_wifi_cards',
+      'network_id': widget.linkedData['network_details']?['network_id'],
+      'unit_id': selectedUnitId,
+      'cards': cardsAsString,
+      'job_id': _addCardsJobId, // <-- هذا هو السطر الذي تم تصحيحه
+    });
   }
 
   void _checkAddCardsStatus() {
     if (!mounted || _isJobAcknowledged) return;
-    _mqttService.publish({'command': 'get_job_status', 'job_id': _addCardsJobId});
+    _mqttService
+        .publish({'command': 'get_job_status', 'job_id': _addCardsJobId});
   }
 
   void _showWaitingDialog(String message) {
-     showDialog(
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -220,18 +234,20 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
             SecureClipboard.copy(widget.cardList.join('\n'), sensitive: false);
             showSuccessSnackBar(context, 'تم نسخ جميع الكروت!');
           },
-          icon: Icon(Icons.copy_all),
-          label: Text('نسخ الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+          icon: const Icon(Icons.copy_all),
+          label: const Text('نسخ الكل'),
+          style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor),
         ),
       ),
       const SizedBox(width: 8),
       Expanded(
         child: ElevatedButton.icon(
           onPressed: _shareCardsAsTextFile,
-          icon: Icon(Icons.share),
-          label: Text('مشاركة الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+          icon: const Icon(Icons.share),
+          label: const Text('مشاركة الكل'),
+          style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor),
         ),
       ),
     ];
@@ -242,9 +258,10 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: _showAddCardsToQahtaniDialog,
-            icon: Icon(Icons.add_to_queue),
-            label: Text('إضافة للقحطاني'),
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+            icon: const Icon(Icons.add_to_queue),
+            label: const Text('إضافة للقحطاني'),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor),
           ),
         ),
       );
@@ -252,7 +269,7 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('الكروت المضافة حديثاً'),
+        title: const Text('الكروت المضافة حديثاً'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: PerfListView<String>(

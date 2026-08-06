@@ -104,7 +104,8 @@ final cardsStatisticsProvider = FutureProvider<CardsStatistics>((ref) async {
 });
 
 /// إحصائيات الأوامر المنفّذة
-final commandsStatisticsProvider = FutureProvider<CommandsStatistics>((ref) async {
+final commandsStatisticsProvider =
+    FutureProvider<CommandsStatistics>((ref) async {
   final dao = ref.watch(executedCommandsDaoProvider);
   return dao.getStatistics();
 });

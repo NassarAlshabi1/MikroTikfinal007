@@ -47,8 +47,8 @@ class CommandResult {
 
 /// مستوى خطورة الأمر
 enum CommandRiskLevel {
-  safe,      // قراءة فقط (print, monitor)
-  moderate,  // تعديل إعدادات (set, add)
+  safe, // قراءة فقط (print, monitor)
+  moderate, // تعديل إعدادات (set, add)
   dangerous, // حذف أو إعادة ضبط (remove, reset, reboot)
 }
 
@@ -215,7 +215,8 @@ class CommandExecutor {
     final ip = prefs.getString('ip');
     final user = prefs.getString('user');
     // 🔒 قراءة كلمة المرور من flutter_secure_storage
-    final pass = await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
+    final pass =
+        await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
     final portStr = prefs.getString('port') ?? '8728';
     final port = int.tryParse(portStr) ?? 8728;
 
@@ -263,7 +264,8 @@ class CommandExecutor {
     final ip = prefs.getString('ip');
     final user = prefs.getString('user');
     // 🔒 قراءة كلمة المرور من flutter_secure_storage
-    final pass = await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
+    final pass =
+        await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
     final portStr = prefs.getString('ssh_port') ?? '22';
     final port = int.tryParse(portStr) ?? 22;
 

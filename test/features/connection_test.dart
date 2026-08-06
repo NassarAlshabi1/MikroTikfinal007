@@ -45,7 +45,8 @@ void main() {
 
       test('toString يحتوي على الرسالة', () {
         const exception = MikrotikCredentialsMissingException('Missing IP');
-        expect(exception.toString(), contains('MikrotikCredentialsMissingException'));
+        expect(exception.toString(),
+            contains('MikrotikCredentialsMissingException'));
         expect(exception.toString(), contains('Missing IP'));
       });
     });

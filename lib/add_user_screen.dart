@@ -1,7 +1,6 @@
 // ملف: add_user_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'dart:math';
 import 'package:dio/dio.dart';
@@ -11,6 +10,7 @@ import 'snackbar_helpers.dart';
 import 'theme/app_theme.dart';
 
 import 'services/secure_clipboard.dart';
+
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
   final bool isVersion7OrNewer;
@@ -87,7 +87,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
 
       final username = _usernameController.text.trim();
       final sharedUsers = _sharedUsersController.text.trim();
-      
+
       String password = "";
       if (_cardType == 'username_and_password_equal') {
         password = username;
@@ -113,9 +113,9 @@ class _AddUserScreenState extends State<AddUserScreen> {
         '=profile=$_selectedProfile',
       ]);
 
-      final String notificationMessage = "تم إضافة كرت فردي جديد بنجاح!\n" 
-          "IP: ${client.address}\n" 
-          "اسم المستخدم: $username\n" 
+      final String notificationMessage = "تم إضافة كرت فردي جديد بنجاح!\n"
+          "IP: ${client.address}\n"
+          "اسم المستخدم: $username\n"
           "الفئة: $_selectedProfile";
       _sendTelegramMessage(notificationMessage);
 
@@ -162,7 +162,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('إضافة كرت جديد'),
+        title: const Text('إضافة كرت جديد'),
         backgroundColor: Theme.of(context).cardColor,
       ),
       body: Form(
@@ -201,7 +201,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedProfile,
+                initialValue: _selectedProfile,
                 decoration: const InputDecoration(
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
@@ -227,7 +227,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _cardType,
+                initialValue: _cardType,
                 decoration: const InputDecoration(
                     labelText: 'نوع الكرت', border: OutlineInputBorder()),
                 items: const [
@@ -244,17 +244,14 @@ class _AddUserScreenState extends State<AddUserScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _charType,
+                initialValue: _charType,
                 decoration: const InputDecoration(
                     labelText: 'نوع أحرف المستخدم',
                     border: OutlineInputBorder()),
                 items: const [
-                  DropdownMenuItem(
-                      value: 'mixed', child: Text('حروف وأرقام')),
-                  DropdownMenuItem(
-                      value: 'letters', child: Text('حروف فقط')),
-                  DropdownMenuItem(
-                      value: 'numbers', child: Text('أرقام فقط')),
+                  DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام')),
+                  DropdownMenuItem(value: 'letters', child: Text('حروف فقط')),
+                  DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط')),
                 ],
                 onChanged: (v) => setState(() => _charType = v!),
               ),
@@ -265,7 +262,9 @@ class _AddUserScreenState extends State<AddUserScreen> {
                     ? SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(context.theme.appColors.onPrimary)))
+                        child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(
+                                context.theme.appColors.onPrimary)))
                     : const Text('حفظ وإضافة'),
               ),
             ],

@@ -6,6 +6,7 @@ import '../models/qos_config.dart';
 import '../models/diagnostic_result.dart';
 
 import '../theme/app_theme.dart';
+
 class AiDiagnosticDashboardScreen extends ConsumerWidget {
   const AiDiagnosticDashboardScreen({super.key});
 
@@ -37,14 +38,11 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
             if (diagState.result != null)
               _buildHealthScoreCard(context, diagState),
             if (diagState.result != null) const SizedBox(height: 16),
-            if (diagState.result != null)
-              _buildQuickStats(context, diagState),
+            if (diagState.result != null) _buildQuickStats(context, diagState),
             if (diagState.result != null) const SizedBox(height: 16),
-            if (diagState.result != null &&
-                diagState.result!.issues.isNotEmpty)
+            if (diagState.result != null && diagState.result!.issues.isNotEmpty)
               _buildIssuesSection(context, diagState),
-            if (diagState.result != null &&
-                diagState.result!.issues.isNotEmpty)
+            if (diagState.result != null && diagState.result!.issues.isNotEmpty)
               const SizedBox(height: 16),
             _buildQoSSection(context, ref, qosState),
           ],
@@ -53,7 +51,8 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAIBanner(BuildContext context, WidgetRef ref, DiagnosticState state) {
+  Widget _buildAIBanner(
+      BuildContext context, WidgetRef ref, DiagnosticState state) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -74,7 +73,10 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.auto_awesome,
@@ -110,9 +112,8 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: state.isLoading
-                  ? null
-                  : () => _runDiagnostic(context, ref),
+              onPressed:
+                  state.isLoading ? null : () => _runDiagnostic(context, ref),
               icon: state.isLoading
                   ? const SizedBox(
                       width: 20,
@@ -213,22 +214,29 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildStatChip(context, 'CPU', r.resources.cpuLoad,
+                _buildStatChip(
+                    context,
+                    'CPU',
+                    r.resources.cpuLoad,
                     r.resources.cpuLoad.contains('%') &&
-                        int.tryParse(r.resources.cpuLoad
-                                .replaceAll('%', ''))! >
+                        int.tryParse(r.resources.cpuLoad.replaceAll('%', ''))! >
                             80),
-                _buildStatChip(context, 'RAM', r.resources.memoryUsage,
+                _buildStatChip(
+                    context,
+                    'RAM',
+                    r.resources.memoryUsage,
                     r.resources.memoryUsage.contains('%') &&
-                        int.tryParse(r.resources.memoryUsage
-                                .replaceAll('%', ''))! >
+                        int.tryParse(
+                                r.resources.memoryUsage.replaceAll('%', ''))! >
                             80),
-                _buildStatChip(context, 'Ping', '${r.connectivity.pingTimeMs}ms',
+                _buildStatChip(
+                    context,
+                    'Ping',
+                    '${r.connectivity.pingTimeMs}ms',
                     r.connectivity.pingTimeMs > 100),
-                _buildStatChip(
-                    context, 'Connections', '${r.quality.activeConnections}', false),
-                _buildStatChip(
-                    context, 'Uptime', r.resources.uptime, false),
+                _buildStatChip(context, 'Connections',
+                    '${r.quality.activeConnections}', false),
+                _buildStatChip(context, 'Uptime', r.resources.uptime, false),
               ],
             ),
           ],
@@ -281,7 +289,8 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
             Text('🚨 المشاكل المكتشفة',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            ...state.result!.issues.map((issue) => _buildIssueTile(context, issue)),
+            ...state.result!.issues
+                .map((issue) => _buildIssueTile(context, issue)),
           ],
         ),
       ),
@@ -338,8 +347,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: (isCritical
                           ? Theme.of(context).appColors.error
@@ -396,8 +404,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQoSSection(
-      BuildContext context, WidgetRef ref, QosState state) {
+  Widget _buildQoSSection(BuildContext context, WidgetRef ref, QosState state) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -426,7 +433,8 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
               Text('النطاق الكلي: ${state.config!.totalBandwidth} Mbps',
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 12),
-              ...state.config!.rules.map((rule) => _buildQosRuleTile(context, rule)),
+              ...state.config!.rules
+                  .map((rule) => _buildQosRuleTile(context, rule)),
               const SizedBox(height: 12),
               if (state.isApplying)
                 const Center(child: CircularProgressIndicator())

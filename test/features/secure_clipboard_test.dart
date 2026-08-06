@@ -13,9 +13,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   // Mock Clipboard channel — الاسم الصحيح هو 'flutter/clipboard'
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  const channel = MethodChannel('flutter/clipboard');
+
   setUp(() {
-    const MethodChannel('flutter/clipboard')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
+    messenger.setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       if (methodCall.method == 'Clipboard.setData') return null;
       if (methodCall.method == 'Clipboard.getData') {
         return <String, dynamic>{'text': ''};
@@ -26,7 +28,7 @@ void main() {
 
   tearDown(() {
     SecureClipboard.cancelAutoClear();
-    const MethodChannel('flutter/clipboard').setMockMethodCallHandler(null);
+    messenger.setMockMethodCallHandler(channel, null);
   });
 
   group('SecureClipboard', () {

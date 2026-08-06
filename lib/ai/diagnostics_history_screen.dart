@@ -3,6 +3,7 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'diagnostics_history.dart';
@@ -11,6 +12,7 @@ import 'diagnostics_provider.dart';
 import 'command_executor.dart';
 
 import '../theme/app_theme.dart';
+
 class DiagnosticsHistoryScreen extends ConsumerWidget {
   const DiagnosticsHistoryScreen({super.key});
 
@@ -25,7 +27,8 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'تحديث',
-            onPressed: () => ref.read(historyManagerProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(historyManagerProvider.notifier).refresh(),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep),
@@ -40,7 +43,8 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: Theme.of(context).appColors.error),
+              Icon(Icons.error_outline,
+                  size: 48, color: Theme.of(context).appColors.error),
               const SizedBox(height: 16),
               Text('خطأ في تحميل السجل: $e'),
             ],
@@ -53,24 +57,29 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.history,
-                      size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
-                  SizedBox(height: 16),
+                      size: 64,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.3)),
+                  const SizedBox(height: 16),
                   Text(
                     'لا توجد جلسات محفوظة',
-                    style: TextStyle(fontSize: 16, color: Theme.of(context).hintColor),
+                    style: TextStyle(
+                        fontSize: 16, color: Theme.of(context).hintColor),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'كل جلسة تشخيص تُحفظ تلقائياً هنا',
-                    style: TextStyle(fontSize: 13, color: Theme.of(context).disabledColor),
+                    style: TextStyle(
+                        fontSize: 13, color: Theme.of(context).disabledColor),
                   ),
                 ],
               ),
             );
           }
           return ListView.builder(
-            itemCount: sessions.length,
-            cacheExtent: 250,
+            scrollCacheExtent: const ScrollCacheExtent.pixels(250), itemCount: sessions.length,
             itemBuilder: (context, index) {
               final session = sessions[index];
               return _SessionCard(session: session);
@@ -96,12 +105,15 @@ class DiagnosticsHistoryScreen extends ConsumerWidget {
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).appColors.error),
             onPressed: () {
               Navigator.of(ctx).pop();
               ref.read(historyManagerProvider.notifier).clearAll();
             },
-            child: Text('حذف الكل', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            child: Text('حذف الكل',
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -118,13 +130,13 @@ class _SessionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).primaryColor,
-          child: Icon(session.mode.icon, color: Theme.of(context).colorScheme.onSurface, size: 20),
+          child: Icon(session.mode.icon,
+              color: Theme.of(context).colorScheme.onSurface, size: 20),
         ),
         title: Text(
           session.title,
@@ -135,15 +147,17 @@ class _SessionCard extends ConsumerWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               session.subtitle,
-              style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
+              style:
+                  TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               _formatDate(session.startedAt),
-              style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).disabledColor),
             ),
           ],
         ),
@@ -166,7 +180,9 @@ class _SessionCard extends ConsumerWidget {
             const PopupMenuItem(value: 'view', child: Text('عرض التفاصيل')),
             PopupMenuItem(
                 value: 'delete',
-                child: Text('حذف', style: TextStyle(color: Theme.of(context).appColors.error))),
+                child: Text('حذف',
+                    style:
+                        TextStyle(color: Theme.of(context).appColors.error))),
           ],
         ),
         onTap: () {
@@ -192,14 +208,17 @@ class _SessionCard extends ConsumerWidget {
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).appColors.error),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).appColors.error),
             onPressed: () {
               Navigator.of(ctx).pop();
               ref
                   .read(historyManagerProvider.notifier)
                   .deleteSession(session.id);
             },
-            child: Text('حذف', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            child: Text('حذف',
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -286,7 +305,7 @@ class _DetailMessageBubble extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isError
             ? Theme.of(context).appColors.error.withValues(alpha: 0.1)
@@ -322,11 +341,12 @@ class _DetailMessageBubble extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Text(
                 '${message.timestamp.hour.toString().padLeft(2, '0')}:'
                 '${message.timestamp.minute.toString().padLeft(2, '0')}',
-                style: TextStyle(fontSize: 10, color: Theme.of(context).disabledColor),
+                style: TextStyle(
+                    fontSize: 10, color: Theme.of(context).disabledColor),
               ),
             ],
           ),
@@ -353,7 +373,9 @@ class _CommandResultCard extends StatelessWidget {
       child: ExpansionTile(
         leading: Icon(
           result.success ? Icons.check_circle : Icons.error,
-          color: result.success ? Theme.of(context).appColors.success : Theme.of(context).appColors.error,
+          color: result.success
+              ? Theme.of(context).appColors.success
+              : Theme.of(context).appColors.error,
         ),
         title: Text(
           result.command,
@@ -365,7 +387,9 @@ class _CommandResultCard extends StatelessWidget {
           '${result.success ? "نجح" : "فشل"} • ${result.elapsed.inMilliseconds}ms',
           style: TextStyle(
             fontSize: 11,
-            color: result.success ? Theme.of(context).appColors.success : Theme.of(context).appColors.error,
+            color: result.success
+                ? Theme.of(context).appColors.success
+                : Theme.of(context).appColors.error,
           ),
         ),
         children: [
@@ -382,9 +406,9 @@ class _CommandResultCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Theme.of(context).textTheme.bodySmall?.color,
                       borderRadius: BorderRadius.circular(6),
@@ -408,7 +432,10 @@ class _CommandResultCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).appColors.error.withValues(alpha: 0.1),
+                      color: Theme.of(context)
+                          .appColors
+                          .error
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: SelectableText(
