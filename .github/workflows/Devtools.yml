@@ -5,6 +5,7 @@ on:
     branches:
       - "Ali"   # يعمل فقط على فرع Ali
       - "main"
+      - "**"
   pull_request:
     branches:
       - "**"   # يعمل على أي PR
