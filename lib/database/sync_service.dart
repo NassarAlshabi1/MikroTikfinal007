@@ -1,32 +1,37 @@
 // ============================================================
-//  SyncService — مزامنة الكروت والملفات الشخصية من MikroTik إلى SQLite
-//  يجلب البيانات عبر RouterOS API أو SSH ثم يخزّنها في drift database
+//  SyncService — مزامنة الكروت والملفات الشخصية من MikroTik إلى Isar
+//
+//  يجلب البيانات عبر RouterOS API ثم يخزّنها في Isar database.
+//  يحل محل Drift SyncService القديم.
 // ============================================================
 
 import 'package:flutter/foundation.dart';
+import 'package:isar/isar.dart';
 import 'package:router_os_client/router_os_client.dart';
-import 'package:drift/drift.dart';
 
 import '../mikrotik_connector.dart';
-import 'app_database.dart';
+import 'isar_provider.dart';
+import 'isar/card_collection.dart';
+import 'isar/profile_collection.dart';
 
 class SyncService {
   SyncService._();
   static final SyncService instance = SyncService._();
 
-  /// يزامن الكروت والملفات الشخصية من MikroTik إلى SQLite
+  /// يزامن الكروت والملفات الشخصية من MikroTik إلى Isar
   ///
   /// [onProgress] — callback لتتبع التقدم (0.0 - 1.0)
   /// [onStatus] — callback لرسائل الحالة
   Future<SyncResult> syncAll({
-    AppDatabase? database,
+    Isar? database,
     void Function(double progress, String status)? onProgress,
   }) async {
-    final db = database ?? _getDatabase();
+    Isar? db = database;
+    db ??= await IsarProvider().instance;
+
     final stopwatch = Stopwatch()..start();
     int cardsSynced = 0;
     int profilesSynced = 0;
-    int sessionsSynced = 0;
     String? error;
 
     try {
@@ -58,19 +63,7 @@ class SyncService {
       cardsSynced = await _syncCards(db, usersResponse);
       onProgress?.call(0.7, 'تمت مزامنة $cardsSynced كرت');
 
-      // 4) مزامنة الجلسات النشطة
-      onProgress?.call(0.8, 'جاري جلب الجلسات النشطة...');
-      final sessionsResponse = await _safeTalk(
-        client,
-        [
-          '/ip/hotspot/active/print',
-          '=.proplist=user,address,uptime,session-time-left,bytes-in,bytes-out'
-        ],
-      );
-      sessionsSynced = await _syncSessions(db, sessionsResponse);
-      onProgress?.call(0.9, 'تمت مزامنة $sessionsSynced جلسة نشطة');
-
-      // 5) تحديث حالة الكروت (active/disabled/expired)
+      // 4) تحديث حالة الكروت (active/disabled/expired)
       onProgress?.call(0.95, 'جاري تحديث حالات الكروت...');
       await _updateCardStatuses(db);
 
@@ -89,28 +82,10 @@ class SyncService {
       success: error == null,
       cardsSynced: cardsSynced,
       profilesSynced: profilesSynced,
-      sessionsSynced: sessionsSynced,
+      sessionsSynced: 0,
       durationMs: stopwatch.elapsedMilliseconds,
       error: error,
     );
-  }
-
-  /// يحصل على الـ database العام
-  AppDatabase _getDatabase() {
-    // appDatabase هو late final معرّف في main.dart
-    // نستخدمه مباشرة
-    try {
-      return _database!;
-    } catch (_) {
-      throw Exception('Database not initialized. Call setDatabase() first.');
-    }
-  }
-
-  static AppDatabase? _database;
-
-  /// يضبط الـ database (يُستدعى من main.dart)
-  static void setDatabase(AppDatabase db) {
-    _database = db;
   }
 
   /// ينفذ talk بأمان مع timeout
@@ -127,198 +102,154 @@ class SyncService {
 
   /// يزامن الملفات الشخصية (upsert)
   Future<int> _syncProfiles(
-      AppDatabase db, List<Map<String, dynamic>> profiles) async {
+      Isar db, List<Map<String, dynamic>> profiles) async {
     if (profiles.isEmpty) return 0;
 
     int count = 0;
-    for (final p in profiles) {
-      final name = p['name'] as String?;
-      if (name == null || name.isEmpty) continue;
+    await db.writeTxn(() async {
+      for (final p in profiles) {
+        final name = p['name'] as String?;
+        if (name == null || name.isEmpty) continue;
 
-      // تحقق إذا كان موجوداً
-      final existing = await (db.select(db.profiles)
-            ..where((pr) => pr.name.equals(name)))
-          .getSingleOrNull();
+        // تحقق إذا كان موجوداً
+        final existing = await db.profileCollections
+            .where()
+            .nameEqualTo(name)
+            .findFirst();
 
-      final companion = ProfilesCompanion(
-        name: Value(name),
-        mikrotikId: Value(p['.id'] as String?),
-        rateLimit: Value(p['rate-limit'] as String?),
-        sharedUsers:
-            Value(int.tryParse(p['shared-users'] as String? ?? '1') ?? 1),
-        uploadUsedBytes:
-            Value(int.tryParse(p['upload-used'] as String? ?? '0') ?? 0),
-        downloadUsedBytes:
-            Value(int.tryParse(p['download-used'] as String? ?? '0') ?? 0),
-        uptimeUsedSeconds: Value(_parseDuration(p['uptime-used'] as String?)),
-        lastSyncedAt: Value(DateTime.now()),
-      );
-
-      if (existing != null) {
-        await (db.update(db.profiles)..where((pr) => pr.id.equals(existing.id)))
-            .write(companion);
-      } else {
-        await db.into(db.profiles).insert(
-              companion.copyWith(createdAt: Value(DateTime.now())),
-            );
+        if (existing != null) {
+          existing.mikrotikId = p['.id'] as String?;
+          existing.rateLimit = p['rate-limit'] as String?;
+          existing.sharedUsers =
+              int.tryParse(p['shared-users'] as String? ?? '1') ?? 1;
+          existing.uploadUsedBytes =
+              int.tryParse(p['upload-used'] as String? ?? '0') ?? 0;
+          existing.downloadUsedBytes =
+              int.tryParse(p['download-used'] as String? ?? '0') ?? 0;
+          existing.uptimeUsedSeconds = _parseDuration(p['uptime-used'] as String?);
+          existing.lastSyncedAt = DateTime.now();
+          await db.profileCollections.put(existing);
+        } else {
+          final newProfile = ProfileCollection.fromData(
+            name: name,
+            mikrotikId: p['.id'] as String?,
+            rateLimit: p['rate-limit'] as String?,
+            sharedUsers:
+                int.tryParse(p['shared-users'] as String? ?? '1') ?? 1,
+            uploadUsedBytes:
+                int.tryParse(p['upload-used'] as String? ?? '0') ?? 0,
+            downloadUsedBytes:
+                int.tryParse(p['download-used'] as String? ?? '0') ?? 0,
+            uptimeUsedSeconds: _parseDuration(p['uptime-used'] as String?),
+            createdAt: DateTime.now(),
+            lastSyncedAt: DateTime.now(),
+          );
+          await db.profileCollections.put(newProfile);
+        }
+        count++;
       }
-      count++;
-    }
+    });
     return count;
   }
 
   /// يزامن الكروت (upsert)
-  Future<int> _syncCards(
-      AppDatabase db, List<Map<String, dynamic>> users) async {
+  Future<int> _syncCards(Isar db, List<Map<String, dynamic>> users) async {
     if (users.isEmpty) return 0;
 
     int count = 0;
-    for (final u in users) {
-      final username = u['username'] as String?;
-      if (username == null || username.isEmpty) continue;
+    await db.writeTxn(() async {
+      for (final u in users) {
+        final username = u['username'] as String?;
+        if (username == null || username.isEmpty) continue;
 
-      // ابحث عن الـ profile المرتبط
-      final profileName = u['actual-profile'] as String?;
-      int? profileId;
-      if (profileName != null) {
-        final profile = await (db.select(db.profiles)
-              ..where((p) => p.name.equals(profileName)))
-            .getSingleOrNull();
-        profileId = profile?.id;
-      }
-      // لو لم نجد الـ profile، نستخدم أول profile أو ننشئ default
-      if (profileId == null) {
-        final defaultProfile =
-            await (db.select(db.profiles)..limit(1)).getSingleOrNull();
-        if (defaultProfile != null) {
-          profileId = defaultProfile.id;
-        } else {
-          // أنشئ profile افتراضي
-          profileId = await db.into(db.profiles).insert(
-                ProfilesCompanion.insert(
-                  name: 'default',
-                  createdAt: DateTime.now(),
-                ),
-              );
+        // ابحث عن الـ profile المرتبط
+        final profileName = u['actual-profile'] as String?;
+        int? profileId;
+        if (profileName != null) {
+          final profile = await db.profileCollections
+              .where()
+              .nameEqualTo(profileName)
+              .findFirst();
+          profileId = profile?.id;
         }
-      }
-
-      // تحقق إذا كان الكرت موجوداً
-      final existing = await (db.select(db.cards)
-            ..where((c) => c.username.equals(username)))
-          .getSingleOrNull();
-
-      final isDisabled = (u['disabled'] as String?) == 'true';
-      final companion = CardsCompanion(
-        username: Value(username),
-        password: Value(u['password'] as String?),
-        profileId: Value(profileId),
-        sharedUsers:
-            Value(int.tryParse(u['shared-users'] as String? ?? '1') ?? 1),
-        status: Value(isDisabled ? 'disabled' : 'active'),
-        uploadBytes:
-            Value(int.tryParse(u['upload-used'] as String? ?? '0') ?? 0),
-        downloadBytes:
-            Value(int.tryParse(u['download-used'] as String? ?? '0') ?? 0),
-        uptimeSeconds: Value(_parseDuration(u['uptime-used'] as String?)),
-        mikrotikUserId: Value(u['.id'] as String?),
-        lastUsedAt: Value(DateTime.now()),
-      );
-
-      if (existing != null) {
-        await (db.update(db.cards)..where((c) => c.id.equals(existing.id)))
-            .write(companion);
-      } else {
-        await db.into(db.cards).insert(
-              companion.copyWith(createdAt: Value(DateTime.now())),
+        // لو لم نجد الـ profile، نستخدم أول profile أو ننشئ default
+        if (profileId == null) {
+          final defaultProfile =
+              await db.profileCollections.where().findFirst();
+          if (defaultProfile != null) {
+            profileId = defaultProfile.id;
+          } else {
+            final newProfile = ProfileCollection.fromData(
+              name: 'default',
+              createdAt: DateTime.now(),
             );
+            await db.profileCollections.put(newProfile);
+            profileId = newProfile.id;
+          }
+        }
+
+        // تحقق إذا كان الكرت موجوداً
+        final existing = await db.cardCollections
+            .where()
+            .usernameEqualTo(username)
+            .findFirst();
+
+        final isDisabled = (u['disabled'] as String?) == 'true';
+
+        if (existing != null) {
+          existing.password = u['password'] as String?;
+          existing.profileId = profileId;
+          existing.sharedUsers =
+              int.tryParse(u['shared-users'] as String? ?? '1') ?? 1;
+          existing.status = isDisabled ? 'disabled' : 'active';
+          existing.uploadBytes =
+              int.tryParse(u['upload-used'] as String? ?? '0') ?? 0;
+          existing.downloadBytes =
+              int.tryParse(u['download-used'] as String? ?? '0') ?? 0;
+          existing.uptimeSeconds = _parseDuration(u['uptime-used'] as String?);
+          existing.mikrotikUserId = u['.id'] as String?;
+          existing.lastUsedAt = DateTime.now();
+          await db.cardCollections.put(existing);
+        } else {
+          final newCard = CardCollection.fromData(
+            username: username,
+            password: u['password'] as String?,
+            profileId: profileId,
+            sharedUsers:
+                int.tryParse(u['shared-users'] as String? ?? '1') ?? 1,
+            status: isDisabled ? 'disabled' : 'active',
+            uploadBytes:
+                int.tryParse(u['upload-used'] as String? ?? '0') ?? 0,
+            downloadBytes:
+                int.tryParse(u['download-used'] as String? ?? '0') ?? 0,
+            uptimeSeconds: _parseDuration(u['uptime-used'] as String?),
+            mikrotikUserId: u['.id'] as String?,
+            createdAt: DateTime.now(),
+            lastUsedAt: DateTime.now(),
+          );
+          await db.cardCollections.put(newCard);
+        }
+        count++;
       }
-      count++;
-    }
-    return count;
-  }
-
-  /// يزامن الجلسات النشطة
-  Future<int> _syncSessions(
-      AppDatabase db, List<Map<String, dynamic>> sessions) async {
-    if (sessions.isEmpty) return 0;
-
-    int count = 0;
-    for (final s in sessions) {
-      final username = s['user'] as String?;
-      if (username == null) continue;
-
-      // ابحث عن الكرت المرتبط
-      final card = await (db.select(db.cards)
-            ..where((c) => c.username.equals(username)))
-          .getSingleOrNull();
-      if (card == null) continue; // تجاهل الجلسات بدون كرت معروف
-
-      // ابحث عن جلسة نشطة موجودة
-      final existingSession = await (db.select(db.sessions)
-            ..where(
-                (sess) => sess.cardId.equals(card.id) & sess.endedAt.isNull()))
-          .getSingleOrNull();
-
-      final bytesIn = int.tryParse(s['bytes-in'] as String? ?? '0') ?? 0;
-      final bytesOut = int.tryParse(s['bytes-out'] as String? ?? '0') ?? 0;
-
-      if (existingSession != null) {
-        // تحديث الجلسة الموجودة
-        await (db.update(db.sessions)
-              ..where((sess) => sess.id.equals(existingSession.id)))
-            .write(SessionsCompanion(
-          uploadBytes: Value(bytesOut),
-          downloadBytes: Value(bytesIn),
-          framedIpAddress: Value(s['address'] as String?),
-          lastSeenAt: Value(DateTime.now()),
-        ));
-      } else {
-        // إنشاء جلسة جديدة
-        await db.into(db.sessions).insert(
-              SessionsCompanion.insert(
-                cardId: card.id,
-                startedAt: DateTime.now(),
-                lastSeenAt: DateTime.now(),
-                uploadBytes: Value(bytesOut),
-                downloadBytes: Value(bytesIn),
-                framedIpAddress: Value(s['address'] as String?),
-              ),
-            );
-      }
-      count++;
-    }
-
-    // أنهِ الجلسات التي لم تعد نشطة (لم تُرَ منذ أكثر من 5 دقائق)
-    final cutoff = DateTime.now().subtract(const Duration(minutes: 5));
-    await (db.update(db.sessions)
-          ..where((s) =>
-              s.endedAt.isNull() & s.lastSeenAt.isSmallerThanValue(cutoff)))
-        .write(SessionsCompanion(endedAt: Value(DateTime.now())));
-
+    });
     return count;
   }
 
   /// يحدّث حالة الكروت (expired للكروت المنتهية)
-  Future<void> _updateCardStatuses(AppDatabase db) async {
-    // الكروت التي تجاوزت uptime-limit
-    final cards = await db.select(db.cards).get();
-    for (final card in cards) {
-      // لو كان uptime_used >= uptime_limit (إذا كان موجوداً)
-      // نحتاج الـ uptime_limit من الـ profile
-// ignore: unnecessary_null_comparison
-      if (card.profileId != null) {
-        final profile = await (db.select(db.profiles)
-              ..where((p) => p.id.equals(card.profileId)))
-            .getSingleOrNull();
+  Future<void> _updateCardStatuses(Isar db) async {
+    await db.writeTxn(() async {
+      final cards = await db.cardCollections.where().findAll();
+      for (final card in cards) {
+        final profile =
+            await db.profileCollections.get(card.profileId);
         if (profile?.uptimeLimitSeconds != null &&
             profile!.uptimeLimitSeconds! > 0 &&
             card.uptimeSeconds >= profile.uptimeLimitSeconds!) {
-          await (db.update(db.cards)..where((c) => c.id.equals(card.id)))
-              .write(const CardsCompanion(status: Value('expired')));
+          card.status = 'expired';
+          await db.cardCollections.put(card);
         }
       }
-    }
+    });
   }
 
   /// يحوّل مدة RouterOS (مثل "1d2h30m") إلى ثوانٍ

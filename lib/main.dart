@@ -38,17 +38,23 @@ import 'ai_diagnostics_screen.dart';
 import 'terminal_screen.dart';
 import 'ai/log_analysis_screen.dart';
 import 'ai/oomol_settings_screen.dart';
-import 'database/app_database.dart' as db;
+import 'database/isar_provider.dart';
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
 // -----------------------------------------
 
-/// قاعدة البيانات العامة (Singleton — تُستخدم عبر كل التطبيق)
-late final db.AppDatabase appDatabase;
+/// قاعدة البيانات العامة (Isar Singleton — تُستخدم عبر كل التطبيق)
+late final IsarProvider appDatabaseProvider;
 
 void main() async {
-  // تهيئة قاعدة البيانات العامة
-  appDatabase = db.AppDatabase();
+  // تهيئة قاعدة البيانات العامة (Isar)
+  appDatabaseProvider = IsarProvider();
+  // افتح الاتصال في الخلفية (لا ننتظره)
+  appDatabaseProvider.instance.then((_) {
+    AppLogger.info('Isar database opened successfully', category: LogCategory.system);
+  }).catchError((e) {
+    AppLogger.error('Failed to open Isar database: $e', category: LogCategory.system);
+  });
 
   // 🔒 Security: ترحيل البيانات الحساسة من SharedPreferences إلى flutter_secure_storage
   // (يحدث مرة واحدة فقط — بعدها يُعلام كمنتهٍ)

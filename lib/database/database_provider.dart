@@ -1,125 +1,141 @@
 // ============================================================
-//  Database Providers — Riverpod providers للوصول للـ database
+//  Database Providers — Riverpod providers للوصول لـ Isar
+//
+//  تمت الهجرة من Drift إلى Isar بالكامل.
+//  المميزات:
+//  - singleton عبر IsarProvider
+//  - DAOs تُنشأ عند الحاجة فقط (lazy)
+//  - Stream Providers للاستعلامات الـ reactive
 // ============================================================
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app_database.dart';
+
+import 'isar_provider.dart';
+import 'isar/card_collection.dart';
+import 'isar/profile_collection.dart';
+import 'isar/ai_diagnostic_collection.dart';
+import 'isar/executed_command_collection.dart';
 import 'daos/cards_dao.dart';
 import 'daos/profiles_dao.dart';
 import 'daos/ai_diagnostics_dao.dart';
 import 'daos/executed_commands_dao.dart';
 import 'migration_service.dart';
 
-/// Singleton للـ database (يبقى حياً طوال عمر التطبيق)
-final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
-
-  // نفّذ الترحيل عند أول استخدام (في الخلفية)
-  ref.onDispose(() {
-    db.close();
-  });
-
+/// Singleton للـ Isar instance
+final isarProvider = FutureProvider<IsarProvider>((ref) async {
+  final provider = IsarProvider();
   // ابدأ الترحيل في الخلفية (لا ننتظره)
-  MigrationService.instance.migrateIfNeeded(db).catchError((e) {
+  MigrationService.instance.migrateFromDriftIfNeeded().catchError((e) {
     // خطأ الترحيل لا يمنع استخدام الـ app
   });
+  return provider;
+});
 
-  return db;
+/// Provider لـ Isar instance مباشرة
+final isarInstanceProvider = FutureProvider((ref) async {
+  final provider = await ref.watch(isarProvider.future);
+  return provider.instance;
 });
 
 /// Provider لـ CardsDao
-final cardsDaoProvider = Provider<CardsDao>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return db.cardsDao;
+final cardsDaoProvider = FutureProvider<CardsDao>((ref) async {
+  final isar = await ref.watch(isarInstanceProvider.future);
+  return CardsDao(isar);
 });
 
 /// Provider لـ ProfilesDao
-final profilesDaoProvider = Provider<ProfilesDao>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return db.profilesDao;
+final profilesDaoProvider = FutureProvider<ProfilesDao>((ref) async {
+  final isar = await ref.watch(isarInstanceProvider.future);
+  return ProfilesDao(isar);
 });
 
 /// Provider لـ AiDiagnosticsDao
-final aiDiagnosticsDaoProvider = Provider<AiDiagnosticsDao>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return db.aiDiagnosticsDao;
+final aiDiagnosticsDaoProvider = FutureProvider<AiDiagnosticsDao>((ref) async {
+  final isar = await ref.watch(isarInstanceProvider.future);
+  return AiDiagnosticsDao(isar);
 });
 
 /// Provider لـ ExecutedCommandsDao
-final executedCommandsDaoProvider = Provider<ExecutedCommandsDao>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return db.executedCommandsDao;
+final executedCommandsDaoProvider =
+    FutureProvider<ExecutedCommandsDao>((ref) async {
+  final isar = await ref.watch(isarInstanceProvider.future);
+  return ExecutedCommandsDao(isar);
 });
 
 // ============================================================
 //  Stream Providers (reactive queries)
 // ============================================================
 
-/// Stream لكل الكروت (يتحدث تلقائياً عند تغيير البيانات)
-final watchAllCardsProvider = StreamProvider<List<Card>>((ref) {
-  final dao = ref.watch(cardsDaoProvider);
-  return dao.watchAllCards();
+/// Stream لكل الكروت
+final watchAllCardsProvider =
+    StreamProvider<List<CardCollection>>((ref) async* {
+  final dao = await ref.watch(cardsDaoProvider.future);
+  yield* dao.watchAllCards();
 });
 
 /// Stream للكروت النشطة
-final watchActiveCardsProvider = StreamProvider<List<Card>>((ref) {
-  final dao = ref.watch(cardsDaoProvider);
-  return dao.watchActiveCards();
+final watchActiveCardsProvider =
+    StreamProvider<List<CardCollection>>((ref) async* {
+  final dao = await ref.watch(cardsDaoProvider.future);
+  yield* dao.watchActiveCards();
 });
 
 /// Stream للملفات الشخصية
-final watchAllProfilesProvider = StreamProvider<List<Profile>>((ref) {
-  final dao = ref.watch(profilesDaoProvider);
-  return dao.watchAllProfiles();
+final watchAllProfilesProvider =
+    StreamProvider<List<ProfileCollection>>((ref) async* {
+  final dao = await ref.watch(profilesDaoProvider.future);
+  yield* dao.watchAllProfiles();
 });
 
 /// Stream لكل جلسات التشخيص
-final watchAllDiagnosticsProvider = StreamProvider<List<AiDiagnostic>>((ref) {
-  final dao = ref.watch(aiDiagnosticsDaoProvider);
-  return dao.watchAllDiagnostics();
+final watchAllDiagnosticsProvider =
+    StreamProvider<List<AiDiagnosticCollection>>((ref) async* {
+  final dao = await ref.watch(aiDiagnosticsDaoProvider.future);
+  yield* dao.watchAllDiagnostics();
 });
 
 /// Stream للجلسات المفضلة
 final watchFavoriteDiagnosticsProvider =
-    StreamProvider<List<AiDiagnostic>>((ref) {
-  final dao = ref.watch(aiDiagnosticsDaoProvider);
-  return dao.watchFavoriteDiagnostics();
+    StreamProvider<List<AiDiagnosticCollection>>((ref) async* {
+  final dao = await ref.watch(aiDiagnosticsDaoProvider.future);
+  yield* dao.watchFavoriteDiagnostics();
 });
 
 /// Stream للأوامر المنفّذة الأخيرة
 final watchRecentCommandsProvider =
-    StreamProvider<List<ExecutedCommand>>((ref) {
-  final dao = ref.watch(executedCommandsDaoProvider);
-  return dao.watchRecentCommands(50);
+    StreamProvider<List<ExecutedCommandCollection>>((ref) async* {
+  final dao = await ref.watch(executedCommandsDaoProvider.future);
+  yield* dao.watchRecentCommands(50);
 });
 
 // ============================================================
 //  Future Providers (one-time queries)
 // ============================================================
 
-/// إحصائيات الكروت (تحسب مرة واحدة ثم تُcache)
-final cardsStatisticsProvider = FutureProvider<CardsStatistics>((ref) async {
-  final dao = ref.watch(cardsDaoProvider);
+/// إحصائيات الكروت
+final cardsStatisticsProvider =
+    FutureProvider<CardsStatistics>((ref) async {
+  final dao = await ref.watch(cardsDaoProvider.future);
   return dao.getStatistics();
 });
 
 /// إحصائيات الأوامر المنفّذة
 final commandsStatisticsProvider =
     FutureProvider<CommandsStatistics>((ref) async {
-  final dao = ref.watch(executedCommandsDaoProvider);
+  final dao = await ref.watch(executedCommandsDaoProvider.future);
   return dao.getStatistics();
 });
 
 /// إحصائيات التشخيصات
 final diagnosticsStatisticsProvider =
     FutureProvider<DiagnosticsStatistics>((ref) async {
-  final dao = ref.watch(aiDiagnosticsDaoProvider);
+  final dao = await ref.watch(aiDiagnosticsDaoProvider.future);
   return dao.getStatistics();
 });
 
 /// التقرير الشهري للأوامر
 final monthlyCommandsReportProvider =
     FutureProvider<List<MonthlyCommandReport>>((ref) async {
-  final dao = ref.watch(executedCommandsDaoProvider);
+  final dao = await ref.watch(executedCommandsDaoProvider.future);
   return dao.getMonthlyReport();
 });

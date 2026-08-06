@@ -1,13 +1,13 @@
 // ============================================================
-//  CardSearchScreen — بحث فوري في الكروت باستخدام FTS5
-//  البحث في username, password, profile_name
-//  يستخدم SQLite FTS5 (أسرع 1000x من البحث في Dart)
+//  CardSearchScreen — بحث فوري في الكروت باستخدام Isar
+//  البحث في username عبر Isar indexes (سريع جداً)
 // ============================================================
 
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'database/app_database.dart' as db;
+import 'database/isar/card_collection.dart';
+import 'database/daos/cards_dao.dart';
 import 'main.dart';
 
 import 'theme/app_theme.dart';
@@ -21,7 +21,7 @@ class CardSearchScreen extends StatefulWidget {
 
 class _CardSearchScreenState extends State<CardSearchScreen> {
   final _searchController = TextEditingController();
-  List<db.Card> _results = [];
+  List<CardCollection> _results = [];
   bool _isSearching = false;
   String? _error;
 
@@ -46,21 +46,37 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
     });
 
     try {
-      // تحويل الاستعلام لصيغة FTS5
-      // FTS5 يدعم: word, prefix*, "phrase", OR, AND, NOT
-      // نحول المسافات إلى OR (ابحث عن أي كلمة)
-      final ftsQuery = query.split(' ').where((w) => w.isNotEmpty).join(' OR ');
+      // البحث المباشر عبر Isar (سريع جداً مع indexes)
+      final isar = await appDatabaseProvider.instance;
+      final cardsDao = CardsDao(isar);
+      // البحث في كل كلمة على حدة
+      final searchTerms = query.split(' ').where((w) => w.isNotEmpty).toList();
+      List<CardCollection> results = [];
+      if (searchTerms.isNotEmpty) {
+        // البحث بأول كلمة (Isar index)
+        results = await cardsDao.searchCards(searchTerms.first);
+        // فلترة النتائج لتشمل كل الكلمات
+        if (searchTerms.length > 1) {
+          results = results.where((card) {
+            return searchTerms.every((term) =>
+                card.username.toLowerCase().contains(term.toLowerCase()));
+          }).toList();
+        }
+      }
 
-      final results = await appDatabase.cardsDao.searchCards(ftsQuery);
-      setState(() {
-        _results = results;
-        _isSearching = false;
-      });
+      if (mounted) {
+        setState(() {
+          _results = results;
+          _isSearching = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = 'خطأ في البحث: $e';
-        _isSearching = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'خطأ في البحث: $e';
+          _isSearching = false;
+        });
+      }
     }
   }
 
@@ -194,7 +210,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
     );
   }
 
-  Widget _buildCardTile(db.Card card) {
+  Widget _buildCardTile(CardCollection card) {
     final statusColor = card.status == 'active'
         ? Theme.of(context).appColors.success
         : card.status == 'disabled'
@@ -279,7 +295,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
     return '${value.toStringAsFixed(1)} ${units[unitIndex]}';
   }
 
-  void _confirmDelete(db.Card card) {
+  void _confirmDelete(CardCollection card) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -295,7 +311,8 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                 backgroundColor: Theme.of(context).appColors.error),
             onPressed: () async {
               Navigator.of(ctx).pop();
-              await appDatabase.cardsDao.deleteCard(card.id);
+              final isar = await appDatabaseProvider.instance;
+              await CardsDao(isar).deleteCard(card.id);
               _performSearch(_searchController.text);
             },
             child: Text('حذف',

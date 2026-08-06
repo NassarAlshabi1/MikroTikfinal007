@@ -1,169 +1,12 @@
 // ============================================================
-//  AiDiagnosticsDao — Data Access Object لسجل التشخيصات AI
-//  يحل محل التخزين في SharedPreferences (أسرع بكثير)
+//  AiDiagnosticsDao (Isar) — Data Access Object لسجل التشخيصات AI
+//
+//  يحل محل Drift AiDiagnosticsDao القديم.
 // ============================================================
 
-import 'package:drift/drift.dart';
-import '../app_database.dart';
+import 'package:isar/isar.dart';
 
-part 'ai_diagnostics_dao.g.dart';
-
-@DriftAccessor(tables: [AiDiagnostics, ExecutedCommands])
-class AiDiagnosticsDao extends DatabaseAccessor<AppDatabase>
-    with _$AiDiagnosticsDaoMixin {
-  AiDiagnosticsDao(super.db);
-
-  // ============================================================
-  //  CRUD
-  // ============================================================
-
-  /// إضافة جلسة تشخيص جديدة
-  Future<int> insertDiagnostic(AiDiagnosticsCompanion diagnostic) =>
-      into(aiDiagnostics).insert(diagnostic);
-
-  /// تحديث جلسة
-  Future<bool> updateDiagnostic(AiDiagnostic diagnostic) =>
-      update(aiDiagnostics).replace(diagnostic);
-
-  /// حذف جلسة
-  Future<int> deleteDiagnostic(int id) =>
-      (delete(aiDiagnostics)..where((d) => d.id.equals(id))).go();
-
-  /// حذف كل الجلسات
-  Future<int> deleteAllDiagnostics() => delete(aiDiagnostics).go();
-
-  // ============================================================
-  //  Queries
-  // ============================================================
-
-  /// كل الجلسات (مرتبة بالأحدث)
-  Future<List<AiDiagnostic>> getAllDiagnostics() =>
-      (select(aiDiagnostics)..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
-          .get();
-
-  /// جلسة واحدة بالـ ID
-  Future<AiDiagnostic?> getDiagnosticById(int id) =>
-      (select(aiDiagnostics)..where((d) => d.id.equals(id))).getSingleOrNull();
-
-  /// الجلسات المفضلة فقط
-  Future<List<AiDiagnostic>> getFavoriteDiagnostics() => (select(aiDiagnostics)
-        ..where((d) => d.isFavorite.equals(true))
-        ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
-      .get();
-
-  /// الجلسات حسب الـ mode
-  Future<List<AiDiagnostic>> getDiagnosticsByMode(String mode) =>
-      (select(aiDiagnostics)
-            ..where((d) => d.mode.equals(mode))
-            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
-          .get();
-
-  /// آخر N جلسة
-  Future<List<AiDiagnostic>> getRecentDiagnostics(int limit) =>
-      (select(aiDiagnostics)
-            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)])
-            ..limit(limit))
-          .get();
-
-  /// بحث في الـ user query أو الـ response
-  Future<List<AiDiagnostic>> searchDiagnostics(String query) =>
-      (select(aiDiagnostics)
-            ..where((d) =>
-                d.userQuery.like('%$query%') | d.aiResponse.like('%$query%'))
-            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
-          .get();
-
-  // ============================================================
-  //  Stream (reactive)
-  // ============================================================
-
-  Stream<List<AiDiagnostic>> watchAllDiagnostics() =>
-      (select(aiDiagnostics)..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
-          .watch();
-
-  Stream<List<AiDiagnostic>> watchFavoriteDiagnostics() =>
-      (select(aiDiagnostics)
-            ..where((d) => d.isFavorite.equals(true))
-            ..orderBy([(d) => OrderingTerm.desc(d.startedAt)]))
-          .watch();
-
-  // ============================================================
-  //  Toggle Favorite
-  // ============================================================
-
-  Future<void> toggleFavorite(int id) async {
-    final diagnostic = await getDiagnosticById(id);
-    if (diagnostic != null) {
-      await (update(aiDiagnostics)..where((d) => d.id.equals(id)))
-          .write(AiDiagnosticsCompanion(
-        isFavorite: Value(!diagnostic.isFavorite),
-      ));
-    }
-  }
-
-  // ============================================================
-  //  Statistics
-  // ============================================================
-
-  /// إحصائيات التشخيصات
-  Future<DiagnosticsStatistics> getStatistics() async {
-    final total = await aiDiagnostics.count().getSingle();
-
-    // عدد المفضّلة (selectOnly + where لأن count() يُعيد Selectable<int>
-    // بدون where في drift 2.31+)
-    final favResult = await (selectOnly(aiDiagnostics)
-          ..addColumns([aiDiagnostics.id.count()])
-          ..where(aiDiagnostics.isFavorite.equals(true)))
-        .getSingle();
-    final favorites = favResult.read(aiDiagnostics.id.count()) ?? 0;
-
-    // إحصائيات حسب الـ mode
-    final byModeQuery = selectOnly(aiDiagnostics)
-      ..addColumns([aiDiagnostics.mode, aiDiagnostics.id.count()])
-      ..groupBy([aiDiagnostics.mode]);
-    final byModeResults = await byModeQuery.get();
-    final byMode = <String, int>{};
-    for (final row in byModeResults) {
-      final mode = row.read(aiDiagnostics.mode) as String;
-      final count = row.read(aiDiagnostics.id.count()) ?? 0;
-      byMode[mode] = count;
-    }
-
-    return DiagnosticsStatistics(
-      totalSessions: total,
-      favoriteSessions: favorites,
-      byMode: byMode,
-    );
-  }
-
-  /// إجمالي tokens المستخدمة
-  Future<int> getTotalTokensUsed() async {
-    final result = await (selectOnly(aiDiagnostics)
-          ..addColumns([aiDiagnostics.tokensUsed.sum()]))
-        .getSingle();
-    return result.read(aiDiagnostics.tokensUsed.sum()) ?? 0;
-  }
-
-  // ============================================================
-  //  Cleanup
-  // ============================================================
-
-  /// حذف الجلسات الأقدم من تاريخ محدد (للحفاظ على حجم الـ DB)
-  Future<int> deleteOlderThan(DateTime date) => (delete(aiDiagnostics)
-        ..where((d) => d.startedAt.isSmallerThanValue(date)))
-      .go();
-
-  /// الاحتفاظ بآخر N جلسة فقط (حذف الباقي)
-  Future<void> keepOnlyLatest(int keepCount) async {
-    final all = await getAllDiagnostics();
-    if (all.length > keepCount) {
-      final toDelete = all.skip(keepCount);
-      for (final d in toDelete) {
-        await deleteDiagnostic(d.id);
-      }
-    }
-  }
-}
+import '../isar/ai_diagnostic_collection.dart';
 
 class DiagnosticsStatistics {
   final int totalSessions;
@@ -175,4 +18,187 @@ class DiagnosticsStatistics {
     required this.favoriteSessions,
     required this.byMode,
   });
+}
+
+class AiDiagnosticsDao {
+  final Isar _isar;
+  AiDiagnosticsDao(this._isar);
+
+  // ============================================================
+  //  CRUD
+  // ============================================================
+
+  Future<int> insertDiagnostic(AiDiagnosticCollection diagnostic) async {
+    await _isar.writeTxn(
+        () => _isar.aiDiagnosticCollections.put(diagnostic));
+    return diagnostic.id;
+  }
+
+  Future<bool> updateDiagnostic(AiDiagnosticCollection diagnostic) async {
+    await _isar.writeTxn(() => _isar.aiDiagnosticCollections.put(diagnostic));
+    return true;
+  }
+
+  Future<bool> deleteDiagnostic(int id) async {
+    return await _isar.writeTxn(() => _isar.aiDiagnosticCollections.delete(id));
+  }
+
+  Future<int> deleteAllDiagnostics() async {
+    return await _isar.writeTxn(() async {
+      final count = await _isar.aiDiagnosticCollections.count();
+      await _isar.aiDiagnosticCollections.clear();
+      return count;
+    });
+  }
+
+  // ============================================================
+  //  Queries
+  // ============================================================
+
+  /// كل الجلسات (مرتبة بالأحدث)
+  Future<List<AiDiagnosticCollection>> getAllDiagnostics() async {
+    return await _isar.aiDiagnosticCollections
+        .where()
+        .sortByStartedAtDesc()
+        .findAll();
+  }
+
+  /// جلسة بالـ ID
+  Future<AiDiagnosticCollection?> getDiagnosticById(int id) async {
+    return await _isar.aiDiagnosticCollections.get(id);
+  }
+
+  /// الجلسات المفضلة فقط
+  Future<List<AiDiagnosticCollection>> getFavoriteDiagnostics() async {
+    return await _isar.aiDiagnosticCollections
+        .filter()
+        .isFavoriteEqualTo(true)
+        .sortByStartedAtDesc()
+        .findAll();
+  }
+
+  /// الجلسات حسب الـ mode
+  Future<List<AiDiagnosticCollection>> getDiagnosticsByMode(String mode) async {
+    return await _isar.aiDiagnosticCollections
+        .filter()
+        .modeEqualTo(mode)
+        .sortByStartedAtDesc()
+        .findAll();
+  }
+
+  /// آخر N جلسة
+  Future<List<AiDiagnosticCollection>> getRecentDiagnostics(int limit) async {
+    return await _isar.aiDiagnosticCollections
+        .where()
+        .sortByStartedAtDesc()
+        .limit(limit)
+        .findAll();
+  }
+
+  /// بحث في الـ user query أو الـ response
+  Future<List<AiDiagnosticCollection>> searchDiagnostics(String query) async {
+    if (query.isEmpty) return getAllDiagnostics();
+    return await _isar.aiDiagnosticCollections
+        .filter()
+        .userQueryContains(query, caseSensitive: false)
+        .or()
+        .aiResponseContains(query, caseSensitive: false)
+        .sortByStartedAtDesc()
+        .findAll();
+  }
+
+  // ============================================================
+  //  Stream (reactive)
+  // ============================================================
+
+  Stream<List<AiDiagnosticCollection>> watchAllDiagnostics() {
+    return _isar.aiDiagnosticCollections
+        .where()
+        .sortByStartedAtDesc()
+        .watch(fireImmediately: true);
+  }
+
+  Stream<List<AiDiagnosticCollection>> watchFavoriteDiagnostics() {
+    return _isar.aiDiagnosticCollections
+        .filter()
+        .isFavoriteEqualTo(true)
+        .sortByStartedAtDesc()
+        .watch(fireImmediately: true);
+  }
+
+  // ============================================================
+  //  Toggle Favorite
+  // ============================================================
+
+  Future<void> toggleFavorite(int id) async {
+    await _isar.writeTxn(() async {
+      final diagnostic = await _isar.aiDiagnosticCollections.get(id);
+      if (diagnostic != null) {
+        diagnostic.isFavorite = !diagnostic.isFavorite;
+        await _isar.aiDiagnosticCollections.put(diagnostic);
+      }
+    });
+  }
+
+  // ============================================================
+  //  Statistics
+  // ============================================================
+
+  Future<DiagnosticsStatistics> getStatistics() async {
+    final all = await _isar.aiDiagnosticCollections.where().findAll();
+
+    int favorites = 0;
+    final byMode = <String, int>{};
+    for (final d in all) {
+      if (d.isFavorite) favorites++;
+      byMode[d.mode] = (byMode[d.mode] ?? 0) + 1;
+    }
+
+    return DiagnosticsStatistics(
+      totalSessions: all.length,
+      favoriteSessions: favorites,
+      byMode: byMode,
+    );
+  }
+
+  /// إجمالي tokens المستخدمة
+  Future<int> getTotalTokensUsed() async {
+    final all = await _isar.aiDiagnosticCollections.where().findAll();
+    int total = 0;
+    for (final d in all) {
+      total += d.tokensUsed ?? 0;
+    }
+    return total;
+  }
+
+  // ============================================================
+  //  Cleanup
+  // ============================================================
+
+  /// حذف الجلسات الأقدم من تاريخ محدد
+  Future<int> deleteOlderThan(DateTime date) async {
+    return await _isar.writeTxn(() async {
+      final old = await _isar.aiDiagnosticCollections
+          .filter()
+          .startedAtLessThan(date)
+          .findAll();
+      for (final d in old) {
+        await _isar.aiDiagnosticCollections.delete(d.id);
+      }
+      return old.length;
+    });
+  }
+
+  /// الاحتفاظ بآخر N جلسة فقط
+  Future<void> keepOnlyLatest(int keepCount) async {
+    await _isar.writeTxn(() async {
+      final all = await getAllDiagnostics();
+      if (all.length > keepCount) {
+        final toDelete = all.skip(keepCount);
+        for (final d in toDelete) {
+          await _isar.aiDiagnosticCollections.delete(d.id);
+        }
+      }
+    });
+  }
 }

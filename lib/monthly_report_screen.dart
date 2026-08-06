@@ -1,6 +1,6 @@
 // ============================================================
 //  MonthlyReportScreen — تقرير شهري للأوامر المنفّذة والإحصائيات
-//  يستخدم SQL aggregations عبر drift
+//  يستخدم Isar aggregations
 // ============================================================
 
 import 'package:flutter/material.dart';
@@ -39,9 +39,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     });
 
     try {
-      final commandsDao = appDatabase.executedCommandsDao;
-      final cardsDao = appDatabase.cardsDao;
-      final diagDao = appDatabase.aiDiagnosticsDao;
+      final isar = await appDatabaseProvider.instance;
+      final commandsDao = ExecutedCommandsDao(isar);
+      final cardsDao = CardsDao(isar);
+      final diagDao = AiDiagnosticsDao(isar);
 
       final results = await Future.wait([
         commandsDao.getMonthlyReport(),

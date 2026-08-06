@@ -1,59 +1,97 @@
 // ============================================================
-//  ProfilesDao — Data Access Object لجدول الملفات الشخصية
+//  ProfilesDao (Isar) — Data Access Object لجدول الملفات الشخصية
+//
+//  يحل محل Drift ProfilesDao القديم.
 // ============================================================
 
-import 'package:drift/drift.dart';
-import '../app_database.dart';
+import 'package:isar/isar.dart';
 
-part 'profiles_dao.g.dart';
+import '../isar/profile_collection.dart';
 
-@DriftAccessor(tables: [Profiles])
-class ProfilesDao extends DatabaseAccessor<AppDatabase>
-    with _$ProfilesDaoMixin {
-  ProfilesDao(super.db);
+class ProfilesDao {
+  final Isar _isar;
+  ProfilesDao(this._isar);
 
   // ============================================================
   //  CRUD
   // ============================================================
 
-  Future<int> insertProfile(ProfilesCompanion profile) =>
-      into(profiles).insert(profile);
+  Future<int> insertProfile(ProfileCollection profile) async {
+    await _isar.writeTxn(() => _isar.profileCollections.put(profile));
+    return profile.id;
+  }
 
-  Future<bool> updateProfile(Profile profile) =>
-      update(profiles).replace(profile);
+  Future<bool> updateProfile(ProfileCollection profile) async {
+    await _isar.writeTxn(() => _isar.profileCollections.put(profile));
+    return true;
+  }
 
-  Future<int> deleteProfile(int id) =>
-      (delete(profiles)..where((p) => p.id.equals(id))).go();
+  Future<bool> deleteProfile(int id) async {
+    return await _isar.writeTxn(() => _isar.profileCollections.delete(id));
+  }
 
   // ============================================================
   //  Queries
   // ============================================================
 
-  Future<List<Profile>> getAllProfiles() =>
-      (select(profiles)..orderBy([(p) => OrderingTerm.asc(p.name)])).get();
+  Future<List<ProfileCollection>> getAllProfiles() async {
+    return await _isar.profileCollections
+        .where()
+        .sortByName()
+        .findAll();
+  }
 
-  Future<Profile?> getProfileById(int id) =>
-      (select(profiles)..where((p) => p.id.equals(id))).getSingleOrNull();
+  Future<ProfileCollection?> getProfileById(int id) async {
+    return await _isar.profileCollections.get(id);
+  }
 
-  Future<Profile?> getProfileByName(String name) =>
-      (select(profiles)..where((p) => p.name.equals(name))).getSingleOrNull();
+  Future<ProfileCollection?> getProfileByName(String name) async {
+    return await _isar.profileCollections
+        .where()
+        .nameEqualTo(name)
+        .findFirst();
+  }
 
-  /// Stream للملفات الشخصية (للـ reactive UI)
-  Stream<List<Profile>> watchAllProfiles() =>
-      (select(profiles)..orderBy([(p) => OrderingTerm.asc(p.name)])).watch();
+  /// Stream للملفات الشخصية
+  Stream<List<ProfileCollection>> watchAllProfiles() {
+    return _isar.profileCollections
+        .where()
+        .sortByName()
+        .watch(fireImmediately: true);
+  }
 
   /// مزامنة الملفات الشخصية من MikroTik (upsert)
   Future<void> syncProfiles(List<Map<String, dynamic>> mikrotikProfiles) async {
-    await batch((b) => b.replaceAll(profiles, [
-          for (final p in mikrotikProfiles)
-            ProfilesCompanion.insert(
-              name: p['name'] as String,
-              mikrotikId: Value(p['.id'] as String?),
-              rateLimit: Value(p['rate-limit'] as String?),
-              sharedUsers:
-                  Value(int.tryParse(p['shared-users'] as String? ?? '1') ?? 1),
-              createdAt: DateTime.now(),
-            ),
-        ]));
+    await _isar.writeTxn(() async {
+      // حذف الملفات غير الموجودة في القائمة الجديدة
+      final existingNames = mikrotikProfiles.map((p) => p['name'] as String).toSet();
+      final allExisting = await _isar.profileCollections.where().findAll();
+      for (final profile in allExisting) {
+        if (!existingNames.contains(profile.name)) {
+          await _isar.profileCollections.delete(profile.id);
+        }
+      }
+
+      // إضافة/تحديث الملفات الجديدة
+      for (final p in mikrotikProfiles) {
+        final name = p['name'] as String;
+        final existing = await _isar.profileCollections
+            .where()
+            .nameEqualTo(name)
+            .findFirst();
+
+        if (existing != null) {
+          existing.mikrotikId = p['.id'] as String?;
+          existing.rateLimit = p['rate-limit'] as String?;
+          existing.sharedUsers =
+              int.tryParse(p['shared-users'] as String? ?? '1') ?? 1;
+          existing.lastSyncedAt = DateTime.now();
+          await _isar.profileCollections.put(existing);
+        } else {
+          final newProfile = ProfileCollection.fromMikrotikData(p);
+          await _isar.profileCollections.put(newProfile);
+        }
+      }
+    });
   }
 }
