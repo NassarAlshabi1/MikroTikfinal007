@@ -14,7 +14,7 @@ on:
 
 env:
   # ===== Flutter / Java =====
-  FLUTTER_VERSION: '3.35.7'
+  FLUTTER_VERSION: '3.44.0'
   JAVA_VERSION: '17'
   JAVA_DISTRIBUTION: 'temurin'
 

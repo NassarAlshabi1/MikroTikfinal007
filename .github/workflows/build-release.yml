@@ -116,7 +116,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.7'
+          flutter-version: '3.44.0'
           channel: 'stable'
 
       - name: Show Flutter version
@@ -249,7 +249,7 @@ jobs:
           - **الإصدار:** ${VERSION}
           - **رقم البناء:** ${BUILD}
           - **التاريخ:** $(date -u '+%Y-%m-%d %H:%M UTC')
-          - **Flutter:** 3.35.7
+          - **Flutter:** 3.44.0
 
           ## 📱 ملفات التحميل
 

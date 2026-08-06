@@ -34,7 +34,7 @@ jobs:
         uses: flutter-actions/setup-flutter@v3
         with:
           channel: 'stable'
-          flutter-version: '3.35.7'
+          flutter-version: '3.44.0'
           cache: true   # تسريع البناء بإعادة استخدام cache
 
       # 4. التحقق من تثبيت Flutter وعرض الإصدار
