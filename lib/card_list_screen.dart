@@ -139,7 +139,7 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold),
-            dropdownColor: Theme.of(context).colorScheme.onSurface,
+            dropdownColor: Theme.of(context).colorScheme.surface,
             hint: Text('اختر الفئة',
                 style: TextStyle(
                     color: Theme.of(context).textTheme.bodySmall?.color,
@@ -270,7 +270,7 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('الكروت المضافة حديثاً'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: PerfListView<String>(
         items: widget.cardList,
@@ -297,7 +297,7 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
         },
       ),
       bottomNavigationBar: BottomAppBar(
-        color: Theme.of(context).cardColor,
+        color: Theme.of(context).colorScheme.surface,
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

@@ -393,7 +393,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold),
-            dropdownColor: Theme.of(context).colorScheme.onSurface,
+            dropdownColor: Theme.of(context).colorScheme.surface,
             hint: Text('اختر الفئة',
                 style: TextStyle(
                     color: context.theme.appColors.muted,
@@ -507,7 +507,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('إضافة كروت جماعية'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: _isGenerating
           ? Center(
@@ -591,7 +591,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold),
-                      dropdownColor: Theme.of(context).colorScheme.onSurface,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
                       decoration: const InputDecoration(
                           labelText: 'الفئة (البروفايل)',
                           border: OutlineInputBorder()),
@@ -619,7 +619,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold),
-                      dropdownColor: Theme.of(context).colorScheme.onSurface,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
                       decoration: const InputDecoration(
                           labelText: 'نوع أحرف المستخدم',
                           border: OutlineInputBorder()),
@@ -654,7 +654,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold),
-                      dropdownColor: Theme.of(context).colorScheme.onSurface,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
                       decoration: const InputDecoration(
                           labelText: 'نوع الكرت', border: OutlineInputBorder()),
                       items: [

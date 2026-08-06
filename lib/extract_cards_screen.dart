@@ -164,7 +164,7 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold),
-            dropdownColor: Theme.of(context).colorScheme.onSurface,
+            dropdownColor: Theme.of(context).colorScheme.surface,
             hint: Text('اختر الفئة',
                 style: TextStyle(
                     color: Theme.of(context).textTheme.bodySmall?.color,
@@ -331,7 +331,7 @@ class _ExtractCardsScreenState extends ConsumerState<ExtractCardsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('استخراج الكروت'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: Center(
         child: _extractedCardNumbers.isNotEmpty

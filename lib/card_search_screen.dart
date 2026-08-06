@@ -95,7 +95,7 @@ class _CardSearchScreenState extends State<CardSearchScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).cardColor,
+                fillColor: Theme.of(context).colorScheme.surface,
               ),
               style: const TextStyle(fontSize: 16),
               textInputAction: TextInputAction.search,

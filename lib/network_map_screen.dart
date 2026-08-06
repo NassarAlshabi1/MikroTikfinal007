@@ -466,7 +466,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         title: Text(_isEditMode ? 'تعديل خريطة الشبكة' : 'خريطة الشبكة'),
         backgroundColor: _isEditMode
             ? Theme.of(context).colorScheme.surfaceContainerHighest
-            : Theme.of(context).cardColor,
+            : Theme.of(context).colorScheme.surface,
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {

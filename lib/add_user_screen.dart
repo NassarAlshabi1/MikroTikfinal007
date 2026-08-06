@@ -163,7 +163,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('إضافة كرت جديد'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: Form(
         key: _formKey,

@@ -52,7 +52,7 @@ class MetricsCard extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: effectiveColor.withValues(alpha: 0.2),

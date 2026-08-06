@@ -418,7 +418,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: context.theme.appColors.primary.withValues(alpha: 0.2),
@@ -528,7 +528,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   void _showUserDetails(Map<String, dynamic> user) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).cardColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

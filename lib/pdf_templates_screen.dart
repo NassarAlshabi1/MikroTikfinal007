@@ -145,7 +145,7 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('إدارة قوالب PDF'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

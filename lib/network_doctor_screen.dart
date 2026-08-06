@@ -665,7 +665,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
@@ -728,7 +728,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: color.withValues(alpha: 0.3),
@@ -959,7 +959,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Row(
@@ -1013,7 +1013,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: sevColor.withValues(alpha: 0.4),
@@ -1196,7 +1196,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: theme.cardColor,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                         color: primary.withValues(alpha: 0.3), width: 1.5),
@@ -1242,7 +1242,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: theme.cardColor,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                         color: AppPalette.error.withValues(alpha: 0.3),

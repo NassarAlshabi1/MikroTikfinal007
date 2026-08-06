@@ -13,7 +13,7 @@ class NetworkToolsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('أدوات الشبكة'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: RepaintBoundary(
         child: Padding(

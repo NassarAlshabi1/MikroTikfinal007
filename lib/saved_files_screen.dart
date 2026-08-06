@@ -207,7 +207,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ملفات الكروت المحفوظة'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

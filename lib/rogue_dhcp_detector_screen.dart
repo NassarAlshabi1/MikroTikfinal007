@@ -219,7 +219,7 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('كاشف DHCP الدخيل'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

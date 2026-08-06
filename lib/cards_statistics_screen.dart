@@ -449,7 +449,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
             colorScheme: ColorScheme.dark(
               primary: Theme.of(context).primaryColor,
               onPrimary: context.theme.appColors.onPrimary,
-              surface: Theme.of(context).cardColor,
+              surface: Theme.of(context).colorScheme.surface,
               onSurface: context.theme.appColors.onSurface,
             ),
           ),
@@ -605,7 +605,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
             color: theme.primaryColor.withValues(alpha: 0.3), width: 1),
@@ -689,7 +689,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
                     _applyFilters();
                   });
                 },
-                backgroundColor: theme.cardColor,
+                backgroundColor: theme.colorScheme.surface,
                 selectedColor: theme.primaryColor,
                 labelStyle: TextStyle(
                     color: Theme.of(context).textTheme.bodyMedium?.color ??
@@ -730,7 +730,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
                     style: TextStyle(
                         color: Theme.of(context).textTheme.bodySmall?.color ??
                             context.theme.appColors.muted)),
-                dropdownColor: theme.cardColor,
+                dropdownColor: theme.colorScheme.surface,
                 icon: Icon(Icons.arrow_drop_down,
                     color: context.theme.appColors.onSurface
                         .withValues(alpha: 0.7)),
@@ -920,7 +920,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -991,7 +991,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
@@ -1203,7 +1203,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
@@ -1280,7 +1280,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -1437,7 +1437,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -1617,7 +1617,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),

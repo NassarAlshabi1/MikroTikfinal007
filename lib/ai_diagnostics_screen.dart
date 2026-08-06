@@ -986,7 +986,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      color: Theme.of(context).cardColor,
+      color: Theme.of(context).colorScheme.surface,
       child: Row(
         children: [
           Icon(
@@ -1456,7 +1456,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: Theme.of(context).colorScheme.surface,
           border: Border(
             top: BorderSide(
                 color: Theme.of(context)
@@ -1575,7 +1575,7 @@ class _MessageBubble extends StatelessWidget {
                             .withValues(alpha: 0.1)
                         : isUser
                             ? Theme.of(context).primaryColor
-                            : Theme.of(context).cardColor,
+                            : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),

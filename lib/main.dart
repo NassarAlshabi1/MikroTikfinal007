@@ -32,7 +32,7 @@ import 'active_users_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_palette.dart';
 import 'theme/app_gradients.dart';
-import 'theme/amolood_theme.dart';
+import 'theme/professional_theme.dart';
 // ===== Imports من capy/v2-riverpod (AI + terminal + perf + database) =====
 import 'ai_diagnostics_screen.dart';
 import 'terminal_screen.dart';
@@ -149,11 +149,13 @@ class MyApp extends StatelessWidget {
         scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
         title: 'MikroTik Manager',
-        // 🎨 ثيم amolood (Dark Navy + Electric Blue + Neon) + Tajawal font
-        // مستوحى من github.com/amolood/Mikrotik-flutter-app
-        theme: AmoloodTheme.dark,
-        darkTheme: AmoloodTheme.dark,
-        themeMode: ThemeMode.dark,
+        // 🎨 Professional Theme — Material 3 Expressive (Indigo + Amber)
+        // - يدعم Light + Dark تلقائياً حسب تفضيل المستخدم
+        // - يتفاعل مع themeProvider.themeMode
+        // - يستبدل AmoloodTheme الداكن الصارخ
+        theme: ProfessionalTheme.light,
+        darkTheme: ProfessionalTheme.dark,
+        themeMode: themeProvider.themeMode,
         home: const LoginScreen(),
       ),
     );
@@ -456,7 +458,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 24),
                     Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TabBar(
@@ -512,7 +514,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: provider.Consumer<AppTheme>(
                 builder: (context, themeProvider, child) => Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor.withValues(alpha: 0.9),
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
@@ -1354,7 +1356,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           leading: Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
-              backgroundColor: Theme.of(context).cardColor,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               child: Icon(Icons.person_outline,
                   color: context.theme.appColors.onSurface),
             ),
@@ -1535,12 +1537,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           end: Alignment.bottomRight,
           colors: isDark
               ? [
-                  AmoloodColors.primaryLight.withValues(alpha: 0.6),
-                  AmoloodColors.electric.withValues(alpha: 0.4),
+                  ProfessionalColors.primaryLight.withValues(alpha: 0.6),
+                  ProfessionalColors.accent.withValues(alpha: 0.4),
                 ]
               : [
-                  AmoloodColors.primaryLight.withValues(alpha: 0.6),
-                  AmoloodColors.electric.withValues(alpha: 0.4),
+                  ProfessionalColors.primaryLight.withValues(alpha: 0.6),
+                  ProfessionalColors.accent.withValues(alpha: 0.4),
                 ],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -1629,31 +1631,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       label: 'المعالج',
                       value: '${cpuUsage.toStringAsFixed(1)}%',
                       icon: Icons.speed,
-                      color: AmoloodColors.primaryLight,
+                      color: ProfessionalColors.primaryLight,
                     ),
                     _buildStatusMetric(
                       label: 'الذاكرة',
                       value: '${memoryUsage.toStringAsFixed(1)}%',
                       icon: Icons.memory,
-                      color: AmoloodColors.success,
+                      color: ProfessionalColors.success,
                     ),
                     _buildStatusMetric(
                       label: 'التحميل',
                       value: '${downloadMb.toStringAsFixed(1)} MB',
                       icon: Icons.download_rounded,
-                      color: AmoloodColors.electric,
+                      color: ProfessionalColors.secondaryLight,
                     ),
                     _buildStatusMetric(
                       label: 'الرفع',
                       value: '${uploadMb.toStringAsFixed(1)} MB',
                       icon: Icons.upload_rounded,
-                      color: AmoloodColors.warning,
+                      color: ProfessionalColors.warning,
                     ),
                     _buildStatusMetric(
                       label: 'المستخدمون النشطون',
                       value: '$activeUsers',
                       icon: Icons.wifi,
-                      color: AmoloodColors.neon,
+                      color: ProfessionalColors.accent,
                     ),
                   ],
                 ),
