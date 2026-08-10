@@ -12,7 +12,7 @@ import 'mqtt_service.dart';
 import 'snackbar_helpers.dart';
 
 class CardListScreen extends StatefulWidget {
-  final List<String> cardList;
+  final List<Map<String, String>> cardList;
   final bool isNetworkLinked;
   final Map<String, dynamic> linkedData;
 
