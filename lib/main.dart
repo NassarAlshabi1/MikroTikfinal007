@@ -1,34 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'mqtt_service.dart';
-import 'app_theme.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'login_screen.dart';
-import 'snackbar_helpers.dart';
+import 'home_screen.dart';
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => MqttService(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
-// مفتاح عالمي لـ ScaffoldMessenger
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mqttService = ref.watch(mqttServiceProvider);
+
     return MaterialApp(
-      scaffoldMessengerKey: scaffoldMessengerKey,
-      debugShowCheckedModeBanner: false,
-      title: 'MikroTik Manager',
+      title: 'اداره الكروت',
       theme: AppTheme.darkTheme,
-      home: const LoginScreen(),
+      home: mqttService.isConnected
+          ? const HomeScreen()
+          : const LoginScreen(),
     );
   }
 }
