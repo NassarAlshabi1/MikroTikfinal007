@@ -21,6 +21,9 @@ import 'cards_statistics_screen.dart';
 import 'stats_screen.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
+import 'setup_wizard_screen.dart';
+import 'user_data_usage_chart_screen.dart';
+import 'print_preview_screen.dart';
 
 enum MikrotikMode { userManager, hotspot }
 
@@ -56,6 +59,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>> _profiles = [];
   bool _isLoadingProfiles = true;
 
+  // --- KPI State ---
+  int _totalUsers = 0;
+  int _activeUsers = 0;
+  int _totalProfiles = 0;
+  bool _isLoadingKpi = true;
+
   // --- الإصلاح: جعل _selectedMode متغيراً قابلاً للتغيير ---
   MikrotikMode _selectedMode = MikrotikMode.userManager;
   bool _isNetworkLinked = false;
@@ -67,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _fetchProfiles();
+    _fetchKpiData();
     _loadLinkStatus();
     _checkConnection();
   }
@@ -116,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (!mounted) return;
       _loadLinkStatus();
       _checkConnection();
+      _fetchKpiData();
       context.read<MqttService>().checkAndReconnect();
       final isLinked = _isNetworkLinked;
       if (isLinked) {
@@ -139,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (mounted) {
         setState(() {
           _profiles = response.map((p) => Map<String, dynamic>.from(p)).toList();
+          _totalProfiles = _profiles.length;
         });
       }
     } catch (e) {
@@ -148,6 +160,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } finally {
       client?.close();
       if (mounted) setState(() => _isLoadingProfiles = false);
+    }
+  }
+
+  Future<void> _fetchKpiData() async {
+    setState(() => _isLoadingKpi = true);
+    RouterOSClient? client;
+    try {
+      client = await MikrotikConnector.connect();
+
+      // جلب عدد المستخدمين الكلي
+      try {
+        final usersResponse = await client.talk(['/tool/user-manager/user/print', '=.proplist=.id']);
+        _totalUsers = usersResponse.length;
+      } catch (e) {
+        _totalUsers = 0;
+      }
+
+      // جلب عدد المستخدمين النشطين
+      try {
+        final activeResponse = await client.talk(['/ip/hotspot/active/print']);
+        _activeUsers = activeResponse.length;
+      } catch (e) {
+        try {
+          final sessionResponse = await client.talk(['/tool/user-manager/session/print']);
+          _activeUsers = sessionResponse.length;
+        } catch (e) {
+          _activeUsers = 0;
+        }
+      }
+
+      if (mounted) {
+        setState(() => _isLoadingKpi = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingKpi = false);
+      }
+    } finally {
+      client?.close();
     }
   }
 
@@ -174,6 +225,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(title: 'إضافة كروت جماعية', icon: Icons.groups, color: const Color(0xFF4CAF50),
         onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => BulkAddScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, username: widget.username))); },
       ),
+      ServiceItem(title: 'معالج الإعداد', icon: Icons.auto_fix_high, color: const Color(0xFF7C4DFF),
+        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const SetupWizardScreen())); },
+      ),
       ServiceItem(title: 'ربط الشبكة', icon: Icons.link, color: const Color(0xFF42A5F5),
         onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen())); },
       ),
@@ -192,8 +246,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(title: 'استخراج الكروت', icon: Icons.document_scanner_outlined, color: const Color(0xFFEF5350),
         onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ExtractCardsScreen())); },
       ),
+      ServiceItem(title: 'طباعة البطاقات', icon: Icons.print, color: const Color(0xFF78909C),
+        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const PrintPreviewScreen(cardUsernames: []))); },
+      ),
       ServiceItem(title: 'إحصائيات الكروت', icon: Icons.bar_chart, color: const Color(0xFF9C27B0),
         onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const CardsStatisticsScreen())); },
+      ),
+      ServiceItem(title: 'استخدام البيانات', icon: Icons.data_usage, color: const Color(0xFF00E5FF),
+        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const UserDataUsageChartScreen())); },
       ),
       ServiceItem(title: 'المستخدمين النشطين', icon: Icons.people_outline, color: const Color(0xFF00ACC1),
         onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ActiveUsersScreen())); },
@@ -256,6 +316,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildStatusCard(),
+                  _buildKpiCards(),
                   // --- الإصلاح: زر تبديل الوضع ---
                   _buildModeSwitcher(),
                   const Padding(
@@ -330,6 +391,88 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildKpiCards() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildKpiCard(
+              title: 'المستخدمين',
+              value: '$_totalUsers',
+              icon: Icons.people,
+              color: const Color(0xFF42A5F5),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildKpiCard(
+              title: 'الخطط',
+              value: '$_totalProfiles',
+              icon: Icons.category,
+              color: const Color(0xFF66BB6A),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildKpiCard(
+              title: 'المتصلين',
+              value: '$_activeUsers',
+              icon: Icons.wifi,
+              color: const Color(0xFFFFA726),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKpiCard({required String title, required String value, required IconData icon, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
+        ],
       ),
     );
   }
