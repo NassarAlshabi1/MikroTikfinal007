@@ -8,6 +8,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 import 'mikrotik_connector.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -243,6 +247,80 @@ class _StatsScreenState extends State<StatsScreen> {
     }
   }
 
+  Future<void> _exportExcelReport() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final excel = Excel.createExcel();
+      final sheet = excel['Statistics'];
+      final now = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+
+      sheet.appendRow([
+        const TextCellValue('Metric'),
+        const TextCellValue('Value'),
+      ]);
+
+      sheet.appendRow([
+        TextCellValue('Date'),
+        TextCellValue(now),
+      ]);
+      sheet.appendRow([
+        TextCellValue('Total Sessions'),
+        TextCellValue('${_stats['totalSessions']}'),
+      ]);
+      sheet.appendRow([
+        TextCellValue('Downloaded'),
+        DoubleCellValue(_stats['dataDownloaded'] is double ? _stats['dataDownloaded'] : 0.0),
+      ]);
+      sheet.appendRow([
+        TextCellValue('Uploaded'),
+        DoubleCellValue(_stats['dataUploaded'] is double ? _stats['dataUploaded'] : 0.0),
+      ]);
+      sheet.appendRow([
+        TextCellValue('CPU Usage'),
+        TextCellValue('${_stats['cpuUsage']}%'),
+      ]);
+      sheet.appendRow([
+        TextCellValue('Memory Usage'),
+        TextCellValue('${_stats['memoryUsage']}%'),
+      ]);
+      sheet.appendRow([
+        TextCellValue('Uptime'),
+        TextCellValue(_stats['uptime']?.toString() ?? ''),
+      ]);
+      sheet.appendRow([
+        TextCellValue('Active Users'),
+        TextCellValue('${_stats['activeUsers']}'),
+      ]);
+
+      for (var i = 0; i < sheet.columns.length; i++) {
+        sheet.setColumnWidth(i, 25);
+      }
+
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/stats_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.xlsx');
+      await file.writeAsBytes(excel.encode()!);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: 'MikroTik Statistics Report',
+          subject: 'Statistics Report',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        showErrorSnackBar(context, 'Failed to export Excel.');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -259,6 +337,11 @@ class _StatsScreenState extends State<StatsScreen> {
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: (_isLoading || _errorMessage.isNotEmpty) ? null : _generatePdfReport,
             tooltip: 'تصدير PDF',
+          ),
+          IconButton(
+            icon: const Icon(Icons.table_chart),
+            onPressed: (_isLoading || _errorMessage.isNotEmpty) ? null : _exportExcelReport,
+            tooltip: 'تصدير Excel',
           ),
         ],
       ),
