@@ -276,7 +276,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                             builder: (context) =>
-                                CardListScreen(cardList: userListForFile)),
+                                CardListScreen(cardList: users)),
                       );
                     },
                   ),
