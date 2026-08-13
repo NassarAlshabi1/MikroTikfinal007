@@ -25,9 +25,6 @@ class MikrotikConnector {
   /// زمن المهلة للاتصال (15 ثانية بدلاً من 5)
   static const Duration _connectionTimeout = Duration(seconds: 15);
 
-  /// زمن المهلة لعمليات talk (30 ثانية)
-  static const Duration _operationTimeout = Duration(seconds: 30);
-
   /// الاتصال بجهاز MikroTik باستخدام البيانات المحفوظة في SharedPreferences
   static Future<RouterOSClient> connect() async {
     final prefs = await SharedPreferences.getInstance();

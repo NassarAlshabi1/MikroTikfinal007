@@ -8,7 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:excel/excel.dart';
+import 'package:excel_plus/excel_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
@@ -51,10 +51,6 @@ class _StatsScreenState extends State<StatsScreen> {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-
-      // الإصلاح: استخدام القيمة المحفوظة عند تسجيل الدخول بدلاً من الافتراضي
-      final prefs = await SharedPreferences.getInstance();
-      final bool isVersion7OrNewer = prefs.getBool('is_version7_plus') ?? false;
 
       final resourceResponse = await client.talk(['/system/resource/print']);
       Map<String, dynamic> resourceData = {};
@@ -113,7 +109,8 @@ class _StatsScreenState extends State<StatsScreen> {
         });
       }
 
-      // تحديث إصدار RouterOS
+      // تحديث إصدار RouterOS للاستخدام في بقية الشاشات.
+      final prefs = await SharedPreferences.getInstance();
       final versionStr = resourceData['version']?.toString() ?? '6';
       await prefs.setString('mikrotik_version', versionStr);
       try {
@@ -182,24 +179,24 @@ class _StatsScreenState extends State<StatsScreen> {
                 pw.Center(
                   child: pw.Text(
                     'تقرير إحصائيات MikroTik',
-                    style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                    style: const pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
                   ),
                 ),
                 pw.SizedBox(height: 20),
                 pw.Divider(),
                 pw.SizedBox(height: 20),
                 
-                pw.Text('معلومات التقرير:', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.Text('معلومات التقرير:', style: const pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 10),
                 pw.Text('التاريخ والوقت: ${dateFormat.format(now)}'),
                 pw.Text('اسم العميل: $clientName'),
                 pw.Text('إصدار MikroTik: ${_stats['version']}'),
                 pw.SizedBox(height: 20),
                 
-                pw.Text('الإحصائيات الرئيسية:', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.Text('الإحصائيات الرئيسية:', style: const pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 10),
                 
-                pw.Table.fromTextArray(
+                pw.TableHelper.fromTextArray(
                   headers: ['المؤشر', 'القيمة'],
                   data: [
                     ['إجمالي الجلسات', '${_stats['totalSessions']}'],
@@ -211,7 +208,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     ['المستخدمين النشطين', '${_stats['activeUsers']}'],
                   ],
                   cellAlignment: pw.Alignment.centerRight,
-                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  headerStyle: const pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   cellHeight: 30,
                 ),
                 
@@ -260,8 +257,8 @@ class _StatsScreenState extends State<StatsScreen> {
       final now = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
       sheet.appendRow([
-        const TextCellValue('Metric'),
-        const TextCellValue('Value'),
+        TextCellValue('Metric'),
+        TextCellValue('Value'),
       ]);
 
       sheet.appendRow([
@@ -297,7 +294,7 @@ class _StatsScreenState extends State<StatsScreen> {
         TextCellValue('${_stats['activeUsers']}'),
       ]);
 
-      for (var i = 0; i < sheet.columns.length; i++) {
+      for (var i = 0; i < sheet.maxColumns; i++) {
         sheet.setColumnWidth(i, 25);
       }
 
@@ -307,10 +304,12 @@ class _StatsScreenState extends State<StatsScreen> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: 'MikroTik Statistics Report',
-          subject: 'Statistics Report',
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path)],
+            text: 'MikroTik Statistics Report',
+            subject: 'Statistics Report',
+          ),
         );
       }
     } catch (e) {
@@ -376,7 +375,7 @@ class _StatsScreenState extends State<StatsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 64,
                 color: Colors.redAccent,
@@ -614,7 +613,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
+                    color: color.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, color: color, size: 24),
@@ -657,7 +656,7 @@ class _StatsScreenState extends State<StatsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue[400]!.withOpacity(0.2),
+                color: Colors.blue[400]!.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.access_time, color: Colors.blue[400], size: 28),

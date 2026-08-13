@@ -22,16 +22,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   String _uptime = '';
   String _version = '';
   String _boardName = '';
-  String _cpu = '';
-  String _cpuCount = '';
-  String _cpuFrequency = '';
   int _cpuLoad = 0;
   int _freeMemory = 0;
   int _totalMemory = 0;
   int _freeHddSpace = 0;
   int _totalHddSpace = 0;
-  String _architectureName = '';
-  String _platform = '';
 
   // System Health data
   String _voltage = 'غير متاح';
@@ -39,11 +34,6 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   // RouterBoard data
   String _model = '';
-  String _serialNumber = '';
-  String _firmwareType = '';
-  String _factoryFirmware = '';
-  String _currentFirmware = '';
-  String _upgradeFirmware = '';
 
   // Interface Statistics
   int _rxBitsPerSecond = 0;
@@ -56,7 +46,6 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   // System Clock
   String _time = '';
   String _date = '';
-  String _timeZoneName = '';
 
   // History for Charts (last 20 data points)
   List<FlSpot> _cpuHistory = [];
@@ -157,16 +146,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _uptime = data['uptime'] ?? '';
         _version = data['version'] ?? '';
         _boardName = data['board-name'] ?? '';
-        _cpu = data['cpu'] ?? '';
-        _cpuCount = data['cpu-count'] ?? '';
-        _cpuFrequency = data['cpu-frequency'] ?? '';
         _cpuLoad = int.tryParse(data['cpu-load']?.toString() ?? '0') ?? 0;
         _freeMemory = int.tryParse(data['free-memory']?.toString() ?? '0') ?? 0;
         _totalMemory = int.tryParse(data['total-memory']?.toString() ?? '0') ?? 0;
         _freeHddSpace = int.tryParse(data['free-hdd-space']?.toString() ?? '0') ?? 0;
         _totalHddSpace = int.tryParse(data['total-hdd-space']?.toString() ?? '0') ?? 0;
-        _architectureName = data['architecture-name'] ?? '';
-        _platform = data['platform'] ?? '';
       }
     } catch (e) {
       debugPrint('Error fetching system resource: $e');
@@ -194,11 +178,6 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       if (response.isNotEmpty) {
         final data = response.first;
         _model = data['model'] ?? '';
-        _serialNumber = data['serial-number'] ?? '';
-        _firmwareType = data['firmware-type'] ?? '';
-        _factoryFirmware = data['factory-firmware'] ?? '';
-        _currentFirmware = data['current-firmware'] ?? '';
-        _upgradeFirmware = data['upgrade-firmware'] ?? '';
       }
     } catch (e) {
       debugPrint('Error fetching routerboard: $e');
@@ -282,7 +261,6 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         final data = response.first;
         _time = data['time'] ?? '';
         _date = data['date'] ?? '';
-        _timeZoneName = data['time-zone-name'] ?? '';
       }
     } catch (e) {
       debugPrint('Error fetching system clock: $e');
@@ -690,8 +668,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.primaryColor.withOpacity(0.8),
-            theme.primaryColor.withOpacity(0.4),
+            theme.primaryColor.withValues(alpha: 0.8),
+            theme.primaryColor.withValues(alpha: 0.4),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -699,7 +677,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -796,11 +774,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isAlert ? Colors.red.withOpacity(0.9) : const Color(0xFFB39DDB),
+              color: isAlert ? Colors.red.withValues(alpha: 0.9) : const Color(0xFFB39DDB),
               borderRadius: BorderRadius.circular(8),
               boxShadow: isAlert ? [
                 BoxShadow(
-                  color: Colors.red.withOpacity(0.5),
+                  color: Colors.red.withValues(alpha: 0.5),
                   blurRadius: 8,
                   spreadRadius: 2,
                 ),
@@ -823,10 +801,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
     return Container(
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -840,7 +818,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             title,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -876,7 +854,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -906,10 +884,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -948,15 +926,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: color.withOpacity(isAlert ? 0.8 : 0.3),
+          color: color.withValues(alpha: isAlert ? 0.8 : 0.3),
           width: isAlert ? 2.5 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(isAlert ? 0.3 : 0.1),
+            color: color.withValues(alpha: isAlert ? 0.3 : 0.1),
             blurRadius: isAlert ? 15 : 10,
             offset: const Offset(0, 4),
             spreadRadius: isAlert ? 2 : 0,
@@ -992,11 +970,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isAlert ? color.withOpacity(0.9) : const Color(0xFFB39DDB),
+                  color: isAlert ? color.withValues(alpha: 0.9) : const Color(0xFFB39DDB),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: (isAlert ? color : Colors.black).withOpacity(0.3),
+                      color: (isAlert ? color : Colors.black).withValues(alpha: 0.3),
                       blurRadius: isAlert ? 6 : 4,
                       offset: const Offset(0, 2),
                     ),
@@ -1024,7 +1002,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   horizontalInterval: 25,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       strokeWidth: 1,
                     );
                   },
@@ -1048,7 +1026,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         return Text(
                           '${value.toInt()}$unit',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                             fontSize: 12,
                           ),
                         );
@@ -1060,7 +1038,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 borderData: FlBorderData(
                   show: true,
                   border: Border.all(
-                    color: color.withOpacity(0.2),
+                    color: color.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -1090,8 +1068,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          color.withOpacity(0.3),
-                          color.withOpacity(0.0),
+                          color.withValues(alpha: 0.3),
+                          color.withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -1142,17 +1120,17 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: color.withOpacity(0.4),
+              color: color.withValues(alpha: 0.4),
               width: 1,
             ),
           ),
@@ -1216,7 +1194,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withOpacity(0.4),
+            color: Colors.red.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 4),
             spreadRadius: 2,
@@ -1230,7 +1208,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -1271,10 +1249,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -1299,7 +1277,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

@@ -1,116 +1,73 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'connection_service.dart';
-import 'mikrotik_connector.dart';
-import 'snackbar_helpers.dart';
-import 'mqtt_service.dart';
-import 'custom_page_route.dart';
-import 'add_user_screen.dart';
-import 'bulk_add_screen.dart';
-import 'saved_files_screen.dart';
-import 'qahtani_link_screen.dart';
-import 'profile_screen.dart';
-import 'pdf_templates_screen.dart';
-import 'network_doctor_screen.dart';
-import 'extract_cards_screen.dart';
-import 'cards_statistics_screen.dart';
-import 'stats_screen.dart';
-import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
-import 'setup_wizard_screen.dart';
-import 'user_data_usage_chart_screen.dart';
+import 'add_user_screen.dart';
+import 'backup_system_screen.dart';
+import 'bulk_add_screen.dart';
+import 'cards_statistics_screen.dart';
+import 'connection_service.dart';
+import 'custom_page_route.dart';
+import 'extract_cards_screen.dart';
+import 'mikrotik_connector.dart';
+import 'network_doctor_screen.dart';
+import 'pdf_templates_screen.dart';
 import 'print_preview_screen.dart';
+import 'profile_screen.dart';
+import 'qahtani_link_screen.dart';
+import 'saved_files_screen.dart';
+import 'setup_wizard_screen.dart';
+import 'stats_screen.dart';
+import 'user_data_usage_chart_screen.dart';
 
 enum MikrotikMode { userManager, hotspot }
 
 class HomeScreen extends StatefulWidget {
-  final bool isVersion7OrNewer;
-  final String username;
-
   const HomeScreen({
     super.key,
     required this.isVersion7OrNewer,
     required this.username,
   });
 
+  final bool isVersion7OrNewer;
+  final String username;
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class ServiceItem {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  ServiceItem({
+class _ServiceItem {
+  const _ServiceItem({
     required this.title,
     required this.icon,
     required this.color,
     required this.onTap,
   });
+
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  List<Map<String, dynamic>> _profiles = [];
-  bool _isLoadingProfiles = true;
-
-  // --- KPI State ---
-  int _totalUsers = 0;
-  int _activeUsers = 0;
-  int _totalProfiles = 0;
-  bool _isLoadingKpi = true;
-
-  // --- الإصلاح: جعل _selectedMode متغيراً قابلاً للتغيير ---
-  MikrotikMode _selectedMode = MikrotikMode.userManager;
+  List<Map<String, dynamic>> _profiles = const [];
+  bool _isLoading = true;
+  bool _isConnected = false;
   bool _isNetworkLinked = false;
   String _clientName = '';
-  bool _isConnected = false;
+  int _totalUsers = 0;
+  int _activeUsers = 0;
+  MikrotikMode _selectedMode = MikrotikMode.userManager;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _fetchProfiles();
-    _fetchKpiData();
-    _loadLinkStatus();
-    _checkConnection();
-  }
-
-  Future<void> _checkConnection() async {
-    try {
-      await ConnectionService.instance.getClient();
-      if (mounted) setState(() => _isConnected = true);
-    } catch (e) {
-      if (mounted) setState(() => _isConnected = false);
-    }
-  }
-
-  Future<void> _loadLinkStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      final isLinked = prefs.getBool('is_network_linked') ?? false;
-      String clientName = '';
-      if (isLinked) {
-        final dataString = prefs.getString('qahtani_linked_data');
-        if (dataString != null) {
-          try {
-            final data = jsonDecode(dataString);
-            clientName = data['client_info']?['name'] ?? '';
-          } catch (e) {
-            debugPrint('Error decoding qahtani_linked_data: $e');
-          }
-        }
-      }
-      setState(() {
-        _isNetworkLinked = isLinked;
-        _clientName = clientName;
-      });
-    }
+    _loadDashboard();
   }
 
   @override
@@ -121,226 +78,156 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      if (!mounted) return;
-      _loadLinkStatus();
-      _checkConnection();
-      _fetchKpiData();
-      context.read<MqttService>().checkAndReconnect();
-      final isLinked = _isNetworkLinked;
-      if (isLinked) {
-        Future.delayed(const Duration(seconds: 1), () {
-          if (!mounted) return;
-          context.read<MqttService>().publish({'command': 'get_latest_network_details'});
-        });
+    if (state == AppLifecycleState.resumed) _loadDashboard(showLoader: false);
+  }
+
+  Future<void> _loadDashboard({bool showLoader = true}) async {
+    if (showLoader && mounted) setState(() => _isLoading = true);
+    await _loadLinkStatus();
+    await _fetchRouterData();
+    if (mounted && showLoader) setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadLinkStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final linked = prefs.getBool('is_network_linked') ?? false;
+    var name = '';
+    if (linked) {
+      try {
+        final rawData = prefs.getString('qahtani_linked_data');
+        final data = rawData == null ? null : jsonDecode(rawData) as Map<String, dynamic>;
+        name = data?['client_info']?['name']?.toString() ?? '';
+      } catch (_) {
+        name = '';
       }
+    }
+    if (mounted) {
+      setState(() {
+        _isNetworkLinked = linked;
+        _clientName = name;
+      });
     }
   }
 
-  Future<void> _fetchProfiles() async {
-    setState(() => _isLoadingProfiles = true);
+  Future<void> _fetchRouterData() async {
     RouterOSClient? client;
     try {
+      await ConnectionService.instance.getClient();
       client = await MikrotikConnector.connect();
-      final command = _selectedMode == MikrotikMode.userManager
+      final profilesCommand = _selectedMode == MikrotikMode.userManager
           ? '/tool/user-manager/profile/print'
           : '/ip/hotspot/user/profile/print';
-      final response = await client.talk([command]);
+      final profilesResponse = await client.talk([profilesCommand]);
+
+      final usersResponse = await _safeTalk(client, ['/tool/user-manager/user/print', '=.proplist=.id']);
+      var activeResponse = await _safeTalk(client, ['/ip/hotspot/active/print']);
+      if (activeResponse.isEmpty) {
+        activeResponse = await _safeTalk(client, ['/tool/user-manager/session/print']);
+      }
+
       if (mounted) {
         setState(() {
-          _profiles = response.map((p) => Map<String, dynamic>.from(p)).toList();
-          _totalProfiles = _profiles.length;
+          _profiles = profilesResponse.map((item) => Map<String, dynamic>.from(item)).toList();
+          _totalUsers = usersResponse.length;
+          _activeUsers = activeResponse.length;
+          _isConnected = true;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        showErrorSnackBar(context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
-      }
-    } finally {
-      client?.close();
-      if (mounted) setState(() => _isLoadingProfiles = false);
-    }
-  }
-
-  Future<void> _fetchKpiData() async {
-    setState(() => _isLoadingKpi = true);
-    RouterOSClient? client;
-    try {
-      client = await MikrotikConnector.connect();
-
-      // جلب عدد المستخدمين الكلي
-      try {
-        final usersResponse = await client.talk(['/tool/user-manager/user/print', '=.proplist=.id']);
-        _totalUsers = usersResponse.length;
-      } catch (e) {
-        _totalUsers = 0;
-      }
-
-      // جلب عدد المستخدمين النشطين
-      try {
-        final activeResponse = await client.talk(['/ip/hotspot/active/print']);
-        _activeUsers = activeResponse.length;
-      } catch (e) {
-        try {
-          final sessionResponse = await client.talk(['/tool/user-manager/session/print']);
-          _activeUsers = sessionResponse.length;
-        } catch (e) {
+        setState(() {
+          _profiles = const [];
+          _totalUsers = 0;
           _activeUsers = 0;
-        }
-      }
-
-      if (mounted) {
-        setState(() => _isLoadingKpi = false);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoadingKpi = false);
+          _isConnected = false;
+        });
       }
     } finally {
       client?.close();
     }
   }
 
-  /// تبديل وضع إدارة المستخدمين
-  void _switchMode(MikrotikMode newMode) {
-    if (newMode == _selectedMode) return;
-    setState(() {
-      _selectedMode = newMode;
-      _isLoadingProfiles = true;
-    });
-    _fetchProfiles();
+  Future<List<dynamic>> _safeTalk(RouterOSClient client, List<String> command) async {
+    try {
+      return await client.talk(command);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  void _switchMode(MikrotikMode value) {
+    if (value == _selectedMode) return;
+    setState(() => _selectedMode = value);
+    _loadDashboard(showLoader: false);
+  }
+
+  Future<void> _logout() async {
+    await ConnectionService.instance.disconnect();
+    if (mounted) Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWith = MediaQuery.of(context).size.width;
-    // --- الإصلاح: عدد الأعمدة ديناميكي حسب عرض الشاشة ---
-    final crossAxisCount = screenWith > 700 ? 4 : screenWith > 500 ? 3 : 2;
-
-    final List<ServiceItem> services = [
-      ServiceItem(title: 'إضافة كرت فردي', icon: Icons.person_add_alt_1, color: const Color(0xFF5C6BC0),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => AddUserScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, customer: widget.username))); },
-      ),
-      ServiceItem(title: 'إضافة كروت جماعية', icon: Icons.groups, color: const Color(0xFF4CAF50),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => BulkAddScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, username: widget.username))); },
-      ),
-      ServiceItem(title: 'معالج الإعداد', icon: Icons.auto_fix_high, color: const Color(0xFF7C4DFF),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const SetupWizardScreen())); },
-      ),
-      ServiceItem(title: 'ربط الشبكة', icon: Icons.link, color: const Color(0xFF42A5F5),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen())); },
-      ),
-      ServiceItem(title: 'الإحصائيات', icon: Icons.bar_chart_rounded, color: const Color(0xFF26A69A),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const StatsScreen())); },
-      ),
-      ServiceItem(title: 'طبيب الشبكة', icon: Icons.local_hospital_outlined, color: const Color(0xFF42A5F5),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const NetworkDoctorScreen())); },
-      ),
-      ServiceItem(title: 'الملفات المحفوظة', icon: Icons.folder_copy, color: const Color(0xFFFFA726),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const SavedFilesScreen())); },
-      ),
-      ServiceItem(title: 'إدارة قوالب PDF', icon: Icons.picture_as_pdf, color: const Color(0xFF78909C),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => PdfTemplatesScreen(profiles: _profiles))); },
-      ),
-      ServiceItem(title: 'استخراج الكروت', icon: Icons.document_scanner_outlined, color: const Color(0xFFEF5350),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ExtractCardsScreen())); },
-      ),
-      ServiceItem(title: 'طباعة البطاقات', icon: Icons.print, color: const Color(0xFF78909C),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const PrintPreviewScreen(cardUsernames: []))); },
-      ),
-      ServiceItem(title: 'إحصائيات الكروت', icon: Icons.bar_chart, color: const Color(0xFF9C27B0),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const CardsStatisticsScreen())); },
-      ),
-      ServiceItem(title: 'استخدام البيانات', icon: Icons.data_usage, color: const Color(0xFF00E5FF),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const UserDataUsageChartScreen())); },
-      ),
-      ServiceItem(title: 'المستخدمين النشطين', icon: Icons.people_outline, color: const Color(0xFF00ACC1),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ActiveUsersScreen())); },
-      ),
-      ServiceItem(title: 'الملف الشخصي', icon: Icons.account_circle, color: const Color(0xFF29B6F6),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ProfileScreen())); },
-      ),
-      ServiceItem(title: 'النسخ الاحتياطي', icon: Icons.backup, color: const Color(0xFF2196F3),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const BackupSystemScreen())); },
-      ),
-    ];
-
+    final services = _buildServices();
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('الرئيسية', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(width: 8),
-            // مؤشر حالة الاتصال
-            Container(
-              width: 10, height: 10,
-              decoration: BoxDecoration(
-                color: _isConnected ? Colors.greenAccent : Colors.redAccent,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: (_isConnected ? Colors.greenAccent : Colors.redAccent).withOpacity(0.5), blurRadius: 6),
-                ],
-              ),
-            ),
-          ],
-        ),
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Theme.of(context).cardColor,
-            child: const Icon(Icons.person_outline, color: Colors.white),
-          ),
-        ),
+        title: const Text('لوحة التحكم'),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_none_rounded), onPressed: () {}, tooltip: 'الإشعارات'),
           IconButton(
-            icon: const Icon(Icons.logout), tooltip: 'تسجيل الخروج',
-            onPressed: () async {
-              await ConnectionService.instance.disconnect();
-              if (mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-              }
-            },
+            onPressed: () => _loadDashboard(),
+            tooltip: 'تحديث البيانات',
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+          IconButton(
+            onPressed: _logout,
+            tooltip: 'تسجيل الخروج',
+            icon: const Icon(Icons.logout_rounded),
           ),
         ],
       ),
-      body: _isLoadingProfiles
-          ? _buildLoadingIndicator()
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatusCard(),
-                  _buildKpiCards(),
-                  // --- الإصلاح: زر تبديل الوضع ---
-                  _buildModeSwitcher(),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 16.0, right: 24.0, left: 24.0, bottom: 12.0),
-                    child: Text('الخدمات الأساسية', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-                  // --- الإصلاح: عدد الأعمدة ديناميكي ---
-                  GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.85,
+      body: _isLoading
+          ? const CustomLoadingIndicator(message: 'جاري تجهيز بيانات الشبكة…')
+          : RefreshIndicator(
+              onRefresh: _loadDashboard,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate.fixed([
+                        _buildWelcomeCard(context),
+                        const SizedBox(height: 16),
+                        _buildKpis(context),
+                        const SizedBox(height: 20),
+                        _buildModeSelector(),
+                        const SizedBox(height: 24),
+                        Text('أدوات الإدارة', style: Theme.of(context).textTheme.titleLarge),
+                        const SizedBox(height: 4),
+                        Text('اختر الخدمة المناسبة لإدارة شبكة MikroTik والكروت.', style: Theme.of(context).textTheme.bodySmall),
+                        const SizedBox(height: 14),
+                      ]),
                     ),
-                    itemCount: services.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final service = services[index];
-                      return RepaintBoundary(
-                        child: _buildServiceGridItem(title: service.title, icon: service.icon, iconBgColor: service.color, onTap: service.onTap),
-                      );
-                    },
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    sliver: SliverLayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.crossAxisExtent >= 900 ? 4 : constraints.crossAxisExtent >= 620 ? 3 : 2;
+                        return SliverGrid(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => _ServiceTile(item: services[index]),
+                            childCount: services.length,
+                          ),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: columns >= 3 ? 1.12 : .92,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -348,82 +235,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildLoadingIndicator() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0))),
-          const SizedBox(height: 16),
-          Text('جاري التحميل...', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14)),
-        ],
-      ),
-    );
-  }
+  Widget _buildWelcomeCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final displayName = _isNetworkLinked && _clientName.isNotEmpty ? _clientName : widget.username;
+    final connectionText = _isConnected ? 'متصل بالراوتر' : 'غير متصل بالراوتر';
+    final connectionColor = _isConnected ? const Color(0xFF38C793) : const Color(0xFFF26D85);
 
-  Widget _buildStatusCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF24265F), Color(0xFF151D32)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _isNetworkLinked && _clientName.isNotEmpty ? _clientName : 'لوحة تحكم MikroTik',
-                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
-              ],
-            ),
-          ],
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: .1)),
       ),
-    );
-  }
-
-  Widget _buildKpiCards() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         children: [
-          Expanded(
-            child: _buildKpiCard(
-              title: 'المستخدمين',
-              value: '$_totalUsers',
-              icon: Icons.people,
-              color: const Color(0xFF42A5F5),
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: .24),
+              borderRadius: BorderRadius.circular(18),
             ),
+            child: const Icon(Icons.router_outlined, color: Colors.white, size: 28),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
-            child: _buildKpiCard(
-              title: 'الخطط',
-              value: '$_totalProfiles',
-              icon: Icons.category,
-              color: const Color(0xFF66BB6A),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildKpiCard(
-              title: 'المتصلين',
-              value: '$_activeUsers',
-              icon: Icons.wifi,
-              color: const Color(0xFFFFA726),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('مرحباً، $displayName', maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleLarge?.copyWith(color: Colors.white)),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(width: 8, height: 8, decoration: BoxDecoration(color: connectionColor, shape: BoxShape.circle)),
+                    const SizedBox(width: 6),
+                    Text(connectionText, style: theme.textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: .72))),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -431,154 +285,145 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildKpiCard({required String title, required String value, required IconData icon, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildKpis(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 24) / 3;
+        return Row(
+          children: [
+            _MetricCard(width: width, label: 'المستخدمون', value: '$_totalUsers', icon: Icons.people_alt_outlined, color: const Color(0xFF6C7BFF)),
+            const SizedBox(width: 12),
+            _MetricCard(width: width, label: 'الفئات', value: '${_profiles.length}', icon: Icons.layers_outlined, color: const Color(0xFF38C793)),
+            const SizedBox(width: 12),
+            _MetricCard(width: width, label: 'المتصلون', value: '$_activeUsers', icon: Icons.wifi_tethering_rounded, color: const Color(0xFFF6B756)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildModeSelector() {
+    return SegmentedButton<MikrotikMode>(
+      segments: const [
+        ButtonSegment(value: MikrotikMode.userManager, icon: Icon(Icons.manage_accounts_outlined), label: Text('مدير المستخدمين')),
+        ButtonSegment(value: MikrotikMode.hotspot, icon: Icon(Icons.wifi_rounded), label: Text('Hotspot')),
+      ],
+      selected: {_selectedMode},
+      showSelectedIcon: false,
+      onSelectionChanged: (selection) => _switchMode(selection.first),
+    );
+  }
+
+  List<_ServiceItem> _buildServices() {
+    return [
+      _ServiceItem(title: 'إضافة كرت', icon: Icons.person_add_alt_1_outlined, color: const Color(0xFF6C7BFF), onTap: () => _open(AddUserScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, customer: widget.username))),
+      _ServiceItem(title: 'إنشاء كروت بالجملة', icon: Icons.group_add_outlined, color: const Color(0xFF38C793), onTap: () => _open(BulkAddScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, username: widget.username))),
+      _ServiceItem(title: 'معالج الإعداد', icon: Icons.auto_fix_high_outlined, color: const Color(0xFFA78BFA), onTap: () => _open(const SetupWizardScreen())),
+      _ServiceItem(title: 'ربط الشبكة', icon: Icons.link_rounded, color: const Color(0xFF4DA3FF), onTap: () => _open(const QahtaniLinkScreen())),
+      _ServiceItem(title: 'الإحصاءات', icon: Icons.query_stats_outlined, color: const Color(0xFF25B6A1), onTap: () => _open(const StatsScreen())),
+      _ServiceItem(title: 'طبيب الشبكة', icon: Icons.health_and_safety_outlined, color: const Color(0xFF4DA3FF), onTap: () => _open(const NetworkDoctorScreen())),
+      _ServiceItem(title: 'الملفات المحفوظة', icon: Icons.folder_copy_outlined, color: const Color(0xFFF6B756), onTap: () => _open(const SavedFilesScreen())),
+      _ServiceItem(title: 'قوالب PDF', icon: Icons.picture_as_pdf_outlined, color: const Color(0xFF96A5BF), onTap: () => _open(PdfTemplatesScreen(profiles: _profiles))),
+      _ServiceItem(title: 'استخراج الكروت', icon: Icons.document_scanner_outlined, color: const Color(0xFFF26D85), onTap: () => _open(const ExtractCardsScreen())),
+      _ServiceItem(title: 'طباعة البطاقات', icon: Icons.print_outlined, color: const Color(0xFF96A5BF), onTap: () => _open(const PrintPreviewScreen(cardUsernames: []))),
+      _ServiceItem(title: 'إحصاءات الكروت', icon: Icons.bar_chart_rounded, color: const Color(0xFFA78BFA), onTap: () => _open(const CardsStatisticsScreen())),
+      _ServiceItem(title: 'استخدام البيانات', icon: Icons.data_usage_outlined, color: const Color(0xFF53C8FF), onTap: () => _open(const UserDataUsageChartScreen())),
+      _ServiceItem(title: 'المستخدمون النشطون', icon: Icons.people_outline_rounded, color: const Color(0xFF38C793), onTap: () => _open(const ActiveUsersScreen())),
+      _ServiceItem(title: 'الملف الشخصي', icon: Icons.account_circle_outlined, color: const Color(0xFF53C8FF), onTap: () => _open(const ProfileScreen())),
+      _ServiceItem(title: 'النسخ الاحتياطي', icon: Icons.backup_outlined, color: const Color(0xFF6C7BFF), onTap: () => _open(const BackupSystemScreen())),
+    ];
+  }
+
+  Future<void> _open(Widget page) async {
+    await Navigator.of(context).push(CustomPageRoute(builder: (_) => page));
+    if (mounted) _loadDashboard(showLoader: false);
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({required this.width, required this.label, required this.value, required this.icon, required this.color});
+
+  final double width;
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 20),
+                decoration: BoxDecoration(color: color.withValues(alpha: .16), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, size: 19, color: color),
               ),
+              const SizedBox(height: 14),
+              Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 2),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withOpacity(0.7),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// زر تبديل بين وضع UserManager و Hotspot
-  Widget _buildModeSwitcher() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildModeButton(
-                title: 'User Manager',
-                icon: Icons.person_outline,
-                isSelected: _selectedMode == MikrotikMode.userManager,
-                onTap: () => _switchMode(MikrotikMode.userManager),
-              ),
-            ),
-            Expanded(
-              child: _buildModeButton(
-                title: 'Hotspot',
-                icon: Icons.wifi_tethering,
-                isSelected: _selectedMode == MikrotikMode.hotspot,
-                onTap: () => _switchMode(MikrotikMode.hotspot),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModeButton({required String title, required IconData icon, required bool isSelected, required VoidCallback onTap}) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF6b3fa0) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.white54),
-              const SizedBox(width: 6),
-              Flexible(child: Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : Colors.white54), overflow: TextOverflow.ellipsis)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceGridItem({required String title, required IconData icon, required Color iconBgColor, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Card(
-        color: iconBgColor.withOpacity(0.1),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: iconBgColor.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 28, color: iconBgColor),
-            ),
-            const SizedBox(height: 10),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
-          ],
         ),
       ),
     );
   }
 }
 
-/// مكون مؤشر التحميل المخصص (منقول من main.dart)
+class _ServiceTile extends StatelessWidget {
+  const _ServiceTile({required this.item});
+
+  final _ServiceItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: item.onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: item.color.withValues(alpha: .16), borderRadius: BorderRadius.circular(14)),
+                child: Icon(item.icon, color: item.color, size: 25),
+              ),
+              const Spacer(),
+              Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text('فتح الخدمة', style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class CustomLoadingIndicator extends StatelessWidget {
-  final String? message;
   const CustomLoadingIndicator({super.key, this.message});
+
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0))),
+          const CircularProgressIndicator(strokeWidth: 3),
           if (message != null) ...[
             const SizedBox(height: 16),
-            Text(message!, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14, height: 1.5), textAlign: TextAlign.center),
+            Text(message!, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
           ],
         ],
       ),

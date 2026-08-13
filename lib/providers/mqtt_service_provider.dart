@@ -1,72 +1,68 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'mqtt_service.dart';
+
+import '../mqtt_service.dart';
 
 class MqttServiceState {
-  final bool isConnected;
-  final String? connectionMessage;
-  final bool isLoading;
-  final String? error;
-  
-  MqttServiceState({
+  const MqttServiceState({
     this.isConnected = false,
-    this.connectionMessage,
     this.isLoading = false,
+    this.connectionMessage,
     this.error,
   });
-  
+
+  const MqttServiceState.initial() : this();
+
+  final bool isConnected;
+  final bool isLoading;
+  final String? connectionMessage;
+  final String? error;
+
+  bool get isDisconnected => !isConnected;
+  bool get hasError => error?.isNotEmpty ?? false;
+
   MqttServiceState copyWith({
     bool? isConnected,
-    String? connectionMessage,
     bool? isLoading,
+    String? connectionMessage,
     String? error,
+    bool clearError = false,
   }) {
     return MqttServiceState(
       isConnected: isConnected ?? this.isConnected,
-      connectionMessage: connectionMessage ?? this.connectionMessage,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      connectionMessage: connectionMessage ?? this.connectionMessage,
+      error: clearError ? null : error ?? this.error,
     );
   }
 }
 
+final mqttClientProvider = Provider<MqttService>((ref) {
+  final service = MqttService();
+  ref.onDispose(service.dispose);
+  return service;
+});
+
 class MqttServiceNotifier extends StateNotifier<MqttServiceState> {
+  MqttServiceNotifier(this._mqttService) : super(const MqttServiceState.initial());
+
   final MqttService _mqttService;
-  
-  MqttServiceNotifier(this._mqttService) : super(MqttServiceState.initial());
-  
-  Future<void> connect(String ip, String username, String password, int port) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final client = await _mqttService.connect(ip, username, password, port);
-      state = state.copyWith(
-        isConnected: true,
-        connectionMessage: 'تم الاتصال بنجاح',
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isConnected: false,
-        error: e.toString(),
-        isLoading: false,
-      );
-    }
+
+  void reconnect() {
+    state = state.copyWith(isLoading: true, clearError: true);
+    _mqttService.checkAndReconnect();
+    state = state.copyWith(
+      isLoading: false,
+      isConnected: _mqttService.isConnected,
+      connectionMessage: _mqttService.isConnected ? 'تم الاتصال بخدمة المزامنة.' : null,
+    );
   }
-  
-  Future<void> disconnect() async {
+
+  void disconnect() {
     _mqttService.disconnect();
-    state = MqttServiceState.initial();
+    state = const MqttServiceState.initial();
   }
 }
 
 final mqttServiceProvider = StateNotifierProvider<MqttServiceNotifier, MqttServiceState>((ref) {
-  final mqttService = MqttService();
-  return MqttServiceNotifier(mqttService);
+  return MqttServiceNotifier(ref.watch(mqttClientProvider));
 });
-
-extension on MqttServiceState {
-  bool get isConnected => this.isConnected;
-  bool get isDisconnected => !this.isConnected;
-  bool get isLoading => this.isLoading;
-  bool get hasError => this.error != null && this.error!.isNotEmpty;
-}

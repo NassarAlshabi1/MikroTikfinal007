@@ -286,8 +286,12 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                     label: const Text('مشاركة كملف نصي'),
                     onPressed: () async {
                       Navigator.of(context).pop();
-                      await Share.shareXFiles([XFile(filePath)],
-                          text: 'New MikroTik Users');
+                      await SharePlus.instance.share(
+                        ShareParams(
+                          files: [XFile(filePath)],
+                          text: 'New MikroTik Users',
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                   ),
@@ -302,21 +306,6 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
                           Navigator.of(context).pop();
                           final List<String> usernamesOnly = users.map((u) => u['username']!).toList();
                           PdfGenerator.sharePdf(
-                            context,
-                            cardUsernames: usernamesOnly,
-                            template: relevantTemplate!,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.save_alt),
-                        label: const Text('حفظ PDF'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          final List<String> usernamesOnly = users.map((u) => u['username']!).toList();
-                          await PdfGenerator.savePdf(
                             context,
                             cardUsernames: usernamesOnly,
                             template: relevantTemplate!,
@@ -525,7 +514,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedProfile,
+                initialValue: _selectedProfile,
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                 dropdownColor: Colors.white,
                 decoration: const InputDecoration(
@@ -542,7 +531,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _charType,
+                initialValue: _charType,
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                 dropdownColor: Colors.white,
                 decoration: const InputDecoration(
@@ -557,7 +546,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _cardType,
+                initialValue: _cardType,
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                 dropdownColor: Colors.white,
                 decoration: const InputDecoration(
@@ -576,7 +565,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedTemplate?.profileName,
+                initialValue: _selectedTemplate?.profileName,
                 decoration: const InputDecoration(
                     labelText: 'نوع القالب (اختياري)',
                     border: OutlineInputBorder()),

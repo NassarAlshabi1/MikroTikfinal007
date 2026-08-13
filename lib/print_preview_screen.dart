@@ -3,7 +3,6 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
-import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'snackbar_helpers.dart';
@@ -29,7 +28,7 @@ class PrintPreviewScreen extends StatefulWidget {
 class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
   int _selectedCardsPerPage = 3;
   bool _isGenerating = false;
-  List<pw.Widget> _previewCards = [];
+  List<Widget> _previewCards = [];
 
   @override
   void initState() {
@@ -53,7 +52,7 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
         margin: const EdgeInsets.all(8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.withOpacity(0.3)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -69,7 +68,7 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
             const SizedBox(height: 4),
             Text(
               widget.category,
-              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.7)),
+              style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7)),
             ),
           ],
         ),
@@ -197,10 +196,12 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
       final file = File('${directory.path}/cards_${widget.category}.pdf');
       await file.writeAsBytes(bytes);
       
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'بطاقات WiFi - ${widget.category}',
-        subject: 'WiFi Cards - ${widget.category}',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'بطاقات WiFi - ${widget.category}',
+          subject: 'WiFi Cards - ${widget.category}',
+        ),
       );
     } catch (e) {
       if (mounted) {
@@ -241,22 +242,25 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
                   child: pw.Column(
                     mainAxisAlignment: pw.MainAxisAlignment.center,
                     children: [
-                      pw.Icon(Icons.credit_card, size: 40, color: PdfColors.purple),
+                      pw.Text(
+                        'Wi-Fi',
+                        style: const pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.purple),
+                      ),
                       pw.SizedBox(height: 12),
                       pw.Text(
                         username,
-                        style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+                        style: const pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
                         textAlign: pw.TextAlign.center,
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
                         widget.category,
-                        style: pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+                        style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
                         dateStr,
-                        style: pw.TextStyle(fontSize: 9, color: PdfColors.grey),
+                        style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey),
                       ),
                     ],
                   ),

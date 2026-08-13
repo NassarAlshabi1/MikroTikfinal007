@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
-import 'snackbar_helpers.dart';
 
 class UserDataUsageChartScreen extends StatefulWidget {
   const UserDataUsageChartScreen({super.key});
@@ -119,9 +118,9 @@ class _UserDataUsageChartScreenState extends State<UserDataUsageChartScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.no_accounts, size: 64, color: Colors.white.withOpacity(0.3)),
+            Icon(Icons.no_accounts, size: 64, color: Colors.white.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
-            Text('لا توجد بيانات', style: TextStyle(color: Colors.white.withOpacity(0.6))),
+            Text('لا توجد بيانات', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
           ],
         ),
       );
@@ -366,7 +365,7 @@ class _UserDataUsageChartScreenState extends State<UserDataUsageChartScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.2),
+                      color: theme.primaryColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -386,18 +385,18 @@ class _UserDataUsageChartScreenState extends State<UserDataUsageChartScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: isDisabled ? Colors.white.withOpacity(0.5) : Colors.white,
+                            color: isDisabled ? Colors.white.withValues(alpha: 0.5) : Colors.white,
                           ),
                         ),
                         if (isDisabled)
-                          Text('معطل', style: TextStyle(fontSize: 11, color: Colors.redAccent.withOpacity(0.7))),
+                          Text('معطل', style: TextStyle(fontSize: 11, color: Colors.redAccent.withValues(alpha: 0.7))),
                       ],
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.15),
+                      color: theme.primaryColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -412,7 +411,7 @@ class _UserDataUsageChartScreenState extends State<UserDataUsageChartScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

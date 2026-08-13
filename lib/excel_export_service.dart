@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:excel/excel.dart';
+import 'package:excel_plus/excel_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
@@ -10,12 +10,12 @@ class ExcelExportService {
     final sheet = excel['Users'];
 
     sheet.appendRow([
-      const TextCellValue('Username'),
-      const TextCellValue('Profile'),
-      const TextCellValue('Status'),
-      const TextCellValue('Download (MB)'),
-      const TextCellValue('Upload (MB)'),
-      const TextCellValue('Total (MB)'),
+      TextCellValue('Username'),
+      TextCellValue('Profile'),
+      TextCellValue('Status'),
+      TextCellValue('Download (MB)'),
+      TextCellValue('Upload (MB)'),
+      TextCellValue('Total (MB)'),
     ]);
 
     for (final user in users) {
@@ -33,7 +33,7 @@ class ExcelExportService {
       ]);
     }
 
-    for (var i = 0; i < sheet.columns.length; i++) {
+    for (var i = 0; i < sheet.maxColumns; i++) {
       sheet.setColumnWidth(i, 20);
     }
 
@@ -50,11 +50,11 @@ class ExcelExportService {
     final sheet = excel['Sessions'];
 
     sheet.appendRow([
-      const TextCellValue('User'),
-      const TextCellValue('IP Address'),
-      const TextCellValue('Uptime'),
-      const TextCellValue('Download (MB)'),
-      const TextCellValue('Upload (MB)'),
+      TextCellValue('User'),
+      TextCellValue('IP Address'),
+      TextCellValue('Uptime'),
+      TextCellValue('Download (MB)'),
+      TextCellValue('Upload (MB)'),
     ]);
 
     for (final session in sessions) {
@@ -70,7 +70,7 @@ class ExcelExportService {
       ]);
     }
 
-    for (var i = 0; i < sheet.columns.length; i++) {
+    for (var i = 0; i < sheet.maxColumns; i++) {
       sheet.setColumnWidth(i, 20);
     }
 
@@ -83,10 +83,12 @@ class ExcelExportService {
   }
 
   static Future<void> shareExcel(File file, String filename) async {
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: 'Excel Report - $filename',
-      subject: 'Excel Report - $filename',
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        text: 'Excel Report - $filename',
+        subject: 'Excel Report - $filename',
+      ),
     );
   }
 }

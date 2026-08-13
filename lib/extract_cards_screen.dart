@@ -495,7 +495,7 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           const Text(
                             'أدخل شروط المسح الضوئي للكروت',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 18, color: Colors.white),
+                            style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                           const SizedBox(height: 32),
                           TextFormField(

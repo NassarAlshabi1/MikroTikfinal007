@@ -217,7 +217,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                       child: Column(
                         children: [
                           DropdownButtonFormField<String>(
-                            value: _selectedProfile,
+                            initialValue: _selectedProfile,
                             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                             dropdownColor: Colors.white,
                             decoration: const InputDecoration(

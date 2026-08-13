@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
 import 'notification_service.dart';
-import 'connection_service.dart';
 import 'home_screen.dart';
 import 'custom_page_route.dart';
 
@@ -441,9 +438,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             child: Text(
               'سياسة الخصوصية',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 decoration: TextDecoration.underline,
-                decorationColor: Colors.white.withOpacity(0.7),
+                decorationColor: Colors.white.withValues(alpha: 0.7),
               ),
             ),
           ),
