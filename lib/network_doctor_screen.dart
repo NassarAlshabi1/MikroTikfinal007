@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:dart_ping/dart_ping.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'ai_diagnosis_prompt.dart';
 import 'network_map_screen.dart';
 import 'rogue_dhcp_detector_screen.dart';
 
@@ -403,6 +405,89 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       }
     }
     if (mounted) setState(() {});
+  }
+
+  bool get _hasCompletedTests => _tests.any(
+        (test) =>
+            test.status != DiagnosticStatus.pending &&
+            test.status != DiagnosticStatus.running,
+      );
+
+  String _diagnosticStatusForPrompt(DiagnosticStatus status) {
+    switch (status) {
+      case DiagnosticStatus.success:
+        return 'success';
+      case DiagnosticStatus.warning:
+        return 'warning';
+      case DiagnosticStatus.error:
+        return 'error';
+      case DiagnosticStatus.running:
+        return 'running';
+      case DiagnosticStatus.pending:
+        return 'pending';
+    }
+  }
+
+  String _buildAIDiagnosisPrompt() => AIDiagnosisPrompt.build(
+        gatewayIp: _gatewayIp,
+        tests: _tests
+            .map(
+              (test) => AIDiagnosticTestResult(
+                id: test.id,
+                title: test.title,
+                status: _diagnosticStatusForPrompt(test.status),
+                message: test.message,
+                latencyMs: test.latencyMs,
+                downloadSpeedMbps: test.downloadSpeedMbps,
+                uploadSpeedMbps: test.uploadSpeedMbps,
+              ),
+            )
+            .toList(growable: false),
+      );
+
+  Future<void> _showAIDiagnosisPrompt() async {
+    final prompt = _buildAIDiagnosisPrompt();
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('موجّه التشخيص الذكي'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 420),
+          child: SingleChildScrollView(
+            child: SelectableText(
+              prompt,
+              textDirection: TextDirection.rtl,
+              style: const TextStyle(fontSize: 13, height: 1.55),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('إغلاق'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: prompt));
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('تم نسخ موجّه التشخيص. لا يتضمن بيانات اعتماد أو كلمات مرور.'),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.content_copy),
+            label: const Text('نسخ الموجّه'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool?> _confirmSpeedTest() {
@@ -844,6 +929,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           ),
         ),
         const SizedBox(height: 8),
+        if (_hasCompletedTests) ...[
+          _buildAIDiagnosisPromptCard(),
+          const SizedBox(height: 12),
+        ],
         if (_recommendations.isEmpty)
           Container(
             padding: const EdgeInsets.all(24),
@@ -851,14 +940,23 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle, color: Colors.greenAccent, size: 24),
-                SizedBox(width: 12),
-                Text(
-                  'لا توجد توصيات - الشبكة في حالة جيدة!',
-                  style: TextStyle(color: Colors.white, fontSize: 15),
+                Icon(
+                  _hasCompletedTests ? Icons.check_circle : Icons.play_circle_outline,
+                  color: _hasCompletedTests ? Colors.greenAccent : Colors.white70,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    _hasCompletedTests
+                        ? 'لا توجد توصيات حالياً - النتائج المكتملة تبدو سليمة.'
+                        : 'شغّل فحصاً واحداً على الأقل لعرض حالة الشبكة والتوصيات.',
+                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),
@@ -868,6 +966,54 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           child: _buildRecommendationCard(r),
         )),
       ],
+    );
+  }
+
+  Widget _buildAIDiagnosisPromptCard() {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: primary.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.auto_awesome_outlined, color: primary),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'موجّه للتشخيص بالذكاء الاصطناعي',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'انسخه إلى مزوّدك الموثوق لتحليل النتائج دون بيانات اعتماد.',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _showAIDiagnosisPrompt,
+            tooltip: 'عرض ونسخ موجّه التشخيص',
+            icon: Icon(Icons.content_copy, color: primary),
+          ),
+        ],
+      ),
     );
   }
 
