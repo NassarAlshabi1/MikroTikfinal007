@@ -14,6 +14,10 @@ class AppTheme {
   static const Color successColor = Color(0xFF38C793);
   static const Color warningColor = Color(0xFFF6B756);
   static const Color dangerColor = Color(0xFFF26D85);
+  static const Color inputBg = Color(0xFF111A2E);
+  static const Color inputText = Color(0xFFF4F7FF);
+  static const Color inputHint = Color(0xFFB4C0D9);
+  static const Color inputBorder = Color(0xFF34415E);
 
   static final ColorScheme _darkScheme = ColorScheme.fromSeed(
     seedColor: primaryColor,
@@ -38,13 +42,19 @@ class AppTheme {
     return baseTheme.copyWith(
       scaffoldBackgroundColor: scaffoldBg,
       textTheme: typography.copyWith(
-        displaySmall: typography.displaySmall?.copyWith(fontWeight: FontWeight.w800),
-        headlineSmall: typography.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-        titleLarge: typography.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-        titleMedium: typography.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        displaySmall:
+            typography.displaySmall?.copyWith(fontWeight: FontWeight.w800),
+        headlineSmall:
+            typography.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+        titleLarge:
+            typography.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        titleMedium:
+            typography.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         bodyMedium: typography.bodyMedium?.copyWith(height: 1.55),
-        bodySmall: typography.bodySmall?.copyWith(color: subtitleGrey, height: 1.5),
-        labelLarge: typography.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+        bodySmall:
+            typography.bodySmall?.copyWith(color: subtitleGrey, height: 1.5),
+        labelLarge:
+            typography.labelLarge?.copyWith(fontWeight: FontWeight.w700),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -65,30 +75,65 @@ class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: primaryColor,
+        selectionColor: primaryColor.withValues(alpha: 0.35),
+        selectionHandleColor: primaryColor,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF11192C),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        hintStyle: typography.bodyMedium?.copyWith(color: subtitleGrey),
-        labelStyle: typography.bodyMedium?.copyWith(color: subtitleGrey),
-        prefixIconColor: subtitleGrey,
-        suffixIconColor: subtitleGrey,
+        fillColor: inputBg,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        hintStyle: typography.bodyMedium?.copyWith(color: inputHint),
+        labelStyle: typography.bodyMedium?.copyWith(color: inputHint),
+        floatingLabelStyle: typography.bodyMedium?.copyWith(
+          color: primaryColor,
+          fontWeight: FontWeight.w700,
+        ),
+        helperStyle: typography.bodySmall?.copyWith(color: inputHint),
+        errorStyle: typography.bodySmall?.copyWith(
+          color: dangerColor,
+          fontWeight: FontWeight.w700,
+        ),
+        prefixIconColor: inputHint,
+        suffixIconColor: inputHint,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          borderSide: const BorderSide(color: inputBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          borderSide: const BorderSide(color: inputBorder),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: inputBorder.withValues(alpha: 0.55)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryColor, width: 1.5),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: dangerColor),
+          borderSide: const BorderSide(color: dangerColor, width: 1.5),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: dangerColor, width: 2),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: cardBg,
+        surfaceTintColor: Colors.transparent,
+        textStyle: typography.bodyMedium?.copyWith(color: inputText),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: const MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(cardBg),
+          surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+        ),
+        textStyle: typography.bodyMedium?.copyWith(color: inputText),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -96,7 +141,8 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(52),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           textStyle: typography.labelLarge,
           elevation: 0,
         ),
@@ -106,7 +152,8 @@ class AppTheme {
           foregroundColor: _darkScheme.onSurface,
           minimumSize: const Size.fromHeight(52),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           textStyle: typography.labelLarge,
         ),
       ),
@@ -133,7 +180,8 @@ class AppTheme {
         indicatorColor: primaryColor.withValues(alpha: 0.24),
         labelTextStyle: WidgetStatePropertyAll(typography.labelSmall),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(color: primaryColor),
+      progressIndicatorTheme:
+          const ProgressIndicatorThemeData(color: primaryColor),
     );
   }
 }

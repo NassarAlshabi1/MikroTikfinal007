@@ -345,13 +345,13 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
         return AlertDialog(
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            dropdownColor: Colors.white,
-            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            dropdownColor: Theme.of(context).cardColor,
+            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: Text(unit['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (value) {
@@ -515,16 +515,16 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _selectedProfile,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                dropdownColor: Theme.of(context).cardColor,
                 decoration: const InputDecoration(
                     labelText: 'الفئة (البروفايل)',
                     border: OutlineInputBorder()),
-                hint: const Text('اختر فئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                hint: const Text('اختر فئة', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                 items: widget.profiles
                     .map((p) => DropdownMenuItem(
                         value: p['name'] as String,
-                        child: Text(p['name'] as String, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))))
+                        child: Text(p['name'] as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))))
                     .toList(),
                 onChanged: (v) => setState(() => _selectedProfile = v),
                 validator: (v) => (v == null) ? 'الرجاء اختيار فئة' : null,
@@ -532,34 +532,34 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _charType,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                dropdownColor: Theme.of(context).cardColor,
                 decoration: const InputDecoration(
                     labelText: 'نوع أحرف المستخدم',
                     border: OutlineInputBorder()),
                 items: const [
-                  DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                  DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                  DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                  DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                  DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
                 ],
                 onChanged: (v) => setState(() => _charType = v!),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _cardType,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                dropdownColor: Theme.of(context).cardColor,
                 decoration: const InputDecoration(
                     labelText: 'نوع الكرت', border: OutlineInputBorder()),
                 items: const [
                   DropdownMenuItem(
-                      value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))) ,
+                      value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))) ,
                   DropdownMenuItem(
                       value: 'username_and_password_equal',
-                      child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))) ,
+                      child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))) ,
                   DropdownMenuItem(
                       value: 'username_and_password_different',
-                      child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))) ,
+                      child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))) ,
                 ],
                 onChanged: (v) => setState(() => _cardType = v!),
               ),
