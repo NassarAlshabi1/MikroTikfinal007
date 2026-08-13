@@ -151,7 +151,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedProfile,
+              initialValue: _selectedProfile,
               style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               dropdownColor: Colors.white,
               decoration: const InputDecoration(labelText: 'الفئة (البروفايل)', border: OutlineInputBorder()),
@@ -165,7 +165,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _cardType,
+              initialValue: _cardType,
               style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               dropdownColor: Colors.white,
               decoration: const InputDecoration(labelText: 'نوع الكرت', border: OutlineInputBorder()),
@@ -178,7 +178,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _charType,
+              initialValue: _charType,
               style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               dropdownColor: Colors.white,
               decoration: const InputDecoration(labelText: 'نوع أحرف المستخدم', border: OutlineInputBorder()),

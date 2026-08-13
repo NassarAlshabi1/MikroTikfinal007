@@ -117,23 +117,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildNotLinkedView() {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.warning_amber_rounded, size: 80, color: Colors.amber),
-            const SizedBox(height: 20),
-            const Text(
+            Icon(Icons.warning_amber_rounded, size: 80, color: Colors.amber),
+            SizedBox(height: 20),
+            Text(
               'لم يتم ربط الشبكة!',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               'الرجاء الذهاب إلى شاشة "ربط الشبكة بـ م/نصار الشعبي" لإكمال عملية الربط أولاً.',
-              style: const TextStyle(fontSize: 16, color: Colors.white),
+              style: TextStyle(fontSize: 16, color: Colors.white),
               textAlign: TextAlign.center,
             ),
           ],

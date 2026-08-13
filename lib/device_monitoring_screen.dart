@@ -152,12 +152,12 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _displayedDevices.isEmpty
-              ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.devices_other, size: 80, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('لا توجد أجهزة للمراقبة', style: TextStyle(fontSize: 22, color: Colors.white)),
-                  const SizedBox(height: 8),
-                  const Text('اضغط على زر التحديث لجلب الأجهزة', style: TextStyle(color: Colors.white)),
+              ? const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Icon(Icons.devices_other, size: 80, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text('لا توجد أجهزة للمراقبة', style: TextStyle(fontSize: 22, color: Colors.white)),
+                  SizedBox(height: 8),
+                  Text('اضغط على زر التحديث لجلب الأجهزة', style: TextStyle(color: Colors.white)),
                 ]))
               : ListView.builder(
                   padding: const EdgeInsets.all(8.0),
@@ -208,8 +208,11 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
               _displayedDevices = List.from(_allDevices);
             }
           });
-          if (newStatus == DeviceStatus.online) showSuccessSnackBar(context, 'تم فحص ${device.name}: متصل');
-          else showErrorSnackBar(context, 'تم فحص ${device.name}: غير متصل');
+          if (newStatus == DeviceStatus.online) {
+            showSuccessSnackBar(context, 'تم فحص ${device.name}: متصل');
+          } else {
+            showErrorSnackBar(context, 'تم فحص ${device.name}: غير متصل');
+          }
         }
       } finally {
         client.close();

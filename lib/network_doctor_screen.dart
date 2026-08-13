@@ -33,8 +33,8 @@ class _NetworkDiagnostic {
   final String id;
   final String title;
   final String description;
-  DiagnosticStatus status;
-  String message;
+  DiagnosticStatus status = DiagnosticStatus.pending;
+  String message = 'لم يتم الفحص بعد';
   double? latencyMs;
   double? downloadSpeedMbps;
   double? uploadSpeedMbps;
@@ -43,11 +43,6 @@ class _NetworkDiagnostic {
     required this.id,
     required this.title,
     required this.description,
-    this.status = DiagnosticStatus.pending,
-    this.message = 'لم يتم الفحص بعد',
-    this.latencyMs,
-    this.downloadSpeedMbps,
-    this.uploadSpeedMbps,
   });
 }
 
@@ -427,7 +422,6 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   int get _countSuccess => _tests.where((t) => t.status == DiagnosticStatus.success).length;
   int get _countWarning => _tests.where((t) => t.status == DiagnosticStatus.warning).length;
   int get _countError => _tests.where((t) => t.status == DiagnosticStatus.error).length;
-  int get _countPending => _tests.where((t) => t.status == DiagnosticStatus.pending).length;
 
   Color _statusColor(DiagnosticStatus s) {
     switch (s) {
@@ -507,14 +501,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [primary.withOpacity(0.6), primary.withOpacity(0.3)],
+          colors: [primary.withValues(alpha: 0.6), primary.withValues(alpha: 0.3)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.2),
+            color: primary.withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -527,7 +521,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.health_and_safety, color: Colors.white, size: 36),
@@ -575,7 +569,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.2),
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -609,7 +603,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Column(
         children: [
@@ -652,7 +646,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         ..._tests.map((t) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: _buildTestCard(t),
-        )).toList(),
+        )),
       ],
     );
   }
@@ -667,7 +661,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -680,7 +674,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(Icons.network_check, color: color, size: 24),
@@ -713,9 +707,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: color.withOpacity(0.5), width: 1),
+                  border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
                 ),
                 child: Text(
                   _statusLabel(t.status),
@@ -762,7 +756,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             width: double.infinity,
@@ -810,9 +804,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.15),
+                    color: Colors.orange.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
                   alignment: Alignment.center,
                   child: const Row(
@@ -872,7 +866,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         ..._recommendations.map((r) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: _buildRecommendationCard(r),
-        )).toList(),
+        )),
       ],
     );
   }
@@ -907,7 +901,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: sevColor.withOpacity(0.4),
+          color: sevColor.withValues(alpha: 0.4),
           width: 1.5,
         ),
       ),
@@ -920,7 +914,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: sevColor.withOpacity(0.2),
+                  color: sevColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(r.icon, color: sevColor, size: 26),
@@ -945,7 +939,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: sevColor.withOpacity(0.2),
+                            color: sevColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -1007,7 +1001,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                       height: 24,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: sevColor.withOpacity(0.2),
+                        color: sevColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -1069,14 +1063,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: primary.withOpacity(0.3), width: 1.5),
+                    border: Border.all(color: primary.withValues(alpha: 0.3), width: 1.5),
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: primary.withOpacity(0.2),
+                          color: primary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Icon(Icons.hub_outlined, size: 32, color: primary),
@@ -1110,14 +1104,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3), width: 1.5),
+                    border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3), width: 1.5),
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.redAccent.withOpacity(0.2),
+                          color: Colors.redAccent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(Icons.security, size: 32, color: Colors.redAccent),

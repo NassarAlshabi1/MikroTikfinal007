@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -11,14 +12,14 @@ class RealtimeMonitoringService {
 
   WebSocketChannel? _wsChannel;
   MqttServerClient? _mqttClient;
-  StreamController<Map<String, dynamic>>? _dataController;
+  final StreamController<Map<String, dynamic>> _dataController = StreamController.broadcast();
   Timer? _reconnectTimer;
   bool _isConnected = false;
   final List<Function(Map<String, dynamic>)> _listeners = [];
 
   bool get isConnected => _isConnected;
 
-  Stream<Map<String, dynamic>> get dataStream => _dataController?.stream ?? const Stream.empty();
+  Stream<Map<String, dynamic>> get dataStream => _dataController.stream;
 
   void addListener(Function(Map<String, dynamic>) listener) {
     _listeners.add(listener);
@@ -106,7 +107,7 @@ class RealtimeMonitoringService {
     for (final listener in _listeners) {
       listener(data);
     }
-    _dataController?.add(data);
+    _dataController.add(data);
   }
 
   void _scheduleReconnect() {
@@ -120,14 +121,14 @@ class RealtimeMonitoringService {
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
     await _wsChannel?.sink.close();
-    await _mqttClient?.unsubscribe('#');
-    await _mqttClient?.disconnect();
+    _mqttClient?.unsubscribe('#');
+    _mqttClient?.disconnect();
     _isConnected = false;
   }
 
   void dispose() {
     _reconnectTimer?.cancel();
-    _dataController?.close();
+    _dataController.close();
     _listeners.clear();
   }
 }

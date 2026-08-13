@@ -57,7 +57,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
   Future<void> _createNewBackup() async {
     final result = await _showBackupNameDialog();
-    if (result == null) return;
+    if (result == null || !mounted) return;
     final backupName = result['name'] as String;
     final encrypt = result['encrypt'] as bool;
 
@@ -134,7 +134,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                 title: const Text('تشفير النسخة', style: TextStyle(fontSize: 14)),
                 subtitle: const Text('يُنصح بالتشفير لحماية الإعدادات', style: TextStyle(fontSize: 11, color: Colors.grey)),
                 value: encrypt,
-                activeColor: Theme.of(context).primaryColor,
+                activeThumbColor: Theme.of(context).primaryColor,
                 contentPadding: EdgeInsets.zero,
                 onChanged: (v) => setDialogState(() => encrypt = v),
               ),
@@ -488,7 +488,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFB39DDB).withOpacity(0.3),
+                            color: const Color(0xFFB39DDB).withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -549,18 +549,18 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
 
     if (_backups.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.backup, size: 80, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'لا توجد نسخ احتياطية',
               style: TextStyle(fontSize: 20, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'اضغط على الزر أدناه لإنشاء نسخة جديدة',
               style: TextStyle(color: Colors.grey),
             ),
@@ -598,10 +598,10 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ),
       body: _buildBody(),
       floatingActionButton: _isCreatingBackup
-          ? FloatingActionButton(
+          ? const FloatingActionButton(
               onPressed: null,
               backgroundColor: Colors.grey,
-              child: const SizedBox(
+              child: SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(

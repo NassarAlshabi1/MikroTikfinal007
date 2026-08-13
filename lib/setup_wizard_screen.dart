@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
 
@@ -79,7 +78,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           // Progress Indicator
           LinearProgressIndicator(
             value: (_currentStep + 1) / _totalSteps,
-            backgroundColor: Colors.white.withOpacity(0.1),
+            backgroundColor: Colors.white.withValues(alpha: 0.1),
             color: theme.primaryColor,
             minHeight: 4,
           ),
@@ -114,25 +113,31 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         'السابق',
-                        style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
                       ),
                     ),
                   ),
                 if (_currentStep > 0) const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _getNextAction(),
+                    onPressed: _isCompleting ? null : _getNextAction(),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: Text(
-                      _currentStep == _totalSteps - 1 ? 'إنهاء' : 'التالي',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    child: _isCompleting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(
+                            _currentStep == _totalSteps - 1 ? 'إنهاء' : 'التالي',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],
@@ -189,7 +194,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'أدخل بيانات الاتصال بـ MikroTik Router',
-            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
           ),
           const SizedBox(height: 32),
           TextField(
@@ -242,9 +247,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
               margin: const EdgeInsets.only(top: 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -286,7 +291,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'قم بتحديد إعدادات الشبكة اللاسلكية',
-            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
           ),
           const SizedBox(height: 32),
           SegmentedButton<bool>(
@@ -371,7 +376,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'حدد عدد البطاقات وخصائصها',
-            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
           ),
           const SizedBox(height: 32),
           TextField(
@@ -413,7 +418,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
+          const Icon(
             Icons.check_circle,
             size: 64,
             color: Colors.green,
@@ -429,7 +434,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'راجع الإعدادات قبل البدء',
-            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
           ),
           const SizedBox(height: 32),
           _buildSummaryItem('عنوان IP', _ipController.text, theme),
@@ -439,10 +444,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           _buildSummaryItem('عدد المستخدمين', _usersCountController.text, theme),
           _buildSummaryItem('البادئة', _prefixController.text, theme),
         ],
-      );
-    }
+      ),
+    );
+  }
 
-    Widget _buildSummaryItem(String label, String value, ThemeData theme) {
+  Widget _buildSummaryItem(String label, String value, ThemeData theme) {
       return Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
@@ -455,7 +461,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
               ),
             ),
             Expanded(
@@ -469,7 +475,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
         ),
       );
     }
-  }
 
   Future<void> _testConnection() async {
     setState(() {

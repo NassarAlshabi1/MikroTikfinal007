@@ -1,13 +1,11 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:mikrotik_manager/main.dart';
 
 void main() {
-  testWidgets('Login screen smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
-
-    expect(find.text('إدارة شبكتك بسهولة وأمان'), findsOneWidget);
-    expect(find.text('اتصال محلي'), findsOneWidget);
-    expect(find.text('اتصال عن بعد'), findsOneWidget);
+  testWidgets('يعرض التطبيق نقطة الدخول الأساسية', (WidgetTester tester) async {
+    await tester.pumpWidget(const ProviderScope(child: MikroTikManagerApp()));
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

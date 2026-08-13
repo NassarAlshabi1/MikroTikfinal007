@@ -15,15 +15,18 @@ final GlobalKey<ScaffoldMessengerState> mqttScaffoldMessengerKey = GlobalKey<Sca
 class MqttService with ChangeNotifier {
   MqttServerClient? _client;
   String? _deviceId;
-  final String _broker = 'ue1f6bff.ala.us-east-1.emqxsl.com';
-  final int _port = 8883;
-  final String _username = '777042661';
-  final String _password = 'mohammed77#7042661';
-  final String _mainTopic = 'MyChatApp/ali/inbox';
+  // تمرر هذه القيم وقت البناء عبر --dart-define ولا تُحفظ داخل المستودع.
+  static const String _broker = String.fromEnvironment('MQTT_BROKER');
+  static const int _port = int.fromEnvironment('MQTT_PORT', defaultValue: 8883);
+  static const String _username = String.fromEnvironment('MQTT_USERNAME');
+  static const String _password = String.fromEnvironment('MQTT_PASSWORD');
+  static const String _mainTopic = String.fromEnvironment('MQTT_MAIN_TOPIC');
   String? _responseTopic;
 
   final StreamController<Map<String, dynamic>> _messageStreamController = StreamController.broadcast();
   Stream<Map<String, dynamic>> get messages => _messageStreamController.stream;
+  bool get isConnected => _client?.connectionStatus?.state == MqttConnectionState.connected;
+  bool get _isConfigured => _broker.isNotEmpty && _username.isNotEmpty && _password.isNotEmpty && _mainTopic.isNotEmpty;
 
   // --- الإصلاح: متغيرات Exponential Backoff ---
   int _retryCount = 0;
@@ -36,9 +39,13 @@ class MqttService with ChangeNotifier {
   }
 
   Future<void> _initialize() async {
+    if (!_isConfigured) {
+      debugPrint('MQTT is disabled: secure runtime configuration is unavailable.');
+      return;
+    }
     _deviceId = await _getDeviceId();
     if (_deviceId != null) {
-      _responseTopic = 'MyChatApp/client/$_deviceId/response';
+      _responseTopic = '$_mainTopic/$_deviceId/response';
       _connect();
     }
   }
@@ -121,6 +128,7 @@ class MqttService with ChangeNotifier {
 
   void _onConnected() {
     debugPrint('MQTT: Connected');
+    notifyListeners();
     _client!.subscribe(_responseTopic!, MqttQos.atLeastOnce);
     _client!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> c) {
       final MqttPublishMessage recMess = c[0].payload as MqttPublishMessage;
@@ -136,6 +144,7 @@ class MqttService with ChangeNotifier {
 
   void _onDisconnected() {
     debugPrint('MQTT: Disconnected');
+    notifyListeners();
     if (!_isDisposed) _scheduleReconnect();
   }
 
@@ -144,6 +153,12 @@ class MqttService with ChangeNotifier {
   }
 
   void _pong() {}
+
+  void disconnect() {
+    _retryTimer?.cancel();
+    _client?.disconnect();
+    notifyListeners();
+  }
 
   void publish(Map<String, dynamic> message) {
     if (_client?.connectionStatus?.state != MqttConnectionState.connected) {

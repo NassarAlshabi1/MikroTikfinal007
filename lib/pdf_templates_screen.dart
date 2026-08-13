@@ -254,10 +254,10 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            Text(
+            const Text(
               'اضغط على زر الإضافة (+) في الأسفل لإنشاء قالب PDF جديد خاص بك.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.white),
+              style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ],
         ),

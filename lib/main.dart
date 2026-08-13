@@ -2,32 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'providers/mqtt_service_provider.dart';
+import 'app_theme.dart';
 import 'l10n/app_localizations.dart';
 import 'login_screen.dart';
-import 'home_screen.dart';
+import 'mqtt_service.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: MikroTikManagerApp()));
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class MikroTikManagerApp extends StatelessWidget {
+  const MikroTikManagerApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final mqttService = ref.watch(mqttServiceProvider);
-
+  Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MikroTik Manager',
+      title: 'إدارة MikroTik',
       theme: AppTheme.darkTheme,
-      home: mqttService.isConnected
-          ? const HomeScreen()
-          : const LoginScreen(),
-      supportedLocales: const [
-        Locale('ar', ''),
-        Locale('en', ''),
-      ],
+      scaffoldMessengerKey: mqttScaffoldMessengerKey,
+      initialRoute: '/',
+      routes: {
+        '/': (_) => const LoginScreen(),
+      },
+      supportedLocales: const [Locale('ar'), Locale('en')],
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
