@@ -144,7 +144,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
           PopupMenuButton<String>(
             onSelected: (value) { if (value == 'all') _showAllDevices(); },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(value: 'all', child: ListTile(leading: Icon(Icons.devices), title: Text('جميع الأجهزة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)))),
+              const PopupMenuItem<String>(value: 'all', child: ListTile(leading: Icon(Icons.devices), title: Text('جميع الأجهزة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)))),
             ],
           ),
         ],

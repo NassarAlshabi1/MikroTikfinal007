@@ -152,13 +152,13 @@ class _AddUserScreenState extends State<AddUserScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _selectedProfile,
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              dropdownColor: Theme.of(context).cardColor,
               decoration: const InputDecoration(labelText: 'الفئة (البروفايل)', border: OutlineInputBorder()),
-              hint: const Text('اختر فئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+              hint: const Text('اختر فئة', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
               items: widget.profiles.map((profile) {
                 final profileName = profile['name'] as String;
-                return DropdownMenuItem(value: profileName, child: Text(profileName, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)));
+                return DropdownMenuItem(value: profileName, child: Text(profileName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)));
               }).toList(),
               onChanged: (value) => setState(() { _selectedProfile = value; }),
               validator: (value) => (value == null) ? 'الرجاء اختيار فئة' : null,
@@ -166,26 +166,26 @@ class _AddUserScreenState extends State<AddUserScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _cardType,
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              dropdownColor: Theme.of(context).cardColor,
               decoration: const InputDecoration(labelText: 'نوع الكرت', border: OutlineInputBorder()),
               items: const [
-                DropdownMenuItem(value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'username_and_password_equal', child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'username_and_password_different', child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'username_and_password_equal', child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'username_and_password_different', child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
               ],
               onChanged: (v) => setState(() => _cardType = v!),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _charType,
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              dropdownColor: Theme.of(context).cardColor,
               decoration: const InputDecoration(labelText: 'نوع أحرف المستخدم', border: OutlineInputBorder()),
               items: const [
-                DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
               ],
               onChanged: (v) => setState(() => _charType = v!),
             ),

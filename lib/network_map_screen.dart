@@ -435,11 +435,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               const PopupMenuItem<String>(
                 value: 'export',
-                child: ListTile(leading: Icon(Icons.file_upload), title: Text('تصدير / مشاركة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                child: ListTile(leading: Icon(Icons.file_upload), title: Text('تصدير / مشاركة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
               ),
               const PopupMenuItem<String>(
                 value: 'import',
-                child: ListTile(leading: Icon(Icons.file_download), title: Text('استيراد خريطة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                child: ListTile(leading: Icon(Icons.file_download), title: Text('استيراد خريطة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
               ),
             ],
           ),
@@ -587,14 +587,14 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           value: 'add',
           child: ListTile(
             leading: Icon(Icons.add_circle_outline),
-            title: Text('إضافة جهاز فرعي', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            title: Text('إضافة جهاز فرعي', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ),
         const PopupMenuItem(
           value: 'edit',
           child: ListTile(
             leading: Icon(Icons.edit_outlined),
-            title: Text('تعديل الجهاز', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            title: Text('تعديل الجهاز', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ),
         const PopupMenuItem(
@@ -640,7 +640,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
   
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withValues(alpha: 0.7),
+      color: Colors.white.withValues(alpha: 0.7),
       child: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
