@@ -81,3 +81,7 @@
 تم جعل `ThemeMode.dark` هو الوضع الافتراضي للتثبيتات الجديدة، مع استمرار احترام تفضيل المستخدم المحفوظ وإتاحة التبديل إلى الوضع الفاتح. وتم توحيد إعدادات `InputDecorationTheme` و`DropdownMenuTheme` و`PopupMenuTheme` و`DialogTheme` و`BottomSheetTheme` و`ProgressIndicatorTheme` على لوحة الألوان الداكنة. جميع النصوص العامة تعتمد TextTheme بخط `Tajawal`، مع الحفاظ على خط AppBar العربي.
 
 أضيفت اختبارات ثيم تتحقق من لون الخلفية والسطح والبطاقات والحقول والقوائم والحوار وbottom sheet وخط Tajawal، وأصبح `flutter analyze` خالياً من الملاحظات، كما نجحت مجموعة الاختبارات الكاملة.
+
+## ملاحظة بناء Web
+
+نجح `flutter analyze` وجميع اختبارات Flutter، لكن `flutter build web --release` لا يكتمل بسبب ملفات Isar المولدة التي تحتوي على معرّفات 64-bit لا يمكن تمثيلها بدقة في JavaScript. هذا قيد معروف لمسار Web في البنية الحالية وليس خطأً في ألوان الثيم أو مكونات Material. التطبيق يستهدف Android/iOS/سطح المكتب مع Isar native؛ وإذا كان Web مطلوباً لاحقاً فيلزم فصل طبقة التخزين أو إضافة backend/web repository بديل بدلاً من استخدام Isar native مباشرة.
