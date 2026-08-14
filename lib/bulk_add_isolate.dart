@@ -42,34 +42,45 @@ class BulkAddIsolateData {
 
 void bulkAddIsolate(BulkAddIsolateData data) async {
   final sendPort = data.sendPort;
+  final approvalPort = ReceivePort();
   int successCount = 0;
   final newlyCreatedUsers = <Map<String, String>>[];
-  final generatedUsernames = <String>{};
-  String firstGeneratedUsername = '';
-
   RouterOSClient? client;
+
   try {
     _validateInput(data);
-    final profile = data.selectedProfile!.trim();
+    final plannedUsers = _buildUsers(data);
+
+    // لا يتم الاتصال أو إرسال أي أمر قبل أن تحفظ الشاشة الخطة في Isar.
+    sendPort.send({
+      'type': 'prepared',
+      'users': plannedUsers,
+      'approvalPort': approvalPort.sendPort,
+    });
+    final approval = await approvalPort.first.timeout(
+      const Duration(minutes: 5),
+      onTimeout: () => <String, dynamic>{
+        'approved': false,
+        'reason': 'انتهت مهلة تجهيز الكروت محلياً.',
+      },
+    );
+    if (approval is! Map || approval['approved'] != true) {
+      throw FormatException(
+        approval is Map
+            ? approval['reason']?.toString() ?? 'تم إلغاء العملية.'
+            : 'تعذر اعتماد خطة إنشاء الكروت.',
+      );
+    }
+
     client = await MikrotikConnector.connectWithConfig(data.connectionConfig);
+    final profile = data.selectedProfile!.trim();
 
-    for (var i = 0; i < data.count; i++) {
-      final username = _generateUniqueUsername(
-        data: data,
-        existingUsernames: generatedUsernames,
-      );
+    for (var i = 0; i < plannedUsers.length; i++) {
+      final user = plannedUsers[i];
+      final username = user['username']!;
+      final password = user['password']!;
 
-      final password = _generatePassword(
-        data: data,
-        username: username,
-        index: i,
-        firstGeneratedUsername: firstGeneratedUsername,
-      );
-      if (data.linkPasswordToFirstUser && i == 0) {
-        firstGeneratedUsername = username;
-      }
-
-      await client.talk(
+      final addResponse = await client.talk(
         MikrotikCardCommands.addUser(
           mode: data.serviceMode,
           username: username,
@@ -80,6 +91,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
           customer: data.customer,
         ),
       );
+      final mikrotikUserId = _extractMikrotikUserId(addResponse);
 
       if (data.serviceMode == MikrotikServiceMode.userManager) {
         await client.talk(
@@ -91,12 +103,17 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         );
       }
 
-      newlyCreatedUsers.add({'username': username, 'password': password});
+      final confirmedUser = <String, String>{
+        'username': username,
+        'password': password,
+        if (mikrotikUserId != null) 'mikrotikUserId': mikrotikUserId,
+      };
+      newlyCreatedUsers.add(confirmedUser);
       successCount++;
       sendPort.send({
         'type': 'progress',
-        'progress': (i + 1) / data.count,
-        'status': 'تم إنشاء الكرت ${i + 1} من ${data.count}',
+        'progress': (i + 1) / plannedUsers.length,
+        'status': 'تم إنشاء الكرت ${i + 1} من ${plannedUsers.length}',
       });
     }
 
@@ -107,25 +124,37 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       'address': client.address,
     });
   } on MikrotikCredentialsMissingException catch (e) {
-    _sendError(sendPort, 'خطأ في بيانات الدخول: ${e.message}', successCount);
+    _sendError(sendPort, 'خطأ في بيانات الدخول: ${e.message}', successCount,
+        newlyCreatedUsers);
   } on MikrotikConnectionException catch (e) {
-    _sendError(sendPort, 'خطأ في الاتصال: ${e.message}', successCount);
+    _sendError(sendPort, 'خطأ في الاتصال: ${e.message}', successCount,
+        newlyCreatedUsers);
+  } on RouterOSTrapError catch (e) {
+    _sendError(
+        sendPort, _friendlyError(e.message), successCount, newlyCreatedUsers);
   } on TimeoutException {
     _sendError(
-        sendPort, 'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).', successCount);
+      sendPort,
+      'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).',
+      successCount,
+      newlyCreatedUsers,
+    );
+  } on FormatException catch (e) {
+    _sendError(sendPort, e.message.toString(), successCount, newlyCreatedUsers);
   } catch (e) {
-    _sendError(sendPort, _friendlyError(e), successCount);
+    _sendError(sendPort, _friendlyError(e), successCount, newlyCreatedUsers);
   } finally {
+    approvalPort.close();
     MikrotikConnector.release(client);
   }
 }
 
 void _validateInput(BulkAddIsolateData data) {
-  if (data.count < 1) {
-    throw const FormatException('عدد الكروت يجب أن يكون أكبر من صفر.');
+  if (data.count < 1 || data.count > 10000) {
+    throw const FormatException('عدد الكروت يجب أن يكون بين 1 و10000.');
   }
-  if (data.length < 1) {
-    throw const FormatException('طول اسم المستخدم يجب أن يكون أكبر من صفر.');
+  if (data.length < 1 || data.length > 64) {
+    throw const FormatException('طول اسم المستخدم يجب أن يكون بين 1 و64.');
   }
   if (data.prefix.length >= data.length) {
     throw const FormatException(
@@ -134,10 +163,51 @@ void _validateInput(BulkAddIsolateData data) {
   if (data.selectedProfile == null || data.selectedProfile!.trim().isEmpty) {
     throw const FormatException('يجب اختيار بروفايل Hotspot.');
   }
-  if (int.tryParse(data.sharedUsers) == null ||
-      int.parse(data.sharedUsers) < 1) {
-    throw const FormatException('Shared Users يجب أن يكون رقماً موجباً.');
+  final sharedUsers = int.tryParse(data.sharedUsers.trim());
+  if (sharedUsers == null || sharedUsers < 1 || sharedUsers > 1000) {
+    throw const FormatException('Shared Users يجب أن يكون رقماً بين 1 و1000.');
   }
+  if (!const {'mixed', 'letters', 'numbers'}.contains(data.charType)) {
+    throw const FormatException('نوع الأحرف غير مدعوم.');
+  }
+  if (!const {
+    'username_only',
+    'username_and_password_equal',
+    'username_and_password_different',
+  }.contains(data.cardType)) {
+    throw const FormatException('نوع الكرت غير مدعوم.');
+  }
+
+  final randomPartLength = data.length - data.prefix.length;
+  final combinations = _combinationCount(randomPartLength, data.charType);
+  if (data.count > combinations) {
+    throw const FormatException(
+        'عدد الكروت أكبر من عدد الأسماء الممكنة؛ زد طول المستخدم أو غيّر نوع الأحرف.');
+  }
+}
+
+List<Map<String, String>> _buildUsers(BulkAddIsolateData data) {
+  final users = <Map<String, String>>[];
+  final generatedUsernames = <String>{};
+  var firstGeneratedUsername = '';
+
+  for (var i = 0; i < data.count; i++) {
+    final username = _generateUniqueUsername(
+      data: data,
+      existingUsernames: generatedUsernames,
+    );
+    final password = _generatePassword(
+      data: data,
+      username: username,
+      index: i,
+      firstGeneratedUsername: firstGeneratedUsername,
+    );
+    if (data.linkPasswordToFirstUser && i == 0) {
+      firstGeneratedUsername = username;
+    }
+    users.add({'username': username, 'password': password});
+  }
+  return users;
 }
 
 String _generateUniqueUsername({
@@ -145,8 +215,8 @@ String _generateUniqueUsername({
   required Set<String> existingUsernames,
 }) {
   const maxAttemptsPerCard = 1000;
+  final randomPartLength = data.length - data.prefix.length;
   for (var attempt = 0; attempt < maxAttemptsPerCard; attempt++) {
-    final randomPartLength = data.length - data.prefix.length;
     final username =
         data.prefix + _generateRandomString(randomPartLength, data.charType);
     if (existingUsernames.add(username)) return username;
@@ -166,10 +236,15 @@ String _generatePassword({
   }
   if (data.cardType == 'username_and_password_equal') return username;
   if (data.cardType == 'username_and_password_different') {
-    return _generateRandomString(
-      max(8, data.length - data.prefix.length),
-      data.charType,
-    );
+    final passwordLength = max(8, data.length - data.prefix.length);
+    var password = _generateRandomString(passwordLength, data.charType);
+    for (var attempt = 0; attempt < 100 && password == username; attempt++) {
+      password = _generateRandomString(passwordLength, data.charType);
+    }
+    if (password == username) {
+      throw StateError('تعذر توليد كلمة مرور مختلفة عن اسم المستخدم.');
+    }
+    return password;
   }
   return '';
 }
@@ -177,6 +252,7 @@ String _generatePassword({
 final Random _random = Random.secure();
 
 String _generateRandomString(int length, String type) {
+  if (length <= 0) return '';
   const charsMixed = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const charsLetters = 'abcdefghijklmnopqrstuvwxyz';
   const charsNumbers = '0123456789';
@@ -187,22 +263,53 @@ String _generateRandomString(int length, String type) {
   };
   return String.fromCharCodes(
     Iterable.generate(
-        length, (_) => chars.codeUnitAt(_random.nextInt(chars.length))),
+      length,
+      (_) => chars.codeUnitAt(_random.nextInt(chars.length)),
+    ),
   );
 }
 
-void _sendError(SendPort sendPort, String message, int successCount) {
+int _combinationCount(int length, String type) {
+  final alphabetSize = switch (type) {
+    'letters' => 26,
+    'numbers' => 10,
+    _ => 36,
+  };
+  var total = 1;
+  for (var i = 0; i < length; i++) {
+    if (total > 1000000000 ~/ alphabetSize) return 1000000000;
+    total *= alphabetSize;
+  }
+  return total;
+}
+
+String? _extractMikrotikUserId(List<Map<String, String>> response) {
+  for (final row in response) {
+    final id = row['.id']?.trim();
+    if (id != null && id.isNotEmpty) return id;
+  }
+  return null;
+}
+
+void _sendError(
+  SendPort sendPort,
+  String message,
+  int successCount,
+  List<Map<String, String>> users,
+) {
   sendPort.send({
     'type': 'error',
     'message': message,
     'count': successCount,
+    'users': users,
   });
 }
 
 String _friendlyError(Object error) {
   final text = error.toString();
   if (text.contains('already have such name') ||
-      text.contains('already exists')) {
+      text.contains('already exists') ||
+      text.contains('such user')) {
     return 'يوجد كرت بنفس الاسم على الراوتر. غيّر البادئة أو أعد التوليد.';
   }
   return text;

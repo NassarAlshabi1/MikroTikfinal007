@@ -76,6 +76,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   Map<String, dynamic> _linkedData = {};
   List<Map<String, dynamic>> _availableProfiles = [];
   bool _isLoadingProfiles = false;
+  List<Map<String, String>> _reservedGenerationUsers = [];
 
   final String telegramBotToken = '';
   final String telegramChatId = '';
@@ -86,9 +87,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     _availableProfiles = _normalizeProfiles(widget.profiles);
     _checkLinkStatus();
     _loadTemplates();
-    if (_availableProfiles.isEmpty) {
-      unawaited(_loadProfilesFromRouter(showErrors: false));
-    }
+    unawaited(_initializeLocalBulkData());
   }
 
   @override
@@ -132,6 +131,32 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     }).toList();
   }
 
+  Future<void> _initializeLocalBulkData() async {
+    try {
+      await CardPersistenceService.cleanupStalePendingCards();
+    } catch (e) {
+      debugPrint('[BulkAdd] stale pending cleanup error: $e');
+    }
+    if (_availableProfiles.isEmpty) {
+      await _loadProfilesFromSources();
+    }
+  }
+
+  Future<void> _loadProfilesFromSources() async {
+    try {
+      final cachedProfiles = await CardPersistenceService.loadCachedProfiles();
+      if (cachedProfiles.isNotEmpty && mounted) {
+        setState(() {
+          _availableProfiles = _normalizeProfiles(cachedProfiles);
+        });
+        return;
+      }
+    } catch (e) {
+      debugPrint('[BulkAdd] cached profile loading error: $e');
+    }
+    await _loadProfilesFromRouter(showErrors: false);
+  }
+
   Future<void> _loadProfilesFromRouter({bool showErrors = true}) async {
     if (_isLoadingProfiles) return;
     if (mounted) setState(() => _isLoadingProfiles = true);
@@ -143,9 +168,15 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       final profiles = response
           .map((profile) => Map<String, dynamic>.from(profile))
           .toList();
+      final normalizedProfiles = _normalizeProfiles(profiles);
+      try {
+        await CardPersistenceService.cacheHotspotProfiles(normalizedProfiles);
+      } catch (e) {
+        debugPrint('[BulkAdd] profile cache error: $e');
+      }
       if (mounted) {
         setState(() {
-          _availableProfiles = _normalizeProfiles(profiles);
+          _availableProfiles = normalizedProfiles;
           if (_selectedProfile != null &&
               !_availableProfiles.any((p) => p['name'] == _selectedProfile)) {
             _selectedProfile = null;
@@ -241,6 +272,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   }
 
   Future<void> _generateUsers() async {
+    if (_isGenerating) return;
     if (!_formKey.currentState!.validate()) return;
 
     final count = int.tryParse(_countController.text.trim());
@@ -301,6 +333,50 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     final message = Map<String, dynamic>.from(rawMessage);
     final type = message['type'];
 
+    if (type == 'prepared') {
+      final users = _usersFromMessage(message['users']);
+      final approvalPort = message['approvalPort'];
+      if (approvalPort is! SendPort || users.isEmpty) {
+        _cleanupGenerationResources();
+        if (mounted) {
+          setState(() => _isGenerating = false);
+          _showErrorDialog('تعذر تجهيز دفعة الكروت محلياً.');
+        }
+        return;
+      }
+
+      setState(() {
+        _generationStatusText = 'جاري فحص الأسماء وحجزها في Isar...';
+        _generationProgress = 0.0;
+      });
+
+      try {
+        final preparation = await CardPersistenceService.prepareGeneratedCards(
+          profileName: _selectedProfile!,
+          users: users,
+          sharedUsers: _sharedUsersValue,
+        );
+        if (!preparation.canProceed) {
+          final conflicts = preparation.conflicts.take(5).join('، ');
+          approvalPort.send({
+            'approved': false,
+            'reason': conflicts.isEmpty
+                ? 'تعذر حجز الكروت في Isar.'
+                : 'الأسماء موجودة محلياً: $conflicts',
+          });
+          return;
+        }
+        _reservedGenerationUsers = preparation.reservedUsers;
+        approvalPort.send({'approved': true});
+      } catch (e) {
+        approvalPort.send({
+          'approved': false,
+          'reason': 'تعذر الحجز المحلي في Isar: $e',
+        });
+      }
+      return;
+    }
+
     if (type == 'progress') {
       setState(() {
         _generationProgress = (message['progress'] as num?)?.toDouble() ?? 0;
@@ -311,34 +387,33 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     }
 
     if (type == 'success') {
-      final users = (message['users'] as List? ?? [])
-          .whereType<Map>()
-          .map((user) => {
-                'username': user['username']?.toString() ?? '',
-                'password': user['password']?.toString() ?? '',
-              })
-          .where((user) => user['username']!.isNotEmpty)
-          .toList();
+      final users = _usersFromMessage(message['users']);
       final successCount = (message['count'] as num?)?.toInt() ?? users.length;
       final address = message['address']?.toString() ?? '';
-
       String? persistenceError;
+
       try {
-        await CardPersistenceService.saveGeneratedCards(
-          profileName: _selectedProfile ?? 'default',
+        final activatedCount =
+            await CardPersistenceService.markGeneratedCardsActive(
+          profileName: _selectedProfile!,
           users: users,
         );
+        if (activatedCount != users.length) {
+          persistenceError =
+              'تم تأكيد $activatedCount من أصل ${users.length} كرت في Isar.';
+        }
       } catch (e) {
         persistenceError = e.toString();
-        debugPrint('[BulkAdd] Isar persistence error: $e');
+        debugPrint('[BulkAdd] Isar activation error: $e');
       }
 
+      _reservedGenerationUsers = [];
       _cleanupGenerationResources();
       if (!mounted) return;
       setState(() => _isGenerating = false);
       if (persistenceError != null) {
         showErrorSnackBar(context,
-            'تمت الإضافة للراوتر لكن تعذر الحفظ المحلي: $persistenceError');
+            'تمت الإضافة للراوتر لكن توجد مشكلة في تثبيت الحفظ المحلي: $persistenceError');
       }
 
       unawaited(_sendTelegramMessage(
@@ -351,12 +426,61 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     if (type == 'error') {
       final errorMessage = message['message']?.toString() ?? 'خطأ غير معروف';
       final successCount = (message['count'] as num?)?.toInt() ?? 0;
+      final confirmedUsers = _usersFromMessage(message['users']);
+      final confirmedNames = confirmedUsers
+          .map((user) => user['username'])
+          .whereType<String>()
+          .toSet();
+      final pendingUsers = _reservedGenerationUsers
+          .where((user) => !confirmedNames.contains(user['username']))
+          .toList(growable: false);
+      String? persistenceError;
+
+      try {
+        if (confirmedUsers.isNotEmpty) {
+          await CardPersistenceService.markGeneratedCardsActive(
+            profileName: _selectedProfile!,
+            users: confirmedUsers,
+          );
+        }
+        if (pendingUsers.isNotEmpty) {
+          await CardPersistenceService.removePendingGeneratedCards(
+            pendingUsers,
+          );
+        }
+      } catch (e) {
+        persistenceError = e.toString();
+        debugPrint('[BulkAdd] partial Isar cleanup error: $e');
+      }
+
+      _reservedGenerationUsers = [];
       _cleanupGenerationResources();
       if (!mounted) return;
       setState(() => _isGenerating = false);
+      final localMessage = persistenceError == null
+          ? ''
+          : ' تعذر تنظيف الحجز المحلي: $persistenceError';
       _showErrorDialog(
-          'فشلت العملية بعد إنشاء $successCount كرت: $errorMessage');
+        'فشلت العملية بعد إنشاء $successCount كرت. الكروت المؤكدة محفوظة محلياً، '
+        '$errorMessage$localMessage',
+      );
     }
+  }
+
+  List<Map<String, String>> _usersFromMessage(dynamic rawUsers) {
+    if (rawUsers is! List) return [];
+    return rawUsers
+        .whereType<Map>()
+        .map(
+          (user) => <String, String>{
+            'username': user['username']?.toString().trim() ?? '',
+            'password': user['password']?.toString() ?? '',
+            if ((user['mikrotikUserId']?.toString().trim() ?? '').isNotEmpty)
+              'mikrotikUserId': user['mikrotikUserId'].toString().trim(),
+          },
+        )
+        .where((user) => user['username']!.isNotEmpty)
+        .toList(growable: false);
   }
 
   void _cleanupGenerationResources() {
@@ -615,10 +739,22 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     showErrorSnackBar(context, message);
   }
 
+  int get _sharedUsersValue =>
+      int.tryParse(_sharedUsersController.text.trim()) ?? 1;
+
   String? _positiveIntegerValidator(String? value, String label) {
     final parsed = int.tryParse(value?.trim() ?? '');
     if (parsed == null) return '$label يجب أن يكون رقماً صحيحاً';
     if (parsed < 1) return '$label يجب أن يكون أكبر من صفر';
+    return null;
+  }
+
+  String? _sharedUsersValidator(String? value) {
+    final parsed = int.tryParse(value?.trim() ?? '');
+    if (parsed == null) return 'Shared Users يجب أن يكون رقماً صحيحاً';
+    if (parsed < 1 || parsed > 1000) {
+      return 'Shared Users يجب أن يكون بين 1 و1000';
+    }
     return null;
   }
 
@@ -883,8 +1019,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                                 Theme.of(context).textTheme.bodyMedium?.color ??
                                     Theme.of(context).colorScheme.onSurface),
                         keyboardType: TextInputType.number,
-                        validator: (v) =>
-                            (v == null || v.isEmpty) ? 'مطلوب' : null),
+                        validator: _sharedUsersValidator),
                     const SizedBox(height: 32),
                     ElevatedButton.icon(
                       onPressed: _isGenerating ? null : _generateUsers,
