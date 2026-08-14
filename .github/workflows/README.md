@@ -22,7 +22,7 @@
 
 **المنصات المدعومة:**
 - 🤖 Android (APK & AAB)
-- 🌐 Web (CanvasKit renderer)
+- 🌐 Web (Flutter Web renderer الافتراضي)
 - 🐧 Linux (GTK3)
 - 🪟 Windows
 - 🍎 macOS
@@ -40,7 +40,7 @@
 **الوظائف:**
 - بناء تطبيق الويب
 - نشر على GitHub Pages
-- تحسين للأداء مع CanvasKit
+- تحسين البناء باستخدام Flutter Web renderer الافتراضي
 - دعم للـ PWA
 
 ### 4. 📦 Create Release
