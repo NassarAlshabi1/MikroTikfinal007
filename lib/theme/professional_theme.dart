@@ -34,17 +34,18 @@ class ProfessionalColors {
   static const primaryLight = Color(0xFF7986CB); // Indigo 300
   static const primaryDark = Color(0xFF1A237E); // Indigo 900
   static const primaryContainer = Color(0xFFE8EAF6); // Indigo 50 (light)
-  static const primaryContainerDark = Color(0xFF1A237E); // Indigo 900 (dark)
+  static const primaryContainerDark =
+      Color(0xFF18264A); // Indigo navy container
   static const onPrimary = Color(0xFFFFFFFF);
   static const onPrimaryContainer = Color(0xFF1A237E);
-  static const onPrimaryContainerDark = Color(0xFFE8EAF6);
+  static const onPrimaryContainerDark = Color(0xFFDCE5FF);
 
   // ─── Secondary: Amber (HSL: 38° 92% 50%) ───
   static const secondary = Color(0xFFFFA000); // Amber 700 — دافئ ومتزن
   static const secondaryLight = Color(0xFFFFD54F); // Amber 300
   static const secondaryDark = Color(0xFFFF6F00); // Amber 900
   static const secondaryContainer = Color(0xFFFFECB3); // Amber 50
-  static const secondaryContainerDark = Color(0xFF4A3500);
+  static const secondaryContainerDark = Color(0xFF2E2408);
   static const onSecondary = Color(0xFF000000);
   static const onSecondaryContainer = Color(0xFF4A3500);
   static const onSecondaryContainerDark = Color(0xFFFFE0B2);
@@ -52,7 +53,7 @@ class ProfessionalColors {
   // ─── Accent: Teal ───
   static const accent = Color(0xFF00897B); // Teal 600
   static const accentContainer = Color(0xFFB2DFDB);
-  static const accentContainerDark = Color(0xFF004D40);
+  static const accentContainerDark = Color(0xFF073B36);
   static const onAccent = Color(0xFFFFFFFF);
   static const onAccentContainer = Color(0xFF004D40);
   static const onAccentContainerDark = Color(0xFFB2DFDB);
@@ -97,18 +98,18 @@ class ProfessionalColors {
 
   // ─── Dark Mode Surfaces (layered) ───
   // Indigo داكن متناسق — ليس أسود صارخ بل عمق نيلي
-  static const darkBackground = Color(0xFF0F1421); // نيلي داكن جداً
-  static const darkSurface = Color(0xFF1A1F2E); // بطاقة عادية
-  static const darkSurfaceVariant = Color(0xFF252B3D); // بطاقة تفاعلية
-  static const darkCard = Color(0xFF1A1F2E);
-  static const darkCardInteractive = Color(0xFF252B3D);
-  static const darkCardHover = Color(0xFF2F3548);
+  static const darkBackground = Color(0xFF070B14); // خلفية التطبيق الأساسية
+  static const darkSurface = Color(0xFF0C1322); // شريط التطبيق والسطح الأساسي
+  static const darkSurfaceVariant = Color(0xFF141D30); // الحقول والقوائم
+  static const darkCard = Color(0xFF0F1728); // البطاقات
+  static const darkCardInteractive = Color(0xFF17243B); // بطاقة تفاعلية
+  static const darkCardHover = Color(0xFF1E2D47); // حالة التحويم/التحديد
 
   // ─── Outlines ───
   static const lightOutline = Color(0xFFB0BEC5); // Blue Grey 200
   static const lightOutlineVariant = Color(0xFFE0E5EB);
-  static const darkOutline = Color(0xFF3A4258); // قابل للرؤية على dark surface
-  static const darkOutlineVariant = Color(0xFF252B3D);
+  static const darkOutline = Color(0xFF2A3A55); // حد واضح دون سطوع زائد
+  static const darkOutlineVariant = Color(0xFF1C2A41); // حد ثانوي
 
   // ─── Text hierarchy ───
   // Light: النص الأساسي داكن على خلفية فاتحة
@@ -120,8 +121,8 @@ class ProfessionalColors {
   // Dark: النص الأساسي فاتح على خلفية داكنة (WCAG AA > 7:1)
   static const darkTextPrimary = Color(0xFFECEFF1);
   static const darkTextSecondary = Color(0xFFB0BEC5);
-  static const darkTextTertiary = Color(0xFF78909C);
-  static const darkTextDisabled = Color(0xFF4A5568);
+  static const darkTextTertiary = Color(0xFF8493A7);
+  static const darkTextDisabled = Color(0xFF566176);
 
   // ─── Gradients ───
   static const gradientPrimary = LinearGradient(
@@ -151,7 +152,7 @@ class ProfessionalColors {
   static const gradientSurfaceDark = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF0F1421), Color(0xFF1A1F2E)],
+    colors: [Color(0xFF070B14), Color(0xFF0F1728)],
   );
 }
 
@@ -196,8 +197,10 @@ class ProfessionalTheme {
         shadow: Color(0x1A000000),
         scrim: Color(0x80000000),
       ),
-      textTheme: _buildTextTheme(ProfessionalColors.lightTextPrimary,
-          ProfessionalColors.lightTextSecondary, ProfessionalColors.lightTextTertiary),
+      textTheme: _buildTextTheme(
+          ProfessionalColors.lightTextPrimary,
+          ProfessionalColors.lightTextSecondary,
+          ProfessionalColors.lightTextTertiary),
       appBarTheme: const AppBarTheme(
         backgroundColor: ProfessionalColors.lightSurface,
         foregroundColor: ProfessionalColors.lightTextPrimary,
@@ -250,7 +253,8 @@ class ProfessionalTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: ProfessionalColors.primary,
-          side: const BorderSide(color: ProfessionalColors.lightOutline, width: 1),
+          side: const BorderSide(
+              color: ProfessionalColors.lightOutline, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -267,7 +271,8 @@ class ProfessionalTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: ProfessionalColors.lightSurfaceVariant,
-        labelStyle: const TextStyle(color: ProfessionalColors.lightTextSecondary),
+        labelStyle:
+            const TextStyle(color: ProfessionalColors.lightTextSecondary),
         hintStyle: const TextStyle(color: ProfessionalColors.lightTextTertiary),
         prefixIconColor: ProfessionalColors.lightTextSecondary,
         suffixIconColor: ProfessionalColors.lightTextSecondary,
@@ -281,7 +286,8 @@ class ProfessionalTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: ProfessionalColors.primary, width: 2),
+          borderSide:
+              const BorderSide(color: ProfessionalColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -289,7 +295,8 @@ class ProfessionalTheme {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: ProfessionalColors.error, width: 2),
+          borderSide:
+              const BorderSide(color: ProfessionalColors.error, width: 2),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -299,7 +306,8 @@ class ProfessionalTheme {
         thickness: 1,
         space: 1,
       ),
-      iconTheme: const IconThemeData(color: ProfessionalColors.lightTextPrimary),
+      iconTheme:
+          const IconThemeData(color: ProfessionalColors.lightTextPrimary),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -322,7 +330,8 @@ class ProfessionalTheme {
           return Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(ProfessionalColors.onPrimary),
-        side: const BorderSide(color: ProfessionalColors.lightOutline, width: 1.5),
+        side: const BorderSide(
+            color: ProfessionalColors.lightOutline, width: 1.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(3),
         ),
@@ -347,9 +356,11 @@ class ProfessionalTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: ProfessionalColors.primary, size: 24);
+            return const IconThemeData(
+                color: ProfessionalColors.primary, size: 24);
           }
-          return const IconThemeData(color: ProfessionalColors.lightTextTertiary, size: 24);
+          return const IconThemeData(
+              color: ProfessionalColors.lightTextTertiary, size: 24);
         }),
       ),
       drawerTheme: const DrawerThemeData(
@@ -357,7 +368,8 @@ class ProfessionalTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ProfessionalColors.darkSurface,
-        contentTextStyle: const TextStyle(color: ProfessionalColors.darkTextPrimary),
+        contentTextStyle:
+            const TextStyle(color: ProfessionalColors.darkTextPrimary),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -404,8 +416,10 @@ class ProfessionalTheme {
         shadow: Color(0x66000000),
         scrim: Color(0xB3000000),
       ),
-      textTheme: _buildTextTheme(ProfessionalColors.darkTextPrimary,
-          ProfessionalColors.darkTextSecondary, ProfessionalColors.darkTextTertiary),
+      textTheme: _buildTextTheme(
+          ProfessionalColors.darkTextPrimary,
+          ProfessionalColors.darkTextSecondary,
+          ProfessionalColors.darkTextTertiary),
       appBarTheme: const AppBarTheme(
         backgroundColor: ProfessionalColors.darkSurface,
         foregroundColor: ProfessionalColors.darkTextPrimary,
@@ -427,7 +441,8 @@ class ProfessionalTheme {
         shadowColor: Colors.black.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: ProfessionalColors.darkOutline, width: 0.5),
+          side: const BorderSide(
+              color: ProfessionalColors.darkOutline, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -457,7 +472,8 @@ class ProfessionalTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: ProfessionalColors.primaryLight,
-          side: const BorderSide(color: ProfessionalColors.darkOutline, width: 1),
+          side:
+              const BorderSide(color: ProfessionalColors.darkOutline, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -474,7 +490,8 @@ class ProfessionalTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: ProfessionalColors.darkSurfaceVariant,
-        labelStyle: const TextStyle(color: ProfessionalColors.darkTextSecondary),
+        labelStyle:
+            const TextStyle(color: ProfessionalColors.darkTextSecondary),
         hintStyle: const TextStyle(color: ProfessionalColors.darkTextTertiary),
         prefixIconColor: ProfessionalColors.darkTextSecondary,
         suffixIconColor: ProfessionalColors.darkTextSecondary,
@@ -488,7 +505,8 @@ class ProfessionalTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: ProfessionalColors.primaryLight, width: 2),
+          borderSide: const BorderSide(
+              color: ProfessionalColors.primaryLight, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -496,10 +514,57 @@ class ProfessionalTheme {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: ProfessionalColors.error, width: 2),
+          borderSide:
+              const BorderSide(color: ProfessionalColors.error, width: 2),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: AppTypography.bodyLarge.copyWith(
+          color: ProfessionalColors.darkTextPrimary,
+        ),
+        menuStyle: MenuStyle(
+          backgroundColor: const WidgetStatePropertyAll(
+              ProfessionalColors.darkSurfaceVariant),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: ProfessionalColors.darkSurfaceVariant,
+        surfaceTintColor: Colors.transparent,
+        textStyle: AppTypography.bodyLarge.copyWith(
+          color: ProfessionalColors.darkTextPrimary,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: ProfessionalColors.darkSurface,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: AppTypography.titleLarge.copyWith(
+          color: ProfessionalColors.darkTextPrimary,
+        ),
+        contentTextStyle: AppTypography.bodyLarge.copyWith(
+          color: ProfessionalColors.darkTextSecondary,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: ProfessionalColors.darkSurface,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: ProfessionalColors.darkSurface,
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: ProfessionalColors.primaryLight,
+        selectionColor: Color(0x664F63C6),
+        selectionHandleColor: ProfessionalColors.primaryLight,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: ProfessionalColors.primaryLight,
+        linearTrackColor: ProfessionalColors.darkOutlineVariant,
       ),
       dividerTheme: const DividerThemeData(
         color: ProfessionalColors.darkOutlineVariant,
@@ -529,7 +594,8 @@ class ProfessionalTheme {
           return Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(ProfessionalColors.onPrimary),
-        side: const BorderSide(color: ProfessionalColors.darkOutline, width: 1.5),
+        side:
+            const BorderSide(color: ProfessionalColors.darkOutline, width: 1.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(3),
         ),
@@ -554,9 +620,11 @@ class ProfessionalTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: ProfessionalColors.primaryLight, size: 24);
+            return const IconThemeData(
+                color: ProfessionalColors.primaryLight, size: 24);
           }
-          return const IconThemeData(color: ProfessionalColors.darkTextTertiary, size: 24);
+          return const IconThemeData(
+              color: ProfessionalColors.darkTextTertiary, size: 24);
         }),
       ),
       drawerTheme: const DrawerThemeData(
@@ -564,7 +632,8 @@ class ProfessionalTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ProfessionalColors.darkSurfaceVariant,
-        contentTextStyle: const TextStyle(color: ProfessionalColors.darkTextPrimary),
+        contentTextStyle:
+            const TextStyle(color: ProfessionalColors.darkTextPrimary),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -722,38 +791,68 @@ class ProfessionalTheme {
   );
 
   static final _lightTextTheme = AppTextThemeExtension(
-    displayLarge: AppTypography.displayLarge.copyWith(color: ProfessionalColors.lightTextPrimary),
-    displayMedium: AppTypography.displayMedium.copyWith(color: ProfessionalColors.lightTextPrimary),
-    displaySmall: AppTypography.displaySmall.copyWith(color: ProfessionalColors.lightTextPrimary),
-    headlineLarge: AppTypography.headlineLarge.copyWith(color: ProfessionalColors.lightTextPrimary),
-    headlineMedium: AppTypography.headlineMedium.copyWith(color: ProfessionalColors.lightTextPrimary),
-    headlineSmall: AppTypography.headlineSmall.copyWith(color: ProfessionalColors.lightTextPrimary),
-    titleLarge: AppTypography.titleLarge.copyWith(color: ProfessionalColors.lightTextPrimary),
-    titleMedium: AppTypography.titleMedium.copyWith(color: ProfessionalColors.lightTextPrimary),
-    titleSmall: AppTypography.titleSmall.copyWith(color: ProfessionalColors.lightTextSecondary),
-    bodyLarge: AppTypography.bodyLarge.copyWith(color: ProfessionalColors.lightTextPrimary),
-    bodyMedium: AppTypography.bodyMedium.copyWith(color: ProfessionalColors.lightTextPrimary),
-    bodySmall: AppTypography.bodySmall.copyWith(color: ProfessionalColors.lightTextSecondary),
-    labelLarge: AppTypography.labelLarge.copyWith(color: ProfessionalColors.lightTextPrimary),
-    labelMedium: AppTypography.labelMedium.copyWith(color: ProfessionalColors.lightTextSecondary),
-    labelSmall: AppTypography.labelSmall.copyWith(color: ProfessionalColors.lightTextTertiary),
+    displayLarge: AppTypography.displayLarge
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    displayMedium: AppTypography.displayMedium
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    displaySmall: AppTypography.displaySmall
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    headlineLarge: AppTypography.headlineLarge
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    headlineMedium: AppTypography.headlineMedium
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    headlineSmall: AppTypography.headlineSmall
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    titleLarge: AppTypography.titleLarge
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    titleMedium: AppTypography.titleMedium
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    titleSmall: AppTypography.titleSmall
+        .copyWith(color: ProfessionalColors.lightTextSecondary),
+    bodyLarge: AppTypography.bodyLarge
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    bodyMedium: AppTypography.bodyMedium
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    bodySmall: AppTypography.bodySmall
+        .copyWith(color: ProfessionalColors.lightTextSecondary),
+    labelLarge: AppTypography.labelLarge
+        .copyWith(color: ProfessionalColors.lightTextPrimary),
+    labelMedium: AppTypography.labelMedium
+        .copyWith(color: ProfessionalColors.lightTextSecondary),
+    labelSmall: AppTypography.labelSmall
+        .copyWith(color: ProfessionalColors.lightTextTertiary),
   );
 
   static final _darkTextTheme = AppTextThemeExtension(
-    displayLarge: AppTypography.displayLarge.copyWith(color: ProfessionalColors.darkTextPrimary),
-    displayMedium: AppTypography.displayMedium.copyWith(color: ProfessionalColors.darkTextPrimary),
-    displaySmall: AppTypography.displaySmall.copyWith(color: ProfessionalColors.darkTextPrimary),
-    headlineLarge: AppTypography.headlineLarge.copyWith(color: ProfessionalColors.darkTextPrimary),
-    headlineMedium: AppTypography.headlineMedium.copyWith(color: ProfessionalColors.darkTextPrimary),
-    headlineSmall: AppTypography.headlineSmall.copyWith(color: ProfessionalColors.darkTextPrimary),
-    titleLarge: AppTypography.titleLarge.copyWith(color: ProfessionalColors.darkTextPrimary),
-    titleMedium: AppTypography.titleMedium.copyWith(color: ProfessionalColors.darkTextPrimary),
-    titleSmall: AppTypography.titleSmall.copyWith(color: ProfessionalColors.darkTextSecondary),
-    bodyLarge: AppTypography.bodyLarge.copyWith(color: ProfessionalColors.darkTextPrimary),
-    bodyMedium: AppTypography.bodyMedium.copyWith(color: ProfessionalColors.darkTextPrimary),
-    bodySmall: AppTypography.bodySmall.copyWith(color: ProfessionalColors.darkTextSecondary),
-    labelLarge: AppTypography.labelLarge.copyWith(color: ProfessionalColors.darkTextPrimary),
-    labelMedium: AppTypography.labelMedium.copyWith(color: ProfessionalColors.darkTextSecondary),
-    labelSmall: AppTypography.labelSmall.copyWith(color: ProfessionalColors.darkTextTertiary),
+    displayLarge: AppTypography.displayLarge
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    displayMedium: AppTypography.displayMedium
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    displaySmall: AppTypography.displaySmall
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    headlineLarge: AppTypography.headlineLarge
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    headlineMedium: AppTypography.headlineMedium
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    headlineSmall: AppTypography.headlineSmall
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    titleLarge: AppTypography.titleLarge
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    titleMedium: AppTypography.titleMedium
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    titleSmall: AppTypography.titleSmall
+        .copyWith(color: ProfessionalColors.darkTextSecondary),
+    bodyLarge: AppTypography.bodyLarge
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    bodyMedium: AppTypography.bodyMedium
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    bodySmall: AppTypography.bodySmall
+        .copyWith(color: ProfessionalColors.darkTextSecondary),
+    labelLarge: AppTypography.labelLarge
+        .copyWith(color: ProfessionalColors.darkTextPrimary),
+    labelMedium: AppTypography.labelMedium
+        .copyWith(color: ProfessionalColors.darkTextSecondary),
+    labelSmall: AppTypography.labelSmall
+        .copyWith(color: ProfessionalColors.darkTextTertiary),
   );
 }

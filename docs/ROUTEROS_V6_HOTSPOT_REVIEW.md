@@ -73,3 +73,11 @@
 [2]: https://help.mikrotik.com/docs/spaces/ROS/pages/56459266/HotSpot+-+Captive+portal "MikroTik HotSpot - Captive portal Documentation"
 
 [3]: https://pub.dev/documentation/router_os_client/latest/ "router_os_client Dart API Documentation"
+
+## تحديث الثيم الداكن
+
+بناءً على مراجعة الاستخدام الميداني، تم تعتيم الخلفيات الأساسية مع الحفاظ على فصل بصري بين مستويات الواجهة. أصبحت الخلفية الأساسية `#070B14`، والسطح العام `#0C1322`، والحقول والقوائم `#141D30`، والبطاقات `#0F1728`، مع حدود داكنة واضحة `#2A3A55`. كما تم رفع وضوح النص الثانوي والـ placeholder دون استخدام أبيض صارخ.
+
+تم جعل `ThemeMode.dark` هو الوضع الافتراضي للتثبيتات الجديدة، مع استمرار احترام تفضيل المستخدم المحفوظ وإتاحة التبديل إلى الوضع الفاتح. وتم توحيد إعدادات `InputDecorationTheme` و`DropdownMenuTheme` و`PopupMenuTheme` و`DialogTheme` و`BottomSheetTheme` و`ProgressIndicatorTheme` على لوحة الألوان الداكنة. جميع النصوص العامة تعتمد TextTheme بخط `Tajawal`، مع الحفاظ على خط AppBar العربي.
+
+أضيفت اختبارات ثيم تتحقق من لون الخلفية والسطح والبطاقات والحقول والقوائم والحوار وbottom sheet وخط Tajawal، وأصبح `flutter analyze` خالياً من الملاحظات، كما نجحت مجموعة الاختبارات الكاملة.
