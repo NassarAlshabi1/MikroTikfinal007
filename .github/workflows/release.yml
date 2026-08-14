@@ -116,6 +116,9 @@ jobs:
         run: flutter pub run flutter_launcher_icons
 
       - name: Build Windows release
+        env:
+          # permission_handler_windows يستخدم experimental/coroutine مع MSVC الحديث.
+          CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
         run: flutter build windows --release
 
       - name: Create Windows archive

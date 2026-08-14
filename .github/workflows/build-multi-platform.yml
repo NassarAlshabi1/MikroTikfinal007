@@ -144,6 +144,10 @@ jobs:
         run: flutter pub run flutter_launcher_icons
 
       - name: Build Windows
+        env:
+          # permission_handler_windows يستخدم experimental/coroutine مع MSVC الحديث.
+          # تعريف الكاشف يمنع STL1011 دون تعطيل تحذيرات المشروع الأخرى.
+          CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
         run: flutter build windows --release
 
       - name: Upload Windows artifacts
