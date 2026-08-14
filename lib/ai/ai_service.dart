@@ -182,6 +182,25 @@ class AiService {
     return _readGeminiContent(response.data);
   }
 
+  static String _sanitizeSnapshotContext(String rawContext) {
+    var sanitized = rawContext;
+    final secretPattern = RegExp(
+      r'(password|passphrase|secret|api[_ -]?key|access[_ -]?token|refresh[_ -]?token|bearer)\s*([=:])\s*([^\s,;]+)',
+      caseSensitive: false,
+    );
+    sanitized = sanitized.replaceAllMapped(
+      secretPattern,
+      (match) => '${match.group(1)}${match.group(2)}[REDACTED]',
+    );
+
+    const maxChars = 28000;
+    if (sanitized.length <= maxChars) return sanitized;
+    const tailChars = 4000;
+    return '${sanitized.substring(0, maxChars - tailChars)}\n'
+        '[CONTEXT TRUNCATED: remaining device output omitted]\n'
+        '${sanitized.substring(sanitized.length - tailChars)}';
+  }
+
   static String _readOpenAiContent(dynamic rawData) {
     if (rawData is! Map) {
       throw const AiServiceException('رد OpenAI غير صالح.');
@@ -273,6 +292,7 @@ class AiService {
 
     // اختيار الـ System Prompt المناسب للوضع المختار
     final systemPrompt = promptForMode(settings.mode);
+    final safeSnapshotContext = _sanitizeSnapshotContext(snapshotContext);
 
     // بناء رسائل المحادثة
     final messages = <Map<String, String>>[
@@ -288,7 +308,7 @@ class AiService {
       {
         'role': 'user',
         'content': 'سؤال المستخدم: $userQuery\n\n'
-            '=== بيانات جهاز MikroTik ===\n$snapshotContext',
+            '=== بيانات جهاز MikroTik ===\n$safeSnapshotContext',
       },
     ];
 
@@ -349,6 +369,7 @@ class AiService {
 
     // اختيار الـ System Prompt المناسب للوضع المختار
     final systemPrompt = promptForMode(settings.mode);
+    final safeSnapshotContext = _sanitizeSnapshotContext(snapshotContext);
 
     // Gemini يستخدم تنسيق contents مختلف
     final contents = <Map<String, dynamic>>[
@@ -366,9 +387,8 @@ class AiService {
         'role': 'user',
         'parts': [
           {
-            'text': '$systemPrompt\n\n'
-                'سؤال المستخدم: $userQuery\n\n'
-                '=== بيانات جهاز MikroTik ===\n$snapshotContext',
+            'text': 'سؤال المستخدم: $userQuery\n\n'
+                '=== بيانات جهاز MikroTik ===\n$safeSnapshotContext',
           },
         ],
       },
@@ -382,6 +402,11 @@ class AiService {
       queryParameters: {'key': settings.apiKey},
       options: Options(headers: {'Content-Type': 'application/json'}),
       data: {
+        'systemInstruction': {
+          'parts': [
+            {'text': systemPrompt},
+          ],
+        },
         'contents': contents,
         'generationConfig': {
           'temperature': 0.4,
