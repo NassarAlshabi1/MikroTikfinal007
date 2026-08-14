@@ -13,14 +13,14 @@ import 'providers/mqtt_service_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/services.dart';
-
+import 'package:router_os_client/router_os_client.dart';
 import 'bulk_add_isolate.dart';
 import 'saved_files_screen.dart';
 import 'card_list_screen.dart';
 import 'mqtt_service.dart';
 import 'services/card_persistence_service.dart';
 import 'services/mikrotik_service_mode.dart';
+import 'mikrotik_connector.dart';
 import 'pdf_templates_screen.dart';
 import 'pdf_generator.dart';
 import 'snackbar_helpers.dart';
@@ -74,6 +74,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   Isolate? _generationIsolate;
   bool _isNetworkLinked = false;
   Map<String, dynamic> _linkedData = {};
+  List<Map<String, dynamic>> _availableProfiles = [];
+  bool _isLoadingProfiles = false;
 
   final String telegramBotToken = '';
   final String telegramChatId = '';
@@ -81,8 +83,12 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   @override
   void initState() {
     super.initState();
+    _availableProfiles = _normalizeProfiles(widget.profiles);
     _checkLinkStatus();
     _loadTemplates();
+    if (_availableProfiles.isEmpty) {
+      unawaited(_loadProfilesFromRouter(showErrors: false));
+    }
   }
 
   @override
@@ -112,6 +118,48 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     } catch (e) {
       // فشل قراءة prefs — لا نعطّل الشاشة
       debugPrint('[BulkAdd] _loadTemplates error: $e');
+    }
+  }
+
+  List<Map<String, dynamic>> _normalizeProfiles(
+      List<Map<String, dynamic>> profiles) {
+    final names = <String>{};
+    return profiles
+        .map((profile) => Map<String, dynamic>.from(profile))
+        .where((profile) {
+      final name = profile['name']?.toString().trim() ?? '';
+      return name.isNotEmpty && names.add(name);
+    }).toList();
+  }
+
+  Future<void> _loadProfilesFromRouter({bool showErrors = true}) async {
+    if (_isLoadingProfiles) return;
+    if (mounted) setState(() => _isLoadingProfiles = true);
+
+    RouterOSClient? client;
+    try {
+      client = await MikrotikConnector.connect();
+      final response = await client.talk(['/ip/hotspot/user/profile/print']);
+      final profiles = response
+          .map((profile) => Map<String, dynamic>.from(profile))
+          .toList();
+      if (mounted) {
+        setState(() {
+          _availableProfiles = _normalizeProfiles(profiles);
+          if (_selectedProfile != null &&
+              !_availableProfiles.any((p) => p['name'] == _selectedProfile)) {
+            _selectedProfile = null;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('[BulkAdd] profile loading error: $e');
+      if (showErrors && mounted) {
+        showErrorSnackBar(context, 'تعذر تحميل بروفايلات Hotspot: $e');
+      }
+    } finally {
+      MikrotikConnector.release(client);
+      if (mounted) setState(() => _isLoadingProfiles = false);
     }
   }
 
@@ -197,9 +245,17 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
     final count = int.tryParse(_countController.text.trim());
     final length = int.tryParse(_lengthController.text.trim());
-    final rootToken = RootIsolateToken.instance;
-    if (count == null || length == null || rootToken == null) {
+    if (count == null || length == null) {
       _showErrorDialog('بيانات إنشاء الكروت غير صالحة.');
+      return;
+    }
+
+    late final MikrotikConnectionConfig connectionConfig;
+    try {
+      // قراءة الاعتمادات على الـ UI isolate قبل بدء العزل.
+      connectionConfig = await MikrotikConnector.loadConnectionConfig();
+    } catch (e) {
+      _showErrorDialog('تعذر قراءة بيانات اتصال MikroTik: $e');
       return;
     }
 
@@ -225,7 +281,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       cardType: _cardType,
       linkPasswordToFirstUser: _linkPasswordToFirstUser,
       isVersion7OrNewer: widget.isVersion7OrNewer,
-      rootIsolateToken: rootToken,
+      connectionConfig: connectionConfig,
       customer: widget.username,
       serviceMode: widget.serviceMode,
     );
@@ -668,22 +724,45 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold),
                       dropdownColor: Theme.of(context).colorScheme.surface,
-                      decoration: const InputDecoration(
-                          labelText: 'الفئة (البروفايل)',
-                          border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                        labelText: 'الفئة (البروفايل)',
+                        border: const OutlineInputBorder(),
+                        helperText: _isLoadingProfiles
+                            ? 'جاري تحميل بروفايلات Hotspot...'
+                            : _availableProfiles.isEmpty
+                                ? 'لا توجد بروفايلات محملة؛ اضغط تحديث أو تحقق من الاتصال.'
+                                : null,
+                        suffixIcon: IconButton(
+                          tooltip: 'تحديث البروفايلات',
+                          onPressed: _isLoadingProfiles
+                              ? null
+                              : () => _loadProfilesFromRouter(),
+                          icon: _isLoadingProfiles
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.refresh),
+                        ),
+                      ),
                       hint: Text('اختر فئة',
                           style: TextStyle(
                               color: context.theme.appColors.muted,
                               fontWeight: FontWeight.bold)),
-                      items: widget.profiles
-                          .map((p) => DropdownMenuItem(
-                              value: p['name'] as String,
-                              child: Text(p['name'] as String,
+                      items: _availableProfiles
+                          .map((p) => DropdownMenuItem<String>(
+                                value: p['name'].toString(),
+                                child: Text(
+                                  p['name'].toString(),
                                   style: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                      fontWeight: FontWeight.bold))))
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ))
                           .toList(),
                       onChanged: (v) => setState(() => _selectedProfile = v),
                       validator: (v) =>

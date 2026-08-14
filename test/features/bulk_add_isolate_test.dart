@@ -14,10 +14,10 @@
 
 import 'dart:isolate';
 import 'dart:math';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mikrotik_manager/bulk_add_isolate.dart';
+import 'package:mikrotik_manager/mikrotik_connector.dart';
 
 void main() {
   // ============================================================
@@ -95,7 +95,13 @@ void main() {
           cardType: 'username_only',
           linkPasswordToFirstUser: false,
           isVersion7OrNewer: true,
-          rootIsolateToken: RootIsolateToken.instance!,
+          connectionConfig: const MikrotikConnectionConfig(
+            address: '127.0.0.1',
+            user: 'admin',
+            password: 'test',
+            port: 8728,
+            useSsl: false,
+          ),
           customer: 'admin',
         );
 
@@ -128,7 +134,13 @@ void main() {
           cardType: 'username_and_password_different',
           linkPasswordToFirstUser: true,
           isVersion7OrNewer: false,
-          rootIsolateToken: RootIsolateToken.instance!,
+          connectionConfig: const MikrotikConnectionConfig(
+            address: '127.0.0.1',
+            user: 'admin',
+            password: 'test',
+            port: 8728,
+            useSsl: false,
+          ),
           customer: 'admin',
         );
 
@@ -157,8 +169,10 @@ void main() {
       for (int i = 0; i < count; i++) {
         const randomPartLength = length - prefix.length;
         expect(randomPartLength, greaterThan(0),
-            reason: 'عندما prefix أقصر من total length، يجب أن يكون الجزء العشوائي > 0');
-        final username = prefix + _invokeGenerateRandomString(randomPartLength, charType);
+            reason:
+                'عندما prefix أقصر من total length، يجب أن يكون الجزء العشوائي > 0');
+        final username =
+            prefix + _invokeGenerateRandomString(randomPartLength, charType);
         usernames.add(username);
       }
 
@@ -180,7 +194,8 @@ void main() {
       for (int i = 0; i < count; i++) {
         const randomPartLength = length - prefix.length;
         expect(randomPartLength, 5);
-        final username = prefix + _invokeGenerateRandomString(randomPartLength, charType);
+        final username =
+            prefix + _invokeGenerateRandomString(randomPartLength, charType);
         usernames.add(username);
       }
 
@@ -196,20 +211,22 @@ void main() {
       const charType = 'mixed';
       const cardType = 'username_and_password_different';
 
-      final username =
-          prefix + _invokeGenerateRandomString(length - prefix.length, charType);
+      final username = prefix +
+          _invokeGenerateRandomString(length - prefix.length, charType);
       String password;
       if (cardType == 'username_and_password_equal') {
         password = username;
       } else if (cardType == 'username_and_password_different') {
-        password = _invokeGenerateRandomString(length - prefix.length, charType);
+        password =
+            _invokeGenerateRandomString(length - prefix.length, charType);
       } else {
         password = '';
       }
 
       expect(password.length, length);
       expect(password == username, isFalse,
-          reason: 'في username_and_password_different يجب أن يختلف password عن username');
+          reason:
+              'في username_and_password_different يجب أن يختلف password عن username');
     });
 
     test('سيناريو: username_and_password_equal يولّد password = username', () {
@@ -218,8 +235,8 @@ void main() {
       const charType = 'mixed';
       const cardType = 'username_and_password_equal';
 
-      final username =
-          prefix + _invokeGenerateRandomString(length - prefix.length, charType);
+      final username = prefix +
+          _invokeGenerateRandomString(length - prefix.length, charType);
       String password;
       if (cardType == 'username_and_password_equal') {
         password = username;
@@ -240,7 +257,8 @@ void main() {
       const prefix = 'very_long_prefix';
       const randomPartLength = length - prefix.length;
       expect(randomPartLength, lessThan(0),
-          reason: 'عندما prefix أطول من length، يجب أن يكون randomPartLength سالباً');
+          reason:
+              'عندما prefix أطول من length، يجب أن يكون randomPartLength سالباً');
       // في الـ isolate الفعلي، هذا يرمي Exception
     });
 
@@ -266,8 +284,8 @@ void main() {
       String firstGeneratedUsername = '';
 
       for (int i = 0; i < 3; i++) {
-        final username =
-            prefix + _invokeGenerateRandomString(length - prefix.length, charType);
+        final username = prefix +
+            _invokeGenerateRandomString(length - prefix.length, charType);
         String password = '';
 
         if (linkPasswordToFirstUser && i == 0) {
@@ -278,8 +296,7 @@ void main() {
         }
 
         if (i == 0) {
-          expect(password, username,
-              reason: 'كلمة مرور أول مستخدم = اسمه');
+          expect(password, username, reason: 'كلمة مرور أول مستخدم = اسمه');
         } else {
           expect(password, firstGeneratedUsername,
               reason: 'كلمات مرور الباقين = اسم أول مستخدم');
