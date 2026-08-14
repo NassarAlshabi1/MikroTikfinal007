@@ -134,8 +134,7 @@ class AiService {
         'temperature': temperature,
       },
     );
-    final data = response.data as Map<String, dynamic>;
-    return data['choices'][0]['message']['content'] as String;
+    return _readOpenAiContent(response.data);
   }
 
   static Future<String> _chatGemini({
@@ -180,8 +179,48 @@ class AiService {
         },
       },
     );
-    return response.data['candidates'][0]['content']['parts'][0]['text']
-        as String;
+    return _readGeminiContent(response.data);
+  }
+
+  static String _readOpenAiContent(dynamic rawData) {
+    if (rawData is! Map) {
+      throw const AiServiceException('رد OpenAI غير صالح.');
+    }
+    final data = Map<String, dynamic>.from(rawData);
+    final error = data['error'];
+    if (error is Map) {
+      throw AiServiceException(
+          'خطأ من الـ AI: ${error['message'] ?? error['code'] ?? 'خطأ غير معروف'}');
+    }
+    final choices = data['choices'];
+    if (choices is! List || choices.isEmpty || choices.first is! Map) {
+      throw const AiServiceException('لم يُرجع مزوّد AI أي إجابة.');
+    }
+    final message = (choices.first as Map)['message'];
+    final content = message is Map ? message['content'] : null;
+    if (content is! String || content.trim().isEmpty) {
+      throw const AiServiceException('رد AI فارغ أو غير مدعوم.');
+    }
+    return content;
+  }
+
+  static String _readGeminiContent(dynamic rawData) {
+    if (rawData is! Map) {
+      throw const AiServiceException('رد Gemini غير صالح.');
+    }
+    final candidates = rawData['candidates'];
+    if (candidates is! List || candidates.isEmpty || candidates.first is! Map) {
+      throw const AiServiceException('لم يُرجع Gemini أي إجابة.');
+    }
+    final content = (candidates.first as Map)['content'];
+    final parts = content is Map ? content['parts'] : null;
+    final text = parts is List && parts.isNotEmpty && parts.first is Map
+        ? (parts.first as Map)['text']
+        : null;
+    if (text is! String || text.trim().isEmpty) {
+      throw const AiServiceException('رد Gemini فارغ أو غير مدعوم.');
+    }
+    return text;
   }
 
   /// يحوّل أخطاء الشبكة/الخادم إلى رسائل عربية مفهومة
@@ -280,7 +319,7 @@ class AiService {
       throw AiServiceException(
           'خطأ من الـ AI: ${error['message'] ?? error['code'] ?? 'خطأ غير معروف'}');
     }
-    final content = data['choices'][0]['message']['content'] as String;
+    final content = _readOpenAiContent(data);
     final commands = _extractCommands(content);
 
     return AiAnalysisResult(
@@ -351,8 +390,7 @@ class AiService {
       },
     );
 
-    final content =
-        response.data['candidates'][0]['content']['parts'][0]['text'] as String;
+    final content = _readGeminiContent(response.data);
     final commands = _extractCommands(content);
 
     return AiAnalysisResult(

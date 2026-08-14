@@ -95,7 +95,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             DateTime.now().difference(_lastTotalUsersFetch!) >
                 const Duration(seconds: 90)) {
           final allUsers = await client.talk([
-            '/tool/user-manager/user/print',
+            _isHotspotMode
+                ? '/ip/hotspot/user/print'
+                : '/tool/user-manager/user/print',
             '=.proplist=.id',
           ]);
           _totalUsers = allUsers.length;
@@ -131,7 +133,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         });
       }
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
     }
   }
 

@@ -80,17 +80,17 @@ class CardsStatsNotifier extends StateNotifier<CardsStatsState> {
       // Future.wait لتشغيل الطلبات بالتوازي (نصف الزمن تقريباً)
       final results = await Future.wait([
         _fetchPaginated(
-          '/tool/user-manager/user/print',
-          'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
+          '/ip/hotspot/user/print',
+          'name,password,disabled,profile,limit-uptime,limit-bytes-total',
         ),
         _fetchPaginated(
-          '/tool/user-manager/session/print',
-          'user,upload,download,uptime,start-time',
+          '/ip/hotspot/active/print',
+          'user,bytes-in,bytes-out,uptime,session-time-left',
         ),
       ]);
 
-      final users = results[0];
-      final sessions = results[1];
+      final users = _normalizeHotspotUsers(results[0]);
+      final sessions = _normalizeHotspotSessions(results[1]);
 
       cache.put(_usersKey, users);
       cache.put(_sessionsKey, sessions);
@@ -111,28 +111,53 @@ class CardsStatsNotifier extends StateNotifier<CardsStatsState> {
     try {
       final results = await Future.wait([
         _fetchPaginated(
-          '/tool/user-manager/user/print',
-          'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
+          '/ip/hotspot/user/print',
+          'name,password,disabled,profile,limit-uptime,limit-bytes-total',
         ),
         _fetchPaginated(
-          '/tool/user-manager/session/print',
-          'user,upload,download,uptime,start-time',
+          '/ip/hotspot/active/print',
+          'user,bytes-in,bytes-out,uptime,session-time-left',
         ),
       ]);
       final cache = _ref.read(responseCacheProvider);
-      cache.put(_usersKey, results[0]);
-      cache.put(_sessionsKey, results[1]);
+      final users = _normalizeHotspotUsers(results[0]);
+      final sessions = _normalizeHotspotSessions(results[1]);
+      cache.put(_usersKey, users);
+      cache.put(_sessionsKey, sessions);
       // حدّث الـ state مرة واحدة فقط (وليس في كل خطوة)
       if (mounted) {
         state = state.copyWith(
-          users: results[0],
-          sessions: results[1],
+          users: users,
+          sessions: sessions,
           clearError: true,
         );
       }
     } catch (_) {
       // تجاهل الأخطاء في التحديث الخلفي
     }
+  }
+
+  List<Map<String, dynamic>> _normalizeHotspotUsers(
+      List<Map<String, dynamic>> users) {
+    return users
+        .map((user) => {
+              ...user,
+              'username': user['name'] ?? user['username'],
+              'actual-profile': user['profile'] ?? user['actual-profile'],
+              'uptime-limit': user['limit-uptime'] ?? user['uptime-limit'],
+            })
+        .toList(growable: false);
+  }
+
+  List<Map<String, dynamic>> _normalizeHotspotSessions(
+      List<Map<String, dynamic>> sessions) {
+    return sessions
+        .map((session) => {
+              ...session,
+              'upload': session['bytes-in'] ?? session['upload'],
+              'download': session['bytes-out'] ?? session['download'],
+            })
+        .toList(growable: false);
   }
 
   Future<List<Map<String, dynamic>>> _fetchPaginated(

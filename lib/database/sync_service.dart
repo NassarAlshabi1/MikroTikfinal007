@@ -1,8 +1,5 @@
 // ============================================================
 //  SyncService — مزامنة الكروت والملفات الشخصية من MikroTik إلى Isar
-//
-//  يجلب البيانات عبر RouterOS API ثم يخزّنها في Isar database.
-//  يحل محل Drift SyncService القديم.
 // ============================================================
 
 import 'package:flutter/foundation.dart';
@@ -10,6 +7,7 @@ import 'package:isar/isar.dart';
 import 'package:router_os_client/router_os_client.dart';
 
 import '../mikrotik_connector.dart';
+import '../services/mikrotik_service_mode.dart';
 import 'isar_provider.dart';
 import 'isar/card_collection.dart';
 import 'isar/profile_collection.dart';
@@ -18,13 +16,11 @@ class SyncService {
   SyncService._();
   static final SyncService instance = SyncService._();
 
-  /// يزامن الكروت والملفات الشخصية من MikroTik إلى Isar
-  ///
-  /// [onProgress] — callback لتتبع التقدم (0.0 - 1.0)
-  /// [onStatus] — callback لرسائل الحالة
+  /// يزامن الكروت والبروفايلات. Hotspot هو الوضع الافتراضي للتطبيق.
   Future<SyncResult> syncAll({
     Isar? database,
     void Function(double progress, String status)? onProgress,
+    MikrotikServiceMode mode = MikrotikServiceMode.hotspot,
   }) async {
     Isar? db = database;
     db ??= await IsarProvider().instance;
@@ -33,40 +29,32 @@ class SyncService {
     int cardsSynced = 0;
     int profilesSynced = 0;
     String? error;
+    RouterOSClient? client;
 
     try {
-      // 1) الاتصال بـ MikroTik
       onProgress?.call(0.0, 'جاري الاتصال بـ MikroTik...');
-      final client = await MikrotikConnector.connect();
+      client = await MikrotikConnector.connect();
 
-      // 2) مزامنة الملفات الشخصية
-      onProgress?.call(0.1, 'جاري جلب الملفات الشخصية...');
+      onProgress?.call(0.1, 'جاري جلب بروفايلات Hotspot...');
       final profilesResponse = await _safeTalk(
         client,
-        [
-          '/tool/user-manager/profile/print',
-          '=.proplist=name,shared-users,rate-limit,uptime-used,upload-used,download-used'
-        ],
+        _profilesCommand(mode),
       );
       profilesSynced = await _syncProfiles(db, profilesResponse);
-      onProgress?.call(0.3, 'تمت مزامنة $profilesSynced ملف شخصي');
+      onProgress?.call(0.3, 'تمت مزامنة $profilesSynced بروفايل');
 
-      // 3) مزامنة المستخدمين (الكروت)
-      onProgress?.call(0.4, 'جاري جلب المستخدمين...');
+      onProgress?.call(0.4, 'جاري جلب مستخدمي Hotspot...');
       final usersResponse = await _safeTalk(
         client,
-        [
-          '/tool/user-manager/user/print',
-          '=.proplist=username,password,disabled,actual-profile,shared-users,upload-used,download-used,uptime-used,uptime-limit'
-        ],
+        _usersCommand(mode),
       );
-      cardsSynced = await _syncCards(db, usersResponse);
+      cardsSynced = await _syncCards(db, usersResponse, mode);
       onProgress?.call(0.7, 'تمت مزامنة $cardsSynced كرت');
 
-      // 4) تحديث حالة الكروت (active/disabled/expired)
       onProgress?.call(0.95, 'جاري تحديث حالات الكروت...');
-      await _updateCardStatuses(db);
-
+      if (mode == MikrotikServiceMode.userManager) {
+        await _updateCardStatuses(db);
+      }
       onProgress?.call(1.0, 'اكتملت المزامنة');
     } on MikrotikCredentialsMissingException catch (e) {
       error = 'بيانات الاعتماد مفقودة: ${e.message}';
@@ -75,6 +63,8 @@ class SyncService {
     } catch (e) {
       error = 'خطأ في المزامنة: $e';
       debugPrint('[SyncService] Error: $e');
+    } finally {
+      MikrotikConnector.release(client);
     }
 
     stopwatch.stop();
@@ -88,7 +78,32 @@ class SyncService {
     );
   }
 
-  /// ينفذ talk بأمان مع timeout
+  List<String> _profilesCommand(MikrotikServiceMode mode) {
+    if (mode == MikrotikServiceMode.hotspot) {
+      return [
+        '/ip/hotspot/user/profile/print',
+        '=.proplist=.id,name,rate-limit,shared-users,session-timeout,idle-timeout',
+      ];
+    }
+    return [
+      '/tool/user-manager/profile/print',
+      '=.proplist=.id,name,shared-users,rate-limit,uptime-used,upload-used,download-used',
+    ];
+  }
+
+  List<String> _usersCommand(MikrotikServiceMode mode) {
+    if (mode == MikrotikServiceMode.hotspot) {
+      return [
+        '/ip/hotspot/user/print',
+        '=.proplist=.id,name,password,profile,disabled,limit-uptime,limit-bytes-total,comment',
+      ];
+    }
+    return [
+      '/tool/user-manager/user/print',
+      '=.proplist=.id,username,password,disabled,actual-profile,shared-users,upload-used,download-used,uptime-used,uptime-limit',
+    ];
+  }
+
   Future<List<Map<String, dynamic>>> _safeTalk(
       RouterOSClient client, List<String> args) async {
     try {
@@ -100,7 +115,6 @@ class SyncService {
     }
   }
 
-  /// يزامن الملفات الشخصية (upsert)
   Future<int> _syncProfiles(
       Isar db, List<Map<String, dynamic>> profiles) async {
     if (profiles.isEmpty) return 0;
@@ -108,140 +122,110 @@ class SyncService {
     int count = 0;
     await db.writeTxn(() async {
       for (final p in profiles) {
-        final name = p['name'] as String?;
+        final name = p['name']?.toString().trim();
         if (name == null || name.isEmpty) continue;
 
-        // تحقق إذا كان موجوداً
-        final existing = await db.profileCollections
-            .where()
-            .nameEqualTo(name)
-            .findFirst();
+        final existing =
+            await db.profileCollections.where().nameEqualTo(name).findFirst();
+        final sharedUsers = _parseInt(p['shared-users'], defaultValue: 1);
+        final rateLimit = p['rate-limit']?.toString();
+        final uploadUsed = _parseInt(p['upload-used']);
+        final downloadUsed = _parseInt(p['download-used']);
+        final uptimeUsed = _parseDuration(p['uptime-used']?.toString());
 
-        if (existing != null) {
-          existing.mikrotikId = p['.id'] as String?;
-          existing.rateLimit = p['rate-limit'] as String?;
-          existing.sharedUsers =
-              int.tryParse(p['shared-users'] as String? ?? '1') ?? 1;
-          existing.uploadUsedBytes =
-              int.tryParse(p['upload-used'] as String? ?? '0') ?? 0;
-          existing.downloadUsedBytes =
-              int.tryParse(p['download-used'] as String? ?? '0') ?? 0;
-          existing.uptimeUsedSeconds = _parseDuration(p['uptime-used'] as String?);
-          existing.lastSyncedAt = DateTime.now();
-          await db.profileCollections.put(existing);
-        } else {
-          final newProfile = ProfileCollection.fromData(
-            name: name,
-            mikrotikId: p['.id'] as String?,
-            rateLimit: p['rate-limit'] as String?,
-            sharedUsers:
-                int.tryParse(p['shared-users'] as String? ?? '1') ?? 1,
-            uploadUsedBytes:
-                int.tryParse(p['upload-used'] as String? ?? '0') ?? 0,
-            downloadUsedBytes:
-                int.tryParse(p['download-used'] as String? ?? '0') ?? 0,
-            uptimeUsedSeconds: _parseDuration(p['uptime-used'] as String?),
-            createdAt: DateTime.now(),
-            lastSyncedAt: DateTime.now(),
-          );
-          await db.profileCollections.put(newProfile);
-        }
+        final profile = existing ??
+            ProfileCollection.fromData(
+              name: name,
+              createdAt: DateTime.now(),
+            );
+        profile.mikrotikId = p['.id']?.toString();
+        profile.rateLimit = rateLimit;
+        profile.sharedUsers = sharedUsers;
+        profile.uploadUsedBytes = uploadUsed;
+        profile.downloadUsedBytes = downloadUsed;
+        profile.uptimeUsedSeconds = uptimeUsed;
+        profile.lastSyncedAt = DateTime.now();
+        await db.profileCollections.put(profile);
         count++;
       }
     });
     return count;
   }
 
-  /// يزامن الكروت (upsert)
-  Future<int> _syncCards(Isar db, List<Map<String, dynamic>> users) async {
+  Future<int> _syncCards(Isar db, List<Map<String, dynamic>> users,
+      MikrotikServiceMode mode) async {
     if (users.isEmpty) return 0;
 
     int count = 0;
     await db.writeTxn(() async {
       for (final u in users) {
-        final username = u['username'] as String?;
+        final usernameKey =
+            mode == MikrotikServiceMode.hotspot ? 'name' : 'username';
+        final profileKey =
+            mode == MikrotikServiceMode.hotspot ? 'profile' : 'actual-profile';
+        final username = u[usernameKey]?.toString().trim();
         if (username == null || username.isEmpty) continue;
 
-        // ابحث عن الـ profile المرتبط
-        final profileName = u['actual-profile'] as String?;
-        int? profileId;
-        if (profileName != null) {
-          final profile = await db.profileCollections
-              .where()
-              .nameEqualTo(profileName)
-              .findFirst();
-          profileId = profile?.id;
-        }
-        // لو لم نجد الـ profile، نستخدم أول profile أو ننشئ default
-        if (profileId == null) {
-          final defaultProfile =
-              await db.profileCollections.where().findFirst();
-          if (defaultProfile != null) {
-            profileId = defaultProfile.id;
-          } else {
-            final newProfile = ProfileCollection.fromData(
-              name: 'default',
-              createdAt: DateTime.now(),
-            );
-            await db.profileCollections.put(newProfile);
-            profileId = newProfile.id;
-          }
-        }
-
-        // تحقق إذا كان الكرت موجوداً
+        final profileName = u[profileKey]?.toString();
+        final profile = profileName == null || profileName.isEmpty
+            ? null
+            : await db.profileCollections
+                .where()
+                .nameEqualTo(profileName)
+                .findFirst();
+        final profileId = await _profileId(db, profile);
         final existing = await db.cardCollections
             .where()
             .usernameEqualTo(username)
             .findFirst();
 
-        final isDisabled = (u['disabled'] as String?) == 'true';
-
-        if (existing != null) {
-          existing.password = u['password'] as String?;
-          existing.profileId = profileId;
-          existing.sharedUsers =
-              int.tryParse(u['shared-users'] as String? ?? '1') ?? 1;
-          existing.status = isDisabled ? 'disabled' : 'active';
-          existing.uploadBytes =
-              int.tryParse(u['upload-used'] as String? ?? '0') ?? 0;
-          existing.downloadBytes =
-              int.tryParse(u['download-used'] as String? ?? '0') ?? 0;
-          existing.uptimeSeconds = _parseDuration(u['uptime-used'] as String?);
-          existing.mikrotikUserId = u['.id'] as String?;
-          existing.lastUsedAt = DateTime.now();
-          await db.cardCollections.put(existing);
-        } else {
-          final newCard = CardCollection.fromData(
-            username: username,
-            password: u['password'] as String?,
-            profileId: profileId,
-            sharedUsers:
-                int.tryParse(u['shared-users'] as String? ?? '1') ?? 1,
-            status: isDisabled ? 'disabled' : 'active',
-            uploadBytes:
-                int.tryParse(u['upload-used'] as String? ?? '0') ?? 0,
-            downloadBytes:
-                int.tryParse(u['download-used'] as String? ?? '0') ?? 0,
-            uptimeSeconds: _parseDuration(u['uptime-used'] as String?),
-            mikrotikUserId: u['.id'] as String?,
-            createdAt: DateTime.now(),
-            lastUsedAt: DateTime.now(),
-          );
-          await db.cardCollections.put(newCard);
-        }
+        final card = existing ??
+            CardCollection.fromData(
+              username: username,
+              profileId: profileId,
+              createdAt: DateTime.now(),
+            );
+        card.password = _nullableString(u['password']);
+        card.profileId = profileId;
+        card.status = _isDisabled(u['disabled']) ? 'disabled' : 'active';
+        card.sharedUsers = profile?.sharedUsers ??
+            _parseInt(u['shared-users'], defaultValue: 1);
+        card.uploadBytes = mode == MikrotikServiceMode.hotspot
+            ? 0
+            : _parseInt(u['upload-used']);
+        card.downloadBytes = mode == MikrotikServiceMode.hotspot
+            ? 0
+            : _parseInt(u['download-used']);
+        card.uptimeSeconds = mode == MikrotikServiceMode.hotspot
+            ? 0
+            : _parseDuration(u['uptime-used']?.toString());
+        card.mikrotikUserId = u['.id']?.toString();
+        card.lastUsedAt = DateTime.now();
+        await db.cardCollections.put(card);
         count++;
       }
     });
     return count;
   }
 
-  /// يحدّث حالة الكروت (expired للكروت المنتهية)
+  Future<int> _profileId(Isar db, ProfileCollection? profile) async {
+    if (profile != null) return profile.id;
+    final defaultProfile = await db.profileCollections.where().findFirst();
+    if (defaultProfile != null) return defaultProfile.id;
+
+    final fallback = ProfileCollection.fromData(
+      name: 'default',
+      createdAt: DateTime.now(),
+    );
+    await db.profileCollections.put(fallback);
+    return fallback.id;
+  }
+
   Future<void> _updateCardStatuses(Isar db) async {
     await db.writeTxn(() async {
       final cards = await db.cardCollections.where().findAll();
       for (final card in cards) {
-        final profile =
-            await db.profileCollections.get(card.profileId);
+        final profile = await db.profileCollections.get(card.profileId);
         if (profile?.uptimeLimitSeconds != null &&
             profile!.uptimeLimitSeconds! > 0 &&
             card.uptimeSeconds >= profile.uptimeLimitSeconds!) {
@@ -252,7 +236,20 @@ class SyncService {
     });
   }
 
-  /// يحوّل مدة RouterOS (مثل "1d2h30m") إلى ثوانٍ
+  int _parseInt(dynamic value, {int defaultValue = 0}) {
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? defaultValue;
+  }
+
+  bool _isDisabled(dynamic value) {
+    return value == true || value?.toString().toLowerCase() == 'true';
+  }
+
+  String? _nullableString(dynamic value) {
+    final text = value?.toString();
+    return text == null || text.isEmpty ? null : text;
+  }
+
   int _parseDuration(String? duration) {
     if (duration == null || duration.isEmpty) return 0;
 
@@ -260,8 +257,7 @@ class SyncService {
     final regex = RegExp(r'(\d+)([wdhms])');
     for (final match in regex.allMatches(duration)) {
       final value = int.parse(match.group(1)!);
-      final unit = match.group(2)!;
-      switch (unit) {
+      switch (match.group(2)!) {
         case 'w':
           totalSeconds += value * 7 * 24 * 3600;
           break;
@@ -283,7 +279,6 @@ class SyncService {
   }
 }
 
-/// نتيجة المزامنة
 class SyncResult {
   final bool success;
   final int cardsSynced;

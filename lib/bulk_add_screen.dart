@@ -19,6 +19,8 @@ import 'bulk_add_isolate.dart';
 import 'saved_files_screen.dart';
 import 'card_list_screen.dart';
 import 'mqtt_service.dart';
+import 'services/card_persistence_service.dart';
+import 'services/mikrotik_service_mode.dart';
 import 'pdf_templates_screen.dart';
 import 'pdf_generator.dart';
 import 'snackbar_helpers.dart';
@@ -27,12 +29,14 @@ class BulkAddScreen extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> profiles;
   final bool isVersion7OrNewer;
   final String username;
+  final MikrotikServiceMode serviceMode;
 
   const BulkAddScreen({
     super.key,
     required this.profiles,
     required this.isVersion7OrNewer,
     required this.username,
+    this.serviceMode = MikrotikServiceMode.hotspot,
   });
 
   @override
@@ -65,6 +69,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
   late MqttService _mqttService;
   StreamSubscription? _mqttSubscription;
+  ReceivePort? _generationPort;
+  StreamSubscription? _generationSubscription;
+  Isolate? _generationIsolate;
   bool _isNetworkLinked = false;
   Map<String, dynamic> _linkedData = {};
 
@@ -176,6 +183,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
   Future<void> _sendTelegramMessage(String message) async {
     final dio = Dio();
+    if (telegramBotToken.isEmpty || telegramChatId.isEmpty) return;
     final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
     try {
       await dio.post(url, data: {'chat_id': telegramChatId, 'text': message});
@@ -185,7 +193,13 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   }
 
   Future<void> _generateUsers() async {
-    if (!_formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate()) return;
+
+    final count = int.tryParse(_countController.text.trim());
+    final length = int.tryParse(_lengthController.text.trim());
+    final rootToken = RootIsolateToken.instance;
+    if (count == null || length == null || rootToken == null) {
+      _showErrorDialog('بيانات إنشاء الكروت غير صالحة.');
       return;
     }
 
@@ -196,10 +210,14 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     });
 
     final receivePort = ReceivePort();
+    _generationPort = receivePort;
+    _generationSubscription = receivePort.listen(
+      (message) => unawaited(_handleGenerationMessage(message)),
+    );
     final isolateData = BulkAddIsolateData(
       sendPort: receivePort.sendPort,
-      count: int.parse(_countController.text),
-      length: int.parse(_lengthController.text),
+      count: count,
+      length: length,
       prefix: _prefixController.text.trim(),
       sharedUsers: _sharedUsersController.text.trim(),
       selectedProfile: _selectedProfile,
@@ -207,61 +225,94 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       cardType: _cardType,
       linkPasswordToFirstUser: _linkPasswordToFirstUser,
       isVersion7OrNewer: widget.isVersion7OrNewer,
-      rootIsolateToken: RootIsolateToken.instance!,
+      rootIsolateToken: rootToken,
       customer: widget.username,
+      serviceMode: widget.serviceMode,
     );
 
-    final isolate = await Isolate.spawn(bulkAddIsolate, isolateData);
-
-    receivePort.listen((message) {
+    try {
+      _generationIsolate = await Isolate.spawn(bulkAddIsolate, isolateData);
+    } catch (e) {
+      _cleanupGenerationResources();
       if (!mounted) return;
-
-      final type = message['type'];
-      if (type == 'progress') {
-        setState(() {
-          _generationProgress = message['progress'];
-          _generationStatusText = message['status'];
-        });
-      } else if (type == 'success') {
-        final newlyCreatedUsers =
-            (message['users'] as List).cast<Map<String, dynamic>>();
-        final successCount = message['count'] as int;
-        final address = message['address'] as String;
-
-        final String notificationMessage =
-            "تم إضافة $successCount كرت جديد بنجاح!\n"
-            "IP: $address\n"
-            "الفئة: $_selectedProfile";
-        _sendTelegramMessage(notificationMessage);
-
-        setState(() {
-          _isGenerating = false;
-        });
-
-        if (newlyCreatedUsers.isNotEmpty) {
-          _showSuccessDialog(newlyCreatedUsers
-              .map((e) => {
-                    'username': e['username'] as String,
-                    'password': e['password'] as String
-                  })
-              .toList());
-        }
-
-        isolate.kill();
-      } else if (type == 'error') {
-        final errorMessage = message['message'] as String;
-        final successCount = message['count'] as int;
-        _showErrorDialog(
-            'فشلت العملية بعد إنشاء $successCount كرت: $errorMessage');
-        setState(() {
-          _isGenerating = false;
-        });
-        isolate.kill();
-      }
-    });
+      setState(() => _isGenerating = false);
+      _showErrorDialog('تعذر بدء عملية إنشاء الكروت: $e');
+    }
   }
 
-  void _showSuccessDialog(List<Map<String, String>> users) async {
+  Future<void> _handleGenerationMessage(dynamic rawMessage) async {
+    if (!mounted || rawMessage is! Map) return;
+    final message = Map<String, dynamic>.from(rawMessage);
+    final type = message['type'];
+
+    if (type == 'progress') {
+      setState(() {
+        _generationProgress = (message['progress'] as num?)?.toDouble() ?? 0;
+        _generationStatusText =
+            message['status']?.toString() ?? 'جاري الإنشاء...';
+      });
+      return;
+    }
+
+    if (type == 'success') {
+      final users = (message['users'] as List? ?? [])
+          .whereType<Map>()
+          .map((user) => {
+                'username': user['username']?.toString() ?? '',
+                'password': user['password']?.toString() ?? '',
+              })
+          .where((user) => user['username']!.isNotEmpty)
+          .toList();
+      final successCount = (message['count'] as num?)?.toInt() ?? users.length;
+      final address = message['address']?.toString() ?? '';
+
+      String? persistenceError;
+      try {
+        await CardPersistenceService.saveGeneratedCards(
+          profileName: _selectedProfile ?? 'default',
+          users: users,
+        );
+      } catch (e) {
+        persistenceError = e.toString();
+        debugPrint('[BulkAdd] Isar persistence error: $e');
+      }
+
+      _cleanupGenerationResources();
+      if (!mounted) return;
+      setState(() => _isGenerating = false);
+      if (persistenceError != null) {
+        showErrorSnackBar(context,
+            'تمت الإضافة للراوتر لكن تعذر الحفظ المحلي: $persistenceError');
+      }
+
+      unawaited(_sendTelegramMessage(
+        'تم إضافة $successCount كرت جديد بنجاح!\nIP: $address\nالفئة: $_selectedProfile',
+      ));
+      if (users.isNotEmpty) await _showSuccessDialog(users);
+      return;
+    }
+
+    if (type == 'error') {
+      final errorMessage = message['message']?.toString() ?? 'خطأ غير معروف';
+      final successCount = (message['count'] as num?)?.toInt() ?? 0;
+      _cleanupGenerationResources();
+      if (!mounted) return;
+      setState(() => _isGenerating = false);
+      _showErrorDialog(
+          'فشلت العملية بعد إنشاء $successCount كرت: $errorMessage');
+    }
+  }
+
+  void _cleanupGenerationResources() {
+    _generationSubscription?.cancel();
+    _generationSubscription = null;
+    _generationPort?.close();
+    _generationPort = null;
+    _generationIsolate?.kill(priority: Isolate.immediate);
+    _generationIsolate = null;
+  }
+
+  Future<void> _showSuccessDialog(List<Map<String, String>> users) async {
     final List<String> userListForFile = users.map((user) {
       if (_cardType == 'username_only') return user['username']!;
       return 'username: ${user['username']}, password: ${user['password']}';
@@ -508,6 +559,13 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     showErrorSnackBar(context, message);
   }
 
+  String? _positiveIntegerValidator(String? value, String label) {
+    final parsed = int.tryParse(value?.trim() ?? '');
+    if (parsed == null) return '$label يجب أن يكون رقماً صحيحاً';
+    if (parsed < 1) return '$label يجب أن يكون أكبر من صفر';
+    return null;
+  }
+
   @override
   void dispose() {
     _prefixController.dispose();
@@ -516,6 +574,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     _sharedUsersController.dispose();
     _mqttSubscription?.cancel();
     _addCardsTimer?.cancel();
+    _cleanupGenerationResources();
     super.dispose();
   }
 
@@ -581,7 +640,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                                             .onSurface),
                                 keyboardType: TextInputType.number,
                                 validator: (v) =>
-                                    (v == null || v.isEmpty) ? 'مطلوب' : null)),
+                                    _positiveIntegerValidator(v, 'الطول'))),
                         const SizedBox(width: 16),
                         Expanded(
                             child: TextFormField(
@@ -599,7 +658,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                                             .onSurface),
                                 keyboardType: TextInputType.number,
                                 validator: (v) =>
-                                    (v == null || v.isEmpty) ? 'مطلوب' : null)),
+                                    _positiveIntegerValidator(v, 'العدد'))),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -737,6 +796,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                         controller: _sharedUsersController,
                         decoration: const InputDecoration(
                             labelText: 'Shared Users',
+                            helperText:
+                                'في Hotspot v6 يُؤخذ التطبيق الفعلي من بروفايل المستخدم',
                             border: OutlineInputBorder()),
                         style: TextStyle(
                             color:

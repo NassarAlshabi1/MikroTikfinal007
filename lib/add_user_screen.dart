@@ -10,17 +10,22 @@ import 'snackbar_helpers.dart';
 import 'theme/app_theme.dart';
 
 import 'services/secure_clipboard.dart';
+import 'services/card_persistence_service.dart';
+import 'services/mikrotik_card_commands.dart';
+import 'services/mikrotik_service_mode.dart';
 
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
   final bool isVersion7OrNewer;
   final String customer;
+  final MikrotikServiceMode serviceMode;
 
   const AddUserScreen({
     super.key,
     required this.profiles,
     required this.isVersion7OrNewer,
     required this.customer,
+    this.serviceMode = MikrotikServiceMode.hotspot,
   });
 
   @override
@@ -42,6 +47,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
 
   Future<void> _sendTelegramMessage(String message) async {
     final dio = Dio();
+    if (telegramBotToken.isEmpty || telegramChatId.isEmpty) return;
     final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
     try {
       await dio.post(url, data: {
@@ -95,23 +101,43 @@ class _AddUserScreenState extends State<AddUserScreen> {
         password = _generateRandomString(8, _charType);
       }
 
-      final List<String> addUserCommand = [
-        '/tool/user-manager/user/add',
-        '=username=$username',
-        '=password=$password',
-        '=shared-users=$sharedUsers',
-      ];
-      if (!widget.isVersion7OrNewer) {
-        addUserCommand.add('=customer=${widget.customer}');
-      }
-      await client.talk(addUserCommand);
+      final profile = _selectedProfile!.trim();
+      await client.talk(
+        MikrotikCardCommands.addUser(
+          mode: widget.serviceMode,
+          username: username,
+          password: password,
+          profile: profile,
+          sharedUsers: sharedUsers,
+          isVersion7OrNewer: widget.isVersion7OrNewer,
+          customer: widget.customer,
+        ),
+      );
 
-      await client.talk([
-        '/tool/user-manager/user/create-and-activate-profile',
-        '=customer=${widget.customer}',
-        '=numbers=$username',
-        '=profile=$_selectedProfile',
-      ]);
+      if (widget.serviceMode == MikrotikServiceMode.userManager) {
+        await client.talk(
+          MikrotikCardCommands.userManagerActivateProfile(
+            customer: widget.customer,
+            username: username,
+            profile: profile,
+          ),
+        );
+      }
+
+      try {
+        await CardPersistenceService.saveGeneratedCards(
+          profileName: profile,
+          users: [
+            {'username': username, 'password': password},
+          ],
+        );
+      } catch (e) {
+        debugPrint('[AddUser] Isar persistence error: $e');
+        if (mounted) {
+          showErrorSnackBar(
+              context, 'تمت الإضافة إلى الراوتر لكن تعذر الحفظ المحلي: $e');
+        }
+      }
 
       final String notificationMessage = "تم إضافة كرت فردي جديد بنجاح!\n"
           "IP: ${client.address}\n"
@@ -142,7 +168,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
         showErrorSnackBar(context, 'فشلت الإضافة. تحقق من الاتصال بالشبكة.');
       }
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -184,21 +210,32 @@ class _AddUserScreenState extends State<AddUserScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _sharedUsersController,
-                decoration: const InputDecoration(
-                    labelText: 'Shared Users', border: OutlineInputBorder()),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'هذا الحقل مطلوب';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'الرجاء إدخال رقم صحيح';
-                  }
-                  return null;
-                },
-              ),
+              if (widget.serviceMode == MikrotikServiceMode.userManager)
+                TextFormField(
+                  controller: _sharedUsersController,
+                  decoration: const InputDecoration(
+                      labelText: 'Shared Users', border: OutlineInputBorder()),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'هذا الحقل مطلوب';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'الرجاء إدخال رقم صحيح';
+                    }
+                    return null;
+                  },
+                ),
+              if (widget.serviceMode == MikrotikServiceMode.hotspot)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      'وضع Hotspot v6 مفعّل. سيُطبّق عدد Shared Users من بروفايل Hotspot على الراوتر.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _selectedProfile,
