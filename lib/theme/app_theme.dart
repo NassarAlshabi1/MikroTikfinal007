@@ -33,7 +33,8 @@ import 'app_palette.dart';
 
 class AppTheme with ChangeNotifier {
   static const String _themeModeKey = 'theme_mode';
-  ThemeMode _themeMode = ThemeMode.system;
+  // الوضع الداكن هو الافتراضي لأن التطبيق مخصص للاستخدام الميداني الطويل.
+  ThemeMode _themeMode = ThemeMode.dark;
 
   ThemeMode get themeMode => _themeMode;
 
@@ -42,12 +43,13 @@ class AppTheme with ChangeNotifier {
     await _loadThemeFromPrefs();
   }
 
-  /// Toggle between light and dark themes
+  /// Toggle between light and dark themes.
+  /// عند الوضع System ننتقل إلى الداكن أولاً بدلاً من فتح فاتح غير متوقع.
   Future<void> toggleTheme() async {
-    if (_themeMode == ThemeMode.light) {
-      await setThemeMode(ThemeMode.dark);
-    } else {
+    if (_themeMode == ThemeMode.dark) {
       await setThemeMode(ThemeMode.light);
+    } else {
+      await setThemeMode(ThemeMode.dark);
     }
   }
 
