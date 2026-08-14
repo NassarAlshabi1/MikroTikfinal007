@@ -224,6 +224,23 @@ class MikrotikConnector {
     }
   }
 
+  /// تحرير اتصال مؤقت.
+  ///
+  /// معظم الشاشات تستعمل اتصالاً مشتركاً من cache. استدعاء `close()` مباشرة
+  /// يغلق الـ socket لكنه يترك `_cachedClient` غير فارغاً، فيُعاد استخدام
+  /// اتصال مغلق خلال فترة الخمول. هذه الدالة تمنع ذلك وتغلق الـ cache فقط
+  /// عندما يكون العميل هو العميل المشترك الحالي.
+  static void release(RouterOSClient? client) {
+    if (client == null) return;
+    if (identical(client, _cachedClient)) {
+      forceDisconnect();
+      return;
+    }
+    try {
+      client.close();
+    } catch (_) {}
+  }
+
   /// إغلاق الاتصال المخزّن بشكل صريح
   static void forceDisconnect() {
     try {

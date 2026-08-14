@@ -47,7 +47,7 @@ dependencies:
   dio_cache_interceptor: ^3.5.0
   dio_cache_interceptor_db_store: ^5.1.0
   # --- ✨ AI Diagnostics ---
-  dartssh2: ^2.9.5                # اتصال SSH بـ MikroTik
+  dartssh2: ^2.22.5               # اتصال SSH متوافق مع Dart 3.13 بـ MikroTik
   flutter_secure_storage: ^9.2.2  # تخزين آمن لمفاتيح API
   flutter_dotenv: ^5.1.0          # تحميل إعدادات من .env
   # --- ✨ NoSQL Database (Isar) — بدل Drift ---

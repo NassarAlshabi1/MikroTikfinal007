@@ -167,8 +167,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
       final results = await Future.wait<List<Map<String, dynamic>>>([
         _fetchPaginated(
           client,
-          '/tool/user-manager/user/print',
-          'username,disabled,upload-used,download-used,actual-profile,uptime-limit,uptime-used',
+          '/ip/hotspot/user/print',
+          'name,password,disabled,profile,limit-uptime,limit-bytes-total,comment',
           chunk: usersChunk,
           maxRecords: usersMax,
           onProgress: (f, t) {
@@ -181,8 +181,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
         ),
         _fetchPaginated(
           client,
-          '/tool/user-manager/session/print',
-          'user,upload,download,uptime,start-time',
+          '/ip/hotspot/active/print',
+          'user,bytes-in,bytes-out,uptime,session-time-left',
           chunk: sessionsChunk,
           maxRecords: sessionsMax,
           onProgress: (f, t) {
@@ -195,8 +195,25 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
         ),
       ]);
 
-      _usersRaw = results[0];
-      _sessionsRaw = results[1];
+      _usersRaw = results[0]
+          .map((user) => <String, dynamic>{
+                ...user,
+                'username': user['name'],
+                'actual-profile': user['profile'],
+                'uptime-limit': user['limit-uptime'],
+                // Hotspot user print لا يقدّم usage cumulatif مثل User Manager.
+                'uptime-used': '0s',
+                'upload-used': '0',
+                'download-used': '0',
+              })
+          .toList();
+      _sessionsRaw = results[1]
+          .map((session) => <String, dynamic>{
+                ...session,
+                'upload': session['bytes-in'] ?? '0',
+                'download': session['bytes-out'] ?? '0',
+              })
+          .toList();
       _lastFetchTime = DateTime.now();
 
       _applyFilters();
@@ -228,7 +245,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
         });
       }
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
     }
   }
 

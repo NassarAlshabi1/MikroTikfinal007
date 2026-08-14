@@ -273,12 +273,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Future<void> _fetchActiveUsers(RouterOSClient client) async {
     try {
-      // محاولة جلب المستخدمين من Hotspot
+      // Hotspot المحلي هو المصدر الأساسي للتطبيق، مع fallback صريح فقط.
+      var hotspotAvailable = false;
       try {
         final hotspotResponse = await client.talk(['/ip/hotspot/active/print']);
         _activeUsers = hotspotResponse.length;
+        hotspotAvailable = true;
       } catch (e) {
-        // إذا فشل Hotspot، جرب User Manager
         try {
           final userManagerResponse =
               await client.talk(['/tool/user-manager/session/print']);
@@ -288,9 +289,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         }
       }
 
-      // جلب إجمالي المستخدمين (من User Manager)
       try {
-        final allUsers = await client.talk(['/tool/user-manager/user/print']);
+        final allUsers = await client.talk([
+          hotspotAvailable
+              ? '/ip/hotspot/user/print'
+              : '/tool/user-manager/user/print',
+        ]);
         _totalUsers = allUsers.length;
       } catch (e) {
         _totalUsers = 0;

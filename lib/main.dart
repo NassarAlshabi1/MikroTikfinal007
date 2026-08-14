@@ -13,6 +13,7 @@ import 'package:dio/dio.dart';
 // 🔒 Security services (من مهارة flutter-security)
 import 'services/app_logger.dart';
 import 'services/secure_credentials_storage.dart';
+import 'services/mikrotik_service_mode.dart';
 
 // --- افترض أن هذه الملفات موجودة في مشروعك ---
 import 'add_user_screen.dart';
@@ -51,9 +52,11 @@ void main() async {
   appDatabaseProvider = IsarProvider();
   // افتح الاتصال في الخلفية (لا ننتظره)
   appDatabaseProvider.instance.then((_) {
-    AppLogger.info('Isar database opened successfully', category: LogCategory.system);
+    AppLogger.info('Isar database opened successfully',
+        category: LogCategory.system);
   }).catchError((e) {
-    AppLogger.error('Failed to open Isar database: $e', category: LogCategory.system);
+    AppLogger.error('Failed to open Isar database: $e',
+        category: LogCategory.system);
   });
 
   // 🔒 Security: ترحيل البيانات الحساسة من SharedPreferences إلى flutter_secure_storage
@@ -520,7 +523,10 @@ class _LoginScreenState extends State<LoginScreen>
               child: provider.Consumer<AppTheme>(
                 builder: (context, themeProvider, child) => Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
@@ -951,7 +957,8 @@ class ServiceItem {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>> _profiles = [];
   bool _isLoadingProfiles = true;
-  final MikrotikMode _selectedMode = MikrotikMode.userManager;
+  // التطبيق مخصص لكروت Hotspot المحلية في RouterOS v6.
+  final MikrotikMode _selectedMode = MikrotikMode.hotspot;
   bool _isNetworkLinked = false;
   String _clientName = '';
 
@@ -1133,7 +1140,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } catch (e) {
       _handleStatusError('فشل تحديث حالة MikroTik: ${e.toString()}');
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
     }
   }
 
@@ -1168,7 +1175,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
       }
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
       if (mounted) setState(() => _isLoadingProfiles = false);
     }
   }
@@ -1186,7 +1193,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             builder: (context) => AddUserScreen(
                 profiles: _profiles,
                 isVersion7OrNewer: widget.isVersion7OrNewer,
-                customer: widget.username),
+                customer: widget.username,
+                serviceMode: MikrotikServiceMode.hotspot),
           ));
         },
       ),
@@ -1199,7 +1207,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             builder: (context) => BulkAddScreen(
                 profiles: _profiles,
                 isVersion7OrNewer: widget.isVersion7OrNewer,
-                username: widget.username),
+                username: widget.username,
+                serviceMode: MikrotikServiceMode.hotspot),
           ));
         },
       ),

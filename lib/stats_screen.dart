@@ -105,14 +105,6 @@ class _StatsScreenState extends State<StatsScreen> {
       client = await MikrotikConnector.connect();
 
       final prefs = await SharedPreferences.getInstance();
-      final versionString = prefs.getString('mikrotik_version') ?? '6';
-      bool isVersion7OrNewer = false;
-      try {
-        isVersion7OrNewer = int.parse(versionString.split('.').first) >= 7;
-      } catch (e) {
-        isVersion7OrNewer = false;
-      }
-
       final resourceResponse = await client.talk(['/system/resource/print']);
       Map<String, dynamic> resourceData = {};
       if (resourceResponse.isNotEmpty) {
@@ -145,19 +137,9 @@ class _StatsScreenState extends State<StatsScreen> {
         activeUsers = [];
       }
 
-      List<Map<String, dynamic>> sessions = [];
-      if (isVersion7OrNewer) {
-        sessions = List<Map<String, dynamic>>.from(activeUsers);
-      } else {
-        try {
-          final sessionResponse =
-              await client.talk(['/tool/user-manager/session/print']);
-          sessions =
-              sessionResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-        } catch (e) {
-          sessions = [];
-        }
-      }
+      // التطبيق يدير Hotspot المحلي؛ الجلسة الفعلية في v6 هي Hotspot active.
+      // لا نربط مصدر البيانات برقم RouterOS لأن v6 يدعم Hotspot المحلي بالكامل.
+      final sessions = List<Map<String, dynamic>>.from(activeUsers);
 
       final cpuLoad = resourceData['cpu-load']?.toString() ?? '0';
       final totalMemory =
@@ -202,7 +184,7 @@ class _StatsScreenState extends State<StatsScreen> {
       _handleFetchError(
           'حدث خطأ أثناء جلب البيانات: ${e.toString()}', useLoadingState);
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
     }
   }
 
