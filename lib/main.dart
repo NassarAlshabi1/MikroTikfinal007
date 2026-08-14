@@ -20,8 +20,6 @@ import 'add_user_screen.dart';
 import 'bulk_add_screen.dart';
 import 'saved_files_screen.dart';
 import 'mqtt_service.dart';
-import 'qahtani_link_screen.dart';
-import 'profile_screen.dart';
 import 'pdf_templates_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
@@ -38,7 +36,6 @@ import 'theme/professional_theme.dart';
 import 'ai_diagnostics_screen.dart';
 import 'terminal_screen.dart';
 import 'ai/log_analysis_screen.dart';
-import 'ai/legacy_integration_settings_screen.dart';
 import 'database/isar_provider.dart';
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
@@ -440,7 +437,11 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      decoration: BoxDecoration(
+        gradient: Theme.of(context).brightness == Brightness.dark
+            ? ProfessionalColors.gradientSurfaceDark
+            : ProfessionalColors.gradientSurfaceLight,
+      ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(
@@ -1213,15 +1214,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'ربط الشبكة',
-        icon: Icons.link,
-        color: AppPalette.info,
-        onTap: () {
-          Navigator.of(context).push(
-              CustomPageRoute(builder: (context) => const QahtaniLinkScreen()));
-        },
-      ),
-      ServiceItem(
         title: 'الإحصائيات',
         icon: Icons.bar_chart_rounded,
         color: AppPalette.secondaryDark,
@@ -1285,15 +1277,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'الملف الشخصي',
-        icon: Icons.account_circle,
-        color: AppPalette.secondaryLight,
-        onTap: () {
-          Navigator.of(context).push(
-              CustomPageRoute(builder: (context) => const ProfileScreen()));
-        },
-      ),
-      ServiceItem(
         title: 'النسخ الاحتياطي',
         icon: Icons.backup,
         color: AppPalette.info,
@@ -1331,15 +1314,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'إعدادات legacy integration Cloud',
-        icon: Icons.cloud,
-        color: AppPalette.info,
-        onTap: () {
-          Navigator.of(context).push(CustomPageRoute(
-              builder: (context) => const OomolSettingsScreen()));
-        },
-      ),
-      ServiceItem(
         title: 'بحث الكروت',
         icon: Icons.search,
         color: AppPalette.warning,
@@ -1360,7 +1334,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     ];
 
     return Container(
-      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      decoration: BoxDecoration(
+        gradient: Theme.of(context).brightness == Brightness.dark
+            ? ProfessionalColors.gradientSurfaceDark
+            : ProfessionalColors.gradientSurfaceLight,
+      ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(

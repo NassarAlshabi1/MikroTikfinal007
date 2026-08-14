@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,16 +28,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (isLinked) {
       final dataString = prefs.getString('qahtani_linked_data');
-      if (dataString != null) {
-        setState(() {
-          _profileData = jsonDecode(dataString);
-          _isLinked = true;
-        });
+      if (dataString != null && mounted) {
+        try {
+          final decoded = jsonDecode(dataString);
+          if (decoded is Map<String, dynamic>) {
+            setState(() {
+              _profileData = decoded;
+              _isLinked = true;
+            });
+          }
+        } catch (_) {
+          // بيانات الربط القديمة غير صالحة؛ نعرض حالة غير مرتبطة بدلاً من crash.
+        }
       }
     }
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
