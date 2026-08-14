@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'theme/app_palette.dart';
+import 'theme/app_theme.dart';
 
 void showErrorSnackBar(BuildContext context, String message) {
   if (!context.mounted) return;
@@ -18,7 +18,7 @@ void showErrorSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: AppPalette.error,
+      backgroundColor: Theme.of(context).appColors.error,
       duration: const Duration(seconds: 5),
       behavior: SnackBarBehavior.floating,
       shape: const RoundedRectangleBorder(
@@ -51,7 +51,7 @@ void showSuccessSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: AppPalette.success,
+      backgroundColor: Theme.of(context).appColors.success,
       duration: const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
       shape: const RoundedRectangleBorder(

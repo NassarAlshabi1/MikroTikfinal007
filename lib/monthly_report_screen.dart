@@ -165,7 +165,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
           'الأوامر المنفّذة',
           _stats?.totalCommands.toString() ?? '0',
           Icons.terminal,
-          Colors.purple,
+          Theme.of(context).appColors.primary,
         ),
         _buildStatCard(
           'جلسات التشخيص',

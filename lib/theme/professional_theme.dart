@@ -31,7 +31,8 @@ class ProfessionalColors {
 
   // ─── Brand: Indigo (HSL: 230° 50% 50%) ───
   static const primary = Color(0xFF3F51B5); // Indigo 500 — قوي لكن متزن
-  static const primaryLight = Color(0xFF7986CB); // Indigo 300
+  static const primaryLight =
+      Color(0xFF5C6BC0); // Indigo 400 — تباين أعلى مع النص الأبيض
   static const primaryDark = Color(0xFF1A237E); // Indigo 900
   static const primaryContainer = Color(0xFFE8EAF6); // Indigo 50 (light)
   static const primaryContainerDark =

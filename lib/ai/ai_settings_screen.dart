@@ -285,8 +285,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             // ===== حد خطوات الاستقصاء (التشخيص الوكيل) =====
             Row(
               children: [
-                const Icon(Icons.psychology,
-                    size: 18, color: Colors.deepPurpleAccent),
+                Icon(Icons.psychology,
+                    size: 18, color: context.theme.appColors.primary),
                 const SizedBox(width: 6),
                 Text(
                   'حد خطوات الاستقصاء (التشخيص الوكيل)',
@@ -297,9 +297,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 const Spacer(),
                 Text(
                   '${settings.agenticMaxSteps}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
-                      color: Colors.deepPurpleAccent,
+                      color: context.theme.appColors.primary,
                       fontWeight: FontWeight.bold),
                 ),
               ],
@@ -310,7 +310,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               max: 12,
               divisions: 11,
               label: '${settings.agenticMaxSteps}',
-              activeColor: Colors.deepPurpleAccent,
+              activeColor: context.theme.appColors.primary,
               onChanged: (v) {
                 ref
                     .read(aiSettingsNotifierProvider.notifier)

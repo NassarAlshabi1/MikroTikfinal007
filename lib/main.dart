@@ -29,7 +29,6 @@ import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
 import 'active_users_screen.dart';
 import 'theme/app_theme.dart';
-import 'theme/app_palette.dart';
 import 'theme/app_gradients.dart';
 import 'theme/professional_theme.dart';
 // ===== Imports من capy/v2-riverpod (AI + terminal + perf + database) =====
@@ -101,7 +100,7 @@ void showErrorSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: AppPalette.error,
+      backgroundColor: Theme.of(context).appColors.error,
       duration: const Duration(seconds: 5),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
@@ -134,7 +133,7 @@ void showSuccessSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: AppPalette.success,
+      backgroundColor: Theme.of(context).appColors.success,
       duration: const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
@@ -438,9 +437,14 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: Theme.of(context).brightness == Brightness.dark
-            ? ProfessionalColors.gradientSurfaceDark
-            : ProfessionalColors.gradientSurfaceLight,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            context.theme.appColors.background,
+            context.theme.appColors.surface,
+          ],
+        ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -1188,7 +1192,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إضافة كرت فردي',
         icon: Icons.person_add_alt_1,
-        color: AppPalette.primary,
+        color: context.theme.appColors.primary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) => AddUserScreen(
@@ -1202,7 +1206,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إضافة كروت جماعية',
         icon: Icons.groups,
-        color: AppPalette.success,
+        color: context.theme.appColors.success,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) => BulkAddScreen(
@@ -1216,7 +1220,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'الإحصائيات',
         icon: Icons.bar_chart_rounded,
-        color: AppPalette.secondaryDark,
+        color: context.theme.appColors.secondary,
         onTap: () {
           Navigator.of(context)
               .push(CustomPageRoute(builder: (context) => const StatsScreen()));
@@ -1225,7 +1229,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'طبيب الشبكة',
         icon: Icons.local_hospital_outlined,
-        color: AppPalette.info,
+        color: context.theme.appColors.info,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => const NetworkDoctorScreen()));
@@ -1234,7 +1238,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'الملفات المحفوظة',
         icon: Icons.folder_copy,
-        color: AppPalette.warning,
+        color: context.theme.appColors.warning,
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => const SavedFilesScreen()));
@@ -1243,7 +1247,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إدارة قوالب PDF',
         icon: Icons.picture_as_pdf,
-        color: AppPalette.muted,
+        color: context.theme.appColors.muted,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => PdfTemplatesScreen(profiles: _profiles)));
@@ -1252,7 +1256,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'استخراج الكروت',
         icon: Icons.document_scanner_outlined,
-        color: AppPalette.error,
+        color: context.theme.appColors.error,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => const ExtractCardsScreen()));
@@ -1261,7 +1265,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'إحصائيات الكروت',
         icon: Icons.bar_chart,
-        color: AppPalette.primary,
+        color: context.theme.appColors.primary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => const CardsStatisticsScreen()));
@@ -1270,7 +1274,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'المستخدمين النشطين',
         icon: Icons.people_outline,
-        color: AppPalette.secondary,
+        color: context.theme.appColors.secondary,
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => const ActiveUsersScreen()));
@@ -1279,7 +1283,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'النسخ الاحتياطي',
         icon: Icons.backup,
-        color: AppPalette.info,
+        color: context.theme.appColors.info,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => const BackupSystemScreen()));
@@ -1289,7 +1293,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'تشخيص بالذكاء الاصطناعي',
         icon: Icons.smart_toy,
-        color: AppPalette.secondary,
+        color: context.theme.appColors.secondary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => const AiDiagnosticsScreen()));
@@ -1298,7 +1302,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'محطة RouterOS التفاعلية',
         icon: Icons.terminal,
-        color: AppPalette.primary,
+        color: context.theme.appColors.primary,
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => const TerminalScreen()));
@@ -1307,7 +1311,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'تحليل Logs MikroTik',
         icon: Icons.analytics,
-        color: AppPalette.success,
+        color: context.theme.appColors.success,
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => const LogAnalysisScreen()));
@@ -1316,7 +1320,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'بحث الكروت',
         icon: Icons.search,
-        color: AppPalette.warning,
+        color: context.theme.appColors.warning,
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => const CardSearchScreen()));
@@ -1325,7 +1329,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ServiceItem(
         title: 'التقرير الشهري',
         icon: Icons.calendar_month,
-        color: AppPalette.info,
+        color: context.theme.appColors.info,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => const MonthlyReportScreen()));
@@ -1335,9 +1339,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: Theme.of(context).brightness == Brightness.dark
-            ? ProfessionalColors.gradientSurfaceDark
-            : ProfessionalColors.gradientSurfaceLight,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            context.theme.appColors.background,
+            context.theme.appColors.surface,
+          ],
+        ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -1530,12 +1539,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           end: Alignment.bottomRight,
           colors: isDark
               ? [
-                  ProfessionalColors.primaryLight.withValues(alpha: 0.6),
-                  ProfessionalColors.accent.withValues(alpha: 0.4),
+                  context.theme.appColors.primary.withValues(alpha: 0.32),
+                  context.theme.appColors.accent.withValues(alpha: 0.20),
                 ]
               : [
-                  ProfessionalColors.primaryLight.withValues(alpha: 0.6),
-                  ProfessionalColors.accent.withValues(alpha: 0.4),
+                  context.theme.appColors.primary.withValues(alpha: 0.32),
+                  context.theme.appColors.accent.withValues(alpha: 0.20),
                 ],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -1558,8 +1567,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppPalette.darkCard.withValues(alpha: 0.3),
-                          AppPalette.darkCard.withValues(alpha: 0.1),
+                          context.theme.appColors.card.withValues(alpha: 0.3),
+                          context.theme.appColors.card.withValues(alpha: 0.1),
                         ],
                       )
                     : AppGradients.cardOverlay,
@@ -1624,31 +1633,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       label: 'المعالج',
                       value: '${cpuUsage.toStringAsFixed(1)}%',
                       icon: Icons.speed,
-                      color: ProfessionalColors.primaryLight,
+                      color: context.theme.appColors.primary,
                     ),
                     _buildStatusMetric(
                       label: 'الذاكرة',
                       value: '${memoryUsage.toStringAsFixed(1)}%',
                       icon: Icons.memory,
-                      color: ProfessionalColors.success,
+                      color: context.theme.appColors.success,
                     ),
                     _buildStatusMetric(
                       label: 'التحميل',
                       value: '${downloadMb.toStringAsFixed(1)} MB',
                       icon: Icons.download_rounded,
-                      color: ProfessionalColors.secondaryLight,
+                      color: context.theme.appColors.secondary,
                     ),
                     _buildStatusMetric(
                       label: 'الرفع',
                       value: '${uploadMb.toStringAsFixed(1)} MB',
                       icon: Icons.upload_rounded,
-                      color: ProfessionalColors.warning,
+                      color: context.theme.appColors.warning,
                     ),
                     _buildStatusMetric(
                       label: 'المستخدمون النشطون',
                       value: '$activeUsers',
                       icon: Icons.wifi,
-                      color: ProfessionalColors.accent,
+                      color: context.theme.appColors.accent,
                     ),
                   ],
                 ),
@@ -1677,7 +1686,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isDark
-            ? AppPalette.darkCardSecondary.withValues(alpha: 0.8)
+            ? context.theme.appColors.cardInteractive.withValues(alpha: 0.8)
             : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
       ),

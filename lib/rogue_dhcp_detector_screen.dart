@@ -265,8 +265,14 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
                       final isRogue = _rogueServers.contains(serverIp);
                       return Card(
                         color: isRogue
-                            ? const Color(0x1AF44336)
-                            : const Color(0x1A4CAF50),
+                            ? Theme.of(context)
+                                .appColors
+                                .errorContainer
+                                .withValues(alpha: 0.55)
+                            : Theme.of(context)
+                                .appColors
+                                .successContainer
+                                .withValues(alpha: 0.55),
                         child: ListTile(
                           leading: Icon(Icons.router,
                               color: isRogue

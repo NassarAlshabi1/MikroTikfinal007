@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'main.dart' show scaffoldMessengerKey;
+import 'theme/app_theme.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -120,13 +121,17 @@ class MqttService with ChangeNotifier {
     if (_client?.connectionStatus?.state != MqttConnectionState.connected) {
       // لا تعيد المحاولة تلقائياً هنا، اترك المنطق في الواجهة يقرر إعادة الإرسال
       checkAndReconnect();
-      scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content:
-              Text('فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.'),
-          backgroundColor: Color(0xFFFFB74D), // warning
-        ),
-      );
+      final messenger = scaffoldMessengerKey.currentState;
+      if (messenger != null) {
+        final theme = Theme.of(messenger.context);
+        messenger.showSnackBar(
+          SnackBar(
+            content: const Text(
+                'فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.'),
+            backgroundColor: theme.appColors.warning,
+          ),
+        );
+      }
       return;
     }
 

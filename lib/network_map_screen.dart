@@ -728,7 +728,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
 
   Widget _buildLoadingOverlay() {
     return Container(
-      color: const Color(0xB3000000),
+      color: Theme.of(context).appColors.scrim,
       child: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

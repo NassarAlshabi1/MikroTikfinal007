@@ -589,7 +589,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   data: _cpuHistory,
                   color: _cpuAlert
                       ? Theme.of(context).appColors.error
-                      : Colors.purple,
+                      : Theme.of(context).appColors.primary,
                   unit: '%',
                   isAlert: _cpuAlert,
                 ),
@@ -778,7 +778,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 'المعالج',
                 '$_cpuLoad%',
                 Icons.memory,
-                _cpuAlert ? Theme.of(context).appColors.error : Colors.purple,
+                _cpuAlert
+                    ? Theme.of(context).appColors.error
+                    : Theme.of(context).appColors.primary,
                 _cpuAlert,
               ),
             ],

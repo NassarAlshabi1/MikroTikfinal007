@@ -14,7 +14,6 @@ import 'ai/diagnostics_models.dart';
 import 'snackbar_helpers.dart';
 
 import 'theme/app_theme.dart';
-import 'theme/professional_theme.dart';
 import 'services/secure_clipboard.dart';
 
 /// نوع سطر في مخرجات التيرمنال
@@ -529,7 +528,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     final commands = _categorizedCommands[_activeCategory] ?? const <String>[];
 
     return Scaffold(
-      backgroundColor: ProfessionalColors.darkBackground,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         title: const Text('تيرمنال MikroTik'),
         actions: [
@@ -573,7 +572,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            color: ProfessionalColors.darkSurface,
+            color: context.appColors.surface,
             child: Row(
               children: [
                 Icon(
@@ -644,7 +643,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 final cmd = commands[i];
                 return Center(
                   child: ActionChip(
-                    backgroundColor: ProfessionalColors.darkSurfaceVariant,
+                    backgroundColor: context.appColors.surfaceVariant,
                     side: BorderSide(
                         color: Theme.of(context)
                             .colorScheme
@@ -677,7 +676,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      color: ProfessionalColors.darkBackground,
+      color: context.appColors.background,
       child: Row(
         children: [
           // أيقونة الفئة الحالية
@@ -715,7 +714,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                             ? Theme.of(context).colorScheme.onPrimary
                             : Theme.of(context).textTheme.bodySmall?.color,
                       ),
-                      backgroundColor: ProfessionalColors.darkSurfaceVariant,
+                      backgroundColor: context.appColors.surfaceVariant,
                       side: BorderSide(
                         color: Theme.of(context)
                             .colorScheme
@@ -752,7 +751,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.all(8),
-        color: ProfessionalColors.darkSurface,
+        color: context.appColors.surface,
         child: Row(
           children: [
             // استرجاع السجل (أعلى/أسفل)
@@ -790,7 +789,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                   hintStyle: TextStyle(
                       color: Theme.of(context).dividerColor, fontSize: 13),
                   filled: true,
-                  fillColor: ProfessionalColors.darkBackground,
+                  fillColor: context.appColors.background,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(
