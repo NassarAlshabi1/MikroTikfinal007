@@ -12,40 +12,60 @@ class ConnectionService {
   RouterOSClient? _client;
   DateTime? _lastUsed;
   bool _isConnecting = false;
+  _ConnectionIdentity? _activeIdentity;
 
   /// مدة الخمول قبل قطع الاتصال تلقائياً
   static const _idleTimeout = Duration(minutes: 5);
 
-  /// الحصول على اتصال نشط أو إنشاء واحد جديد
-  Future<RouterOSClient> getClient() async {
-    // إذا كان الاتصال جاري بالفعل، انتظر
+  /// الحصول على اتصال نشط أو إنشاء واحد جديد.
+  ///
+  /// تمرير بيانات الاتصال مهم في شاشة الدخول؛ فلا نعتمد على SharedPreferences
+  /// قبل نجاح المصادقة، ولا نفتح جلسة ثانية عند الانتقال إلى لوحة التحكم.
+  Future<RouterOSClient> getClient({
+    String? address,
+    String? username,
+    String? password,
+    int? port,
+  }) async {
+    final requestedIdentity =
+        address == null && username == null && password == null && port == null
+            ? null
+            : _ConnectionIdentity(address, username, password, port);
+
     while (_isConnecting) {
       await Future.delayed(const Duration(milliseconds: 100));
     }
 
-    // تحقق من صلاحية الاتصال الحالي
-    if (_client != null && _lastUsed != null &&
-        DateTime.now().difference(_lastUsed!) < _idleTimeout) {
+    final isReusable =
+        _client != null &&
+        _lastUsed != null &&
+        DateTime.now().difference(_lastUsed!) < _idleTimeout &&
+        (requestedIdentity == null || requestedIdentity == _activeIdentity);
+    if (isReusable) {
       _lastUsed = DateTime.now();
       return _client!;
     }
 
-    // أغلق الاتصال القديم إن وجد
     await _closeExistingClient();
-
-    // إنشاء اتصال جديد
-    return _createNewClient();
+    return _createNewClient(requestedIdentity);
   }
 
-  Future<RouterOSClient> _createNewClient() async {
+  Future<RouterOSClient> _createNewClient(_ConnectionIdentity? identity) async {
     _isConnecting = true;
     try {
-      _client = await MikrotikConnector.connect();
+      _client = await MikrotikConnector.connect(
+        address: identity?.address,
+        username: identity?.username,
+        password: identity?.password,
+        port: identity?.port,
+      );
+      _activeIdentity = identity;
       _lastUsed = DateTime.now();
       return _client!;
     } catch (e) {
       _client = null;
       _lastUsed = null;
+      _activeIdentity = null;
       rethrow;
     } finally {
       _isConnecting = false;
@@ -60,6 +80,7 @@ class ConnectionService {
     } finally {
       _client = null;
       _lastUsed = null;
+      _activeIdentity = null;
     }
   }
 
@@ -74,6 +95,33 @@ class ConnectionService {
   }
 
   /// التحقق مما إذا كان هناك اتصال نشط
-  bool get isConnected => _client != null && _lastUsed != null &&
+  bool get isConnected =>
+      _client != null &&
+      _lastUsed != null &&
       DateTime.now().difference(_lastUsed!) < _idleTimeout;
+}
+
+class _ConnectionIdentity {
+  final String? address;
+  final String? username;
+  final String? password;
+  final int? port;
+
+  const _ConnectionIdentity(
+    this.address,
+    this.username,
+    this.password,
+    this.port,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ConnectionIdentity &&
+      other.address == address &&
+      other.username == username &&
+      other.password == password &&
+      other.port == port;
+
+  @override
+  int get hashCode => Object.hash(address, username, password, port);
 }

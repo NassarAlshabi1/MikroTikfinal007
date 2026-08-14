@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'mikrotik_connector.dart';
+import 'connection_service.dart';
 import 'snackbar_helpers.dart';
 
 class SetupWizardScreen extends StatefulWidget {
@@ -10,7 +10,8 @@ class SetupWizardScreen extends StatefulWidget {
   State<SetupWizardScreen> createState() => _SetupWizardScreenState();
 }
 
-class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProviderStateMixin {
+class _SetupWizardScreenState extends State<SetupWizardScreen>
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentStep = 0;
   final int _totalSteps = 4;
@@ -31,7 +32,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
   // Step 3: Card Generation
   final TextEditingController _usersCountController = TextEditingController();
   final TextEditingController _prefixController = TextEditingController();
-  final TextEditingController _passwordLengthController = TextEditingController(text: '8');
+  final TextEditingController _passwordLengthController = TextEditingController(
+    text: '8',
+  );
 
   // Step 4: Summary
   bool _isCompleting = false;
@@ -59,7 +62,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _currentStep == 0 ? 'معالج الإعداد' : 'الخطوة $_currentStep من $_totalSteps',
+          _currentStep == 0
+              ? 'معالج الإعداد'
+              : 'الخطوة $_currentStep من $_totalSteps',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -113,11 +118,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         'السابق',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
                       ),
                     ),
                   ),
@@ -128,16 +137,25 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: _isCompleting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : Text(
-                            _currentStep == _totalSteps - 1 ? 'إنهاء' : 'التالي',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
+                    child:
+                        _isCompleting
+                            ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : Text(
+                              _currentStep == _totalSteps - 1
+                                  ? 'إنهاء'
+                                  : 'التالي',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                   ),
                 ),
               ],
@@ -178,11 +196,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.router,
-            size: 64,
-            color: theme.primaryColor,
-          ),
+          Icon(Icons.router, size: 64, color: theme.primaryColor),
           const SizedBox(height: 24),
           Text(
             'إعدادات الراوتر',
@@ -194,7 +208,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'أدخل بيانات الاتصال بـ MikroTik Router',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 32),
           TextField(
@@ -232,14 +249,20 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _isTestingConnection ? null : _testConnection,
-              icon: _isTestingConnection
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.wifi_find),
-              label: Text(_isTestingConnection ? 'جاري الاختبار...' : 'اختبار الاتصال'),
+              icon:
+                  _isTestingConnection
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : const Icon(Icons.wifi_find),
+              label: Text(
+                _isTestingConnection ? 'جاري الاختبار...' : 'اختبار الاتصال',
+              ),
             ),
           ),
           if (_connectionSuccess)
@@ -275,11 +298,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.wifi_tethering,
-            size: 64,
-            color: theme.primaryColor,
-          ),
+          Icon(Icons.wifi_tethering, size: 64, color: theme.primaryColor),
           const SizedBox(height: 24),
           Text(
             'إعدادات Hotspot',
@@ -291,7 +310,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'قم بتحديد إعدادات الشبكة اللاسلكية',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 32),
           SegmentedButton<bool>(
@@ -360,11 +382,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.credit_card,
-            size: 64,
-            color: theme.primaryColor,
-          ),
+          Icon(Icons.credit_card, size: 64, color: theme.primaryColor),
           const SizedBox(height: 24),
           Text(
             'توليد البطاقات',
@@ -376,7 +394,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'حدد عدد البطاقات وخصائصها',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 32),
           TextField(
@@ -418,11 +439,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.check_circle,
-            size: 64,
-            color: Colors.green,
-          ),
+          const Icon(Icons.check_circle, size: 64, color: Colors.green),
           const SizedBox(height: 24),
           Text(
             'ملخص الإعداد',
@@ -434,14 +451,25 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
           const SizedBox(height: 8),
           Text(
             'راجع الإعدادات قبل البدء',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 32),
           _buildSummaryItem('عنوان IP', _ipController.text, theme),
           _buildSummaryItem('اسم المستخدم', _usernameController.text, theme),
-          _buildSummaryItem('الوضع', _isHotspotMode ? 'Hotspot' : 'User Manager', theme),
+          _buildSummaryItem(
+            'الوضع',
+            _isHotspotMode ? 'Hotspot' : 'User Manager',
+            theme,
+          ),
           _buildSummaryItem('الفئة', _profileNameController.text, theme),
-          _buildSummaryItem('عدد المستخدمين', _usersCountController.text, theme),
+          _buildSummaryItem(
+            'عدد المستخدمين',
+            _usersCountController.text,
+            theme,
+          ),
           _buildSummaryItem('البادئة', _prefixController.text, theme),
         ],
       ),
@@ -449,56 +477,75 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
   }
 
   Widget _buildSummaryItem(String label, String value, ThemeData theme) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 14,
               ),
             ),
-            Expanded(
-              child: Text(
-                value.isEmpty ? 'غير محدد' : value,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.end,
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? 'غير محدد' : value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.end,
             ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _testConnection() async {
+    final address = _ipController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    if (address.isEmpty || username.isEmpty) {
+      showErrorSnackBar(context, 'أدخل عنوان الراوتر واسم المستخدم أولاً');
+      return;
+    }
+
     setState(() {
       _isTestingConnection = true;
       _connectionSuccess = false;
     });
 
     try {
-      final client = await MikrotikConnector.connect();
+      final client = await ConnectionService.instance.getClient(
+        address: address,
+        username: username,
+        password: password,
+        port: 8728,
+      );
       final response = await client.talk(['/system/resource/print']);
-      
-      if (response.isNotEmpty) {
+
+      if (response.isNotEmpty && mounted) {
         setState(() => _connectionSuccess = true);
-        if (mounted) {
-          showSuccessSnackBar(context, 'تم الاتصال بنجاح!');
-        }
+        showSuccessSnackBar(context, 'تم الاتصال بنجاح!');
       }
     } catch (e) {
-      setState(() => _connectionSuccess = false);
       if (mounted) {
+        setState(() => _connectionSuccess = false);
         showErrorSnackBar(context, 'فشل الاتصال: ${e.toString()}');
       }
     } finally {
-      setState(() => _isTestingConnection = false);
+      if (mounted) setState(() => _isTestingConnection = false);
     }
   }
 
@@ -507,9 +554,21 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> with TickerProvid
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('router_ip', _ipController.text);
-      await prefs.setString('router_username', _usernameController.text);
-      await prefs.setString('router_password', _passwordController.text);
+      final address = _ipController.text.trim();
+      final username = _usernameController.text.trim();
+      final password = _passwordController.text;
+
+      // تستخدم شاشة الدخول والموصل هذه المفاتيح الموحدة.
+      await prefs.setString('ip', address);
+      await prefs.setString('user', username);
+      await prefs.setString('pass', password);
+      await prefs.setString('port', '8728');
+      await prefs.setBool('remember_me', true);
+
+      // الاحتفاظ بالمفاتيح القديمة للتوافق مع الإصدارات السابقة.
+      await prefs.setString('router_ip', address);
+      await prefs.setString('router_username', username);
+      await prefs.setString('router_password', password);
       await prefs.setBool('is_hotspot_mode', _isHotspotMode);
       await prefs.setString('default_profile', _profileNameController.text);
       await prefs.setBool('setup_completed', true);
