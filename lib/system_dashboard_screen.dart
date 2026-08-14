@@ -5,6 +5,8 @@ import 'theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
+import 'active_users_screen.dart';
+import 'network_doctor_screen.dart';
 
 class SystemDashboardScreen extends StatefulWidget {
   const SystemDashboardScreen({super.key});
@@ -671,46 +673,26 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 mainAxisSpacing: 12,
                 children: [
                   _buildActionButton(
-                    'الأكتشف',
-                    Icons.person_search,
+                    'المستخدمون النشطون',
+                    Icons.people_alt_outlined,
                     theme.primaryColor,
                     () {
-                      // TODO: Navigate to HotspotActiveUsersScreen
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ActiveUsersScreen(),
+                        ),
                       );
                     },
                   ),
                   _buildActionButton(
-                    'البروديائد',
-                    Icons.wifi_tethering,
-                    Theme.of(context).appColors.muted,
+                    'فحص الشبكة',
+                    Icons.network_check,
+                    Theme.of(context).appColors.info,
                     () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
-                    'يوزر متجر',
-                    Icons.group,
-                    Theme.of(context).appColors.muted,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
-                    'هوتسبوت',
-                    Icons.wifi,
-                    theme.primaryColor,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NetworkDoctorScreen(),
+                        ),
                       );
                     },
                   ),

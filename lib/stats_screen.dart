@@ -8,10 +8,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'theme/app_gradients.dart';
 import 'mikrotik_connector.dart';
 
 import 'theme/app_theme.dart';
+import 'theme/professional_theme.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -324,7 +324,11 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: AppGradients.softBackground),
+      decoration: BoxDecoration(
+        gradient: Theme.of(context).brightness == Brightness.dark
+            ? ProfessionalColors.gradientSurfaceDark
+            : ProfessionalColors.gradientSurfaceLight,
+      ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
