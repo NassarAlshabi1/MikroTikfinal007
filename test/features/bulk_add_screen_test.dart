@@ -68,8 +68,44 @@ void main() {
       expect(find.text('إنشاء الكروت'), findsOneWidget);
     });
 
-    testWidgets('يعرض الشاشة مع profiles موجودة',
+    testWidgets('يعرض حالة واضحة عند عدم توفر بروفايلات',
         (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues(const {
+        'is_network_linked': false,
+        'pdf_templates': <String>[],
+        'saved_files': <String>[],
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mqttServiceProvider.overrideWithValue(_FakeMqttService()),
+          ],
+          child: const MaterialApp(
+            home: BulkAddScreen(
+              profiles: [],
+              isVersion7OrNewer: true,
+              username: 'test_user',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final hasProfileState = find
+              .textContaining('لا توجد بروفايلات محملة')
+              .evaluate()
+              .isNotEmpty ||
+          find
+              .textContaining('جاري تحميل بروفايلات Hotspot')
+              .evaluate()
+              .isNotEmpty;
+      expect(hasProfileState, isTrue);
+      expect(find.byTooltip('تحديث البروفايلات'), findsOneWidget);
+    });
+
+    testWidgets('يعرض الشاشة مع profiles موجودة', (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues(const {
         'is_network_linked': false,
         'pdf_templates': <String>[],
@@ -309,7 +345,8 @@ void main() {
           reason: 'Should have prefix, length, count, shared_users fields');
       // dropdowns
       expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(4),
-          reason: 'Should have profile, charType, cardType, template dropdowns');
+          reason:
+              'Should have profile, charType, cardType, template dropdowns');
       // زر الإنشاء
       expect(find.byType(ElevatedButton), findsOneWidget);
       // checkbox لربط كلمة المرور

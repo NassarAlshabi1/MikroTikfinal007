@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:math';
-import 'package:flutter/services.dart';
 
 import 'package:router_os_client/router_os_client.dart';
 
@@ -20,7 +19,7 @@ class BulkAddIsolateData {
   final String cardType;
   final bool linkPasswordToFirstUser;
   final bool isVersion7OrNewer;
-  final RootIsolateToken rootIsolateToken;
+  final MikrotikConnectionConfig connectionConfig;
   final String customer;
   final MikrotikServiceMode serviceMode;
 
@@ -35,14 +34,13 @@ class BulkAddIsolateData {
     required this.cardType,
     required this.linkPasswordToFirstUser,
     required this.isVersion7OrNewer,
-    required this.rootIsolateToken,
+    required this.connectionConfig,
     required this.customer,
     this.serviceMode = MikrotikServiceMode.hotspot,
   });
 }
 
 void bulkAddIsolate(BulkAddIsolateData data) async {
-  BackgroundIsolateBinaryMessenger.ensureInitialized(data.rootIsolateToken);
   final sendPort = data.sendPort;
   int successCount = 0;
   final newlyCreatedUsers = <Map<String, String>>[];
@@ -53,7 +51,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
   try {
     _validateInput(data);
     final profile = data.selectedProfile!.trim();
-    client = await MikrotikConnector.connect();
+    client = await MikrotikConnector.connectWithConfig(data.connectionConfig);
 
     for (var i = 0; i < data.count; i++) {
       final username = _generateUniqueUsername(

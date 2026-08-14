@@ -52,6 +52,24 @@ class MikrotikTrapException implements Exception {
   String toString() => 'MikrotikTrapException: $message';
 }
 
+/// إعدادات اتصال مستقلة يمكن تمريرها إلى Isolate بأمان.
+/// لا تحتوي على أي كائن Flutter أو Plugin.
+class MikrotikConnectionConfig {
+  final String address;
+  final String user;
+  final String password;
+  final int port;
+  final bool useSsl;
+
+  const MikrotikConnectionConfig({
+    required this.address,
+    required this.user,
+    required this.password,
+    required this.port,
+    required this.useSsl,
+  });
+}
+
 /// مُوصل MikroTik مع تجمع اتصالات مستمر لتسريع العمليات
 ///
 /// استفادة من router_os_client 2.0.1:
@@ -76,6 +94,85 @@ class MikrotikConnector {
   static bool get currentUseSsl => _currentUseSsl;
   static bool get isCached => _cachedClient != null;
 
+  /// قراءة إعدادات الاتصال من التخزين على الـ UI isolate فقط.
+  /// بعد ذلك يمكن تمرير النتيجة إلى عمليات طويلة دون استدعاء Plugins داخلها.
+  static Future<MikrotikConnectionConfig> loadConnectionConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ip = prefs.getString('ip');
+    final user = prefs.getString('user');
+    final pass =
+        await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
+    final useSsl = prefs.getString('use_ssl') == 'true';
+    final portString = prefs.getString('port');
+    final port = portString != null
+        ? (int.tryParse(portString) ?? (useSsl ? 8729 : 8728))
+        : (useSsl ? 8729 : 8728);
+
+    if (ip == null ||
+        ip.trim().isEmpty ||
+        user == null ||
+        user.trim().isEmpty) {
+      throw const MikrotikCredentialsMissingException(
+          'IP address or username is not set.');
+    }
+    if (pass == null) {
+      throw const MikrotikCredentialsMissingException(
+          'MikroTik password is not set.');
+    }
+
+    return MikrotikConnectionConfig(
+      address: ip.trim(),
+      user: user.trim(),
+      password: pass,
+      port: port,
+      useSsl: useSsl,
+    );
+  }
+
+  /// ينشئ اتصالاً مستقلاً من إعدادات جاهزة؛ مناسب للـ Isolate.
+  static Future<RouterOSClient> connectWithConfig(
+      MikrotikConnectionConfig config) async {
+    final client = RouterOSClient(
+      address: config.address,
+      user: config.user,
+      password: config.password,
+      port: config.port,
+      useSsl: config.useSsl,
+      verbose: false,
+      timeout: _connectTimeout,
+    );
+
+    try {
+      final loggedIn = await client.login().timeout(_connectTimeout);
+      if (!loggedIn) {
+        throw const MikrotikLoginException(
+            'Login failed - invalid credentials.');
+      }
+      return client;
+    } on TimeoutException {
+      try {
+        client.close();
+      } catch (_) {}
+      throw const MikrotikConnectionException(
+          'Connection timed out. Check IP/port and network.');
+    } on LoginError catch (e) {
+      try {
+        client.close();
+      } catch (_) {}
+      throw MikrotikLoginException('Login failed: ${e.message}', e);
+    } on CreateSocketError catch (e) {
+      try {
+        client.close();
+      } catch (_) {}
+      throw MikrotikConnectionException('Socket error: ${e.message}', e);
+    } catch (_) {
+      try {
+        client.close();
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
   /// الحصول على اتصال MikroTik - يعيد الاتصال المخزّن إذا كان نشطاً
   /// أو ينشئ اتصالاً جديداً عند الحاجة فقط
   static Future<RouterOSClient> connect() async {
@@ -94,25 +191,13 @@ class MikrotikConnector {
     } catch (_) {}
     _cachedClient = null;
 
-    // قراءة بيانات الاعتماد
-    final prefs = await SharedPreferences.getInstance();
-    final ip = prefs.getString('ip');
-    final user = prefs.getString('user');
-    // 🔒 قراءة كلمة المرور من flutter_secure_storage (مشفّرة)
-    final pass =
-        await SecureCredentialsStorageContainer.instance.getMikrotikPassword();
-    final portString = prefs.getString('port');
-    final useSslString = prefs.getString('use_ssl');
-    final useSsl = useSslString == 'true';
-    // إن كان useSsl=true والمنفذ غير محدد، استخدم 8729 تلقائياً
-    final port = portString != null
-        ? (int.tryParse(portString) ?? (useSsl ? 8729 : 8728))
-        : (useSsl ? 8729 : 8728);
-
-    if (ip == null || user == null || pass == null) {
-      throw const MikrotikCredentialsMissingException(
-          'IP address, username, or password are not set.');
-    }
+    // قراءة بيانات الاعتماد على الـ UI isolate ثم إنشاء الاتصال من config.
+    final config = await loadConnectionConfig();
+    final ip = config.address;
+    final user = config.user;
+    final pass = config.password;
+    final port = config.port;
+    final useSsl = config.useSsl;
 
     // تجنب إنشاء اتصال مكرر إذا كان جارياً بالفعل
     if (_isConnecting) {
