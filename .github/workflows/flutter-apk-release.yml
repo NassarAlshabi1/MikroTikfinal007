@@ -38,13 +38,13 @@ jobs:
       - name: Clean build artifacts
         run: flutter clean
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build ARMv8 release APK
+        run: flutter build apk --release --target-platform android-arm64
 
-      - name: Upload release APK artifact
+      - name: Upload ARMv8 release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mikrotik-manager-release-apk-${{ github.sha }}
+          name: mikrotik-manager-arm64-release-apk-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 30
