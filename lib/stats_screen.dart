@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'mikrotik_connector.dart';
 
 import 'theme/app_theme.dart';
-import 'theme/professional_theme.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -325,9 +324,19 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: Theme.of(context).brightness == Brightness.dark
-            ? ProfessionalColors.gradientSurfaceDark
-            : ProfessionalColors.gradientSurfaceLight,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: Theme.of(context).brightness == Brightness.dark
+              ? [
+                  context.theme.appColors.background,
+                  context.theme.appColors.card,
+                ]
+              : [
+                  context.theme.appColors.background,
+                  context.theme.appColors.surface,
+                ],
+        ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -589,7 +598,7 @@ class _StatsScreenState extends State<StatsScreen> {
               'إجمالي الجلسات',
               '${_stats['totalSessions']}',
               Icons.group,
-              Colors.purple[400]!,
+              Theme.of(context).appColors.primary,
             ),
             _buildStatCard(
               'المستخدمين النشطين',

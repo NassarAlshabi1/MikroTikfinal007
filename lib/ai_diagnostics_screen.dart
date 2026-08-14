@@ -181,7 +181,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  color: context.theme.appColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: SelectableText(
@@ -779,7 +779,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  color: context.theme.appColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: SelectableText(
@@ -997,7 +997,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     : Icons.auto_awesome,
             size: 16,
             color: state.settings.provider == AiProvider.openRouter
-                ? Colors.purpleAccent
+                ? Theme.of(context).appColors.primary
                 : Theme.of(context).textTheme.bodySmall?.color,
           ),
           const SizedBox(width: 8),
@@ -1009,7 +1009,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isOpenRouterFlash
-                    ? Colors.purpleAccent.withValues(alpha: 0.25)
+                    ? Theme.of(context)
+                        .appColors
+                        .primary
+                        .withValues(alpha: 0.25)
                     : isGeminiFlash25
                         ? Theme.of(context)
                             .appColors
@@ -1021,7 +1024,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 borderRadius: BorderRadius.circular(8),
                 border: isOpenRouterFlash
                     ? Border.all(
-                        color: Colors.purpleAccent.withValues(alpha: 0.5))
+                        color: Theme.of(context)
+                            .appColors
+                            .primary
+                            .withValues(alpha: 0.5))
                     : isGeminiFlash25
                         ? Border.all(
                             color: Theme.of(context)
@@ -1041,7 +1047,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                             : Icons.memory,
                     size: 12,
                     color: isOpenRouterFlash
-                        ? Colors.purpleAccent
+                        ? Theme.of(context).appColors.primary
                         : isGeminiFlash25
                             ? Theme.of(context).appColors.info
                             : Theme.of(context).textTheme.bodySmall?.color,
@@ -1053,7 +1059,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         color: isOpenRouterFlash
-                            ? Colors.purpleAccent
+                            ? Theme.of(context).appColors.primary
                             : isGeminiFlash25
                                 ? Theme.of(context).appColors.info
                                 : Theme.of(context).colorScheme.onSurface,
@@ -1151,20 +1157,20 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             const Divider(height: 1),
 
             // ===== قسم: OpenRouter (الافتراضي) =====
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
                     Icon(Icons.swap_horiz,
-                        size: 14, color: Colors.purpleAccent),
-                    SizedBox(width: 4),
+                        size: 14, color: Theme.of(context).appColors.primary),
+                    const SizedBox(width: 4),
                     Text(
                       'OpenRouter (نماذج متعددة)',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.purpleAccent,
+                        color: Theme.of(context).appColors.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1479,7 +1485,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               icon: const Icon(Icons.psychology),
               tooltip: 'تشخيص عميق وكيل (استقصاء خطوة بخطوة)',
               onPressed: state.isLoading ? null : _handleAgenticDiagnose,
-              color: Colors.deepPurpleAccent,
+              color: Theme.of(context).appColors.primary,
             ),
             // حقل الإدخال
             Expanded(

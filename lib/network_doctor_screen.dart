@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'network_map_screen.dart';
 import 'rogue_dhcp_detector_screen.dart';
-import 'theme/app_palette.dart';
 
 import 'theme/app_theme.dart';
 
@@ -473,7 +472,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       case DiagnosticStatus.warning:
         return Theme.of(context).appColors.warning;
       case DiagnosticStatus.error:
-        return AppPalette.error;
+        return Theme.of(context).appColors.error;
       case DiagnosticStatus.running:
         return Theme.of(context).primaryColor;
       default:
@@ -646,15 +645,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       children: [
         Expanded(
             child: _buildChip('ناجحة', _countSuccess.toString(),
-                AppPalette.success, Icons.check_circle)),
+                Theme.of(context).appColors.success, Icons.check_circle)),
         const SizedBox(width: 10),
         Expanded(
             child: _buildChip('تحذير', _countWarning.toString(),
                 Theme.of(context).appColors.warning, Icons.warning)),
         const SizedBox(width: 10),
         Expanded(
-            child: _buildChip(
-                'فشل', _countError.toString(), AppPalette.error, Icons.error)),
+            child: _buildChip('فشل', _countError.toString(),
+                Theme.of(context).appColors.error, Icons.error)),
       ],
     );
   }
@@ -965,8 +964,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle,
-                    color: AppPalette.success, size: 24),
+                Icon(Icons.check_circle,
+                    color: Theme.of(context).appColors.success, size: 24),
                 const SizedBox(width: 12),
                 Text(
                   'لا توجد توصيات - الشبكة في حالة جيدة!',
@@ -993,7 +992,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
 
     switch (r.severity) {
       case SeverityLevel.high:
-        sevColor = AppPalette.error;
+        sevColor = Theme.of(context).appColors.error;
         severityLabel = 'عاجل';
         break;
       case SeverityLevel.medium:
@@ -1005,7 +1004,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         severityLabel = 'منخفض';
         break;
       case SeverityLevel.info:
-        sevColor = AppPalette.info;
+        sevColor = Theme.of(context).appColors.info;
         severityLabel = 'معلومة';
         break;
     }
@@ -1245,7 +1244,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                        color: AppPalette.error.withValues(alpha: 0.3),
+                        color: Theme.of(context)
+                            .appColors
+                            .error
+                            .withValues(alpha: 0.3),
                         width: 1.5),
                   ),
                   child: Column(
