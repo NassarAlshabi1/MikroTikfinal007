@@ -33,7 +33,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Install dependencies
@@ -68,7 +68,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Install dependencies
@@ -103,7 +103,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Enable Windows desktop
@@ -145,7 +145,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Enable Linux desktop
@@ -206,7 +206,7 @@ jobs:
           ## ✨ New Features
           - Updated app icon with Qahtani logo
           - Cross-platform support (Android, iOS, Web, Windows, Linux, macOS)
-          - Modern Flutter 3.22 implementation
+          - Modern Flutter 3.47.0 implementation
           
           ## 📱 Download Options
           
@@ -222,7 +222,7 @@ jobs:
           - **Web Bundle**: Deploy to any web server or hosting service
           
           ## 🔧 Technical Details
-          - Flutter Version: 3.22.3
+          - Flutter Version: 3.47.0
           - Minimum Android Version: API 21 (Android 5.0)
           - Windows: Windows 10 or later
           - Linux: Ubuntu 18.04+ or equivalent with GTK3
