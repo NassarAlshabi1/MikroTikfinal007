@@ -73,7 +73,7 @@ jobs:
         run: flutter pub run flutter_launcher_icons || echo "Icon generation skipped"
 
       - name: Build Web
-        run: flutter build web --release --web-renderer canvaskit
+        run: flutter build web --release
 
       - name: Upload Web artifacts
         uses: actions/upload-artifact@v4
