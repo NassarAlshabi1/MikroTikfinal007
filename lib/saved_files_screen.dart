@@ -11,7 +11,7 @@ import 'snackbar_helpers.dart';
 import 'card_list_screen.dart';
 import 'theme/app_theme.dart';
 import 'pdf_generator.dart'; // <-- ١. استيراد جديد
-import 'pdf_templates_screen.dart'; // <-- ٢. استيراد جديد
+import 'services/pdf_template_storage.dart';
 
 class SavedFile {
   final String path;
@@ -163,16 +163,12 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     showSuccessSnackBar(context, 'جاري تحضير ملف PDF...');
 
     try {
-      // البحث عن القالب المطابق لاسم الفئة
-      final prefs = await SharedPreferences.getInstance();
-      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-      final relevantTemplateJson = templatesJson.firstWhere(
-        (json) =>
-            PdfTemplate.fromJson(jsonDecode(json)).profileName ==
-            savedFile.profileName,
-      );
+      // البحث عن القالب المطابق لاسم الفئة مع التحقق من الصورة.
       final relevantTemplate =
-          PdfTemplate.fromJson(jsonDecode(relevantTemplateJson));
+          await PdfTemplateStorage.findForProfile(savedFile.profileName);
+      if (relevantTemplate == null) {
+        throw StateError('template_not_found');
+      }
 
       // قراءة أسماء المستخدمين من الملف النصي
       final file = File(savedFile.path);

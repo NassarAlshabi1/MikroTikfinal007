@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/app_theme.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +21,7 @@ import 'card_list_screen.dart';
 import 'mqtt_service.dart';
 import 'services/card_persistence_service.dart';
 import 'services/mikrotik_service_mode.dart';
+import 'services/pdf_template_storage.dart';
 import 'mikrotik_connector.dart';
 import 'pdf_templates_screen.dart';
 import 'pdf_generator.dart';
@@ -99,23 +101,13 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
   Future<void> _loadTemplates() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-      final parsed = <PdfTemplate>[];
-      for (final jsonString in templatesJson) {
-        try {
-          parsed.add(PdfTemplate.fromJson(jsonDecode(jsonString)));
-        } catch (_) {
-          // تجاهل القوالب التالفة بدل تعطيل الشاشة
-        }
-      }
+      final parsed = await PdfTemplateStorage.load();
       if (mounted) {
         setState(() {
           _templates = parsed;
         });
       }
     } catch (e) {
-      // فشل قراءة prefs — لا نعطّل الشاشة
       debugPrint('[BulkAdd] _loadTemplates error: $e');
     }
   }
@@ -517,20 +509,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     await prefs.setStringList('saved_files', existingFiles);
 
     // استخدام القالب المختار من المستخدم، أو البحث عن قالب مطابق للـ profile
-    PdfTemplate? relevantTemplate = _selectedTemplate;
-    if (relevantTemplate == null) {
-      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-      try {
-        final templateJson = templatesJson.firstWhere(
-          (json) =>
-              PdfTemplate.fromJson(jsonDecode(json)).profileName ==
-              _selectedProfile,
-        );
-        relevantTemplate = PdfTemplate.fromJson(jsonDecode(templateJson));
-      } catch (e) {
-        // No template found
-      }
-    }
+    final relevantTemplate = _selectedTemplate ??
+        await PdfTemplateStorage.findForProfile(_selectedProfile ?? '');
+    final selectedPdfTemplate = relevantTemplate;
 
     if (!mounted) return;
     showDialog(
@@ -568,7 +549,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor),
                 ),
-                if (relevantTemplate != null) ...[
+                if (selectedPdfTemplate != null) ...[
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.picture_as_pdf),
@@ -582,7 +563,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       PdfGenerator.sharePdf(
                         context,
                         cardUsernames: usernamesOnly,
-                        template: relevantTemplate!,
+                        template: selectedPdfTemplate,
                       );
                     },
                   ),
@@ -599,7 +580,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       await PdfGenerator.savePdf(
                         context,
                         cardUsernames: usernamesOnly,
-                        template: relevantTemplate!,
+                        template: selectedPdfTemplate,
                       );
                     },
                   ),
@@ -831,6 +812,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                                             .colorScheme
                                             .onSurface),
                                 keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                                 validator: (v) =>
                                     _positiveIntegerValidator(v, 'الطول'))),
                         const SizedBox(width: 16),
@@ -849,6 +833,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                                             .colorScheme
                                             .onSurface),
                                 keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                                 validator: (v) =>
                                     _positiveIntegerValidator(v, 'العدد'))),
                       ],
