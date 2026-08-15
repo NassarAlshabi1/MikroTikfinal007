@@ -1,64 +1,15 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'snackbar_helpers.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'edit_pdf_template_screen.dart';
 
+import 'package:flutter/material.dart';
+
+import 'edit_pdf_template_screen.dart';
+import 'models/pdf_template.dart';
+import 'services/pdf_template_storage.dart';
+import 'snackbar_helpers.dart';
 import 'theme/app_theme.dart';
 
-// موديل بسيط لتسهيل التعامل مع بيانات القالب
-class PdfTemplate {
-  final String profileName;
-  final String imagePath;
-  final double textXRatio; // نسبة موقع النص أفقياً
-  final double textYRatio; // نسبة موقع النص عمودياً
-  final int cardsPerPage;
-  final double imageWidth; // عرض الصورة الأصلي
-  final double imageHeight; // طول الصورة الأصلي
-  // --- ✨ تعديل: إضافة متغيرات لحفظ أبعاد المربع ---
-  final double markerWidthRatio;
-  final double markerHeightRatio;
-
-  PdfTemplate({
-    required this.profileName,
-    required this.imagePath,
-    required this.textXRatio,
-    required this.textYRatio,
-    required this.cardsPerPage,
-    required this.imageWidth,
-    required this.imageHeight,
-    // --- ✨ تعديل: إضافة المتغيرات الجديدة للكونستركتور ---
-    required this.markerWidthRatio,
-    required this.markerHeightRatio,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'profileName': profileName,
-        'imagePath': imagePath,
-        'textXRatio': textXRatio,
-        'textYRatio': textYRatio,
-        'cardsPerPage': cardsPerPage,
-        'imageWidth': imageWidth,
-        'imageHeight': imageHeight,
-        // --- ✨ تعديل: إضافة المتغيرات الجديدة لـ JSON ---
-        'markerWidthRatio': markerWidthRatio,
-        'markerHeightRatio': markerHeightRatio,
-      };
-
-  factory PdfTemplate.fromJson(Map<String, dynamic> json) => PdfTemplate(
-        profileName: json['profileName'],
-        imagePath: json['imagePath'],
-        textXRatio: json['textXRatio']?.toDouble() ?? 0.5,
-        textYRatio: json['textYRatio']?.toDouble() ?? 0.5,
-        cardsPerPage: json['cardsPerPage'],
-        imageWidth: json['imageWidth']?.toDouble() ?? 1.0,
-        imageHeight: json['imageHeight']?.toDouble() ?? 1.0,
-        // --- ✨ تعديل: قراءة المتغيرات الجديدة من JSON مع قيم افتراضية ---
-        markerWidthRatio: json['markerWidthRatio']?.toDouble() ?? 0.3,
-        markerHeightRatio: json['markerHeightRatio']?.toDouble() ?? 0.1,
-      );
-}
+export 'models/pdf_template.dart';
 
 class PdfTemplatesScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
@@ -76,20 +27,23 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadTemplates();
+    unawaited(_loadTemplates());
   }
 
   Future<void> _loadTemplates() async {
-    setState(() => _isLoading = true);
-    final prefs = await SharedPreferences.getInstance();
-    final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-    if (!mounted) return;
-    setState(() {
-      _templates = templatesJson
-          .map((jsonString) => PdfTemplate.fromJson(jsonDecode(jsonString)))
-          .toList();
-      _isLoading = false;
-    });
+    if (mounted) setState(() => _isLoading = true);
+    try {
+      final templates = await PdfTemplateStorage.load();
+      if (!mounted) return;
+      setState(() {
+        _templates = templates;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      showErrorSnackBar(context, 'تعذر تحميل قوالب PDF: $e');
+    }
   }
 
   Future<void> _deleteTemplate(PdfTemplate templateToDelete) async {
@@ -98,15 +52,20 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
       builder: (context) => AlertDialog(
         title: const Text('تأكيد الحذف'),
         content: Text(
-            'هل أنت متأكد من رغبتك في حذف قالب الفئة "${templateToDelete.profileName}"؟'),
+          'هل أنت متأكد من رغبتك في حذف قالب الفئة "${templateToDelete.profileName}"؟',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('إلغاء')),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء'),
+          ),
           TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text('حذف',
-                  style: TextStyle(color: Theme.of(context).appColors.error))),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              'حذف',
+              style: TextStyle(color: Theme.of(context).appColors.error),
+            ),
+          ),
         ],
       ),
     );
@@ -114,30 +73,23 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
     if (shouldDelete != true) return;
 
     try {
-      final file = File(templateToDelete.imagePath);
-      if (await file.exists()) {
-        await file.delete();
-      }
-    } catch (e) {
-      // تجاهل الخطأ
-    }
-
-    _templates
-        .removeWhere((t) => t.profileName == templateToDelete.profileName);
-    final prefs = await SharedPreferences.getInstance();
-    final updatedTemplatesJson =
-        _templates.map((t) => jsonEncode(t.toJson())).toList();
-    await prefs.setStringList('pdf_templates', updatedTemplatesJson);
-    if (mounted) {
-      setState(() {});
+      await PdfTemplateStorage.delete(templateToDelete);
+      if (!mounted) return;
+      setState(() {
+        _templates
+            .removeWhere((template) => template.id == templateToDelete.id);
+      });
       showSuccessSnackBar(context, 'تم حذف القالب بنجاح.');
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'تعذر حذف القالب: $e');
     }
   }
 
-  void _navigateAndReload(Widget screen) async {
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (context) => screen));
-    _loadTemplates(); // إعادة التحميل بعد العودة من شاشة الإضافة/التعديل
+  Future<void> _navigateAndReload(Widget screen) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => screen),
+    );
+    if (mounted) await _loadTemplates();
   }
 
   @override
@@ -157,32 +109,30 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
                     padding: const EdgeInsets.all(12),
                     itemCount: _templates.length,
                     itemBuilder: (context, index) {
-                      final template = _templates[index];
-                      return _buildTemplateCard(template);
+                      return _buildTemplateCard(_templates[index]);
                     },
                   ),
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateAndReload(
-            EditPdfTemplateScreen(profiles: widget.profiles)),
+          EditPdfTemplateScreen(profiles: widget.profiles),
+        ),
         tooltip: 'إضافة قالب جديد',
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  // --- виджет جديد لبناء بطاقة القالب ---
   Widget _buildTemplateCard(PdfTemplate template) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- معاينة الصورة ---
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Container(
@@ -194,68 +144,88 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Center(
-                        child: Icon(Icons.image_not_supported,
-                            color: Theme.of(context).appColors.muted,
-                            size: 40));
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Theme.of(context).appColors.onSurfaceVariant,
+                        size: 40,
+                      ),
+                    );
                   },
                 ),
               ),
             ),
             const SizedBox(height: 12),
-            // --- اسم الفئة ---
             Text(
               'قالب فئة: ${template.profileName}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            // --- عدد الكروت ---
             Text(
               'عدد الكروت بالصفحة: ${template.cardsPerPage}',
               style: TextStyle(
-                  fontSize: 15,
-                  color: Theme.of(context).textTheme.bodyMedium?.color ??
-                      Theme.of(context).colorScheme.onSurface),
+                fontSize: 15,
+                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                    Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            Text(
+              'معرّف القالب: ${template.id}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).appColors.muted,
+              ),
             ),
             const Divider(height: 24),
-            // --- أزرار الإجراءات ---
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton.icon(
                   onPressed: () => _deleteTemplate(template),
-                  icon: Icon(Icons.delete_outline,
-                      color: Theme.of(context).appColors.error, size: 20),
-                  label: Text('حذف',
-                      style:
-                          TextStyle(color: Theme.of(context).appColors.error)),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: Theme.of(context).appColors.error,
+                    size: 20,
+                  ),
+                  label: Text(
+                    'حذف',
+                    style: TextStyle(
+                      color: Theme.of(context).appColors.error,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  onPressed: () => _navigateAndReload(EditPdfTemplateScreen(
-                    profiles: widget.profiles,
-                    existingTemplate: template,
-                  )),
+                  onPressed: () => _navigateAndReload(
+                    EditPdfTemplateScreen(
+                      profiles: widget.profiles,
+                      existingTemplate: template,
+                    ),
+                  ),
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   label: const Text('تعديل'),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  // --- виджет لعرض الشاشة الفارغة ---
   Widget _buildEmptyView() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.style_outlined,
-                size: 80, color: Theme.of(context).appColors.muted),
+            Icon(
+              Icons.style_outlined,
+              size: 80,
+              color: Theme.of(context).appColors.muted,
+            ),
             const SizedBox(height: 20),
             const Text(
               'لا توجد قوالب محفوظة',
@@ -266,9 +236,10 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               'اضغط على زر الإضافة (+) في الأسفل لإنشاء قالب PDF جديد خاص بك.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).textTheme.bodyMedium?.color ??
-                      Theme.of(context).colorScheme.onSurface),
+                fontSize: 16,
+                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                    Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ],
         ),

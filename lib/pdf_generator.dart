@@ -1,104 +1,138 @@
-// ملف: pdf_generator.dart
-
 import 'dart:io';
-// --- ✨ إصلاح: تم تصحيح الأخطاء الإملائية في الـ import ---
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'snackbar_helpers.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
-import 'pdf_templates_screen.dart';
+import 'package:printing/printing.dart';
+
+import 'models/pdf_template.dart';
+import 'snackbar_helpers.dart';
 
 Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
-  final cardUsernames = data['cardUsernames'] as List<String>;
+  final cardUsernames = List<String>.from(data['cardUsernames'] as List);
   final imagePath = data['imagePath'] as String;
-  final textXRatio = data['textXRatio'] as double;
-  final textYRatio = data['textYRatio'] as double;
+  final textXRatio = (data['textXRatio'] as num).toDouble();
+  final textYRatio = (data['textYRatio'] as num).toDouble();
   final cardsPerPage = data['cardsPerPage'] as int;
-  final imageWidth = data['imageWidth'] as double;
-  final imageHeight = data['imageHeight'] as double;
-  final markerWidthRatio = data['markerWidthRatio'] as double;
-  final markerHeightRatio = data['markerHeightRatio'] as double;
+  final imageWidth = (data['imageWidth'] as num).toDouble();
+  final imageHeight = (data['imageHeight'] as num).toDouble();
+  final markerWidthRatio = (data['markerWidthRatio'] as num).toDouble();
+  final markerHeightRatio = (data['markerHeightRatio'] as num).toDouble();
+  final fontBytes = data['fontBytes'] as Uint8List?;
 
-  final doc = pw.Document();
+  if (cardUsernames.isEmpty) {
+    throw const FormatException('لا توجد كروت لإنشاء ملف PDF.');
+  }
+  if (cardsPerPage < 1 || cardsPerPage > 1000) {
+    throw const FormatException('عدد الكروت في الصفحة غير صالح.');
+  }
+  if (!File(imagePath).existsSync()) {
+    throw const FileSystemException('صورة قالب PDF غير موجودة.');
+  }
+  _validateRatio(textXRatio, 'موضع النص الأفقي');
+  _validateRatio(textYRatio, 'موضع النص العمودي');
+  _validateRatio(markerWidthRatio, 'عرض منطقة النص');
+  _validateRatio(markerHeightRatio, 'ارتفاع منطقة النص');
+
+  final pdfFont =
+      fontBytes == null ? null : pw.Font.ttf(_asByteData(fontBytes));
+  final doc = pw.Document(
+    theme: pdfFont == null
+        ? null
+        : pw.ThemeData.withFont(base: pdfFont, bold: pdfFont),
+  );
   final imageBytes = await File(imagePath).readAsBytes();
   final imageProvider = pw.MemoryImage(imageBytes);
+  final columns = cardsPerPage < 3 ? cardsPerPage : 3;
 
-  int step = cardsPerPage;
-  for (var i = 0; i < cardUsernames.length || i == 0; i += step) {
-    if (i > cardUsernames.length && i != 0) break;
+  for (var start = 0; start < cardUsernames.length; start += cardsPerPage) {
+    final end = (start + cardsPerPage).clamp(0, cardUsernames.length);
+    final pageCards = cardUsernames.sublist(start, end);
+    final rows = (pageCards.length / columns).ceil();
+    final slotCount = rows * columns;
+    final gridChildren = <pw.Widget>[];
 
-    final pageCards = cardUsernames.sublist(
-        i, i + step > cardUsernames.length ? cardUsernames.length : i + step);
+    for (var index = 0; index < slotCount; index++) {
+      if (index >= pageCards.length) {
+        gridChildren.add(pw.SizedBox.expand());
+        continue;
+      }
+      final username = pageCards[index];
+      gridChildren.add(
+        pw.LayoutBuilder(
+          builder: (context, constraints) {
+            final safeConstraints = constraints;
+            if (safeConstraints == null) return pw.SizedBox.shrink();
+            final cellWidth = safeConstraints.maxWidth;
+            final cellHeight = safeConstraints.maxHeight;
+            final boxWidth =
+                (markerWidthRatio * cellWidth).clamp(1.0, cellWidth).toDouble();
+            final boxHeight = (markerHeightRatio * cellHeight)
+                .clamp(1.0, cellHeight)
+                .toDouble();
+            final centerX = textXRatio * cellWidth;
+            final centerY = textYRatio * cellHeight;
+            final boxLeft = (centerX - boxWidth / 2)
+                .clamp(0.0, (cellWidth - boxWidth).clamp(0.0, cellWidth))
+                .toDouble();
+            final boxTop = (centerY - boxHeight / 2)
+                .clamp(0.0, (cellHeight - boxHeight).clamp(0.0, cellHeight))
+                .toDouble();
+            final fontSize = (boxHeight * 0.42).clamp(7.0, 22.0).toDouble();
 
-    doc.addPage(
-      pw.Page(
-        margin: const pw.EdgeInsets.all(20),
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          final List<pw.Widget> gridChildren = [];
-
-          for (var user in pageCards) {
-            gridChildren.add(
-              pw.LayoutBuilder(builder: (ctx, constraints) {
-                // --- ✨ إصلاح: إضافة علامة التعجب (!) للتعامل مع Null Safety ---
-                final cellWidth = constraints!.maxWidth;
-                final cellHeight = constraints.maxHeight;
-
-                final boxWidth = markerWidthRatio * cellWidth;
-                final boxHeight = markerHeightRatio * cellHeight;
-                final boxLeft = (textXRatio * cellWidth) - (boxWidth / 2);
-                final boxTop = (textYRatio * cellHeight) - (boxHeight / 2);
-
-                return pw.Container(
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black, width: 1.5),
-                  ),
-                  child: pw.Stack(
-                    fit: pw.StackFit.expand,
-                    children: [
-                      pw.Image(imageProvider, fit: pw.BoxFit.fill),
-                      // --- ✨ إصلاح: استخدام pw.Container داخل pw.Positioned لتحديد الأبعاد ---
-                      pw.Positioned(
-                        left: boxLeft,
-                        top: boxTop,
-                        child: pw.Container(
-                          width: boxWidth,
-                          height: boxHeight,
-                          child: pw.Center(
-                            child: pw.Text(
-                              user,
-                              textAlign: pw.TextAlign.center,
-                              style: const pw.TextStyle(
-                                color: PdfColors.black,
-                                fontSize: 10,
-                              ),
-                            ),
+            return pw.Container(
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.black, width: 1.2),
+              ),
+              child: pw.Stack(
+                fit: pw.StackFit.expand,
+                children: [
+                  pw.Image(imageProvider, fit: pw.BoxFit.fill),
+                  pw.Positioned(
+                    left: boxLeft,
+                    top: boxTop,
+                    child: pw.SizedBox(
+                      width: boxWidth,
+                      height: boxHeight,
+                      child: pw.Center(
+                        child: pw.Text(
+                          username,
+                          maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
+                          textAlign: pw.TextAlign.center,
+                          textDirection: pw.TextDirection.rtl,
+                          style: pw.TextStyle(
+                            font: pdfFont,
+                            fontSize: fontSize,
+                            color: PdfColors.black,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                );
-              }),
+                ],
+              ),
             );
-          }
+          },
+        ),
+      );
+    }
 
-          int remainingSlots = cardsPerPage - pageCards.length;
-          for (var j = 0; j < remainingSlots; j++) {
-            gridChildren.add(pw.SizedBox.shrink());
-          }
-
-          return pw.GridView(
-            crossAxisSpacing: 5,
-            mainAxisSpacing: 5,
-            crossAxisCount: 3,
-            childAspectRatio: imageWidth / imageHeight,
-            children: gridChildren,
-          );
-        },
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        textDirection: pw.TextDirection.rtl,
+        build: (context) => pw.GridView(
+          crossAxisCount: columns,
+          crossAxisSpacing: 5,
+          mainAxisSpacing: 5,
+          childAspectRatio: imageWidth / imageHeight,
+          children: gridChildren,
+        ),
       ),
     );
   }
@@ -106,40 +140,96 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   return doc.save();
 }
 
+ByteData _asByteData(Uint8List bytes) {
+  return ByteData.view(
+    bytes.buffer,
+    bytes.offsetInBytes,
+    bytes.lengthInBytes,
+  );
+}
+
+void _validateRatio(double value, String label) {
+  if (!value.isFinite || value < 0 || value > 1) {
+    throw FormatException('$label يجب أن يكون بين 0 و1.');
+  }
+}
+
 class PdfGenerator {
+  static const _fontAsset = 'fonts/Tajawal-Regular.ttf';
+
+  static Future<Map<String, dynamic>> _generationData({
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    template.validate();
+    if (cardUsernames.isEmpty) {
+      throw const FormatException('لا توجد كروت لإنشاء ملف PDF.');
+    }
+    final image = File(template.imagePath);
+    if (!await image.exists()) {
+      throw const FileSystemException('صورة قالب PDF غير موجودة.');
+    }
+
+    late final Uint8List fontBytes;
+    try {
+      final fontData = await rootBundle.load(_fontAsset);
+      fontBytes = fontData.buffer.asUint8List(
+        fontData.offsetInBytes,
+        fontData.lengthInBytes,
+      );
+    } catch (error) {
+      throw StateError('تعذر تحميل خط Tajawal المضمّن لقالب PDF: $error');
+    }
+
+    return {
+      'cardUsernames': cardUsernames,
+      'imagePath': template.imagePath,
+      'textXRatio': template.textXRatio,
+      'textYRatio': template.textYRatio,
+      'cardsPerPage': template.cardsPerPage,
+      'imageWidth': template.imageWidth,
+      'imageHeight': template.imageHeight,
+      'markerWidthRatio': template.markerWidthRatio,
+      'markerHeightRatio': template.markerHeightRatio,
+      'fontBytes': fontBytes,
+    };
+  }
+
+  static Future<Uint8List> generatePdfBytes({
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    final data = await _generationData(
+      cardUsernames: cardUsernames,
+      template: template,
+    );
+    return compute(_generatePdfInBackground, data);
+  }
+
   static Future<void> sharePdf(
     BuildContext context, {
     required List<String> cardUsernames,
     required PdfTemplate template,
   }) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
+    if (cardUsernames.isEmpty) {
+      showErrorSnackBar(context, 'لا توجد كروت لمشاركتها.');
+      return;
+    }
+    _showProgressDialog(context);
     try {
-      final Map<String, dynamic> generationData = {
-        'cardUsernames': cardUsernames,
-        'imagePath': template.imagePath,
-        'textXRatio': template.textXRatio,
-        'textYRatio': template.textYRatio,
-        'cardsPerPage': template.cardsPerPage,
-        'imageWidth': template.imageWidth,
-        'imageHeight': template.imageHeight,
-        'markerWidthRatio': template.markerWidthRatio,
-        'markerHeightRatio': template.markerHeightRatio,
-      };
-
-      final pdfBytes = await compute(_generatePdfInBackground, generationData);
-
-      if (context.mounted) Navigator.of(context).pop();
-      await Printing.sharePdf(bytes: pdfBytes, filename: 'wifi-cards.pdf');
+      final pdfBytes = await generatePdfBytes(
+        cardUsernames: cardUsernames,
+        template: template,
+      );
+      if (context.mounted) _closeProgressDialog(context);
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: _fileName(template.profileName),
+      );
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop();
-        showErrorSnackBar(
-            context, 'فشل إنشاء ملف PDF. تأكد من القالب وصلاحية الصورة.');
+        _closeProgressDialog(context);
+        showErrorSnackBar(context, 'فشل إنشاء ملف PDF: $e');
       }
     }
   }
@@ -149,44 +239,52 @@ class PdfGenerator {
     required List<String> cardUsernames,
     required PdfTemplate template,
   }) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
+    if (cardUsernames.isEmpty) {
+      showErrorSnackBar(context, 'لا توجد كروت لحفظها.');
+      return null;
+    }
+    _showProgressDialog(context);
     try {
-      final Map<String, dynamic> generationData = {
-        'cardUsernames': cardUsernames,
-        'imagePath': template.imagePath,
-        'textXRatio': template.textXRatio,
-        'textYRatio': template.textYRatio,
-        'cardsPerPage': template.cardsPerPage,
-        'imageWidth': template.imageWidth,
-        'imageHeight': template.imageHeight,
-        'markerWidthRatio': template.markerWidthRatio,
-        'markerHeightRatio': template.markerHeightRatio,
-      };
-
-      final pdfBytes = await compute(_generatePdfInBackground, generationData);
-
+      final pdfBytes = await generatePdfBytes(
+        cardUsernames: cardUsernames,
+        template: template,
+      );
       final docsDir = await getApplicationDocumentsDirectory();
-      final now = DateTime.now();
-      final filename = 'wifi-cards-${now.millisecondsSinceEpoch}.pdf';
-      final savePath = '${docsDir.path}/$filename';
-      final file = File(savePath);
-      await file.writeAsBytes(pdfBytes, flush: true);
+      final exportsDir = Directory('${docsDir.path}/pdf_exports');
+      await exportsDir.create(recursive: true);
+      final savePath = '${exportsDir.path}/${_fileName(template.profileName)}';
+      await File(savePath).writeAsBytes(pdfBytes, flush: true);
 
-      if (!context.mounted) return null;
-      Navigator.of(context).pop();
+      if (!context.mounted) return savePath;
+      _closeProgressDialog(context);
       showSuccessSnackBar(context, 'تم حفظ PDF في: $savePath');
       return savePath;
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop();
-        showErrorSnackBar(context, 'فشل حفظ PDF.');
+        _closeProgressDialog(context);
+        showErrorSnackBar(context, 'فشل حفظ PDF: $e');
       }
       return null;
     }
+  }
+
+  static void _showProgressDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  static void _closeProgressDialog(BuildContext context) {
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+
+  static String _fileName(String profileName) {
+    final safeProfile = profileName
+        .trim()
+        .replaceAll(RegExp(r'[^a-zA-Z0-9\u0600-\u06FF_-]+'), '_');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return 'wifi-cards-${safeProfile.isEmpty ? 'cards' : safeProfile}-$timestamp.pdf';
   }
 }

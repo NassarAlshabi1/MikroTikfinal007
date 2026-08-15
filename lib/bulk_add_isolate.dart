@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:router_os_client/router_os_client.dart';
 
 import 'mikrotik_connector.dart';
+import 'services/card_number_policy.dart';
 import 'services/mikrotik_card_commands.dart';
 import 'services/mikrotik_service_mode.dart';
 
@@ -163,7 +164,8 @@ void _validateInput(BulkAddIsolateData data) {
   if (data.selectedProfile == null || data.selectedProfile!.trim().isEmpty) {
     throw const FormatException('يجب اختيار بروفايل Hotspot.');
   }
-  final sharedUsers = int.tryParse(data.sharedUsers.trim());
+  final sharedUsers =
+      CardNumberPolicy.parseAsciiInteger(data.sharedUsers.trim());
   if (sharedUsers == null || sharedUsers < 1 || sharedUsers > 1000) {
     throw const FormatException('Shared Users يجب أن يكون رقماً بين 1 و1000.');
   }
@@ -178,7 +180,8 @@ void _validateInput(BulkAddIsolateData data) {
     throw const FormatException('نوع الكرت غير مدعوم.');
   }
 
-  final randomPartLength = data.length - data.prefix.length;
+  final normalizedPrefix = CardNumberPolicy.toAsciiDigits(data.prefix);
+  final randomPartLength = data.length - normalizedPrefix.length;
   final combinations = _combinationCount(randomPartLength, data.charType);
   if (data.count > combinations) {
     throw const FormatException(
@@ -215,10 +218,11 @@ String _generateUniqueUsername({
   required Set<String> existingUsernames,
 }) {
   const maxAttemptsPerCard = 1000;
-  final randomPartLength = data.length - data.prefix.length;
+  final normalizedPrefix = CardNumberPolicy.toAsciiDigits(data.prefix);
+  final randomPartLength = data.length - normalizedPrefix.length;
   for (var attempt = 0; attempt < maxAttemptsPerCard; attempt++) {
-    final username =
-        data.prefix + _generateRandomString(randomPartLength, data.charType);
+    final username = normalizedPrefix +
+        _generateRandomString(randomPartLength, data.charType);
     if (existingUsernames.add(username)) return username;
   }
   throw StateError(
