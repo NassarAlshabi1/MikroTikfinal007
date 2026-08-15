@@ -32,63 +32,68 @@ const CardCollectionSchema = CollectionSchema(
       name: r'expiresAt',
       type: IsarType.dateTime,
     ),
-    r'lastUsedAt': PropertySchema(
+    r'generationJobId': PropertySchema(
       id: 3,
+      name: r'generationJobId',
+      type: IsarType.string,
+    ),
+    r'lastUsedAt': PropertySchema(
+      id: 4,
       name: r'lastUsedAt',
       type: IsarType.dateTime,
     ),
     r'mikrotikUserId': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'mikrotikUserId',
       type: IsarType.string,
     ),
     r'password': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'password',
       type: IsarType.string,
     ),
     r'profileId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'profileId',
       type: IsarType.long,
     ),
     r'sharedUsers': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'sharedUsers',
       type: IsarType.long,
     ),
     r'status': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'status',
       type: IsarType.string,
     ),
     r'totalBytes': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'totalBytes',
       type: IsarType.long,
     ),
     r'totalDownloadGB': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'totalDownloadGB',
       type: IsarType.double,
     ),
     r'totalUploadGB': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'totalUploadGB',
       type: IsarType.double,
     ),
     r'uploadBytes': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'uploadBytes',
       type: IsarType.long,
     ),
     r'uptimeSeconds': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'uptimeSeconds',
       type: IsarType.long,
     ),
     r'username': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'username',
       type: IsarType.string,
     )
@@ -142,6 +147,19 @@ const CardCollectionSchema = CollectionSchema(
           caseSensitive: false,
         )
       ],
+    ),
+    r'generationJobId': IndexSchema(
+      id: -1717821557028675960,
+      name: r'generationJobId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'generationJobId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
     )
   },
   links: {},
@@ -158,6 +176,12 @@ int _cardCollectionEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.generationJobId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.mikrotikUserId;
     if (value != null) {
@@ -184,18 +208,19 @@ void _cardCollectionSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeLong(offsets[1], object.downloadBytes);
   writer.writeDateTime(offsets[2], object.expiresAt);
-  writer.writeDateTime(offsets[3], object.lastUsedAt);
-  writer.writeString(offsets[4], object.mikrotikUserId);
-  writer.writeString(offsets[5], object.password);
-  writer.writeLong(offsets[6], object.profileId);
-  writer.writeLong(offsets[7], object.sharedUsers);
-  writer.writeString(offsets[8], object.status);
-  writer.writeLong(offsets[9], object.totalBytes);
-  writer.writeDouble(offsets[10], object.totalDownloadGB);
-  writer.writeDouble(offsets[11], object.totalUploadGB);
-  writer.writeLong(offsets[12], object.uploadBytes);
-  writer.writeLong(offsets[13], object.uptimeSeconds);
-  writer.writeString(offsets[14], object.username);
+  writer.writeString(offsets[3], object.generationJobId);
+  writer.writeDateTime(offsets[4], object.lastUsedAt);
+  writer.writeString(offsets[5], object.mikrotikUserId);
+  writer.writeString(offsets[6], object.password);
+  writer.writeLong(offsets[7], object.profileId);
+  writer.writeLong(offsets[8], object.sharedUsers);
+  writer.writeString(offsets[9], object.status);
+  writer.writeLong(offsets[10], object.totalBytes);
+  writer.writeDouble(offsets[11], object.totalDownloadGB);
+  writer.writeDouble(offsets[12], object.totalUploadGB);
+  writer.writeLong(offsets[13], object.uploadBytes);
+  writer.writeLong(offsets[14], object.uptimeSeconds);
+  writer.writeString(offsets[15], object.username);
 }
 
 CardCollection _cardCollectionDeserialize(
@@ -208,16 +233,17 @@ CardCollection _cardCollectionDeserialize(
   object.createdAt = reader.readDateTime(offsets[0]);
   object.downloadBytes = reader.readLong(offsets[1]);
   object.expiresAt = reader.readDateTimeOrNull(offsets[2]);
+  object.generationJobId = reader.readStringOrNull(offsets[3]);
   object.id = id;
-  object.lastUsedAt = reader.readDateTimeOrNull(offsets[3]);
-  object.mikrotikUserId = reader.readStringOrNull(offsets[4]);
-  object.password = reader.readStringOrNull(offsets[5]);
-  object.profileId = reader.readLong(offsets[6]);
-  object.sharedUsers = reader.readLong(offsets[7]);
-  object.status = reader.readString(offsets[8]);
-  object.uploadBytes = reader.readLong(offsets[12]);
-  object.uptimeSeconds = reader.readLong(offsets[13]);
-  object.username = reader.readString(offsets[14]);
+  object.lastUsedAt = reader.readDateTimeOrNull(offsets[4]);
+  object.mikrotikUserId = reader.readStringOrNull(offsets[5]);
+  object.password = reader.readStringOrNull(offsets[6]);
+  object.profileId = reader.readLong(offsets[7]);
+  object.sharedUsers = reader.readLong(offsets[8]);
+  object.status = reader.readString(offsets[9]);
+  object.uploadBytes = reader.readLong(offsets[13]);
+  object.uptimeSeconds = reader.readLong(offsets[14]);
+  object.username = reader.readString(offsets[15]);
   return object;
 }
 
@@ -235,28 +261,30 @@ P _cardCollectionDeserializeProp<P>(
     case 2:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 4:
       return (reader.readStringOrNull(offset)) as P;
+    case 4:
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
       return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
       return (reader.readLong(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
-    case 9:
       return (reader.readLong(offset)) as P;
+    case 9:
+      return (reader.readString(offset)) as P;
     case 10:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 11:
       return (reader.readDouble(offset)) as P;
     case 12:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 13:
       return (reader.readLong(offset)) as P;
     case 14:
+      return (reader.readLong(offset)) as P;
+    case 15:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -697,6 +725,73 @@ extension CardCollectionQueryWhere
       ));
     });
   }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
+      generationJobIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'generationJobId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
+      generationJobIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'generationJobId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
+      generationJobIdEqualTo(String? generationJobId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'generationJobId',
+        value: [generationJobId],
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
+      generationJobIdNotEqualTo(String? generationJobId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId',
+              lower: [],
+              upper: [generationJobId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId',
+              lower: [generationJobId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId',
+              lower: [generationJobId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId',
+              lower: [],
+              upper: [generationJobId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
 }
 
 extension CardCollectionQueryFilter
@@ -883,6 +978,160 @@ extension CardCollectionQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'generationJobId',
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'generationJobId',
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'generationJobId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'generationJobId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'generationJobId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'generationJobId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'generationJobId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'generationJobId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'generationJobId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'generationJobId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'generationJobId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterFilterCondition>
+      generationJobIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'generationJobId',
+        value: '',
       ));
     });
   }
@@ -2058,6 +2307,20 @@ extension CardCollectionQuerySortBy
   }
 
   QueryBuilder<CardCollection, CardCollection, QAfterSortBy>
+      sortByGenerationJobId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'generationJobId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterSortBy>
+      sortByGenerationJobIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'generationJobId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterSortBy>
       sortByLastUsedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastUsedAt', Sort.asc);
@@ -2264,6 +2527,20 @@ extension CardCollectionQuerySortThenBy
     });
   }
 
+  QueryBuilder<CardCollection, CardCollection, QAfterSortBy>
+      thenByGenerationJobId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'generationJobId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterSortBy>
+      thenByGenerationJobIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'generationJobId', Sort.desc);
+    });
+  }
+
   QueryBuilder<CardCollection, CardCollection, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -2465,6 +2742,14 @@ extension CardCollectionQueryWhereDistinct
   }
 
   QueryBuilder<CardCollection, CardCollection, QDistinct>
+      distinctByGenerationJobId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'generationJobId',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QDistinct>
       distinctByLastUsedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastUsedAt');
@@ -2574,6 +2859,13 @@ extension CardCollectionQueryProperty
       expiresAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'expiresAt');
+    });
+  }
+
+  QueryBuilder<CardCollection, String?, QQueryOperations>
+      generationJobIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'generationJobId');
     });
   }
 

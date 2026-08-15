@@ -6,8 +6,8 @@ import 'package:router_os_client/router_os_client.dart';
 
 import 'mikrotik_connector.dart';
 import 'services/card_number_policy.dart';
-import 'services/mikrotik_card_commands.dart';
 import 'services/mikrotik_service_mode.dart';
+import 'services/router_os_card_gateway.dart';
 
 class BulkAddIsolateData {
   final SendPort sendPort;
@@ -23,6 +23,7 @@ class BulkAddIsolateData {
   final MikrotikConnectionConfig connectionConfig;
   final String customer;
   final MikrotikServiceMode serviceMode;
+  final List<Map<String, String>>? plannedUsers;
 
   BulkAddIsolateData({
     required this.sendPort,
@@ -38,6 +39,7 @@ class BulkAddIsolateData {
     required this.connectionConfig,
     required this.customer,
     this.serviceMode = MikrotikServiceMode.hotspot,
+    this.plannedUsers,
   });
 }
 
@@ -47,16 +49,18 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
   int successCount = 0;
   final newlyCreatedUsers = <Map<String, String>>[];
   RouterOSClient? client;
+  RouterOsCardGateway? gateway;
 
   try {
     _validateInput(data);
-    final plannedUsers = _buildUsers(data);
+    final plannedUsers = data.plannedUsers ?? _buildUsers(data);
 
     // لا يتم الاتصال أو إرسال أي أمر قبل أن تحفظ الشاشة الخطة في Isar.
     sendPort.send({
       'type': 'prepared',
       'users': plannedUsers,
       'approvalPort': approvalPort.sendPort,
+      'resumable': data.plannedUsers != null,
     });
     final approval = await approvalPort.first.timeout(
       const Duration(minutes: 5),
@@ -74,6 +78,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     }
 
     client = await MikrotikConnector.connectWithConfig(data.connectionConfig);
+    gateway = RouterOsCardGateway(RouterOsClientTalker(client));
     final profile = data.selectedProfile!.trim();
 
     for (var i = 0; i < plannedUsers.length; i++) {
@@ -81,34 +86,25 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       final username = user['username']!;
       final password = user['password']!;
 
-      final addResponse = await client.talk(
-        MikrotikCardCommands.addUser(
-          mode: data.serviceMode,
-          username: username,
-          password: password,
-          profile: profile,
-          sharedUsers: data.sharedUsers,
-          isVersion7OrNewer: data.isVersion7OrNewer,
-          customer: data.customer,
-        ),
+      final createdCard = await gateway.addCard(
+        mode: data.serviceMode,
+        username: username,
+        password: password,
+        profile: profile,
+        sharedUsers: data.sharedUsers,
+        isVersion7OrNewer: data.isVersion7OrNewer,
+        customer: data.customer,
       );
-      final mikrotikUserId = _extractMikrotikUserId(addResponse);
 
       if (data.serviceMode == MikrotikServiceMode.userManager) {
-        await client.talk(
-          MikrotikCardCommands.userManagerActivateProfile(
-            customer: data.customer,
-            username: username,
-            profile: profile,
-          ),
+        await gateway.activateUserManagerProfile(
+          customer: data.customer,
+          username: username,
+          profile: profile,
         );
       }
 
-      final confirmedUser = <String, String>{
-        'username': username,
-        'password': password,
-        if (mikrotikUserId != null) 'mikrotikUserId': mikrotikUserId,
-      };
+      final confirmedUser = createdCard.toMap();
       newlyCreatedUsers.add(confirmedUser);
       successCount++;
       sendPort.send({
@@ -118,12 +114,18 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       });
     }
 
+    final verifiedUsers = await gateway.verifyUsers(
+      mode: data.serviceMode,
+      users: newlyCreatedUsers,
+    );
     sendPort.send({
       'type': 'success',
-      'users': newlyCreatedUsers,
-      'count': successCount,
+      'users': verifiedUsers,
+      'count': verifiedUsers.length,
       'address': client.address,
     });
+  } on RouterOsVerificationException catch (e) {
+    _sendError(sendPort, e.message, e.confirmedUsers.length, e.confirmedUsers);
   } on MikrotikCredentialsMissingException catch (e) {
     _sendError(sendPort, 'خطأ في بيانات الدخول: ${e.message}', successCount,
         newlyCreatedUsers);
@@ -154,12 +156,14 @@ void _validateInput(BulkAddIsolateData data) {
   if (data.count < 1 || data.count > 10000) {
     throw const FormatException('عدد الكروت يجب أن يكون بين 1 و10000.');
   }
-  if (data.length < 1 || data.length > 64) {
-    throw const FormatException('طول اسم المستخدم يجب أن يكون بين 1 و64.');
-  }
-  if (data.prefix.length >= data.length) {
-    throw const FormatException(
-        'طول البادئة يجب أن يكون أقل من الطول الإجمالي للمستخدم.');
+  if (data.plannedUsers == null) {
+    if (data.length < 1 || data.length > 64) {
+      throw const FormatException('طول اسم المستخدم يجب أن يكون بين 1 و64.');
+    }
+    if (data.prefix.length >= data.length) {
+      throw const FormatException(
+          'طول البادئة يجب أن يكون أقل من الطول الإجمالي للمستخدم.');
+    }
   }
   if (data.selectedProfile == null || data.selectedProfile!.trim().isEmpty) {
     throw const FormatException('يجب اختيار بروفايل Hotspot.');
@@ -180,12 +184,24 @@ void _validateInput(BulkAddIsolateData data) {
     throw const FormatException('نوع الكرت غير مدعوم.');
   }
 
-  final normalizedPrefix = CardNumberPolicy.toAsciiDigits(data.prefix);
-  final randomPartLength = data.length - normalizedPrefix.length;
-  final combinations = _combinationCount(randomPartLength, data.charType);
-  if (data.count > combinations) {
-    throw const FormatException(
-        'عدد الكروت أكبر من عدد الأسماء الممكنة؛ زد طول المستخدم أو غيّر نوع الأحرف.');
+  if (data.plannedUsers == null) {
+    final normalizedPrefix = CardNumberPolicy.toAsciiDigits(data.prefix);
+    final randomPartLength = data.length - normalizedPrefix.length;
+    final combinations = _combinationCount(randomPartLength, data.charType);
+    if (data.count > combinations) {
+      throw const FormatException(
+          'عدد الكروت أكبر من عدد الأسماء الممكنة؛ زد طول المستخدم أو غيّر نوع الأحرف.');
+    }
+  } else {
+    if (data.plannedUsers!.isEmpty || data.plannedUsers!.length != data.count) {
+      throw const FormatException('خطة الاستئناف غير صالحة أو فارغة.');
+    }
+    for (final user in data.plannedUsers!) {
+      if ((user['username']?.trim() ?? '').isEmpty ||
+          !user.containsKey('password')) {
+        throw const FormatException('تحتوي خطة الاستئناف على كرت غير صالح.');
+      }
+    }
   }
 }
 
@@ -285,14 +301,6 @@ int _combinationCount(int length, String type) {
     total *= alphabetSize;
   }
   return total;
-}
-
-String? _extractMikrotikUserId(List<Map<String, String>> response) {
-  for (final row in response) {
-    final id = row['.id']?.trim();
-    if (id != null && id.isNotEmpty) return id;
-  }
-  return null;
 }
 
 void _sendError(

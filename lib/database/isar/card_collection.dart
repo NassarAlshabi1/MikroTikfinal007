@@ -56,6 +56,10 @@ class CardCollection {
   /// معرّف RouterOS (.id)
   String? mikrotikUserId;
 
+  /// معرّف عملية التوليد الجماعي في Isar
+  @Index()
+  String? generationJobId;
+
   // ============================================================
   //  Constructors
   // ============================================================
@@ -77,6 +81,7 @@ class CardCollection {
     this.downloadBytes = 0,
     this.uptimeSeconds = 0,
     this.mikrotikUserId,
+    this.generationJobId,
   });
 
   /// تحويل إلى Map (للتصدير والـ JSON)
@@ -94,6 +99,7 @@ class CardCollection {
         'download_bytes': downloadBytes,
         'uptime_seconds': uptimeSeconds,
         'mikrotik_user_id': mikrotikUserId,
+        'generation_job_id': generationJobId,
       };
 
   /// إجمالي البايتات

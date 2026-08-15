@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,8 +19,11 @@ import 'package:router_os_client/router_os_client.dart';
 import 'bulk_add_isolate.dart';
 import 'saved_files_screen.dart';
 import 'card_list_screen.dart';
+import 'card_generation_jobs_screen.dart';
 import 'mqtt_service.dart';
+import 'services/card_generation_job_service.dart';
 import 'services/card_persistence_service.dart';
+import 'database/isar/card_generation_job.dart';
 import 'services/mikrotik_service_mode.dart';
 import 'services/pdf_template_storage.dart';
 import 'mikrotik_connector.dart';
@@ -79,6 +83,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   List<Map<String, dynamic>> _availableProfiles = [];
   bool _isLoadingProfiles = false;
   List<Map<String, String>> _reservedGenerationUsers = [];
+  String? _generationJobId;
+  GenerationLockToken? _generationLock;
+  List<CardGenerationJob> _resumableJobs = const [];
 
   final String telegramBotToken = '';
   final String telegramChatId = '';
@@ -126,8 +133,11 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   Future<void> _initializeLocalBulkData() async {
     try {
       await CardPersistenceService.cleanupStalePendingCards();
+      await CardGenerationJobService.deleteOldTerminalJobs();
+      final jobs = await CardGenerationJobService.loadResumable();
+      if (mounted) setState(() => _resumableJobs = jobs);
     } catch (e) {
-      debugPrint('[BulkAdd] stale pending cleanup error: $e');
+      debugPrint('[BulkAdd] local job cleanup error: $e');
     }
     if (_availableProfiles.isEmpty) {
       await _loadProfilesFromSources();
@@ -269,55 +279,196 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
     final count = int.tryParse(_countController.text.trim());
     final length = int.tryParse(_lengthController.text.trim());
-    if (count == null || length == null) {
+    final selectedProfile = _selectedProfile?.trim();
+    if (count == null ||
+        length == null ||
+        selectedProfile == null ||
+        selectedProfile.isEmpty) {
       _showErrorDialog('بيانات إنشاء الكروت غير صالحة.');
       return;
     }
 
+    final lock = CardGenerationJobService.tryAcquireLock();
+    if (lock == null) {
+      _showErrorDialog(
+          'توجد عملية إنشاء كروت أخرى قيد التنفيذ. انتظر انتهائها أولاً.');
+      return;
+    }
+    _generationLock = lock;
+
     late final MikrotikConnectionConfig connectionConfig;
     try {
-      // قراءة الاعتمادات على الـ UI isolate قبل بدء العزل.
       connectionConfig = await MikrotikConnector.loadConnectionConfig();
+      final job = await CardGenerationJobService.create(
+        profileName: selectedProfile,
+        serviceMode: widget.serviceMode.name,
+        requestedCount: count,
+        routerAddress: connectionConfig.address,
+        parameters: {
+          'count': count,
+          'length': length,
+          'prefix': _prefixController.text.trim(),
+          'sharedUsers': _sharedUsersController.text.trim(),
+          'profileName': selectedProfile,
+          'charType': _charType,
+          'cardType': _cardType,
+          'linkPasswordToFirstUser': _linkPasswordToFirstUser,
+          'isVersion7OrNewer': widget.isVersion7OrNewer,
+          'customer': widget.username,
+          'serviceMode': widget.serviceMode.name,
+        },
+      );
+      _generationJobId = job.jobId;
     } catch (e) {
-      _showErrorDialog('تعذر قراءة بيانات اتصال MikroTik: $e');
+      _cleanupGenerationResources();
+      if (mounted) _showErrorDialog('تعذر تجهيز سجل عملية التوليد: $e');
       return;
     }
 
+    if (!mounted) {
+      _cleanupGenerationResources();
+      return;
+    }
     setState(() {
       _isGenerating = true;
       _generationProgress = 0.0;
       _generationStatusText = 'جاري التحضير...';
     });
 
+    await _spawnGeneration(
+      (sendPort) => BulkAddIsolateData(
+        sendPort: sendPort,
+        count: count,
+        length: length,
+        prefix: _prefixController.text.trim(),
+        sharedUsers: _sharedUsersController.text.trim(),
+        selectedProfile: selectedProfile,
+        charType: _charType,
+        cardType: _cardType,
+        linkPasswordToFirstUser: _linkPasswordToFirstUser,
+        isVersion7OrNewer: widget.isVersion7OrNewer,
+        connectionConfig: connectionConfig,
+        customer: widget.username,
+        serviceMode: widget.serviceMode,
+      ),
+    );
+  }
+
+  Future<void> _spawnGeneration(
+    BulkAddIsolateData Function(SendPort sendPort) buildData,
+  ) async {
     final receivePort = ReceivePort();
     _generationPort = receivePort;
     _generationSubscription = receivePort.listen(
       (message) => unawaited(_handleGenerationMessage(message)),
     );
-    final isolateData = BulkAddIsolateData(
-      sendPort: receivePort.sendPort,
-      count: count,
-      length: length,
-      prefix: _prefixController.text.trim(),
-      sharedUsers: _sharedUsersController.text.trim(),
-      selectedProfile: _selectedProfile,
-      charType: _charType,
-      cardType: _cardType,
-      linkPasswordToFirstUser: _linkPasswordToFirstUser,
-      isVersion7OrNewer: widget.isVersion7OrNewer,
-      connectionConfig: connectionConfig,
-      customer: widget.username,
-      serviceMode: widget.serviceMode,
-    );
-
     try {
-      _generationIsolate = await Isolate.spawn(bulkAddIsolate, isolateData);
+      _generationIsolate = await Isolate.spawn(
+        bulkAddIsolate,
+        buildData(receivePort.sendPort),
+      );
     } catch (e) {
+      final jobId = _generationJobId;
+      if (jobId != null) {
+        await CardGenerationJobService.markFailed(jobId, error: e.toString());
+      }
       _cleanupGenerationResources();
       if (!mounted) return;
       setState(() => _isGenerating = false);
       _showErrorDialog('تعذر بدء عملية إنشاء الكروت: $e');
     }
+  }
+
+  Future<void> _resumeJob(CardGenerationJob job) async {
+    if (_isGenerating) return;
+    final plannedUsers = await CardPersistenceService.loadPendingGeneratedCards(
+      job.jobId,
+    );
+    if (plannedUsers.isEmpty) {
+      if (job.confirmedCount >= job.requestedCount) {
+        await CardGenerationJobService.markCompleted(
+          job.jobId,
+          confirmedCount: job.confirmedCount,
+        );
+      } else {
+        await CardGenerationJobService.markFailed(
+          job.jobId,
+          error: 'لا توجد كروت pending قابلة للاستئناف.',
+          confirmedCount: job.confirmedCount,
+          failedCount: job.requestedCount - job.confirmedCount,
+        );
+      }
+      if (mounted) {
+        setState(() {
+          _resumableJobs =
+              _resumableJobs.where((item) => item.id != job.id).toList();
+        });
+        _showErrorDialog('لا توجد كروت معلقة قابلة للاستئناف لهذه العملية.');
+      }
+      return;
+    }
+
+    final lock = CardGenerationJobService.tryAcquireLock();
+    if (lock == null) {
+      _showErrorDialog('توجد عملية إنشاء أخرى قيد التنفيذ.');
+      return;
+    }
+    _generationLock = lock;
+
+    late final MikrotikConnectionConfig connectionConfig;
+    late final Map<String, dynamic> parameters;
+    try {
+      connectionConfig = await MikrotikConnector.loadConnectionConfig();
+      final decoded = jsonDecode(job.parametersJson);
+      if (decoded is! Map) throw const FormatException('بيانات Job غير صالحة.');
+      parameters = Map<String, dynamic>.from(decoded);
+    } catch (e) {
+      await CardGenerationJobService.markFailed(
+        job.jobId,
+        error: 'تعذر تجهيز استئناف Job: $e',
+      );
+      _cleanupGenerationResources();
+      if (mounted) _showErrorDialog('تعذر استئناف العملية: $e');
+      return;
+    }
+
+    final serviceMode = MikrotikServiceMode.values.firstWhere(
+      (mode) => mode.name == job.serviceMode,
+      orElse: () => MikrotikServiceMode.hotspot,
+    );
+    _generationJobId = job.jobId;
+    _selectedProfile = job.profileName;
+    if (!mounted) {
+      _cleanupGenerationResources();
+      return;
+    }
+    setState(() {
+      _isGenerating = true;
+      _generationProgress =
+          job.requestedCount == 0 ? 0 : job.confirmedCount / job.requestedCount;
+      _generationStatusText = 'جاري استئناف العملية ${job.jobId}...';
+      _resumableJobs =
+          _resumableJobs.where((item) => item.id != job.id).toList();
+    });
+
+    await _spawnGeneration(
+      (sendPort) => BulkAddIsolateData(
+        sendPort: sendPort,
+        count: plannedUsers.length,
+        length: (parameters['length'] as num?)?.toInt() ?? 8,
+        prefix: parameters['prefix']?.toString() ?? '',
+        sharedUsers: parameters['sharedUsers']?.toString() ?? '1',
+        selectedProfile: job.profileName,
+        charType: parameters['charType']?.toString() ?? 'numbers',
+        cardType: parameters['cardType']?.toString() ?? 'username_only',
+        linkPasswordToFirstUser: parameters['linkPasswordToFirstUser'] == true,
+        isVersion7OrNewer: parameters['isVersion7OrNewer'] == true,
+        connectionConfig: connectionConfig,
+        customer: parameters['customer']?.toString() ?? widget.username,
+        serviceMode: serviceMode,
+        plannedUsers: plannedUsers,
+      ),
+    );
   }
 
   Future<void> _handleGenerationMessage(dynamic rawMessage) async {
@@ -337,19 +488,41 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
         return;
       }
 
+      final isResumable = message['resumable'] == true;
+      if (isResumable) {
+        _reservedGenerationUsers = users;
+        final jobId = _generationJobId;
+        if (jobId != null) {
+          await CardGenerationJobService.markRunning(jobId);
+        }
+        approvalPort.send({'approved': true});
+        return;
+      }
+
       setState(() {
         _generationStatusText = 'جاري فحص الأسماء وحجزها في Isar...';
         _generationProgress = 0.0;
       });
 
       try {
+        final jobId = _generationJobId;
         final preparation = await CardPersistenceService.prepareGeneratedCards(
           profileName: _selectedProfile!,
           users: users,
           sharedUsers: _sharedUsersValue,
+          generationJobId: jobId,
         );
         if (!preparation.canProceed) {
           final conflicts = preparation.conflicts.take(5).join('، ');
+          if (jobId != null) {
+            await CardGenerationJobService.markFailed(
+              jobId,
+              error: conflicts.isEmpty
+                  ? 'تعذر حجز الكروت في Isar.'
+                  : 'الأسماء موجودة محلياً: $conflicts',
+              failedCount: users.length,
+            );
+          }
           approvalPort.send({
             'approved': false,
             'reason': conflicts.isEmpty
@@ -359,8 +532,22 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
           return;
         }
         _reservedGenerationUsers = preparation.reservedUsers;
+        if (jobId != null) {
+          await CardGenerationJobService.markReady(
+            jobId,
+            reservedCount: preparation.reservedUsers.length,
+            plannedUsers: preparation.reservedUsers,
+          );
+        }
         approvalPort.send({'approved': true});
       } catch (e) {
+        final jobId = _generationJobId;
+        if (jobId != null) {
+          await CardGenerationJobService.markFailed(
+            jobId,
+            error: 'تعذر الحجز المحلي في Isar: $e',
+          );
+        }
         approvalPort.send({
           'approved': false,
           'reason': 'تعذر الحجز المحلي في Isar: $e',
@@ -370,11 +557,24 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     }
 
     if (type == 'progress') {
+      final progress = (message['progress'] as num?)?.toDouble() ?? 0;
       setState(() {
-        _generationProgress = (message['progress'] as num?)?.toDouble() ?? 0;
+        _generationProgress = progress;
         _generationStatusText =
             message['status']?.toString() ?? 'جاري الإنشاء...';
       });
+      final jobId = _generationJobId;
+      if (jobId != null) {
+        final nextIndex = (progress * _reservedGenerationUsers.length).round();
+        unawaited(CardGenerationJobService.markProgress(
+          jobId,
+          nextIndex: nextIndex,
+          lastUsername:
+              nextIndex > 0 && nextIndex <= _reservedGenerationUsers.length
+                  ? _reservedGenerationUsers[nextIndex - 1]['username']
+                  : null,
+        ));
+      }
       return;
     }
 
@@ -382,13 +582,15 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       final users = _usersFromMessage(message['users']);
       final successCount = (message['count'] as num?)?.toInt() ?? users.length;
       final address = message['address']?.toString() ?? '';
+      final jobId = _generationJobId;
       String? persistenceError;
+      var activatedCount = 0;
 
       try {
-        final activatedCount =
-            await CardPersistenceService.markGeneratedCardsActive(
+        activatedCount = await CardPersistenceService.markGeneratedCardsActive(
           profileName: _selectedProfile!,
           users: users,
+          generationJobId: jobId,
         );
         if (activatedCount != users.length) {
           persistenceError =
@@ -397,6 +599,26 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       } catch (e) {
         persistenceError = e.toString();
         debugPrint('[BulkAdd] Isar activation error: $e');
+      }
+
+      if (jobId != null) {
+        final existingJob = await CardGenerationJobService.find(jobId);
+        final previousConfirmed = existingJob?.confirmedCount ?? 0;
+        final totalConfirmed = previousConfirmed + activatedCount;
+        if (persistenceError == null) {
+          await CardGenerationJobService.markCompleted(
+            jobId,
+            confirmedCount: totalConfirmed,
+          );
+        } else {
+          await CardGenerationJobService.markPartialFailure(
+            jobId,
+            confirmedCount: totalConfirmed,
+            failedCount:
+                (existingJob?.requestedCount ?? users.length) - totalConfirmed,
+            error: persistenceError,
+          );
+        }
       }
 
       _reservedGenerationUsers = [];
@@ -426,23 +648,51 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       final pendingUsers = _reservedGenerationUsers
           .where((user) => !confirmedNames.contains(user['username']))
           .toList(growable: false);
+      final jobId = _generationJobId;
       String? persistenceError;
+      var activatedCount = 0;
 
       try {
         if (confirmedUsers.isNotEmpty) {
-          await CardPersistenceService.markGeneratedCardsActive(
+          activatedCount =
+              await CardPersistenceService.markGeneratedCardsActive(
             profileName: _selectedProfile!,
             users: confirmedUsers,
+            generationJobId: jobId,
           );
         }
         if (pendingUsers.isNotEmpty) {
           await CardPersistenceService.removePendingGeneratedCards(
             pendingUsers,
+            generationJobId: jobId,
           );
         }
       } catch (e) {
         persistenceError = e.toString();
         debugPrint('[BulkAdd] partial Isar cleanup error: $e');
+      }
+
+      if (jobId != null) {
+        final existingJob = await CardGenerationJobService.find(jobId);
+        final previousConfirmed = existingJob?.confirmedCount ?? 0;
+        final totalConfirmed = previousConfirmed + activatedCount;
+        final requested =
+            existingJob?.requestedCount ?? _reservedGenerationUsers.length;
+        if (totalConfirmed > 0 || persistenceError != null) {
+          await CardGenerationJobService.markPartialFailure(
+            jobId,
+            confirmedCount: totalConfirmed,
+            failedCount: math.max(requested - totalConfirmed, 0),
+            error: persistenceError ?? errorMessage,
+          );
+        } else {
+          await CardGenerationJobService.markFailed(
+            jobId,
+            error: errorMessage,
+            confirmedCount: 0,
+            failedCount: requested,
+          );
+        }
       }
 
       _reservedGenerationUsers = [];
@@ -475,6 +725,34 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
         .toList(growable: false);
   }
 
+  Future<void> _cancelGeneration({bool silent = false}) async {
+    if (!_isGenerating && _generationJobId == null) return;
+    final jobId = _generationJobId;
+    final pendingUsers = List<Map<String, String>>.from(
+      _reservedGenerationUsers,
+    );
+    if (jobId != null) {
+      await CardGenerationJobService.cancel(jobId);
+      if (pendingUsers.isNotEmpty) {
+        await CardPersistenceService.removePendingGeneratedCards(
+          pendingUsers,
+          generationJobId: jobId,
+        );
+      }
+    }
+    _reservedGenerationUsers = [];
+    _cleanupGenerationResources();
+    if (!silent && mounted) {
+      setState(() {
+        _isGenerating = false;
+        _generationProgress = 0;
+        _generationStatusText = 'تم إلغاء العملية.';
+      });
+      showSuccessSnackBar(
+          context, 'تم إلغاء عملية إنشاء الكروت وتنظيف الحجز المحلي.');
+    }
+  }
+
   void _cleanupGenerationResources() {
     _generationSubscription?.cancel();
     _generationSubscription = null;
@@ -482,6 +760,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     _generationPort = null;
     _generationIsolate?.kill(priority: Isolate.immediate);
     _generationIsolate = null;
+    _generationLock?.release();
+    _generationLock = null;
+    _generationJobId = null;
   }
 
   Future<void> _showSuccessDialog(List<Map<String, String>> users) async {
@@ -550,6 +831,23 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       backgroundColor: Theme.of(context).primaryColor),
                 ),
                 if (selectedPdfTemplate != null) ...[
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.preview_outlined),
+                    label: const Text('معاينة PDF النهائية'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      final List<String> usernamesOnly =
+                          users.map((u) => u['username']!).toList();
+                      PdfGenerator.previewPdf(
+                        context,
+                        cardUsernames: usernamesOnly,
+                        template: selectedPdfTemplate,
+                      );
+                    },
+                  ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.picture_as_pdf),
@@ -739,8 +1037,56 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     return null;
   }
 
+  Widget _buildResumableJobsCard() {
+    return Card(
+      color: context.theme.appColors.warningContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'توجد عمليات إنشاء غير مكتملة',
+              style: TextStyle(
+                color: context.theme.appColors.onWarningContainer,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ..._resumableJobs.map(
+              (job) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  '${job.profileName} — ${job.confirmedCount}/${job.requestedCount}',
+                  style: TextStyle(
+                    color: context.theme.appColors.onWarningContainer,
+                  ),
+                ),
+                subtitle: Text(
+                  'الحالة: ${job.status} · آخر تحديث: ${DateFormat('yyyy-MM-dd HH:mm').format(job.updatedAt)}',
+                  style: TextStyle(
+                    color: context.theme.appColors.onWarningContainer,
+                  ),
+                ),
+                trailing: FilledButton(
+                  onPressed: _isGenerating ? null : () => _resumeJob(job),
+                  child: const Text('استئناف'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    if (_isGenerating || _generationJobId != null) {
+      unawaited(_cancelGeneration(silent: true));
+    } else {
+      _cleanupGenerationResources();
+    }
     _prefixController.dispose();
     _lengthController.dispose();
     _countController.dispose();
@@ -774,6 +1120,12 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text('${(_generationProgress * 100).toStringAsFixed(0)}%'),
+                    const SizedBox(height: 20),
+                    OutlinedButton.icon(
+                      onPressed: () => _cancelGeneration(),
+                      icon: const Icon(Icons.cancel_outlined),
+                      label: const Text('إلغاء العملية'),
+                    ),
                   ],
                 ),
               ),
@@ -785,6 +1137,22 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (_resumableJobs.isNotEmpty) ...[
+                      _buildResumableJobsCard(),
+                      const SizedBox(height: 16),
+                    ],
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const CardGenerationJobsScreen(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.history),
+                        label: const Text('سجل عمليات التوليد'),
+                      ),
+                    ),
                     TextFormField(
                         controller: _prefixController,
                         decoration: const InputDecoration(

@@ -66,6 +66,30 @@ void main() {
     expect(active.map((card) => card.password), containsAll([null, 'pass002']));
   });
 
+  test('يعزل حجوزات Job ويثبت الكرت المرتبط به فقط', () async {
+    final users = [
+      {'username': 'job-card-01', 'password': 'p1'},
+    ];
+    final preparation = await CardPersistenceService.prepareGeneratedCards(
+      profileName: 'default',
+      users: users,
+      generationJobId: 'job-test-1',
+    );
+    expect(preparation.canProceed, isTrue);
+
+    final pending = await CardPersistenceService.loadPendingGeneratedCards(
+      'job-test-1',
+    );
+    expect(pending.single['username'], 'job-card-01');
+
+    final activated = await CardPersistenceService.markGeneratedCardsActive(
+      profileName: 'default',
+      users: users,
+      generationJobId: 'job-test-1',
+    );
+    expect(activated, 1);
+  });
+
   test('يرفض الاسم المكرر محلياً دون إدخال دفعة ثانية', () async {
     final user = [
       {'username': 'duplicate01', 'password': 'secret'},
