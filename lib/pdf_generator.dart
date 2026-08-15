@@ -206,6 +206,34 @@ class PdfGenerator {
     return compute(_generatePdfInBackground, data);
   }
 
+  static Future<void> previewPdf(
+    BuildContext context, {
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    if (cardUsernames.isEmpty) {
+      showErrorSnackBar(context, 'لا توجد كروت لمعاينتها.');
+      return;
+    }
+    _showProgressDialog(context);
+    try {
+      final pdfBytes = await generatePdfBytes(
+        cardUsernames: cardUsernames,
+        template: template,
+      );
+      if (context.mounted) _closeProgressDialog(context);
+      await Printing.layoutPdf(
+        name: _fileName(template.profileName),
+        onLayout: (_) async => pdfBytes,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        _closeProgressDialog(context);
+        showErrorSnackBar(context, 'فشل فتح معاينة PDF: $e');
+      }
+    }
+  }
+
   static Future<void> sharePdf(
     BuildContext context, {
     required List<String> cardUsernames,

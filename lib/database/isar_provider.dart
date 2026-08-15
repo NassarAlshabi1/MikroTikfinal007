@@ -12,6 +12,7 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'isar/card_collection.dart';
+import 'isar/card_generation_job.dart';
 import 'isar/profile_collection.dart';
 import 'isar/ai_diagnostic_collection.dart';
 import 'isar/executed_command_collection.dart';
@@ -40,6 +41,7 @@ class IsarProvider {
     return await Isar.open(
       [
         CardCollectionSchema,
+        CardGenerationJobSchema,
         ProfileCollectionSchema,
         AiDiagnosticCollectionSchema,
         ExecutedCommandCollectionSchema,

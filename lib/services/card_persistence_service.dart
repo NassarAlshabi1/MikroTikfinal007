@@ -98,6 +98,7 @@ class CardPersistenceService {
     required String profileName,
     required List<Map<String, String>> users,
     int sharedUsers = 1,
+    String? generationJobId,
   }) async {
     final normalized = _normalizeUsers(users);
     if (profileName.trim().isEmpty || normalized.isEmpty) {
@@ -138,6 +139,7 @@ class CardPersistenceService {
               status: 'pending',
               createdAt: now,
               mikrotikUserId: _nullableString(user['mikrotikUserId']),
+              generationJobId: _nullableString(generationJobId),
             ),
           )
           .toList(growable: false);
@@ -153,6 +155,7 @@ class CardPersistenceService {
   static Future<int> markGeneratedCardsActive({
     required String profileName,
     required List<Map<String, String>> users,
+    String? generationJobId,
   }) async {
     final normalized = _normalizeUsers(users);
     if (profileName.trim().isEmpty || normalized.isEmpty) return 0;
@@ -170,7 +173,11 @@ class CardPersistenceService {
       final cardsToUpdate = <CardCollection>[];
       for (final user in normalized.values) {
         final card = byUsername[user['username']!];
-        if (card == null) continue;
+        if (card == null ||
+            (generationJobId != null &&
+                card.generationJobId != generationJobId)) {
+          continue;
+        }
         card.password = _nullablePassword(user['password']);
         card.mikrotikUserId = _nullableString(user['mikrotikUserId']);
         card.status = 'active';
@@ -184,10 +191,30 @@ class CardPersistenceService {
     });
   }
 
+  /// يقرأ الكروت pending الخاصة بعملية توليد محددة لاستئنافها.
+  static Future<List<Map<String, String>>> loadPendingGeneratedCards(
+    String generationJobId,
+  ) async {
+    if (generationJobId.trim().isEmpty) return const [];
+    final isar = await IsarProvider().instance;
+    final cards = await isar.cardCollections
+        .filter()
+        .generationJobIdEqualTo(generationJobId)
+        .statusEqualTo('pending')
+        .findAll();
+    return cards
+        .map((card) => <String, String>{
+              'username': card.username,
+              'password': card.password ?? '',
+            })
+        .toList(growable: false);
+  }
+
   /// يحذف الحجوزات التي لم يؤكدها الراوتر بعد فشل جزئي أو إلغاء العملية.
   static Future<int> removePendingGeneratedCards(
-    List<Map<String, String>> users,
-  ) async {
+    List<Map<String, String>> users, {
+    String? generationJobId,
+  }) async {
     final normalized = _normalizeUsers(users);
     if (normalized.isEmpty) return 0;
 
@@ -199,7 +226,10 @@ class CardPersistenceService {
         return query.usernameEqualTo(username);
       }).findAll();
       final ids = existingCards
-          .where((card) => card.status == 'pending')
+          .where((card) =>
+              card.status == 'pending' &&
+              (generationJobId == null ||
+                  card.generationJobId == generationJobId))
           .map((card) => card.id)
           .toList(growable: false);
       if (ids.isEmpty) return 0;
@@ -212,16 +242,19 @@ class CardPersistenceService {
     required String profileName,
     required List<Map<String, String>> users,
     int sharedUsers = 1,
+    String? generationJobId,
   }) async {
     final preparation = await prepareGeneratedCards(
       profileName: profileName,
       users: users,
       sharedUsers: sharedUsers,
+      generationJobId: generationJobId,
     );
     if (!preparation.canProceed) return 0;
     return markGeneratedCardsActive(
       profileName: profileName,
       users: preparation.reservedUsers,
+      generationJobId: generationJobId,
     );
   }
 
