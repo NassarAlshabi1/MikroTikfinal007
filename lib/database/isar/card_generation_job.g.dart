@@ -22,93 +22,98 @@ const CardGenerationJobSchema = CollectionSchema(
       name: r'completedAt',
       type: IsarType.dateTime,
     ),
-    r'confirmedCount': PropertySchema(
+    r'configurationFingerprint': PropertySchema(
       id: 1,
+      name: r'configurationFingerprint',
+      type: IsarType.string,
+    ),
+    r'confirmedCount': PropertySchema(
+      id: 2,
       name: r'confirmedCount',
       type: IsarType.long,
     ),
     r'createdAt': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'failedCount': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'failedCount',
       type: IsarType.long,
     ),
     r'isResumable': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'isResumable',
       type: IsarType.bool,
     ),
     r'isTerminal': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'isTerminal',
       type: IsarType.bool,
     ),
     r'jobId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'jobId',
       type: IsarType.string,
     ),
     r'lastError': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'lastError',
       type: IsarType.string,
     ),
     r'lastUsername': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'lastUsername',
       type: IsarType.string,
     ),
     r'nextIndex': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'nextIndex',
       type: IsarType.long,
     ),
     r'parametersJson': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'parametersJson',
       type: IsarType.string,
     ),
     r'plannedUsersJson': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'plannedUsersJson',
       type: IsarType.string,
     ),
     r'profileName': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'profileName',
       type: IsarType.string,
     ),
     r'requestedCount': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'requestedCount',
       type: IsarType.long,
     ),
     r'reservedCount': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'reservedCount',
       type: IsarType.long,
     ),
     r'routerAddress': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'routerAddress',
       type: IsarType.string,
     ),
     r'serviceMode': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'serviceMode',
       type: IsarType.string,
     ),
     r'status': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'status',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -160,6 +165,12 @@ int _cardGenerationJobEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.configurationFingerprint;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.jobId.length * 3;
   {
     final value = object.lastError;
@@ -199,24 +210,25 @@ void _cardGenerationJobSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.completedAt);
-  writer.writeLong(offsets[1], object.confirmedCount);
-  writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeLong(offsets[3], object.failedCount);
-  writer.writeBool(offsets[4], object.isResumable);
-  writer.writeBool(offsets[5], object.isTerminal);
-  writer.writeString(offsets[6], object.jobId);
-  writer.writeString(offsets[7], object.lastError);
-  writer.writeString(offsets[8], object.lastUsername);
-  writer.writeLong(offsets[9], object.nextIndex);
-  writer.writeString(offsets[10], object.parametersJson);
-  writer.writeString(offsets[11], object.plannedUsersJson);
-  writer.writeString(offsets[12], object.profileName);
-  writer.writeLong(offsets[13], object.requestedCount);
-  writer.writeLong(offsets[14], object.reservedCount);
-  writer.writeString(offsets[15], object.routerAddress);
-  writer.writeString(offsets[16], object.serviceMode);
-  writer.writeString(offsets[17], object.status);
-  writer.writeDateTime(offsets[18], object.updatedAt);
+  writer.writeString(offsets[1], object.configurationFingerprint);
+  writer.writeLong(offsets[2], object.confirmedCount);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeLong(offsets[4], object.failedCount);
+  writer.writeBool(offsets[5], object.isResumable);
+  writer.writeBool(offsets[6], object.isTerminal);
+  writer.writeString(offsets[7], object.jobId);
+  writer.writeString(offsets[8], object.lastError);
+  writer.writeString(offsets[9], object.lastUsername);
+  writer.writeLong(offsets[10], object.nextIndex);
+  writer.writeString(offsets[11], object.parametersJson);
+  writer.writeString(offsets[12], object.plannedUsersJson);
+  writer.writeString(offsets[13], object.profileName);
+  writer.writeLong(offsets[14], object.requestedCount);
+  writer.writeLong(offsets[15], object.reservedCount);
+  writer.writeString(offsets[16], object.routerAddress);
+  writer.writeString(offsets[17], object.serviceMode);
+  writer.writeString(offsets[18], object.status);
+  writer.writeDateTime(offsets[19], object.updatedAt);
 }
 
 CardGenerationJob _cardGenerationJobDeserialize(
@@ -227,23 +239,24 @@ CardGenerationJob _cardGenerationJobDeserialize(
 ) {
   final object = CardGenerationJob();
   object.completedAt = reader.readDateTimeOrNull(offsets[0]);
-  object.confirmedCount = reader.readLong(offsets[1]);
-  object.createdAt = reader.readDateTime(offsets[2]);
-  object.failedCount = reader.readLong(offsets[3]);
+  object.configurationFingerprint = reader.readStringOrNull(offsets[1]);
+  object.confirmedCount = reader.readLong(offsets[2]);
+  object.createdAt = reader.readDateTime(offsets[3]);
+  object.failedCount = reader.readLong(offsets[4]);
   object.id = id;
-  object.jobId = reader.readString(offsets[6]);
-  object.lastError = reader.readStringOrNull(offsets[7]);
-  object.lastUsername = reader.readStringOrNull(offsets[8]);
-  object.nextIndex = reader.readLong(offsets[9]);
-  object.parametersJson = reader.readString(offsets[10]);
-  object.plannedUsersJson = reader.readStringOrNull(offsets[11]);
-  object.profileName = reader.readString(offsets[12]);
-  object.requestedCount = reader.readLong(offsets[13]);
-  object.reservedCount = reader.readLong(offsets[14]);
-  object.routerAddress = reader.readStringOrNull(offsets[15]);
-  object.serviceMode = reader.readString(offsets[16]);
-  object.status = reader.readString(offsets[17]);
-  object.updatedAt = reader.readDateTime(offsets[18]);
+  object.jobId = reader.readString(offsets[7]);
+  object.lastError = reader.readStringOrNull(offsets[8]);
+  object.lastUsername = reader.readStringOrNull(offsets[9]);
+  object.nextIndex = reader.readLong(offsets[10]);
+  object.parametersJson = reader.readString(offsets[11]);
+  object.plannedUsersJson = reader.readStringOrNull(offsets[12]);
+  object.profileName = reader.readString(offsets[13]);
+  object.requestedCount = reader.readLong(offsets[14]);
+  object.reservedCount = reader.readLong(offsets[15]);
+  object.routerAddress = reader.readStringOrNull(offsets[16]);
+  object.serviceMode = reader.readString(offsets[17]);
+  object.status = reader.readString(offsets[18]);
+  object.updatedAt = reader.readDateTime(offsets[19]);
   return object;
 }
 
@@ -257,40 +270,42 @@ P _cardGenerationJobDeserializeProp<P>(
     case 0:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 1:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDateTime(offset)) as P;
-    case 3:
       return (reader.readLong(offset)) as P;
+    case 3:
+      return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 5:
       return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readLong(offset)) as P;
-    case 10:
-      return (reader.readString(offset)) as P;
-    case 11:
       return (reader.readStringOrNull(offset)) as P;
-    case 12:
-      return (reader.readString(offset)) as P;
-    case 13:
+    case 10:
       return (reader.readLong(offset)) as P;
+    case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
+      return (reader.readStringOrNull(offset)) as P;
+    case 13:
+      return (reader.readString(offset)) as P;
     case 14:
       return (reader.readLong(offset)) as P;
     case 15:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 16:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 17:
       return (reader.readString(offset)) as P;
     case 18:
+      return (reader.readString(offset)) as P;
+    case 19:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -608,6 +623,162 @@ extension CardGenerationJobQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'configurationFingerprint',
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'configurationFingerprint',
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'configurationFingerprint',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'configurationFingerprint',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'configurationFingerprint',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'configurationFingerprint',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'configurationFingerprint',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'configurationFingerprint',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'configurationFingerprint',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'configurationFingerprint',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'configurationFingerprint',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterFilterCondition>
+      configurationFingerprintIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'configurationFingerprint',
+        value: '',
       ));
     });
   }
@@ -2400,6 +2571,20 @@ extension CardGenerationJobQuerySortBy
   }
 
   QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterSortBy>
+      sortByConfigurationFingerprint() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'configurationFingerprint', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterSortBy>
+      sortByConfigurationFingerprintDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'configurationFingerprint', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterSortBy>
       sortByConfirmedCount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'confirmedCount', Sort.asc);
@@ -2665,6 +2850,20 @@ extension CardGenerationJobQuerySortThenBy
       thenByCompletedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'completedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterSortBy>
+      thenByConfigurationFingerprint() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'configurationFingerprint', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QAfterSortBy>
+      thenByConfigurationFingerprintDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'configurationFingerprint', Sort.desc);
     });
   }
 
@@ -2944,6 +3143,14 @@ extension CardGenerationJobQueryWhereDistinct
   }
 
   QueryBuilder<CardGenerationJob, CardGenerationJob, QDistinct>
+      distinctByConfigurationFingerprint({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'configurationFingerprint',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, CardGenerationJob, QDistinct>
       distinctByConfirmedCount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'confirmedCount');
@@ -3085,6 +3292,13 @@ extension CardGenerationJobQueryProperty
       completedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'completedAt');
+    });
+  }
+
+  QueryBuilder<CardGenerationJob, String?, QQueryOperations>
+      configurationFingerprintProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'configurationFingerprint');
     });
   }
 
