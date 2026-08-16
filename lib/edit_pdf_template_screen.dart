@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -6,10 +7,13 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:router_os_client/router_os_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'mikrotik_connector.dart';
 import 'models/pdf_template.dart';
 import 'pdf_templates_screen.dart';
+import 'services/card_persistence_service.dart';
 import 'services/pdf_template_preview_server.dart';
 import 'services/pdf_template_storage.dart';
 import 'snackbar_helpers.dart';
@@ -41,10 +45,15 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
   String? _selectedProfile;
   final _cardsPerPageController = TextEditingController();
   bool _isLoading = false;
+  bool _isLoadingProfiles = false;
+  String? _profileLoadError;
+  late List<String> _availableProfileNames;
 
-  List<String> get _profileNames {
+  List<String> get _profileNames => _availableProfileNames;
+
+  List<String> _normalizeProfileNames(Iterable<Map<String, dynamic>> profiles) {
     final names = <String>{};
-    for (final profile in widget.profiles) {
+    for (final profile in profiles) {
       final name = profile['name']?.toString().trim() ?? '';
       if (name.isNotEmpty) names.add(name);
     }
@@ -54,6 +63,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
   @override
   void initState() {
     super.initState();
+    _availableProfileNames = _normalizeProfileNames(widget.profiles);
+    unawaited(_loadProfilesFromRouter());
     final template = widget.existingTemplate;
     if (template != null) {
       _selectedProfile = template.profileName;
@@ -70,6 +81,111 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
   void dispose() {
     _cardsPerPageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadProfilesFromRouter() async {
+    if (_isLoadingProfiles) return;
+    if (mounted) {
+      setState(() {
+        _isLoadingProfiles = true;
+        _profileLoadError = null;
+      });
+    }
+
+    RouterOSClient? client;
+    try {
+      client = await MikrotikConnector.connect();
+      // نفس أمر RouterOS المستخدم في main؛ بعض إصدارات v6 لا تتعامل
+      // بشكل متسق مع proplist عند جلب بروفايلات Hotspot.
+      final response = await client.talk(['/ip/hotspot/user/profile/print']);
+      final profiles = response
+          .map((profile) => Map<String, dynamic>.from(profile))
+          .toList(growable: false);
+      final names = _normalizeProfileNames(profiles);
+      if (names.isEmpty) {
+        throw const FormatException('لم يعثر MikroTik على أي بروفايل Hotspot.');
+      }
+      try {
+        await CardPersistenceService.cacheHotspotProfiles(profiles);
+      } catch (e) {
+        debugPrint('[PdfTemplate] profile cache error: $e');
+      }
+      if (!mounted) return;
+      setState(() {
+        // عند نجاح الجلب تصبح نتيجة MikroTik هي المصدر الأساسي، مع الحفاظ
+        // على قائمة البداية فقط أثناء الاتصال أو عند فشله.
+        _availableProfileNames = names;
+        if (_selectedProfile != null && !names.contains(_selectedProfile)) {
+          _selectedProfile = null;
+        }
+        _profileLoadError = null;
+      });
+    } catch (e) {
+      debugPrint('[PdfTemplate] profile loading error: $e');
+      if (mounted) {
+        setState(() {
+          _profileLoadError =
+              'تعذر جلب بروفايلات MikroTik؛ ستُستخدم القائمة المتاحة مؤقتاً.';
+        });
+      }
+    } finally {
+      MikrotikConnector.release(client);
+      if (mounted) setState(() => _isLoadingProfiles = false);
+    }
+  }
+
+  InputDecoration _fieldDecoration({
+    required String labelText,
+    String? helperText,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    final colors = Theme.of(context).appColors;
+    final enabledBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: colors.outline, width: 1.2),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: colors.inputFocusedBorder, width: 2),
+    );
+    return InputDecoration(
+      labelText: labelText,
+      helperText: helperText,
+      filled: true,
+      fillColor: colors.inputBackground,
+      labelStyle: TextStyle(
+        color: colors.textSecondary,
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: TextStyle(
+        color: colors.primary,
+        fontWeight: FontWeight.bold,
+      ),
+      helperStyle: TextStyle(color: colors.textSecondary),
+      prefixIcon: prefixIcon == null
+          ? null
+          : Icon(prefixIcon, color: colors.primary, size: 23),
+      suffixIcon: suffixIcon,
+      border: enabledBorder,
+      enabledBorder: enabledBorder,
+      focusedBorder: focusedBorder,
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: colors.error, width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: colors.error, width: 2),
+      ),
+    );
+  }
+
+  TextStyle _fieldTextStyle() {
+    return TextStyle(
+      color: Theme.of(context).appColors.textPrimary,
+      fontWeight: FontWeight.w600,
+    );
   }
 
   RenderBox? _imageRenderBox() {
@@ -296,6 +412,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
           widget.existingTemplate == null ? 'إضافة قالب جديد' : 'تعديل قالب',
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
       ),
       body: _isLoading
           ? const Center(
@@ -323,15 +440,49 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                 _profileNames.contains(_selectedProfile)
                                     ? _selectedProfile
                                     : null,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: _fieldTextStyle(),
                             dropdownColor:
                                 Theme.of(context).colorScheme.surface,
-                            decoration: const InputDecoration(
-                              labelText: 'اختر الفئة (البروفايل)',
-                              prefixIcon: Icon(Icons.category_outlined),
+                            icon: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Theme.of(context).appColors.primary,
+                            ),
+                            decoration: _fieldDecoration(
+                              labelText: 'اختر الفئة (بروفايل MikroTik)',
+                              helperText: _isLoadingProfiles
+                                  ? 'جاري جلب فئات الكروت من MikroTik...'
+                                  : _profileLoadError ??
+                                      'المصدر: /ip/hotspot/user/profile/print',
+                              prefixIcon: Icons.category_rounded,
+                              suffixIcon: IconButton(
+                                tooltip: 'تحديث البروفايلات من MikroTik',
+                                onPressed: _isLoadingProfiles
+                                    ? null
+                                    : () => _loadProfilesFromRouter(),
+                                color: Theme.of(context).appColors.primary,
+                                icon: _isLoadingProfiles
+                                    ? SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Theme.of(context)
+                                              .appColors
+                                              .primary,
+                                        ),
+                                      )
+                                    : const Icon(Icons.refresh_rounded),
+                              ),
+                            ),
+                            hint: Text(
+                              _profileNames.isEmpty
+                                  ? 'لا توجد بروفايلات متاحة'
+                                  : 'اختر فئة الكروت',
+                              style: TextStyle(
+                                color:
+                                    Theme.of(context).appColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             items: _profileNames
                                 .map(
@@ -339,12 +490,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                     value: name,
                                     child: Text(
                                       name,
-                                      style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: _fieldTextStyle(),
                                     ),
                                   ),
                                 )
@@ -358,18 +504,12 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _cardsPerPageController,
-                            decoration: const InputDecoration(
+                            decoration: _fieldDecoration(
                               labelText: 'عدد الكروت في كل صفحة',
                               helperText: 'من 1 إلى 1000 كرت',
-                              prefixIcon: Icon(Icons.view_module_outlined),
+                              prefixIcon: Icons.view_module_rounded,
                             ),
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.color ??
-                                  Theme.of(context).colorScheme.onSurface,
-                            ),
+                            style: _fieldTextStyle(),
                             keyboardType: TextInputType.number,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
@@ -394,12 +534,13 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          const Text(
+                          Text(
                             'حرك المربع لتحديد منطقة طباعة الرقم',
                             textAlign: TextAlign.center,
                             style: TextStyle(
+                              color: Theme.of(context).appColors.textPrimary,
                               fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -437,7 +578,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: Theme.of(context).appColors.muted,
+                                  color: Theme.of(context).appColors.outline,
+                                  width: 1.3,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -446,9 +588,15 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: _imageFile == null
-                                        ? const Center(
+                                        ? Center(
                                             child: Text(
                                               'اختر صورة للقالب أولاً',
+                                              style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .appColors
+                                                    .textSecondary,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           )
                                         : Image.file(
@@ -486,9 +634,13 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              const Text(
+                              Text(
                                 'العرض:',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(context).appColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               Expanded(
                                 child: Slider(
@@ -509,9 +661,13 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           ),
                           Row(
                             children: [
-                              const Text(
+                              Text(
                                 'الارتفاع:',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(context).appColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               Expanded(
                                 child: Slider(
