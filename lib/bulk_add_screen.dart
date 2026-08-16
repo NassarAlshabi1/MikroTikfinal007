@@ -137,28 +137,30 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     } catch (e) {
       debugPrint('[BulkAdd] local job cleanup error: $e');
     }
-    if (_availableProfiles.isEmpty) {
-      await _loadProfilesFromSources();
-    }
+    // بروفايلات فئة الكروت مصدرها MikroTik؛ القائمة الممررة أو الكاش
+    // تستخدم فقط كبيانات أولية/بديلة أثناء تعذر الاتصال.
+    await _loadProfilesFromSources();
   }
 
   Future<void> _loadProfilesFromSources() async {
+    // لا نعتمد على profiles القادمة من الشاشة الأم؛ قد تكون قديمة أو محلية.
+    final loadedFromRouter = await _loadProfilesFromRouter(showErrors: false);
+    if (loadedFromRouter) return;
+
     try {
       final cachedProfiles = await CardPersistenceService.loadCachedProfiles();
       if (cachedProfiles.isNotEmpty && mounted) {
         setState(() {
           _availableProfiles = _normalizeProfiles(cachedProfiles);
         });
-        return;
       }
     } catch (e) {
       debugPrint('[BulkAdd] cached profile loading error: $e');
     }
-    await _loadProfilesFromRouter(showErrors: false);
   }
 
-  Future<void> _loadProfilesFromRouter({bool showErrors = true}) async {
-    if (_isLoadingProfiles) return;
+  Future<bool> _loadProfilesFromRouter({bool showErrors = true}) async {
+    if (_isLoadingProfiles) return false;
     if (mounted) setState(() => _isLoadingProfiles = true);
 
     RouterOSClient? client;
@@ -183,11 +185,13 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
           }
         });
       }
+      return normalizedProfiles.isNotEmpty;
     } catch (e) {
       debugPrint('[BulkAdd] profile loading error: $e');
       if (showErrors && mounted) {
         showErrorSnackBar(context, 'تعذر تحميل بروفايلات Hotspot: $e');
       }
+      return false;
     } finally {
       MikrotikConnector.release(client);
       if (mounted) setState(() => _isLoadingProfiles = false);
@@ -982,6 +986,65 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     );
   }
 
+  InputDecoration _fieldDecoration({
+    required String labelText,
+    String? helperText,
+    String? hintText,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    final colors = Theme.of(context).appColors;
+    final outline = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: colors.outline, width: 1.2),
+    );
+    final focused = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: colors.inputFocusedBorder, width: 2),
+    );
+
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      helperText: helperText,
+      filled: true,
+      fillColor: colors.inputBackground,
+      labelStyle: TextStyle(
+        color: colors.textSecondary,
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: TextStyle(
+        color: colors.primary,
+        fontWeight: FontWeight.bold,
+      ),
+      hintStyle: TextStyle(color: colors.textSecondary),
+      helperStyle: TextStyle(color: colors.textSecondary),
+      prefixIcon: prefixIcon == null
+          ? null
+          : Icon(prefixIcon, color: colors.primary, size: 23),
+      suffixIcon: suffixIcon,
+      border: outline,
+      enabledBorder: outline,
+      focusedBorder: focused,
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: colors.error, width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: colors.error, width: 2),
+      ),
+    );
+  }
+
+  TextStyle _fieldTextStyle() {
+    final colors = Theme.of(context).appColors;
+    return TextStyle(
+      color: colors.textPrimary,
+      fontWeight: FontWeight.w600,
+    );
+  }
+
   @override
   void dispose() {
     if (_isGenerating || _generationSession != null) {
@@ -1005,6 +1068,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       appBar: AppBar(
         title: const Text('إضافة كروت جماعية'),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
       ),
       body: _isGenerating
           ? Center(
@@ -1056,31 +1120,24 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       ),
                     ),
                     TextFormField(
-                        controller: _prefixController,
-                        decoration: const InputDecoration(
-                            labelText: 'بادئة (اختياري)',
-                            border: OutlineInputBorder()),
-                        style: TextStyle(
-                            color:
-                                Theme.of(context).textTheme.bodyMedium?.color ??
-                                    Theme.of(context).colorScheme.onSurface)),
+                      controller: _prefixController,
+                      decoration: _fieldDecoration(
+                        labelText: 'بادئة (اختياري)',
+                        prefixIcon: Icons.text_fields_rounded,
+                      ),
+                      style: _fieldTextStyle(),
+                    ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
                             child: TextFormField(
                                 controller: _lengthController,
-                                decoration: const InputDecoration(
-                                    labelText: 'الطول',
-                                    border: OutlineInputBorder()),
-                                style: TextStyle(
-                                    color: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.color ??
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .onSurface),
+                                decoration: _fieldDecoration(
+                                  labelText: 'الطول',
+                                  prefixIcon: Icons.straighten_rounded,
+                                ),
+                                style: _fieldTextStyle(),
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
@@ -1091,17 +1148,11 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                         Expanded(
                             child: TextFormField(
                                 controller: _countController,
-                                decoration: const InputDecoration(
-                                    labelText: 'العدد',
-                                    border: OutlineInputBorder()),
-                                style: TextStyle(
-                                    color: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.color ??
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .onSurface),
+                                decoration: _fieldDecoration(
+                                  labelText: 'العدد',
+                                  prefixIcon: Icons.confirmation_number_rounded,
+                                ),
+                                style: _fieldTextStyle(),
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
@@ -1117,27 +1168,30 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold),
                       dropdownColor: Theme.of(context).colorScheme.surface,
-                      decoration: InputDecoration(
+                      decoration: _fieldDecoration(
                         labelText: 'الفئة (البروفايل)',
-                        border: const OutlineInputBorder(),
                         helperText: _isLoadingProfiles
-                            ? 'جاري تحميل بروفايلات Hotspot...'
+                            ? 'جاري تحميل بروفايلات Hotspot من MikroTik...'
                             : _availableProfiles.isEmpty
                                 ? 'لا توجد بروفايلات محملة؛ اضغط تحديث أو تحقق من الاتصال.'
-                                : null,
+                                : 'المصدر: بروفايلات Hotspot الحالية من MikroTik',
+                        prefixIcon: Icons.category_rounded,
                         suffixIcon: IconButton(
                           tooltip: 'تحديث البروفايلات',
+                          color: Theme.of(context).appColors.primary,
                           onPressed: _isLoadingProfiles
                               ? null
                               : () => _loadProfilesFromRouter(),
                           icon: _isLoadingProfiles
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Theme.of(context).appColors.primary,
+                                  ),
                                 )
-                              : const Icon(Icons.refresh),
+                              : const Icon(Icons.refresh_rounded),
                         ),
                       ),
                       hint: Text('اختر فئة',
@@ -1168,9 +1222,10 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold),
                       dropdownColor: Theme.of(context).colorScheme.surface,
-                      decoration: const InputDecoration(
-                          labelText: 'نوع أحرف المستخدم',
-                          border: OutlineInputBorder()),
+                      decoration: _fieldDecoration(
+                        labelText: 'نوع أحرف المستخدم',
+                        prefixIcon: Icons.text_format_rounded,
+                      ),
                       items: [
                         DropdownMenuItem(
                             value: 'mixed',
@@ -1203,8 +1258,10 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold),
                       dropdownColor: Theme.of(context).colorScheme.surface,
-                      decoration: const InputDecoration(
-                          labelText: 'نوع الكرت', border: OutlineInputBorder()),
+                      decoration: _fieldDecoration(
+                        labelText: 'نوع الكرت',
+                        prefixIcon: Icons.badge_rounded,
+                      ),
                       items: [
                         DropdownMenuItem(
                             value: 'username_only',
@@ -1233,10 +1290,18 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedTemplate?.profileName,
-                      decoration: const InputDecoration(
-                          labelText: 'نوع القالب (اختياري)',
-                          border: OutlineInputBorder()),
-                      hint: const Text('اختر قالب للتصدير إلى PDF'),
+                      decoration: _fieldDecoration(
+                        labelText: 'نوع القالب (اختياري)',
+                        hintText: 'اختر قالباً للتصدير إلى PDF',
+                        prefixIcon: Icons.picture_as_pdf_rounded,
+                      ),
+                      hint: Text(
+                        'اختر قالباً للتصدير إلى PDF',
+                        style: TextStyle(
+                          color: Theme.of(context).appColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       items: _templates
                           .map((template) => DropdownMenuItem(
                               value: template.profileName,
@@ -1253,7 +1318,15 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                     ),
                     const SizedBox(height: 16),
                     CheckboxListTile(
-                      title: const Text("ربط كلمة المرور بأول مستخدم"),
+                      title: Text(
+                        'ربط كلمة المرور بأول مستخدم',
+                        style: TextStyle(
+                          color: Theme.of(context).appColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      activeColor: Theme.of(context).appColors.primary,
+                      checkColor: Theme.of(context).appColors.onPrimary,
                       value: _linkPasswordToFirstUser,
                       onChanged: (newValue) {
                         setState(() {
@@ -1265,18 +1338,17 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
-                        controller: _sharedUsersController,
-                        decoration: const InputDecoration(
-                            labelText: 'Shared Users',
-                            helperText:
-                                'في Hotspot v6 يُؤخذ التطبيق الفعلي من بروفايل المستخدم',
-                            border: OutlineInputBorder()),
-                        style: TextStyle(
-                            color:
-                                Theme.of(context).textTheme.bodyMedium?.color ??
-                                    Theme.of(context).colorScheme.onSurface),
-                        keyboardType: TextInputType.number,
-                        validator: _sharedUsersValidator),
+                      controller: _sharedUsersController,
+                      decoration: _fieldDecoration(
+                        labelText: 'Shared Users',
+                        helperText:
+                            'في Hotspot v6 يُؤخذ التطبيق الفعلي من بروفايل المستخدم',
+                        prefixIcon: Icons.people_alt_rounded,
+                      ),
+                      style: _fieldTextStyle(),
+                      keyboardType: TextInputType.number,
+                      validator: _sharedUsersValidator,
+                    ),
                     const SizedBox(height: 32),
                     ElevatedButton.icon(
                       onPressed: _isGenerating ? null : _generateUsers,
