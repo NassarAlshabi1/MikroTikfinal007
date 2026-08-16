@@ -19,7 +19,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     with AutomaticKeepAliveClientMixin {
   Timer? _refreshTimer;
   bool _isLoading = false;
+  bool _refreshInFlight = false;
   String? _errorMessage;
+  String? _lastShownError;
+  DateTime? _lastErrorSnackAt;
 
   // System Resource data
   String _uptime = '';
@@ -102,15 +105,17 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   }
 
   Future<void> _fetchData() async {
-    if (!mounted) return;
+    if (!mounted || _refreshInFlight) return;
+    _refreshInFlight = true;
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
+    RouterOSClient? client;
     try {
-      final client = await MikrotikConnector.connect();
+      client = await MikrotikConnector.connect();
 
       // جلب معلومات النظام والأداء
       await _fetchSystemResource(client);
@@ -136,6 +141,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       // Check for alerts
       _checkAlerts();
 
+      _lastShownError = null;
+      _lastErrorSnackAt = null;
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -166,8 +173,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           _isLoading = false;
           _errorMessage = userMessage;
         });
-        showErrorSnackBar(context, userMessage);
+        final now = DateTime.now();
+        final shouldShowSnackBar = _lastShownError != userMessage ||
+            _lastErrorSnackAt == null ||
+            now.difference(_lastErrorSnackAt!) >= const Duration(seconds: 30);
+        if (shouldShowSnackBar) {
+          _lastShownError = userMessage;
+          _lastErrorSnackAt = now;
+          showErrorSnackBar(context, userMessage);
+        }
       }
+    } finally {
+      MikrotikConnector.release(client);
+      _refreshInFlight = false;
     }
   }
 

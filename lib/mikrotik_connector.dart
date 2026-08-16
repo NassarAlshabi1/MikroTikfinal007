@@ -79,11 +79,14 @@ class MikrotikConnectionConfig {
 class MikrotikConnector {
   static RouterOSClient? _cachedClient;
   static DateTime? _lastUsed;
+  static DateTime? _lastHealthCheck;
   static String? _currentIp;
   static String? _currentUser;
   static int _currentPort = 8728;
   static bool _currentUseSsl = false;
   static const _maxIdle = Duration(minutes: 3);
+  static const _healthCheckInterval = Duration(seconds: 15);
+  static const _healthCheckTimeout = Duration(seconds: 3);
   static const _connectTimeout = Duration(seconds: 10);
   static bool _isConnecting = false;
 
@@ -176,33 +179,9 @@ class MikrotikConnector {
   /// الحصول على اتصال MikroTik - يعيد الاتصال المخزّن إذا كان نشطاً
   /// أو ينشئ اتصالاً جديداً عند الحاجة فقط
   static Future<RouterOSClient> connect() async {
-    // التحقق مما إذا كان الاتصال المخزّن لا يزال صالحاً
-    if (_cachedClient != null &&
-        _lastUsed != null &&
-        DateTime.now().difference(_lastUsed!) < _maxIdle &&
-        !_isConnecting) {
-      _lastUsed = DateTime.now();
-      return _cachedClient!;
-    }
-
-    // إذا كان هناك اتصال قديم، أغلقه
-    try {
-      _cachedClient?.close();
-    } catch (_) {}
-    _cachedClient = null;
-
-    // قراءة بيانات الاعتماد على الـ UI isolate ثم إنشاء الاتصال من config.
-    final config = await loadConnectionConfig();
-    final ip = config.address;
-    final user = config.user;
-    final pass = config.password;
-    final port = config.port;
-    final useSsl = config.useSsl;
-
-    // تجنب إنشاء اتصال مكرر إذا كان جارياً بالفعل
+    // انتظر اتصالاً جارياً قبل إغلاق أو استبدال العميل المشترك.
     if (_isConnecting) {
-      // انتظر حتى يكتمل الاتصال الحالي
-      for (int i = 0; i < 50; i++) {
+      for (var i = 0; i < 50; i++) {
         await Future.delayed(const Duration(milliseconds: 100));
         if (_cachedClient != null && !_isConnecting) {
           _lastUsed = DateTime.now();
@@ -212,6 +191,31 @@ class MikrotikConnector {
       throw const MikrotikConnectionException(
           'Connection already in progress.');
     }
+
+    // أعد استخدام العميل فقط إذا كان ضمن فترة الخمول وما زال حياً.
+    final cached = _cachedClient;
+    if (cached != null &&
+        _lastUsed != null &&
+        DateTime.now().difference(_lastUsed!) < _maxIdle) {
+      final shouldCheck = _lastHealthCheck == null ||
+          DateTime.now().difference(_lastHealthCheck!) >= _healthCheckInterval;
+      if (!shouldCheck || await _isAlive(cached)) {
+        _lastUsed = DateTime.now();
+        return cached;
+      }
+      _invalidateCachedClient();
+    }
+
+    // إذا كان هناك اتصال قديم، أغلقه قبل إنشاء اتصال جديد.
+    _invalidateCachedClient();
+
+    // قراءة بيانات الاعتماد على الـ UI isolate ثم إنشاء الاتصال من config.
+    final config = await loadConnectionConfig();
+    final ip = config.address;
+    final user = config.user;
+    final pass = config.password;
+    final port = config.port;
+    final useSsl = config.useSsl;
 
     _isConnecting = true;
     try {
@@ -232,6 +236,7 @@ class MikrotikConnector {
       if (loggedIn) {
         _cachedClient = client;
         _lastUsed = DateTime.now();
+        _lastHealthCheck = DateTime.now();
         _currentIp = ip;
         _currentUser = user;
         _currentPort = port;
@@ -257,7 +262,7 @@ class MikrotikConnector {
     } on MikrotikCredentialsMissingException {
       rethrow;
     } catch (e) {
-      _cachedClient = null;
+      _invalidateCachedClient();
       throw MikrotikConnectionException('An unexpected error occurred: $e', e);
     } finally {
       _isConnecting = false;
@@ -311,19 +316,38 @@ class MikrotikConnector {
 
   /// تحرير اتصال مؤقت.
   ///
-  /// معظم الشاشات تستعمل اتصالاً مشتركاً من cache. استدعاء `close()` مباشرة
-  /// يغلق الـ socket لكنه يترك `_cachedClient` غير فارغاً، فيُعاد استخدام
-  /// اتصال مغلق خلال فترة الخمول. هذه الدالة تمنع ذلك وتغلق الـ cache فقط
-  /// عندما يكون العميل هو العميل المشترك الحالي.
+  /// العميل الذي ترجعه `connect()` مشترك بين الشاشات، لذلك لا يُغلق هنا.
+  /// إغلاقه من شاشة واحدة كان يتسبب في `Bad state: Connection closed` داخل
+  /// شاشة أخرى تعمل بمؤقت تحديث. تتم إدارة الخمول وفحص الحيوية في `connect()`.
+  /// الاتصالات المستقلة التي تُنشأ عبر `connectWithConfig()` تُغلق كالمعتاد.
   static void release(RouterOSClient? client) {
     if (client == null) return;
     if (identical(client, _cachedClient)) {
-      forceDisconnect();
+      _lastUsed = DateTime.now();
       return;
     }
     try {
       client.close();
     } catch (_) {}
+  }
+
+  static Future<bool> _isAlive(RouterOSClient client) async {
+    try {
+      _lastHealthCheck = DateTime.now();
+      await client.isAlive().timeout(_healthCheckTimeout);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static void _invalidateCachedClient() {
+    try {
+      _cachedClient?.close();
+    } catch (_) {}
+    _cachedClient = null;
+    _lastUsed = null;
+    _lastHealthCheck = null;
   }
 
   /// إغلاق الاتصال المخزّن بشكل صريح
@@ -333,6 +357,7 @@ class MikrotikConnector {
     } catch (_) {}
     _cachedClient = null;
     _lastUsed = null;
+    _lastHealthCheck = null;
     _isConnecting = false;
     debugPrint('MikroTik: Connection forced closed.');
   }
