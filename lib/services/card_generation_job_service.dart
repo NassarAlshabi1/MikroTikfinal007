@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:isar/isar.dart';
 
 import '../database/isar/card_generation_job.dart';
@@ -49,12 +50,57 @@ class CardGenerationJobService {
       requestedCount: requestedCount,
       parametersJson: jsonEncode(parameters),
       routerAddress: routerAddress,
+      configurationFingerprint: fingerprint(
+        routerAddress: routerAddress,
+        profileName: profileName,
+        serviceMode: serviceMode,
+        parameters: parameters,
+      ),
       createdAt: now,
       updatedAt: now,
     );
     final isar = await IsarProvider().instance;
     await isar.writeTxn(() => isar.cardGenerationJobs.put(job));
     return job;
+  }
+
+  static String fingerprint({
+    required String? routerAddress,
+    required String profileName,
+    required String serviceMode,
+    required Map<String, dynamic> parameters,
+  }) {
+    final keys = parameters.keys.toList()..sort();
+    final sortedParameters = Map.fromEntries(
+      keys.map((key) => MapEntry(key, parameters[key])),
+    );
+    final canonical = <String, dynamic>{
+      'routerAddress': routerAddress?.trim().toLowerCase() ?? '',
+      'profileName': profileName.trim(),
+      'serviceMode': serviceMode,
+      ...sortedParameters,
+    };
+    return crypto.sha256.convert(utf8.encode(jsonEncode(canonical))).toString();
+  }
+
+  static bool matchesFingerprint(
+    CardGenerationJob job, {
+    required String routerAddress,
+    required Map<String, dynamic> parameters,
+  }) {
+    final stored = job.configurationFingerprint;
+    if (stored == null || stored.isEmpty) {
+      return job.routerAddress == null ||
+          job.routerAddress!.trim().toLowerCase() ==
+              routerAddress.trim().toLowerCase();
+    }
+    return stored ==
+        fingerprint(
+          routerAddress: routerAddress,
+          profileName: job.profileName,
+          serviceMode: job.serviceMode,
+          parameters: parameters,
+        );
   }
 
   static Future<CardGenerationJob?> find(String jobId) async {

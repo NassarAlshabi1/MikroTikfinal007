@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:isar/isar.dart';
 
 part 'card_generation_job.g.dart';
@@ -39,6 +41,7 @@ class CardGenerationJob {
   String? lastUsername;
   String? lastError;
   String? routerAddress;
+  String? configurationFingerprint;
   late DateTime createdAt;
   late DateTime updatedAt;
   DateTime? completedAt;
@@ -60,6 +63,7 @@ class CardGenerationJob {
     this.lastUsername,
     this.lastError,
     this.routerAddress,
+    this.configurationFingerprint,
     required this.createdAt,
     required this.updatedAt,
     this.completedAt,
@@ -67,6 +71,15 @@ class CardGenerationJob {
 
   bool get isResumable => CardGenerationJobStatus.resumable.contains(status);
   bool get isTerminal => CardGenerationJobStatus.terminal.contains(status);
+
+  @ignore
+  Map<String, dynamic> get parameters {
+    final decoded = jsonDecode(parametersJson);
+    if (decoded is! Map) {
+      throw const FormatException('بيانات Job غير صالحة.');
+    }
+    return Map<String, dynamic>.from(decoded);
+  }
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -84,6 +97,7 @@ class CardGenerationJob {
         'last_username': lastUsername,
         'last_error': lastError,
         'router_address': routerAddress,
+        'configuration_fingerprint': configurationFingerprint,
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
         'completed_at': completedAt?.toIso8601String(),

@@ -26,11 +26,24 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   if (cardUsernames.isEmpty) {
     throw const FormatException('لا توجد كروت لإنشاء ملف PDF.');
   }
+  for (final username in cardUsernames) {
+    final normalized = username.trim();
+    if (normalized.isEmpty ||
+        normalized.length > 128 ||
+        normalized.contains(RegExp(r'[\r\n]'))) {
+      throw const FormatException('اسم كرت غير صالح أو يتجاوز حدود قالب PDF.');
+    }
+  }
   if (cardsPerPage < 1 || cardsPerPage > 1000) {
     throw const FormatException('عدد الكروت في الصفحة غير صالح.');
   }
-  if (!File(imagePath).existsSync()) {
+  final imageFile = File(imagePath);
+  if (!imageFile.existsSync()) {
     throw const FileSystemException('صورة قالب PDF غير موجودة.');
+  }
+  final imageLength = imageFile.lengthSync();
+  if (imageLength <= 0 || imageLength > PdfTemplate.maxImageBytes) {
+    throw const FileSystemException('حجم صورة قالب PDF غير مسموح به.');
   }
   _validateRatio(textXRatio, 'موضع النص الأفقي');
   _validateRatio(textYRatio, 'موضع النص العمودي');
@@ -44,7 +57,7 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
         ? null
         : pw.ThemeData.withFont(base: pdfFont, bold: pdfFont),
   );
-  final imageBytes = await File(imagePath).readAsBytes();
+  final imageBytes = await imageFile.readAsBytes();
   final imageProvider = pw.MemoryImage(imageBytes);
   final columns = cardsPerPage < 3 ? cardsPerPage : 3;
 
@@ -103,7 +116,7 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
                           maxLines: 1,
                           overflow: pw.TextOverflow.clip,
                           textAlign: pw.TextAlign.center,
-                          textDirection: pw.TextDirection.rtl,
+                          textDirection: pw.TextDirection.ltr,
                           style: pw.TextStyle(
                             font: pdfFont,
                             fontSize: fontSize,
@@ -169,6 +182,10 @@ class PdfGenerator {
     if (!await image.exists()) {
       throw const FileSystemException('صورة قالب PDF غير موجودة.');
     }
+    final imageLength = await image.length();
+    if (imageLength <= 0 || imageLength > PdfTemplate.maxImageBytes) {
+      throw const FileSystemException('حجم صورة قالب PDF غير مسموح به.');
+    }
 
     late final Uint8List fontBytes;
     try {
@@ -181,8 +198,20 @@ class PdfGenerator {
       throw StateError('تعذر تحميل خط Tajawal المضمّن لقالب PDF: $error');
     }
 
+    final normalizedUsernames = cardUsernames
+        .map((username) => username.trim())
+        .toList(growable: false);
+    for (final username in normalizedUsernames) {
+      if (username.isEmpty ||
+          username.length > 128 ||
+          username.contains(RegExp(r'[\r\n]'))) {
+        throw const FormatException(
+            'اسم كرت غير صالح أو يتجاوز حدود قالب PDF.');
+      }
+    }
+
     return {
-      'cardUsernames': cardUsernames,
+      'cardUsernames': normalizedUsernames,
       'imagePath': template.imagePath,
       'textXRatio': template.textXRatio,
       'textYRatio': template.textYRatio,

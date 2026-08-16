@@ -1,5 +1,7 @@
 class PdfTemplate {
   static const int currentSchemaVersion = 2;
+  static const int maxImageBytes = 12 * 1024 * 1024;
+  static const int maxImageDimension = 6000;
 
   final String id;
   final String profileName;

@@ -16,11 +16,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:router_os_client/router_os_client.dart';
-import 'bulk_add_isolate.dart';
 import 'saved_files_screen.dart';
 import 'card_list_screen.dart';
 import 'card_generation_jobs_screen.dart';
 import 'mqtt_service.dart';
+import 'services/bulk_card_generation_service.dart';
 import 'services/card_generation_job_service.dart';
 import 'services/card_persistence_service.dart';
 import 'database/isar/card_generation_job.dart';
@@ -75,16 +75,14 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
   late MqttService _mqttService;
   StreamSubscription? _mqttSubscription;
-  ReceivePort? _generationPort;
-  StreamSubscription? _generationSubscription;
-  Isolate? _generationIsolate;
+  BulkGenerationSession? _generationSession;
+  StreamSubscription<GenerationEvent>? _generationSubscription;
   bool _isNetworkLinked = false;
   Map<String, dynamic> _linkedData = {};
   List<Map<String, dynamic>> _availableProfiles = [];
   bool _isLoadingProfiles = false;
   List<Map<String, String>> _reservedGenerationUsers = [];
   String? _generationJobId;
-  GenerationLockToken? _generationLock;
   List<CardGenerationJob> _resumableJobs = const [];
 
   final String telegramBotToken = '';
@@ -288,91 +286,55 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       return;
     }
 
-    final lock = CardGenerationJobService.tryAcquireLock();
-    if (lock == null) {
-      _showErrorDialog(
-          'توجد عملية إنشاء كروت أخرى قيد التنفيذ. انتظر انتهائها أولاً.');
-      return;
-    }
-    _generationLock = lock;
-
     late final MikrotikConnectionConfig connectionConfig;
     try {
       connectionConfig = await MikrotikConnector.loadConnectionConfig();
-      final job = await CardGenerationJobService.create(
-        profileName: selectedProfile,
-        serviceMode: widget.serviceMode.name,
-        requestedCount: count,
-        routerAddress: connectionConfig.address,
-        parameters: {
-          'count': count,
-          'length': length,
-          'prefix': _prefixController.text.trim(),
-          'sharedUsers': _sharedUsersController.text.trim(),
-          'profileName': selectedProfile,
-          'charType': _charType,
-          'cardType': _cardType,
-          'linkPasswordToFirstUser': _linkPasswordToFirstUser,
-          'isVersion7OrNewer': widget.isVersion7OrNewer,
-          'customer': widget.username,
-          'serviceMode': widget.serviceMode.name,
-        },
-      );
-      _generationJobId = job.jobId;
     } catch (e) {
-      _cleanupGenerationResources();
-      if (mounted) _showErrorDialog('تعذر تجهيز سجل عملية التوليد: $e');
+      if (mounted) _showErrorDialog('تعذر قراءة بيانات اتصال MikroTik: $e');
       return;
     }
 
-    if (!mounted) {
-      _cleanupGenerationResources();
-      return;
-    }
-    setState(() {
-      _isGenerating = true;
-      _generationProgress = 0.0;
-      _generationStatusText = 'جاري التحضير...';
-    });
-
-    await _spawnGeneration(
-      (sendPort) => BulkAddIsolateData(
-        sendPort: sendPort,
-        count: count,
-        length: length,
-        prefix: _prefixController.text.trim(),
-        sharedUsers: _sharedUsersController.text.trim(),
-        selectedProfile: selectedProfile,
-        charType: _charType,
-        cardType: _cardType,
-        linkPasswordToFirstUser: _linkPasswordToFirstUser,
-        isVersion7OrNewer: widget.isVersion7OrNewer,
-        connectionConfig: connectionConfig,
-        customer: widget.username,
-        serviceMode: widget.serviceMode,
-      ),
+    final request = BulkGenerationRequest(
+      count: count,
+      length: length,
+      prefix: _prefixController.text.trim(),
+      sharedUsers: _sharedUsersController.text.trim(),
+      profileName: selectedProfile,
+      charType: _charType,
+      cardType: _cardType,
+      linkPasswordToFirstUser: _linkPasswordToFirstUser,
+      isVersion7OrNewer: widget.isVersion7OrNewer,
+      connectionConfig: connectionConfig,
+      customer: widget.username,
+      serviceMode: widget.serviceMode,
     );
+
+    if (mounted) {
+      setState(() {
+        _isGenerating = true;
+        _generationProgress = 0.0;
+        _generationStatusText = 'جاري التحضير...';
+      });
+    }
+    await _startGenerationSession(
+        () => BulkCardGenerationService.startNew(request));
   }
 
-  Future<void> _spawnGeneration(
-    BulkAddIsolateData Function(SendPort sendPort) buildData,
+  Future<void> _startGenerationSession(
+    Future<BulkGenerationSession> Function() start,
   ) async {
-    final receivePort = ReceivePort();
-    _generationPort = receivePort;
-    _generationSubscription = receivePort.listen(
-      (message) => unawaited(_handleGenerationMessage(message)),
-    );
     try {
-      _generationIsolate = await Isolate.spawn(
-        bulkAddIsolate,
-        buildData(receivePort.sendPort),
+      final session = await start();
+      if (!mounted) {
+        session.close();
+        return;
+      }
+      _generationSession = session;
+      _generationJobId = session.jobId;
+      _generationSubscription = session.events.listen(
+        (event) => unawaited(_handleGenerationMessage(event)),
       );
     } catch (e) {
-      final jobId = _generationJobId;
-      if (jobId != null) {
-        await CardGenerationJobService.markFailed(jobId, error: e.toString());
-      }
-      _cleanupGenerationResources();
       if (!mounted) return;
       setState(() => _isGenerating = false);
       _showErrorDialog('تعذر بدء عملية إنشاء الكروت: $e');
@@ -381,100 +343,43 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
   Future<void> _resumeJob(CardGenerationJob job) async {
     if (_isGenerating) return;
-    final plannedUsers = await CardPersistenceService.loadPendingGeneratedCards(
-      job.jobId,
-    );
-    if (plannedUsers.isEmpty) {
-      if (job.confirmedCount >= job.requestedCount) {
-        await CardGenerationJobService.markCompleted(
-          job.jobId,
-          confirmedCount: job.confirmedCount,
-        );
-      } else {
-        await CardGenerationJobService.markFailed(
-          job.jobId,
-          error: 'لا توجد كروت pending قابلة للاستئناف.',
-          confirmedCount: job.confirmedCount,
-          failedCount: job.requestedCount - job.confirmedCount,
-        );
-      }
-      if (mounted) {
-        setState(() {
-          _resumableJobs =
-              _resumableJobs.where((item) => item.id != job.id).toList();
-        });
-        _showErrorDialog('لا توجد كروت معلقة قابلة للاستئناف لهذه العملية.');
-      }
-      return;
-    }
-
-    final lock = CardGenerationJobService.tryAcquireLock();
-    if (lock == null) {
-      _showErrorDialog('توجد عملية إنشاء أخرى قيد التنفيذ.');
-      return;
-    }
-    _generationLock = lock;
-
-    late final MikrotikConnectionConfig connectionConfig;
-    late final Map<String, dynamic> parameters;
-    try {
-      connectionConfig = await MikrotikConnector.loadConnectionConfig();
-      final decoded = jsonDecode(job.parametersJson);
-      if (decoded is! Map) throw const FormatException('بيانات Job غير صالحة.');
-      parameters = Map<String, dynamic>.from(decoded);
-    } catch (e) {
-      await CardGenerationJobService.markFailed(
-        job.jobId,
-        error: 'تعذر تجهيز استئناف Job: $e',
-      );
-      _cleanupGenerationResources();
-      if (mounted) _showErrorDialog('تعذر استئناف العملية: $e');
-      return;
-    }
-
-    final serviceMode = MikrotikServiceMode.values.firstWhere(
-      (mode) => mode.name == job.serviceMode,
-      orElse: () => MikrotikServiceMode.hotspot,
-    );
-    _generationJobId = job.jobId;
     _selectedProfile = job.profileName;
-    if (!mounted) {
-      _cleanupGenerationResources();
-      return;
+    if (mounted) {
+      setState(() {
+        _isGenerating = true;
+        _generationProgress = job.requestedCount == 0
+            ? 0
+            : job.confirmedCount / job.requestedCount;
+        _generationStatusText = 'جاري استئناف العملية ${job.jobId}...';
+        _resumableJobs =
+            _resumableJobs.where((item) => item.id != job.id).toList();
+      });
     }
-    setState(() {
-      _isGenerating = true;
-      _generationProgress =
-          job.requestedCount == 0 ? 0 : job.confirmedCount / job.requestedCount;
-      _generationStatusText = 'جاري استئناف العملية ${job.jobId}...';
-      _resumableJobs =
-          _resumableJobs.where((item) => item.id != job.id).toList();
-    });
-
-    await _spawnGeneration(
-      (sendPort) => BulkAddIsolateData(
-        sendPort: sendPort,
-        count: plannedUsers.length,
-        length: (parameters['length'] as num?)?.toInt() ?? 8,
-        prefix: parameters['prefix']?.toString() ?? '',
-        sharedUsers: parameters['sharedUsers']?.toString() ?? '1',
-        selectedProfile: job.profileName,
-        charType: parameters['charType']?.toString() ?? 'numbers',
-        cardType: parameters['cardType']?.toString() ?? 'username_only',
-        linkPasswordToFirstUser: parameters['linkPasswordToFirstUser'] == true,
-        isVersion7OrNewer: parameters['isVersion7OrNewer'] == true,
-        connectionConfig: connectionConfig,
-        customer: parameters['customer']?.toString() ?? widget.username,
-        serviceMode: serviceMode,
-        plannedUsers: plannedUsers,
+    await _startGenerationSession(
+      () => BulkCardGenerationService.resume(
+        job,
+        fallbackCustomer: widget.username,
       ),
     );
   }
 
   Future<void> _handleGenerationMessage(dynamic rawMessage) async {
-    if (!mounted || rawMessage is! Map) return;
-    final message = Map<String, dynamic>.from(rawMessage);
-    final type = message['type'];
+    if (!mounted) return;
+    final event = rawMessage is GenerationEvent
+        ? rawMessage
+        : GenerationEvent.fromRaw(rawMessage);
+    final message = <String, dynamic>{
+      'type': event.type,
+      'users': event.users.map((card) => card.toMap()).toList(growable: false),
+      'approvalPort': event.approvalPort,
+      'progress': event.progress,
+      'status': event.status,
+      'message': event.message,
+      'count': event.count,
+      'address': event.address,
+      'resumable': event.resumable,
+    };
+    final type = event.type;
 
     if (type == 'prepared') {
       final users = _usersFromMessage(message['users']);
@@ -726,18 +631,19 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   }
 
   Future<void> _cancelGeneration({bool silent = false}) async {
-    if (!_isGenerating && _generationJobId == null) return;
-    final jobId = _generationJobId;
-    final pendingUsers = List<Map<String, String>>.from(
-      _reservedGenerationUsers,
-    );
-    if (jobId != null) {
-      await CardGenerationJobService.cancel(jobId);
-      if (pendingUsers.isNotEmpty) {
-        await CardPersistenceService.removePendingGeneratedCards(
-          pendingUsers,
-          generationJobId: jobId,
+    final session = _generationSession;
+    if (!_isGenerating && session == null) return;
+    if (session != null) {
+      try {
+        await BulkCardGenerationService.cancel(
+          session,
+          pendingCards: _reservedGenerationUsers
+              .map(GeneratedCard.fromMap)
+              .toList(growable: false),
         );
+      } catch (e) {
+        debugPrint('[BulkAdd] cancel error: $e');
+        session.close();
       }
     }
     _reservedGenerationUsers = [];
@@ -756,12 +662,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   void _cleanupGenerationResources() {
     _generationSubscription?.cancel();
     _generationSubscription = null;
-    _generationPort?.close();
-    _generationPort = null;
-    _generationIsolate?.kill(priority: Isolate.immediate);
-    _generationIsolate = null;
-    _generationLock?.release();
-    _generationLock = null;
+    _generationSession?.close();
+    _generationSession = null;
     _generationJobId = null;
   }
 
@@ -1082,7 +984,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
 
   @override
   void dispose() {
-    if (_isGenerating || _generationJobId != null) {
+    if (_isGenerating || _generationSession != null) {
       unawaited(_cancelGeneration(silent: true));
     } else {
       _cleanupGenerationResources();

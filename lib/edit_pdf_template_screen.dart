@@ -107,8 +107,15 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       final pickedFile =
           await ImagePicker().pickImage(source: ImageSource.gallery);
       if (pickedFile == null || !mounted) return;
+      final picked = File(pickedFile.path);
+      final byteLength = await picked.length();
+      if (!mounted) return;
+      if (byteLength <= 0 || byteLength > PdfTemplate.maxImageBytes) {
+        showErrorSnackBar(context, 'حجم الصورة يجب ألا يتجاوز 12 ميغابايت.');
+        return;
+      }
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageFile = picked;
         _offset = Offset.zero;
         _normalizedOffset = const Offset(0.5, 0.5);
       });
@@ -129,11 +136,20 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     if (!await imageFile.exists()) {
       throw const FileSystemException('صورة القالب غير موجودة.');
     }
+    final byteLength = await imageFile.length();
+    if (byteLength <= 0 || byteLength > PdfTemplate.maxImageBytes) {
+      throw const FileSystemException(
+          'حجم صورة القالب يجب ألا يتجاوز 12 ميغابايت.');
+    }
 
     final imageBytes = await imageFile.readAsBytes();
     final decodedImage = await decodeImageFromList(imageBytes);
     if (decodedImage.width <= 0 || decodedImage.height <= 0) {
       throw const FormatException('تعذر قراءة أبعاد صورة القالب.');
+    }
+    if (decodedImage.width > PdfTemplate.maxImageDimension ||
+        decodedImage.height > PdfTemplate.maxImageDimension) {
+      throw const FormatException('أبعاد صورة القالب أكبر من الحد المسموح.');
     }
 
     final displayWidth = renderBox.size.width;
