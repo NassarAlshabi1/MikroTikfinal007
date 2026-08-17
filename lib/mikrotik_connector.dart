@@ -314,6 +314,14 @@ class MikrotikConnector {
     }
   }
 
+  /// يحدد أخطاء العميل التي تعني أن Socket أُغلق ويجب إنشاء اتصال جديد.
+  static bool isSocketClosedError(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('socket is not open') ||
+        message.contains('connection closed') ||
+        message.contains('bad state');
+  }
+
   /// تحرير اتصال مؤقت.
   ///
   /// العميل الذي ترجعه `connect()` مشترك بين الشاشات، لذلك لا يُغلق هنا.
