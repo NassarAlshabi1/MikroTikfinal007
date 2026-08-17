@@ -22,7 +22,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     _loadBackups();
   }
 
-  Future<void> _loadBackups() async {
+  Future<void> _loadBackups({bool retryOnSocketError = true}) async {
     setState(() => _isLoading = true);
     RouterOSClient? client;
     try {
@@ -47,12 +47,41 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         });
       }
     } catch (e) {
+      if (retryOnSocketError && MikrotikConnector.isSocketClosedError(e)) {
+        MikrotikConnector.forceDisconnect();
+        await _loadBackups(retryOnSocketError: false);
+        return;
+      }
       if (mounted) {
-        showErrorSnackBar(context, 'فشل تحميل النسخ الاحتياطية.');
+        showErrorSnackBar(context, 'فشل تحميل النسخ الاحتياطية: $e');
       }
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveBackupToRouter(String backupName) async {
+    RouterOSClient? client;
+    try {
+      client = await MikrotikConnector.connect();
+      await client.talk([
+        '/system/backup/save',
+        '=name=$backupName',
+        '=dont-encrypt=yes',
+      ]);
+    } finally {
+      MikrotikConnector.release(client);
+    }
+  }
+
+  Future<void> _saveBackupWithReconnect(String backupName) async {
+    try {
+      await _saveBackupToRouter(backupName);
+    } catch (e) {
+      if (!MikrotikConnector.isSocketClosedError(e)) rethrow;
+      MikrotikConnector.forceDisconnect();
+      await _saveBackupToRouter(backupName);
     }
   }
 
@@ -84,18 +113,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ),
     );
 
-    RouterOSClient? client;
     try {
-      client = await MikrotikConnector.connect();
-
-      await client.talk([
-        '/system/backup/save',
-        '=name=$backupName',
-        '=dont-encrypt=yes',
-      ]);
-
+      await _saveBackupWithReconnect(backupName);
       await Future.delayed(const Duration(seconds: 3));
-
       await _loadBackups();
 
       snackBar.close();
@@ -108,7 +128,6 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل إنشاء النسخة.');
       }
     } finally {
-      client?.close();
       if (mounted) setState(() => _isCreatingBackup = false);
     }
   }
@@ -294,7 +313,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشلت عملية الاستعادة.');
       }
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
     }
   }
 
@@ -342,7 +361,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         showErrorSnackBar(context, 'فشل حذف النسخة الاحتياطية.');
       }
     } finally {
-      client?.close();
+      MikrotikConnector.release(client);
     }
   }
 

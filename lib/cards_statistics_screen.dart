@@ -93,7 +93,9 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     void Function(int fetchedPages, int totalPages)? onProgress,
   }) async {
     final totalPages = (maxRecords / chunk).ceil();
-    const parallel = 4;
+    // RouterOSClient يستخدم Socket واحداً؛ تنفيذ عدة talk() بالتوازي
+    // قد يؤدي إلى إغلاق الـ Socket أو قراءة رد غير متزامن في RouterOS v6.
+    const parallel = 1;
     final all = <Map<String, dynamic>>[];
     int fetched = 0;
 
@@ -130,7 +132,7 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     return all;
   }
 
-  Future<void> _fetchStatistics() async {
+  Future<void> _fetchStatistics({bool retryOnSocketError = true}) async {
     // التحقق من الـ cache
     if (_lastFetchTime != null &&
         DateTime.now().difference(_lastFetchTime!) < _cacheDuration &&
@@ -164,36 +166,37 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
         _sessionsFetchedPages = 0;
       });
 
-      final results = await Future.wait<List<Map<String, dynamic>>>([
-        _fetchPaginated(
-          client,
-          '/ip/hotspot/user/print',
-          'name,password,disabled,profile,limit-uptime,limit-bytes-total,comment',
-          chunk: usersChunk,
-          maxRecords: usersMax,
-          onProgress: (f, t) {
-            if (!mounted) return;
-            setState(() {
-              _usersFetchedPages = f;
-              _usersTotalPages = t;
-            });
-          },
-        ),
-        _fetchPaginated(
-          client,
-          '/ip/hotspot/active/print',
-          'user,bytes-in,bytes-out,uptime,session-time-left',
-          chunk: sessionsChunk,
-          maxRecords: sessionsMax,
-          onProgress: (f, t) {
-            if (!mounted) return;
-            setState(() {
-              _sessionsFetchedPages = f;
-              _sessionsTotalPages = t;
-            });
-          },
-        ),
-      ]);
+      // نفذ الطلبين بالتتابع لأنهما يشتركان في Socket واحد.
+      // هذا أكثر استقراراً مع Native API في RouterOS v6 من Future.wait.
+      final users = await _fetchPaginated(
+        client,
+        '/ip/hotspot/user/print',
+        'name,password,disabled,profile,limit-uptime,limit-bytes-total,comment',
+        chunk: usersChunk,
+        maxRecords: usersMax,
+        onProgress: (f, t) {
+          if (!mounted) return;
+          setState(() {
+            _usersFetchedPages = f;
+            _usersTotalPages = t;
+          });
+        },
+      );
+      final sessions = await _fetchPaginated(
+        client,
+        '/ip/hotspot/active/print',
+        'user,bytes-in,bytes-out,uptime,session-time-left',
+        chunk: sessionsChunk,
+        maxRecords: sessionsMax,
+        onProgress: (f, t) {
+          if (!mounted) return;
+          setState(() {
+            _sessionsFetchedPages = f;
+            _sessionsTotalPages = t;
+          });
+        },
+      );
+      final results = <List<Map<String, dynamic>>>[users, sessions];
 
       _usersRaw = results[0]
           .map((user) => <String, dynamic>{
@@ -238,6 +241,11 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
         _animationController.forward(from: 0);
       }
     } catch (e) {
+      if (retryOnSocketError && MikrotikConnector.isSocketClosedError(e)) {
+        MikrotikConnector.forceDisconnect();
+        await _fetchStatistics(retryOnSocketError: false);
+        return;
+      }
       if (mounted) {
         setState(() {
           _isLoading = false;
