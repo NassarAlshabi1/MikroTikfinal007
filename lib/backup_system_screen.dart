@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:router_os_client/router_os_client.dart';
 import 'theme/app_theme.dart';
 import 'mikrotik_connector.dart';
@@ -22,12 +24,21 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     _loadBackups();
   }
 
-  Future<void> _loadBackups({bool retryOnSocketError = true}) async {
+  Future<void> _loadBackups({
+    bool retryOnSocketError = true,
+    bool retryOnTimeout = true,
+  }) async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      final response = await client.talk(['/file/print']);
+      final response = await client
+          .talk([
+            '/file/print',
+            '=.proplist=name,type,size,creation-time',
+          ])
+          .timeout(const Duration(seconds: 20));
 
       if (mounted) {
         setState(() {
@@ -49,11 +60,28 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     } catch (e) {
       if (retryOnSocketError && MikrotikConnector.isSocketClosedError(e)) {
         MikrotikConnector.forceDisconnect();
-        await _loadBackups(retryOnSocketError: false);
+        await _loadBackups(
+          retryOnSocketError: false,
+          retryOnTimeout: retryOnTimeout,
+        );
+        return;
+      }
+      if (e is TimeoutException && retryOnTimeout) {
+        // قد يكون الـ socket المشترك عالقًا بعد عملية طويلة؛ أعد الاتصال
+        // مرة واحدة قبل عرض الخطأ للمستخدم.
+        MikrotikConnector.forceDisconnect();
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        await _loadBackups(
+          retryOnSocketError: false,
+          retryOnTimeout: false,
+        );
         return;
       }
       if (mounted) {
-        showErrorSnackBar(context, 'فشل تحميل النسخ الاحتياطية: $e');
+        final message = e is TimeoutException
+            ? 'انتهت مهلة تحميل النسخ الاحتياطية. تحقق من اتصال MikroTik وحاول مرة أخرى.'
+            : 'فشل تحميل النسخ الاحتياطية: $e';
+        showErrorSnackBar(context, message);
       }
     } finally {
       MikrotikConnector.release(client);

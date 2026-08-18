@@ -36,6 +36,7 @@ import 'ai_diagnostics_screen.dart';
 import 'terminal_screen.dart';
 import 'ai/log_analysis_screen.dart';
 import 'database/isar_provider.dart';
+import 'database/migration_service.dart';
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
 // -----------------------------------------
@@ -43,23 +44,32 @@ import 'card_search_screen.dart';
 /// قاعدة البيانات العامة (Isar Singleton — تُستخدم عبر كل التطبيق)
 late final IsarProvider appDatabaseProvider;
 
-void main() async {
-  // تهيئة قاعدة البيانات العامة (Isar)
-  appDatabaseProvider = IsarProvider();
-  // افتح الاتصال في الخلفية (لا ننتظره)
-  appDatabaseProvider.instance.then((_) {
-    AppLogger.info('Isar database opened successfully',
-        category: LogCategory.system);
-  }).catchError((e) {
-    AppLogger.error('Failed to open Isar database: $e',
-        category: LogCategory.system);
-  });
-
-  // 🔒 Security: ترحيل البيانات الحساسة من SharedPreferences إلى flutter_secure_storage
-  // (يحدث مرة واحدة فقط — بعدها يُعلام كمنتهٍ)
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SecureCredentialsStorageContainer.instance
-      .migrateFromSharedPreferences();
+
+  appDatabaseProvider = IsarProvider();
+  try {
+    await appDatabaseProvider.instance;
+    AppLogger.info(
+      'Isar database opened successfully',
+      category: LogCategory.system,
+    );
+
+    // 🔒 انقل الأسرار أولًا، ثم البيانات القديمة إلى Isar.
+    await SecureCredentialsStorageContainer.instance
+        .migrateFromSharedPreferences();
+    await MigrationService.instance.migrateLegacyDataIfNeeded();
+  } catch (error, stackTrace) {
+    // لا نكسر شاشة الدخول عند فشل ترحيل قديم، لكن نسجل الفشل كي يظهر
+    // في تقارير التشخيص وتُعاد المحاولة في التشغيل التالي.
+    AppLogger.error(
+      'Application bootstrap migration failed',
+      error: error,
+      stackTrace: stackTrace,
+      category: LogCategory.system,
+    );
+  }
+
   AppLogger.info('App starting', category: LogCategory.system);
 
   runApp(

@@ -84,52 +84,30 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     super.dispose();
   }
 
-  Future<List<Map<String, dynamic>>> _fetchPaginated(
+  Future<List<Map<String, dynamic>>> _fetchRecords(
     RouterOSClient client,
     String path,
     String fields, {
-    int chunk = 200,
     int maxRecords = 2000,
     void Function(int fetchedPages, int totalPages)? onProgress,
   }) async {
-    final totalPages = (maxRecords / chunk).ceil();
-    // RouterOSClient يستخدم Socket واحداً؛ تنفيذ عدة talk() بالتوازي
-    // قد يؤدي إلى إغلاق الـ Socket أو قراءة رد غير متزامن في RouterOS v6.
-    const parallel = 1;
-    final all = <Map<String, dynamic>>[];
-    int fetched = 0;
+    // RouterOS API يدعم =.proplist، لكنه لا يدعم =.skip و=.limit
+    // كمعاملات عامة لأوامر print. إرسالها يسبب unknown parameter في RouterOS v6.
+    // لذلك نجلب السجلات المطلوبة مرة واحدة ونطبق الحد محليًا بأمان.
+    final response = await client
+        .talk([
+          path,
+          '=.proplist=$fields',
+        ])
+        .timeout(const Duration(seconds: 15));
 
-    for (int start = 0; start < totalPages; start += parallel) {
-      final end =
-          (start + parallel) > totalPages ? totalPages : (start + parallel);
-      final futures = <Future<List<dynamic>>>[];
-      for (int i = start; i < end; i++) {
-        final offset = i * chunk;
-        futures.add(
-          client.talk([
-            path,
-            '=.proplist=$fields',
-            '=.skip=$offset',
-            '=.limit=$chunk',
-          ]).timeout(const Duration(seconds: 5)),
-        );
-      }
-
-      final pages = await Future.wait(futures);
-      for (final page in pages) {
-        for (final e in page) {
-          all.add(Map<String, dynamic>.from(e));
-          if (all.length >= maxRecords) {
-            onProgress?.call(totalPages, totalPages);
-            return all.sublist(0, maxRecords);
-          }
-        }
-      }
-      fetched += (end - start);
-      onProgress?.call(fetched, totalPages);
-    }
-
-    return all;
+    final records = response
+        .whereType<Map>()
+        .map((record) => Map<String, dynamic>.from(record))
+        .take(maxRecords)
+        .toList(growable: false);
+    onProgress?.call(1, 1);
+    return records;
   }
 
   Future<void> _fetchStatistics({bool retryOnSocketError = true}) async {
@@ -150,10 +128,8 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     try {
       client = await MikrotikConnector.connect();
 
-      const usersChunk = 20;
-      const usersMax = 50;
-      const sessionsChunk = 20;
-      const sessionsMax = 50;
+      const usersMax = 2000;
+      const sessionsMax = 2000;
 
       setState(() {
         _fetchStartTime = DateTime.now();
@@ -168,11 +144,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
 
       // نفذ الطلبين بالتتابع لأنهما يشتركان في Socket واحد.
       // هذا أكثر استقراراً مع Native API في RouterOS v6 من Future.wait.
-      final users = await _fetchPaginated(
+      final users = await _fetchRecords(
         client,
         '/ip/hotspot/user/print',
         'name,password,disabled,profile,limit-uptime,limit-bytes-total,comment',
-        chunk: usersChunk,
         maxRecords: usersMax,
         onProgress: (f, t) {
           if (!mounted) return;
@@ -182,11 +157,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
           });
         },
       );
-      final sessions = await _fetchPaginated(
+      final sessions = await _fetchRecords(
         client,
         '/ip/hotspot/active/print',
         'user,bytes-in,bytes-out,uptime,session-time-left',
-        chunk: sessionsChunk,
         maxRecords: sessionsMax,
         onProgress: (f, t) {
           if (!mounted) return;
