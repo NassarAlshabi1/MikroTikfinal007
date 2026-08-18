@@ -49,19 +49,22 @@ class IsarProvider {
 
   /// فتح قاعدة بيانات Isar جديدة.
   Future<Isar> _openIsar() async {
-    final directory = kIsWeb
-        ? null
-        : (await getApplicationDocumentsDirectory()).path;
+    const schemas = [
+      CardCollectionSchema,
+      CardGenerationJobSchema,
+      ProfileCollectionSchema,
+      AiDiagnosticCollectionSchema,
+      ExecutedCommandCollectionSchema,
+    ];
 
+    if (kIsWeb) {
+      return Isar.open(schemas, inspector: kDebugMode);
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
     return Isar.open(
-      [
-        CardCollectionSchema,
-        CardGenerationJobSchema,
-        ProfileCollectionSchema,
-        AiDiagnosticCollectionSchema,
-        ExecutedCommandCollectionSchema,
-      ],
-      directory: directory,
+      schemas,
+      directory: directory.path,
       inspector: kDebugMode,
     );
   }
