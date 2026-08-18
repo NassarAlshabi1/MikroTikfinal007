@@ -57,14 +57,13 @@ class IsarProvider {
       ExecutedCommandCollectionSchema,
     ];
 
-    if (kIsWeb) {
-      return Isar.open(schemas, inspector: kDebugMode);
-    }
+    final directory = kIsWeb
+        ? ''
+        : (await getApplicationDocumentsDirectory()).path;
 
-    final directory = await getApplicationDocumentsDirectory();
     return Isar.open(
       schemas,
-      directory: directory.path,
+      directory: directory,
       inspector: kDebugMode,
     );
   }
