@@ -27,6 +27,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   Future<void> _loadBackups({
     bool retryOnSocketError = true,
     bool retryOnTimeout = true,
+    bool showError = true,
   }) async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -63,6 +64,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         await _loadBackups(
           retryOnSocketError: false,
           retryOnTimeout: retryOnTimeout,
+          showError: showError,
         );
         return;
       }
@@ -74,10 +76,11 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         await _loadBackups(
           retryOnSocketError: false,
           retryOnTimeout: false,
+          showError: showError,
         );
         return;
       }
-      if (mounted) {
+      if (mounted && showError) {
         final message = e is TimeoutException
             ? 'انتهت مهلة تحميل النسخ الاحتياطية. تحقق من اتصال MikroTik وحاول مرة أخرى.'
             : 'فشل تحميل النسخ الاحتياطية: $e';
@@ -87,6 +90,39 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       MikrotikConnector.release(client);
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _normalizeBackupName(String value) {
+    var name = value.trim();
+    if (name.toLowerCase().endsWith('.backup')) {
+      name = name.substring(0, name.length - '.backup'.length);
+    }
+    name = name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    return name.isEmpty ? 'mikrotik_backup' : name;
+  }
+
+  bool _isBackupFileForName(Map<String, dynamic> file, String backupName) {
+    final actualName = file['name']?.toString().trim().toLowerCase();
+    final expectedName = backupName.trim().toLowerCase();
+    return actualName == expectedName || actualName == '$expectedName.backup';
+  }
+
+  Future<bool> _waitForBackup(String backupName) async {
+    const attempts = 20;
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      await _loadBackups(
+        retryOnSocketError: false,
+        retryOnTimeout: false,
+        showError: false,
+      );
+      if (_backups.any((file) => _isBackupFileForName(file, backupName))) {
+        return true;
+      }
+      if (attempt < attempts - 1) {
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+    }
+    return false;
   }
 
   Future<void> _saveBackupToRouter(String backupName) async {
@@ -114,8 +150,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   }
 
   Future<void> _createNewBackup() async {
-    final backupName = await _showBackupNameDialog();
-    if (backupName == null || backupName.isEmpty) return;
+    final requestedName = await _showBackupNameDialog();
+    if (requestedName == null || requestedName.trim().isEmpty) return;
+    final backupName = _normalizeBackupName(requestedName);
     if (!mounted) return;
 
     setState(() => _isCreatingBackup = true);
@@ -143,17 +180,21 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
     try {
       await _saveBackupWithReconnect(backupName);
-      await Future.delayed(const Duration(seconds: 3));
-      await _loadBackups();
+      final created = await _waitForBackup(backupName);
+      if (!created) {
+        throw StateError(
+          'تم إرسال أمر الإنشاء، لكن لم يظهر ملف النسخة في MikroTik خلال 20 ثانية.',
+        );
+      }
 
       snackBar.close();
       if (mounted) {
-        showSuccessSnackBar(context, 'تم إنشاء النسخة الاحتياطية بنجاح');
+        showSuccessSnackBar(context, 'تم إنشاء النسخة الاحتياطية والتحقق منها بنجاح');
       }
     } catch (e) {
       snackBar.close();
       if (mounted) {
-        showErrorSnackBar(context, 'فشل إنشاء النسخة.');
+        showErrorSnackBar(context, 'فشل إنشاء النسخة: $e');
       }
     } finally {
       if (mounted) setState(() => _isCreatingBackup = false);
