@@ -1488,7 +1488,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildDashboardStatusCard() {
     if (_isLoadingStatus && _dashboardStatus == null) {
       return Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -1498,15 +1498,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Theme.of(context).colorScheme.onSurface,
             ],
           ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: Theme.of(context)
                   .colorScheme
                   .onSurface
                   .withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -1557,13 +1557,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   context.theme.appColors.accent.withValues(alpha: 0.20),
                 ],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color:
                 Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
           ),
         ],
       ),
@@ -1586,7 +1586,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(14.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1601,25 +1601,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 ? _clientName
                                 : 'حالة MikroTik',
                             style: TextStyle(
-                              fontSize: 22,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: context.theme.appColors.onSurface,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 3),
                           Text(
                             'الإصدار: ${status['version']}',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               color: context.theme.appColors.muted,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 3),
                           Text(
                             'وقت التشغيل: ${status['uptime']}',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               color: context.theme.appColors.muted,
                             ),
                           ),
@@ -1628,16 +1628,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                     Icon(
                       Icons.router,
-                      size: 48,
+                      size: 34,
                       color: context.theme.appColors.primary
                           .withValues(alpha: 0.8),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     _buildStatusMetric(
                       label: 'المعالج',
@@ -1673,7 +1673,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 if (_isRefreshingStatus)
                   const Padding(
-                    padding: EdgeInsets.only(top: 16.0),
+                    padding: EdgeInsets.only(top: 8.0),
                     child: LinearProgressIndicator(minHeight: 3),
                   ),
               ],
@@ -1693,25 +1693,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: isDark
             ? context.theme.appColors.cardInteractive.withValues(alpha: 0.8)
             : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 18, color: color),
+            child: Icon(icon, size: 16, color: color),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 7),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -1719,7 +1719,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: context.theme.appColors.muted,
                   fontWeight: FontWeight.w500,
                 ),
@@ -1727,7 +1727,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: context.theme.appColors.onSurface,
                 ),
