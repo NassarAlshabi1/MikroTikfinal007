@@ -87,8 +87,8 @@ class MikrotikConnector {
   static const _maxIdle = Duration(minutes: 3);
   static const _healthCheckInterval = Duration(seconds: 15);
   static const _healthCheckTimeout = Duration(seconds: 3);
-  // النسخ الاحتياطية وأوامر print قد تتأخر على أجهزة RouterOS البطيئة.
-  static const _connectTimeout = Duration(seconds: 20);
+  // يجب أن يفشل عنوان غير صالح بسرعة مع إبقاء مهلة كافية للراوترات البطيئة.
+  static const _connectTimeout = Duration(seconds: 10);
   static bool _isConnecting = false;
 
   /// معلومات الاتصال الحالي (للاستخدام في UI والتشخيص)
