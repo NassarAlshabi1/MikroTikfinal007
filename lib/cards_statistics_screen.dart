@@ -136,9 +136,9 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
         _fetchDuration = null;
         _fetchedBytes = 0;
         _pagesPerSecond = 0.0;
-        _usersTotalPages = (usersMax / usersChunk).ceil();
+        _usersTotalPages = 1;
         _usersFetchedPages = 0;
-        _sessionsTotalPages = (sessionsMax / sessionsChunk).ceil();
+        _sessionsTotalPages = 1;
         _sessionsFetchedPages = 0;
       });
 
