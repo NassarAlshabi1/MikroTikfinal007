@@ -19,16 +19,10 @@ import 'daos/cards_dao.dart';
 import 'daos/profiles_dao.dart';
 import 'daos/ai_diagnostics_dao.dart';
 import 'daos/executed_commands_dao.dart';
-import 'migration_service.dart';
 
 /// Singleton للـ Isar instance
 final isarProvider = FutureProvider<IsarProvider>((ref) async {
-  final provider = IsarProvider();
-  // ابدأ الترحيل في الخلفية (لا ننتظره)
-  MigrationService.instance.migrateFromDriftIfNeeded().catchError((e) {
-    // خطأ الترحيل لا يمنع استخدام الـ app
-  });
-  return provider;
+  return IsarProvider();
 });
 
 /// Provider لـ Isar instance مباشرة

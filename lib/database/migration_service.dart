@@ -1,202 +1,233 @@
-// ============================================================
-//  Migration Service — ترحيل البيانات من SharedPreferences/Files إلى Isar
+//  Migration Service — ترحيل البيانات القديمة إلى Isar
 //
-//  يعمل مرة واحدة عند أول تشغيل بعد التحديث.
-//  يحل محل Drift MigrationService القديم.
+//  يطبق الهجرة مرة واحدة لكل إصدار schema، مع حالات واضحة وإمكانية
+//  إعادة المحاولة بعد الفشل. لا تُحذف البيانات القديمة قبل نجاح الكتابة.
 // ============================================================
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
 
-import 'isar_provider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:isar/isar.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'isar/ai_diagnostic_collection.dart';
 import 'isar/card_collection.dart';
 import 'isar/profile_collection.dart';
-import 'isar/ai_diagnostic_collection.dart';
+import 'isar_provider.dart';
 
 class MigrationService {
   MigrationService._();
   static final MigrationService instance = MigrationService._();
 
-  static const _migrationDoneKey = 'isar_migration_done';
+  static const int currentMigrationVersion = 1;
+  static const _migrationVersionKey = 'isar_migration_version';
+  static const _migrationStateKey = 'isar_migration_state';
+  static const _legacyMigrationDoneKey = 'isar_migration_done';
+  static const _diagnosticsLegacyKey = 'diagnostics_sessions';
 
-  /// يتحقق إذا تم الترحيل مسبقاً
   Future<bool> isMigrationDone() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_migrationDoneKey) ?? false;
+    return (prefs.getInt(_migrationVersionKey) ?? 0) >=
+        currentMigrationVersion;
   }
 
-  /// ينفّذ الترحيل الكامل من SharedPreferences/Files إلى Isar
-  Future<void> migrateFromDriftIfNeeded() async {
-    if (await isMigrationDone()) {
+  /// ينفذ الهجرة القديمة مرة واحدة لكل إصدار schema.
+  ///
+  /// في حال الفشل يُعاد رمي الخطأ وتبقى الحالة failed، كي يعاد التنفيذ
+  /// في التشغيل التالي بدل اعتبار الهجرة ناجحة بشكل جزئي.
+  Future<void> migrateLegacyDataIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    if ((prefs.getInt(_migrationVersionKey) ?? 0) >=
+        currentMigrationVersion) {
       debugPrint('[Migration] Already done — skipping');
       return;
     }
 
-    debugPrint('[Migration] Starting migration to Isar...');
+    await prefs.setString(_migrationStateKey, 'in_progress');
     final stopwatch = Stopwatch()..start();
 
     try {
       final isar = await IsarProvider().instance;
+      final diagnosticsCount = await _migrateDiagnosticsSessions(isar, prefs);
+      final cardsCount = await _migrateSavedCards(isar);
 
-      await _migrateDiagnosticsSessions(isar);
-      await _migrateSavedCards(isar);
-
-      // وضع علامة أن الترحيل تم
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_migrationDoneKey, true);
+      await prefs.setInt(_migrationVersionKey, currentMigrationVersion);
+      // الاحتفاظ بهذا المفتاح للتوافق مع الإصدارات السابقة.
+      await prefs.setBool(_legacyMigrationDoneKey, true);
+      await prefs.setString(_migrationStateKey, 'completed');
 
       stopwatch.stop();
       debugPrint(
-          '[Migration] Completed in ${stopwatch.elapsedMilliseconds}ms');
-    } catch (e, st) {
-      debugPrint('[Migration] Error: $e\n$st');
-      // لا نضع علامة "تم" — سيتكرر المحاولة في التشغيل التالي
+        '[Migration] Completed in ${stopwatch.elapsedMilliseconds}ms '
+        '(diagnostics=$diagnosticsCount, cards=$cardsCount)',
+      );
+    } catch (error, stackTrace) {
+      await prefs.setString(_migrationStateKey, 'failed');
+      debugPrint('[Migration] Failed: $error\n$stackTrace');
+      rethrow;
     }
   }
 
-  /// ترحيل جلسات التشخيص من SharedPreferences
-  Future<void> _migrateDiagnosticsSessions(dynamic isar) async {
-    final prefs = await SharedPreferences.getInstance();
-    final sessionsJson = prefs.getString('diagnostics_sessions');
-    if (sessionsJson == null) {
+  Future<int> _migrateDiagnosticsSessions(
+    Isar isar,
+    SharedPreferences prefs,
+  ) async {
+    final sessionsJson = prefs.getString(_diagnosticsLegacyKey);
+    if (sessionsJson == null || sessionsJson.trim().isEmpty) {
       debugPrint('[Migration] No diagnostics sessions to migrate');
-      return;
+      return 0;
     }
 
-    try {
-      final List<dynamic> sessions = jsonDecode(sessionsJson);
-      debugPrint(
-          '[Migration] Migrating ${sessions.length} diagnostic sessions...');
+    final decoded = jsonDecode(sessionsJson);
+    if (decoded is! List) {
+      throw const FormatException('diagnostics_sessions must be a JSON list');
+    }
 
-      final diagnostics = <AiDiagnosticCollection>[];
-      for (final sessionData in sessions) {
-        final session = sessionData as Map<String, dynamic>;
-        final messages = (session['messages'] as List?) ?? [];
+    final diagnostics = <AiDiagnosticCollection>[];
+    for (final rawSession in decoded) {
+      if (rawSession is! Map) {
+        continue;
+      }
+      final session = Map<String, dynamic>.from(rawSession);
+      final messages = session['messages'] is List
+          ? session['messages'] as List
+          : const <dynamic>[];
 
-        // استخراج أول سؤال من المستخدم
-        String userQuery = '';
-        for (final m in messages) {
-          if (m['type'] == 'user') {
-            userQuery = m['content'] as String? ?? '';
-            break;
-          }
+      var userQuery = '';
+      for (final rawMessage in messages) {
+        if (rawMessage is Map && rawMessage['type'] == 'user') {
+          final content = rawMessage['content'];
+          if (content is String) userQuery = content;
+          break;
         }
+      }
 
-        // استخراج آخر رد من الـ AI
-        String aiResponse = '';
-        for (final m in messages.reversed) {
-          if (m['type'] == 'assistant') {
-            aiResponse = m['content'] as String? ?? '';
-            break;
-          }
+      var aiResponse = '';
+      for (final rawMessage in messages.reversed) {
+        if (rawMessage is Map && rawMessage['type'] == 'assistant') {
+          final content = rawMessage['content'];
+          if (content is String) aiResponse = content;
+          break;
         }
+      }
 
-        final startedAt =
-            DateTime.tryParse(session['startedAt'] as String? ?? '') ??
-                DateTime.now();
-        final endedAt = session['endedAt'] != null
-            ? DateTime.tryParse(session['endedAt'] as String)
-            : null;
+      final startedAt = DateTime.tryParse(session['startedAt'] as String? ?? '') ??
+          DateTime.now();
+      final endedAt = DateTime.tryParse(session['endedAt'] as String? ?? '');
+      final snapshotJson = jsonEncode(session);
 
-        diagnostics.add(AiDiagnosticCollection.fromData(
+      // snapshotJson هو مفتاح idempotency للهجرة القديمة.
+      final alreadyMigrated = await isar.aiDiagnosticCollections
+          .filter()
+          .snapshotJsonEqualTo(snapshotJson)
+          .findFirst();
+      if (alreadyMigrated != null) continue;
+
+      diagnostics.add(
+        AiDiagnosticCollection.fromData(
           mode: session['mode'] as String? ?? 'general',
           mikrotikIp: session['mikrotikIp'] as String?,
           startedAt: startedAt,
           endedAt: endedAt,
           userQuery: userQuery,
           aiResponse: aiResponse,
-          snapshotJson: jsonEncode(session),
-          isFavorite: false,
-        ));
-      }
+          snapshotJson: snapshotJson,
+          isFavorite: session['isFavorite'] as bool? ?? false,
+        ),
+      );
+    }
 
+    if (diagnostics.isNotEmpty) {
       await isar.writeTxn(() async {
         await isar.aiDiagnosticCollections.putAll(diagnostics);
       });
-
-      // حذف من SharedPreferences بعد الترحيل الناجح
-      await prefs.remove('diagnostics_sessions');
-      debugPrint('[Migration] Diagnostics sessions migrated successfully');
-    } catch (e) {
-      debugPrint('[Migration] Error migrating diagnostics: $e');
     }
+
+    // نحذف المصدر فقط بعد نجاح transaction كاملة.
+    await prefs.remove(_diagnosticsLegacyKey);
+    return diagnostics.length;
   }
 
-  /// ترحيل الكروت المحفوظة من ملفات نصية
-  Future<void> _migrateSavedCards(dynamic isar) async {
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final cardsDir = Directory('${appDir.path}/saved_cards');
+  Future<int> _migrateSavedCards(Isar isar) async {
+    // saved_cards ملفات محلية؛ لا يوجد مصدر ملفات مماثل على Web.
+    if (kIsWeb) return 0;
 
-      if (!await cardsDir.exists()) {
-        debugPrint('[Migration] No saved_cards directory');
-        return;
+    final appDir = await getApplicationDocumentsDirectory();
+    final cardsDir = Directory(p.join(appDir.path, 'saved_cards'));
+    if (!await cardsDir.exists()) {
+      debugPrint('[Migration] No saved_cards directory');
+      return 0;
+    }
+
+    final entities = await cardsDir.list().toList();
+    var migratedCount = 0;
+    for (final entity in entities) {
+      if (entity is! File || p.extension(entity.path).toLowerCase() != '.txt') {
+        continue;
       }
 
-      final files = await cardsDir.list().toList();
-      debugPrint('[Migration] Migrating ${files.length} card files...');
+      final content = await entity.readAsString();
+      final usernames = content
+          .split(RegExp(r'\r?\n'))
+          .map((line) => line.trim())
+          .where((line) => line.isNotEmpty)
+          .toSet();
+      if (usernames.isEmpty) continue;
 
-      for (final entity in files) {
-        if (entity is File && entity.path.endsWith('.txt')) {
-          final content = await entity.readAsString();
-          final usernames = content
-              .split('\n')
-              .where((line) => line.trim().isNotEmpty)
-              .toList();
+      final profileName = p.basenameWithoutExtension(entity.path);
+      final existingProfile = await isar.profileCollections
+          .where()
+          .nameEqualTo(profileName)
+          .findFirst();
+      var profileId = existingProfile?.id;
 
-          if (usernames.isEmpty) continue;
+      if (profileId == null) {
+        final newProfile = ProfileCollection.fromData(
+          name: profileName,
+          createdAt: DateTime.now(),
+        );
+        await isar.writeTxn(() async {
+          await isar.profileCollections.put(newProfile);
+        });
+        profileId = newProfile.id;
+      }
 
-          // اسم الملف يحتوي عادة على اسم الفئة
-          final profileName =
-              entity.path.split('/').last.replaceAll('.txt', '');
-
-          // إضافة profile إن لم يكن موجوداً
-          ProfileCollection? existingProfile = await isar.profileCollections
-              .where()
-              .nameEqualTo(profileName)
-              .findFirst();
-
-          int profileId;
-          if (existingProfile != null) {
-            profileId = existingProfile.id;
-          } else {
-            final newProfile = ProfileCollection.fromData(
-              name: profileName,
+      final cards = <CardCollection>[];
+      for (final username in usernames) {
+        final existing = await isar.cardCollections
+            .where()
+            .usernameEqualTo(username)
+            .findFirst();
+        if (existing == null) {
+          cards.add(
+            CardCollection.fromData(
+              username: username,
+              profileId: profileId,
               createdAt: DateTime.now(),
-            );
-            await isar.writeTxn(() async {
-              await isar.profileCollections.put(newProfile);
-            });
-            profileId = newProfile.id;
-          }
-
-          // إضافة الكروت
-          final cards = usernames
-              .map((username) => CardCollection.fromData(
-                    username: username,
-                    profileId: profileId,
-                    createdAt: DateTime.now(),
-                  ))
-              .toList();
-
-          await isar.writeTxn(() async {
-            await isar.cardCollections.putAll(cards);
-          });
+            ),
+          );
         }
       }
 
-      debugPrint('[Migration] Saved cards migrated successfully');
-    } catch (e) {
-      debugPrint('[Migration] Error migrating cards: $e');
+      if (cards.isNotEmpty) {
+        await isar.writeTxn(() async {
+          await isar.cardCollections.putAll(cards);
+        });
+        migratedCount += cards.length;
+      }
     }
+
+    return migratedCount;
   }
 
-  /// إعادة الترحيل (للاختبار أو إعادة الضبط)
+  /// يعيد ضبط حالة الهجرة للاختبار أو لإعادة المحاولة يدويًا.
   Future<void> resetMigration() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_migrationDoneKey);
+    await prefs.remove(_migrationVersionKey);
+    await prefs.remove(_migrationStateKey);
+    await prefs.remove(_legacyMigrationDoneKey);
   }
 }
