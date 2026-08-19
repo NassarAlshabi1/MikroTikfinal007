@@ -21,15 +21,15 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBackups();
+    unawaited(_loadBackups());
   }
 
-  Future<void> _loadBackups({
+  Future<bool> _loadBackups({
     bool retryOnSocketError = true,
     bool retryOnTimeout = true,
     bool showError = true,
   }) async {
-    if (!mounted) return;
+    if (!mounted) return false;
     setState(() => _isLoading = true);
     RouterOSClient? client;
     try {
@@ -57,28 +57,28 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
             return timeB.compareTo(timeA);
           });
         });
+        return true;
       }
+      return false;
     } catch (e) {
       if (retryOnSocketError && MikrotikConnector.isSocketClosedError(e)) {
         MikrotikConnector.forceDisconnect();
-        await _loadBackups(
+        return _loadBackups(
           retryOnSocketError: false,
           retryOnTimeout: retryOnTimeout,
           showError: showError,
         );
-        return;
       }
       if (e is TimeoutException && retryOnTimeout) {
         // قد يكون الـ socket المشترك عالقًا بعد عملية طويلة؛ أعد الاتصال
         // مرة واحدة قبل عرض الخطأ للمستخدم.
         MikrotikConnector.forceDisconnect();
         await Future<void>.delayed(const Duration(milliseconds: 300));
-        await _loadBackups(
+        return _loadBackups(
           retryOnSocketError: false,
           retryOnTimeout: false,
           showError: showError,
         );
-        return;
       }
       if (mounted && showError) {
         final message = e is TimeoutException
@@ -86,6 +86,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
             : 'فشل تحميل النسخ الاحتياطية: $e';
         showErrorSnackBar(context, message);
       }
+      if (mounted) setState(() => _backups = []);
+      return false;
     } finally {
       MikrotikConnector.release(client);
       if (mounted) setState(() => _isLoading = false);
@@ -102,20 +104,24 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   }
 
   bool _isBackupFileForName(Map<String, dynamic> file, String backupName) {
-    final actualName = file['name']?.toString().trim().toLowerCase();
-    final expectedName = backupName.trim().toLowerCase();
-    return actualName == expectedName || actualName == '$expectedName.backup';
+    final rawActualName = file['name']?.toString().trim().toLowerCase() ?? '';
+    final actualName = rawActualName.endsWith('.backup')
+        ? rawActualName.substring(0, rawActualName.length - '.backup'.length)
+        : rawActualName;
+    final expectedName = _normalizeBackupName(backupName).toLowerCase();
+    return actualName == expectedName;
   }
 
   Future<bool> _waitForBackup(String backupName) async {
     const attempts = 20;
     for (var attempt = 0; attempt < attempts; attempt++) {
-      await _loadBackups(
+      final loaded = await _loadBackups(
         retryOnSocketError: false,
         retryOnTimeout: false,
         showError: false,
       );
-      if (_backups.any((file) => _isBackupFileForName(file, backupName))) {
+      if (loaded &&
+          _backups.any((file) => _isBackupFileForName(file, backupName))) {
         return true;
       }
       if (attempt < attempts - 1) {
@@ -673,7 +679,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadBackups,
+      onRefresh: () async {
+        await _loadBackups();
+      },
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: _backups.length,
@@ -694,7 +702,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadBackups,
+            onPressed: () => unawaited(_loadBackups()),
             tooltip: 'تحديث',
           ),
         ],
