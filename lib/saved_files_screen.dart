@@ -98,8 +98,9 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
 
   Future<void> _shareFile(String path) async {
     try {
-      await Share.shareXFiles([XFile(path)]);
+      await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
     } catch (e) {
+      if (!mounted) return;
       showErrorSnackBar(context, 'فشلت عملية المشاركة.');
     }
   }
@@ -119,6 +120,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     final updatedFilesJson =
         _savedFiles.map((file) => jsonEncode(file.toJson())).toList();
     await prefs.setStringList('saved_files', updatedFilesJson);
+    if (!mounted) return;
     setState(() {});
   }
 
@@ -126,8 +128,19 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     try {
       final file = File(path);
       final fileContent = await file.readAsString();
-      // إزالة أي أسطر فارغة قد تنتج عن الانقسام
-      final cardList = fileContent.split('\n').where((line) => line.trim().isNotEmpty).toList();
+      // تحويل كل سطر إلى بنية موحدة متوافقة مع شاشة عرض الكروت.
+      final cardList = fileContent
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .map((line) {
+            final usernameMatch = RegExp(r'username:\s*([^,\n]+)', caseSensitive: false).firstMatch(line);
+            final passwordMatch = RegExp(r'password:\s*([^,\n]+)', caseSensitive: false).firstMatch(line);
+            return <String, String>{
+              'username': usernameMatch?.group(1)?.trim() ?? line.trim(),
+              'password': passwordMatch?.group(1)?.trim() ?? '',
+            };
+          })
+          .toList();
 
       if (mounted) {
         Navigator.of(context).push(
@@ -143,6 +156,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       showErrorSnackBar(context, 'فشل عرض الملف.');
     }
   }
@@ -166,6 +180,7 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       final cardUsernames = fileContent.split('\n').where((line) => line.trim().isNotEmpty).toList();
 
       // استدعاء دالة إنشاء ومشاركة الـ PDF
+      if (!mounted) return;
       await PdfGenerator.sharePdf(
         context,
         cardUsernames: cardUsernames,
@@ -173,8 +188,10 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       );
 
     } on StateError { // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
+       if (!mounted) return;
        showErrorSnackBar(context, 'لم يتم العثور على قالب PDF للفئة "${savedFile.profileName}".');
     } catch (e) {
+      if (!mounted) return;
       showErrorSnackBar(context, 'فشل إنشاء ملف PDF.');
     }
   }
@@ -190,10 +207,10 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _savedFiles.isEmpty
-              ? Center(
+              ? const Center(
                   child: Text(
                     'لا توجد ملفات محفوظة.',
-                    style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87),
+                    style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 )
               : ListView.builder(

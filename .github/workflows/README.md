@@ -13,7 +13,7 @@
 - بناء APK للأندرويد
 - بناء AAB (Android App Bundle)
 - رفع الملفات كـ artifacts
-- تشغيل مع Flutter 3.22.3 و Java 17
+- تشغيل مع Flutter 3.47.0 و Java 17
 
 ### 2. 🌐 Multi-Platform Build
 **الملف:** `build-multi-platform.yml`
@@ -22,7 +22,7 @@
 
 **المنصات المدعومة:**
 - 🤖 Android (APK & AAB)
-- 🌐 Web (CanvasKit renderer)
+- 🌐 Web (Flutter Web renderer الافتراضي)
 - 🐧 Linux (GTK3)
 - 🪟 Windows
 - 🍎 macOS
@@ -40,7 +40,7 @@
 **الوظائف:**
 - بناء تطبيق الويب
 - نشر على GitHub Pages
-- تحسين للأداء مع CanvasKit
+- تحسين البناء باستخدام Flutter Web renderer الافتراضي
 - دعم للـ PWA
 
 ### 4. 📦 Create Release
@@ -75,7 +75,7 @@
 2. **Secrets**: تأكد من وجود `GITHUB_TOKEN` (يتم إنشاؤه تلقائياً)
 
 ### متطلبات البناء
-- **Flutter**: 3.22.3 (stable)
+- **Flutter**: 3.47.0 (stable) — يتضمن Dart متوافقاً مع syncfusion_flutter_pdf
 - **Java**: 17 (للأندرويد)
 - **Node.js**: للأدوات المساعدة
 
@@ -135,6 +135,6 @@
 
 ---
 
-**🏗️ Built with Flutter 3.22.3**  
+**🏗️ Built with Flutter 3.47.0**
 **✨ Features Qahtani Logo Integration**  
 **🚀 Ready for Production Deployment**

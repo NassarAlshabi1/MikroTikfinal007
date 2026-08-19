@@ -61,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.all(16.0),
       child: ListView(
         children: [
-          Icon(Icons.account_circle, size: 100, color: context.theme.appColors.primary),
+          const Icon(Icons.account_circle, size: 100, color: Colors.deepOrange),
           const SizedBox(height: 16),
           _buildInfoCard(
             context,
@@ -110,30 +110,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54),
+          style: const TextStyle(color: Colors.white),
         ),
       ),
     );
   }
 
   Widget _buildNotLinkedView() {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_amber_rounded, size: 80, color: context.theme.appColors.warning),
-            const SizedBox(height: 20),
-            const Text(
+            Icon(Icons.warning_amber_rounded, size: 80, color: Colors.amber),
+            SizedBox(height: 20),
+            Text(
               'لم يتم ربط الشبكة!',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               'الرجاء الذهاب إلى شاشة "ربط الشبكة بـ م/نصار الشعبي" لإكمال عملية الربط أولاً.',
-              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+              style: TextStyle(fontSize: 16, color: Colors.white),
               textAlign: TextAlign.center,
             ),
           ],

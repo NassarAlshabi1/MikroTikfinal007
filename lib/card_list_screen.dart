@@ -1,21 +1,16 @@
-// lib/card_list_screen.dart
-
-import 'dart:async';
-
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+
 import 'mqtt_service.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'snackbar_helpers.dart';
 
-class CardListScreen extends StatefulWidget {
-  final List<String> cardList;
-  final bool isNetworkLinked;
-  final Map<String, dynamic> linkedData;
-
+class CardListScreen extends ConsumerWidget {
   const CardListScreen({
     super.key,
     required this.cardList,
@@ -23,248 +18,184 @@ class CardListScreen extends StatefulWidget {
     this.linkedData = const {},
   });
 
-  @override
-  State<CardListScreen> createState() => _CardListScreenState();
-}
-
-class _CardListScreenState extends State<CardListScreen> {
-  late MqttService _mqttService;
-  StreamSubscription? _mqttSubscription;
-  String? _addCardsJobId;
-  Timer? _addCardsTimer;
-  bool _isJobAcknowledged = false;
+  final List<Map<String, String>> cardList;
+  final bool isNetworkLinked;
+  final Map<String, dynamic> linkedData;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _mqttService = Provider.of<MqttService>(context, listen: false);
-    _setupMqttListener();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mqttService = ref.read(mqttClientProvider);
 
-  Future<void> _shareCardsAsTextFile() async {
-    final String fileContent = widget.cardList.join('\n');
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/shared_cards.txt';
-    final file = File(filePath);
-    await file.writeAsString(fileContent);
-
-    await Share.shareXFiles([XFile(filePath)], text: 'الكروت المضافة حديثاً');
-  }
-
-  void _setupMqttListener() {
-    _mqttSubscription?.cancel();
-    _mqttSubscription = _mqttService.messages.listen((message) {
-      if (!mounted) return;
-      
-      final jobId = message['job_id'];
-      if (_addCardsJobId == null || jobId != _addCardsJobId) return;
-
-      final status = message['status'];
-
-      switch(status) {
-        case 'acknowledged':
-          _addCardsTimer?.cancel();
-          setState(() => _isJobAcknowledged = true);
-          Navigator.of(context, rootNavigator: true).pop();
-          _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
-          break;
-        
-        case 'job_status_response':
-           if (message['job_status'] == 'not_found') {
-             _addCardsTimer?.cancel();
-             Navigator.of(context, rootNavigator: true).pop(); 
-             _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
-           }
-           break;
-
-        case 'cards_added_success':
-          _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
-          showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
-          break;
-
-        case 'error':
-          _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
-          _showErrorDialog(message['message'] ?? 'حدث خطأ.');
-          break;
-      }
-    });
-  }
-
-  String _extractUsername(String cardLine) {
-    if (cardLine.toLowerCase().contains('username:')) {
-      try {
-        return cardLine.split(',')[0].split(':')[1].trim();
-      } catch (e) {
-        return cardLine.trim();
-      }
-    }
-    return cardLine.trim();
-  }
-
-  void _showAddCardsToQahtaniDialog() {
-    String? selectedUnitId;
-    final units = (widget.linkedData['network_details']?['units'] as List?) ?? [];
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('اختر فئة م/نصار الشعبي'),
-          content: DropdownButtonFormField<String>(
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            dropdownColor: Colors.white,
-            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-            items: units.map((unit) {
-              return DropdownMenuItem<String>(
-                value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              );
-            }).toList(),
-            onChanged: (value) => selectedUnitId = value,
-            validator: (value) => value == null ? 'الرجاء اختيار فئة' : null,
-          ),
-          actions: [
-            TextButton(child: const Text('إلغاء'), onPressed: () => Navigator.of(context).pop()),
-            ElevatedButton(
-              child: const Text('تأكيد وإضافة'),
-              onPressed: () {
-                if (selectedUnitId != null) {
-                  Navigator.of(context).pop();
-                  _sendCardsToQahtani(selectedUnitId!);
-                }
-              },
+    return Scaffold(
+      appBar: AppBar(title: const Text('الكروت المضافة حديثاً')),
+      body: cardList.isEmpty
+          ? const _EmptyCardsState()
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+              itemCount: cardList.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) => _CardCredentialTile(
+                number: index + 1,
+                card: cardList[index],
+              ),
             ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _sendCardsToQahtani(String selectedUnitId) {
-      _showWaitingDialog("جاري إرسال الكروت...");
-
-      setState(() {
-        _addCardsJobId = _mqttService.generateUniqueId();
-        _isJobAcknowledged = false;
-      });
-
-      _addCardsTimer?.cancel();
-      _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
-      
-      final List<String> cardUsernamesOnly = widget.cardList.map(_extractUsername).toList();
-      final String cardsAsString = cardUsernamesOnly.join('\n');
-
-      _mqttService.publish({
-        'command': 'add_wifi_cards',
-        'network_id': widget.linkedData['network_details']?['network_id'],
-        'unit_id': selectedUnitId,
-        'cards': cardsAsString,
-        'job_id': _addCardsJobId, // <-- هذا هو السطر الذي تم تصحيحه
-      });
-  }
-
-  void _checkAddCardsStatus() {
-    if (!mounted || _isJobAcknowledged) return;
-    _mqttService.publish({'command': 'get_job_status', 'job_id': _addCardsJobId});
-  }
-
-  void _showWaitingDialog(String message) {
-     showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Row(children: [
-          const CircularProgressIndicator(),
-          const SizedBox(width: 20),
-          Expanded(child: Text(message)),
-        ]),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: cardList.isEmpty ? null : () => _copyAll(context),
+                icon: const Icon(Icons.copy_all_outlined),
+                label: const Text('نسخ الكل'),
+              ),
+              FilledButton.icon(
+                onPressed: cardList.isEmpty ? null : () => _shareAll(context),
+                icon: const Icon(Icons.ios_share_rounded),
+                label: const Text('مشاركة'),
+              ),
+              if (isNetworkLinked)
+                FilledButton.tonalIcon(
+                  onPressed: cardList.isEmpty ? null : () => _chooseQahtaniUnit(context, mqttService),
+                  icon: const Icon(Icons.cloud_upload_outlined),
+                  label: const Text('إرسال للشبكة'),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  void _showErrorDialog(String message) {
-    if (!mounted) return;
-    showErrorSnackBar(context, message);
+  String get _cardsAsText => cardList
+      .map((card) => 'اسم المستخدم: ${card['username'] ?? ''}\nكلمة المرور: ${card['password'] ?? ''}')
+      .join('\n\n');
+
+  Future<void> _copyAll(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: _cardsAsText));
+    if (context.mounted) showSuccessSnackBar(context, 'تم نسخ جميع الكروت.');
   }
 
-  @override
-  void dispose() {
-    _mqttSubscription?.cancel();
-    _addCardsTimer?.cancel();
-    super.dispose();
+  Future<void> _shareAll(BuildContext context) async {
+    final directory = await getTemporaryDirectory();
+    final file = File('${directory.path}/mikrotik_cards.txt');
+    await file.writeAsString(_cardsAsText);
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(file.path)], text: 'كروت MikroTik المضافة حديثاً'),
+    );
   }
+
+  Future<void> _chooseQahtaniUnit(BuildContext context, MqttService mqttService) async {
+    final units = (linkedData['network_details']?['units'] as List?)
+            ?.whereType<Map>()
+            .cast<Map<dynamic, dynamic>>()
+            .toList() ??
+        const <Map<dynamic, dynamic>>[];
+    if (units.isEmpty) {
+      showErrorSnackBar(context, 'لا توجد وحدات متاحة للإرسال.');
+      return;
+    }
+
+    final selectedUnitId = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('اختيار جهة الإرسال'),
+        content: DropdownButtonFormField<String>(
+          decoration: const InputDecoration(labelText: 'الوحدة'),
+          items: units
+              .map(
+                (unit) => DropdownMenuItem<String>(
+                  value: unit['id']?.toString(),
+                  child: Text(unit['name']?.toString() ?? 'وحدة غير مسماة'),
+                ),
+              )
+              .toList(),
+          onChanged: (value) => Navigator.of(dialogContext).pop(value),
+        ),
+      ),
+    );
+    if (selectedUnitId == null || !context.mounted) return;
+
+    mqttService.publish({
+      'command': 'add_cards',
+      'unit_id': selectedUnitId,
+      'cards': cardList,
+    });
+    showSuccessSnackBar(context, 'تمت جدولة إرسال الكروت إلى الوحدة المحددة.');
+  }
+}
+
+class _CardCredentialTile extends StatelessWidget {
+  const _CardCredentialTile({required this.number, required this.card});
+
+  final int number;
+  final Map<String, String> card;
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> bottomButtons = [
-      Expanded(
-        child: ElevatedButton.icon(
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: widget.cardList.join('\n')));
-            showSuccessSnackBar(context, 'تم نسخ جميع الكروت!');
-          },
-          icon: const Icon(Icons.copy_all),
-          label: const Text('نسخ الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
-        ),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: ElevatedButton.icon(
-          onPressed: _shareCardsAsTextFile,
-          icon: const Icon(Icons.share),
-          label: const Text('مشاركة الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
-        ),
-      ),
-    ];
-
-    if (widget.isNetworkLinked) {
-      bottomButtons.add(const SizedBox(width: 8));
-      bottomButtons.add(
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _showAddCardsToQahtaniDialog,
-            icon: const Icon(Icons.add_to_queue),
-            label: const Text('إضافة للقحطاني'),
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('الكروت المضافة حديثاً'),
-        backgroundColor: Theme.of(context).cardColor,
-      ),
-      body: ListView.builder(
-        itemCount: widget.cardList.length,
-        itemBuilder: (context, index) {
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: ListTile(
-              title: Text(widget.cardList[index]),
-              trailing: IconButton(
-                icon: const Icon(Icons.copy),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: widget.cardList[index]));
-                  showSuccessSnackBar(context, 'تم نسخ الكرت!');
-                },
-                tooltip: 'نسخ',
+    final username = card['username'] ?? '—';
+    final password = card['password'] ?? '—';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              child: Text('$number'),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(username, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text('كلمة المرور: $password', style: Theme.of(context).textTheme.bodySmall),
+                ],
               ),
             ),
-          );
-        },
+            IconButton(
+              tooltip: 'نسخ الكرت',
+              icon: const Icon(Icons.copy_outlined),
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: 'username: $username\npassword: $password'));
+                if (context.mounted) showSuccessSnackBar(context, 'تم نسخ الكرت.');
+              },
+            ),
+          ],
+        ),
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: Theme.of(context).cardColor,
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: bottomButtons,
+    );
+  }
+}
+
+class _EmptyCardsState extends StatelessWidget {
+  const _EmptyCardsState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.inventory_2_outlined, size: 56, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 16),
+            Text('لا توجد كروت لعرضها', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 6),
+            Text('أضف كروتاً جديدة لتظهر هنا وتصبح جاهزة للنسخ أو المشاركة.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+          ],
         ),
       ),
     );

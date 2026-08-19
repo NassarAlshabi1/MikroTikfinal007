@@ -3,7 +3,6 @@ import 'package:router_os_client/router_os_client.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'mikrotik_connector.dart';
-import 'theme/app_theme.dart';
 
 class ActiveUsersScreen extends StatefulWidget {
   const ActiveUsersScreen({super.key});
@@ -16,7 +15,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   List<Map<String, dynamic>> _activeUsers = [];
   DateTime? _lastActiveFetch;
   static const Duration _minRefreshGap = Duration(seconds: 20);
-  static const Duration _cacheDuration = Duration(minutes: 2);
   int _page = 0;
   static const int _pageSize = 50;
   bool _isLoading = true;
@@ -133,9 +131,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     final minutes = RegExp(r'(\d+)m').firstMatch(uptime)?.group(1);
     final seconds = RegExp(r'(\d+)s').firstMatch(uptime)?.group(1);
     final parts = <String>[];
-    if (hours != null && int.parse(hours) > 0) parts.add('${hours}س');
-    if (minutes != null && int.parse(minutes) > 0) parts.add('${minutes}د');
-    if (seconds != null && int.parse(seconds) > 0) parts.add('${seconds}ث');
+    if (hours != null && int.parse(hours) > 0) parts.add('$hoursس');
+    if (minutes != null && int.parse(minutes) > 0) parts.add('$minutesد');
+    if (seconds != null && int.parse(seconds) > 0) parts.add('$secondsث');
     return parts.isEmpty ? uptime : parts.join(' ');
   }
 
@@ -143,7 +141,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: context.theme.appColors.primary,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         title: const Text('المستخدمين النشطين', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
@@ -170,12 +168,12 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: context.theme.appColors.error),
+              const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
               const SizedBox(height: 16),
               Text(
                 _errorMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.theme.appColors.error, fontSize: 12),
+                style: const TextStyle(color: Colors.redAccent, fontSize: 16),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -217,14 +215,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            context.theme.appColors.primary.withOpacity(0.8),
-            context.theme.appColors.primary.withOpacity(0.5),
+            Theme.of(context).primaryColor.withValues(alpha: 0.8),
+            Theme.of(context).primaryColor.withValues(alpha: 0.5),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: context.theme.appColors.primary.withOpacity(0.3),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -237,18 +235,18 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             icon: Icons.people,
             label: 'النشطين الآن',
             value: '$_activeCount',
-            color: context.theme.appColors.onPrimary,
+            color: Colors.white,
           ),
           Container(
             width: 1,
             height: 60,
-            color: context.theme.appColors.onSurface.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
           ),
           _buildStatItem(
             icon: Icons.group,
             label: 'إجمالي المستخدمين',
             value: '$_totalUsers',
-            color: context.theme.appColors.onPrimary,
+            color: Colors.white,
           ),
         ],
       ),
@@ -268,7 +266,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         Text(
           label,
           style: TextStyle(
-            color: color.withOpacity(0.9),
+            color: color.withValues(alpha: 0.9),
             fontSize: 14,
           ),
           textAlign: TextAlign.center,
@@ -296,13 +294,13 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               Icon(
                 Icons.people_outline,
                 size: 80,
-                color: context.theme.appColors.onSurface.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
                 'لا توجد مستخدمين نشطين حالياً',
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.black54,
+                  color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 16,
                 ),
               ),
@@ -325,19 +323,19 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           padding: const EdgeInsets.only(bottom: 12.0),
           child: Row(
             children: [
-              Text(
+              const Text(
                 'المتصلين حالياً',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: context.theme.appColors.onSurface,
+                  color: Colors.white,
                 ),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: context.theme.appColors.primary.withOpacity(0.2),
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -403,7 +401,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: context.theme.appColors.primary.withOpacity(0.2),
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -424,15 +422,15 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Theme.of(context).primaryColor.withOpacity(0.8),
-                        Theme.of(context).primaryColor.withOpacity(0.4),
+                        Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                        Theme.of(context).primaryColor.withValues(alpha: 0.4),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.person,
-                    color: context.theme.appColors.onPrimary,
+                    color: Colors.white,
                     size: 28,
                   ),
                 ),
@@ -443,10 +441,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     children: [
                       Text(
                         username,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: context.theme.appColors.onSurface,
+                          color: Colors.white,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -454,18 +452,18 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.location_on,
                             size: 14,
-                            color: context.theme.appColors.secondary,
+                            color: Color(0xFFB39DDB),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               ipAddress,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
-                                color: context.theme.appColors.secondary,
+                                color: Color(0xFFB39DDB),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -476,17 +474,17 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.access_time,
                             size: 14,
-                            color: context.theme.appColors.success,
+                            color: Color(0xFF81C784),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             _formatUptime(uptime),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 13,
-                              color: context.theme.appColors.success,
+                              color: Color(0xFF81C784),
                             ),
                           ),
                         ],
@@ -496,7 +494,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: context.theme.appColors.onSurface.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                 ),
               ],
             ),
@@ -528,12 +526,12 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-                  Text(
+                  const Text(
                     'تفاصيل المستخدم',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: context.theme.appColors.onSurface,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -550,7 +548,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                         child: Text(
                           entry.key,
                           style: TextStyle(
-                            color: context.theme.appColors.onSurface.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 14,
                           ),
                         ),
@@ -559,8 +557,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                         flex: 3,
                         child: Text(
                           entry.value.toString(),
-                          style: TextStyle(
-                            color: context.theme.appColors.onSurface,
+                          style: const TextStyle(
+                            color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -569,7 +567,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ],
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

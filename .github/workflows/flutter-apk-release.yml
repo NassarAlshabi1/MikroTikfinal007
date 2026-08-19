@@ -27,7 +27,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.22.3'
+          # تتطلب الاعتمادات الحالية وColor.withValues إصدار Flutter حديثاً.
+          # تم التحقق محلياً من pub get وanalyze وtest باستخدام 3.47.0.
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Install dependencies
@@ -36,13 +38,13 @@ jobs:
       - name: Clean build artifacts
         run: flutter clean
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build split release APKs by ABI
+        run: flutter build apk --release --split-per-abi
 
-      - name: Upload release APK artifact
+      - name: Upload ARMv8 release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mikrotik-manager-release-apk-${{ github.sha }}
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: mikrotik-manager-arm64-v8a-release-apk-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           if-no-files-found: error
           retention-days: 30
