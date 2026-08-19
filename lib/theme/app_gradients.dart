@@ -1,65 +1,100 @@
 import 'package:flutter/material.dart';
 import 'app_palette.dart';
 
+/// 🎨 التدرجات اللونية الحديثة الأنيقة
+/// تصميم 2025: تدرجات ناعمة هادئة، غير صارخة
 abstract class AppGradients {
-  // Light Theme Gradients
+  /// خلفية ناعمة للثيم الفاتح — تدرج هادئ جداً من الأبيض المائل للأزرق
   static const LinearGradient softBackground = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      AppPalette.gradientSoftStart,
-      AppPalette.gradientSoftMiddle,
-      AppPalette.gradientSoftEnd,
+      AppPalette.gradientSoftStart, // Slate 50
+      AppPalette.gradientSoftMiddle, // Blue 50
+      AppPalette.gradientSoftEnd, // Violet 50
     ],
   );
 
-  static final LinearGradient cardOverlay = LinearGradient(
+  /// تدرج البطاقات في الثيم الفاتح — أبيض شفاف ناعم
+  static const LinearGradient cardOverlay = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Colors.white.withOpacity(0.45),
-      Colors.white.withOpacity(0.2),
+      Color(0xFFFFFFFF),
+      Color(0xFFFAFBFF),
     ],
   );
 
-  // Dark Theme Gradients - خلفيات متدرجة للثيم الغامق
+  /// خلفية الثيم الداكن — تدرج عميق أنيق
   static const LinearGradient darkBackground = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF0A0514),  // بنفسجي داكن جداً
-      Color(0xFF1A1329),  // بنفسجي داكن
-      Color(0xFF2D213F),  // بنفسجي أفتح قليلاً
+      Color(0xFF0F172A), // Slate 950
+      Color(0xFF1E293B), // Slate 800
+      Color(0xFF312E81), // Indigo 900 (لمسة لونية خفيفة)
     ],
+    stops: [0.0, 0.6, 1.0],
   );
 
-  static final LinearGradient lightCardOverlay = LinearGradient(
+  /// تدرج البطاقات البيضاء على الثيم الداكن — تأثير الزجاج (Glassmorphism)
+  static const LinearGradient lightCardOverlay = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Colors.white.withOpacity(0.95),  // شبه شفاف عالي
-      Colors.white.withOpacity(0.85),  // شبه شفاف متوسط
+      Color(0xFFFFFFFF),
+      Color(0xFFFAFBFC),
     ],
   );
 
-  // Additional Dark Theme Gradients
-  static final LinearGradient darkCardElevation = LinearGradient(
+  /// تدرج البطاقات المرتفعة في الثيم الداكن
+  static const LinearGradient darkCardElevation = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Colors.white.withOpacity(0.98),
-      Colors.white.withOpacity(0.92),
-      Colors.white.withOpacity(0.88),
+      Color(0xFFFFFFFF),
+      Color(0xFFF8FAFC),
+      Color(0xFFF1F5F9),
     ],
   );
 
-  // Soft Dark Gradient for Overlays
-  static final LinearGradient softDarkOverlay = LinearGradient(
+  /// تدرج ناعم للـ overlays الداكنة
+  static const LinearGradient softDarkOverlay = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      AppPalette.darkBackground.withOpacity(0.8),
-      AppPalette.darkSurface.withOpacity(0.9),
+      Color(0xE60F172A), // Slate 950 at 90%
+      Color(0xF01E293B), // Slate 800 at 94%
+    ],
+  );
+
+  /// تدرج الـ AppBar الرئيسي — Indigo إلى Violet
+  static const LinearGradient primaryAppBar = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      AppPalette.gradientStart,
+      AppPalette.gradientEnd,
+    ],
+  );
+
+  /// تدرج أزرار الـ Sign In — عميق أنيق
+  static const LinearGradient signInButton = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      AppPalette.signStartGradient,
+      AppPalette.gradientEnd,
+    ],
+  );
+
+  /// تدرج ناعم للـ FAB (Floating Action Button)
+  static const LinearGradient fabGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      AppPalette.primary,
+      AppPalette.secondary,
     ],
   );
 }

@@ -39,20 +39,22 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.47.0'
+          flutter-version: '3.44.0'
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate drift code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Build release AAB
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --target-platform android-arm64
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -74,11 +76,15 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.47.0'
+          flutter-version: '3.44.0'
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate drift code
+        run: dart run build_runner build --delete-conflicting-outputs
+      - name: Prepare Isar schema for Web
+        run: python3 tool/patch_isar_web_ids.py
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons
@@ -109,7 +115,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.47.0'
+          flutter-version: '3.44.0'
           cache: true
 
       - name: Enable Windows desktop
@@ -117,14 +123,13 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate drift code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons
 
       - name: Build Windows release
-        env:
-          # permission_handler_windows يستخدم experimental/coroutine مع MSVC الحديث.
-          CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
         run: flutter build windows --release
 
       - name: Create Windows archive
@@ -148,13 +153,13 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.47.0'
+          flutter-version: '3.44.0'
           cache: true
 
       - name: Enable Linux desktop
@@ -162,6 +167,8 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate drift code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons
@@ -215,7 +222,7 @@ jobs:
           ## ✨ New Features
           - Updated app icon with Qahtani logo
           - Cross-platform support (Android, iOS, Web, Windows, Linux, macOS)
-          - Modern Flutter 3.47.0 implementation
+          - Modern Flutter 3.22 implementation
           
           ## 📱 Download Options
           
@@ -231,7 +238,7 @@ jobs:
           - **Web Bundle**: Deploy to any web server or hosting service
           
           ## 🔧 Technical Details
-          - Flutter Version: 3.47.0
+          - Flutter Version: 3.22.3
           - Minimum Android Version: API 21 (Android 5.0)
           - Windows: Windows 10 or later
           - Linux: Ubuntu 18.04+ or equivalent with GTK3

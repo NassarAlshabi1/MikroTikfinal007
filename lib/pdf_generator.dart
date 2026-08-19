@@ -1,124 +1,151 @@
-// ملف: pdf_generator.dart
-
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
-import 'pdf_templates_screen.dart'; // تأكد من وجود هذا الملف واستيراد PdfTemplate
 
-/// دالة توليد الـ PDF في الخلفية (Isolate)
+import 'models/pdf_template.dart';
+import 'snackbar_helpers.dart';
+
 Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
-  // استلام البيانات
-  final cardUsernames = data['cardUsernames'] as List<String>;
-  final imageBytes = data['imageBytes'] as Uint8List; // نمرر الصورة كـ Uint8List
-  final textXRatio = data['textXRatio'] as double;
-  final textYRatio = data['textYRatio'] as double;
+  final cardUsernames = List<String>.from(data['cardUsernames'] as List);
+  final imagePath = data['imagePath'] as String;
+  final textXRatio = (data['textXRatio'] as num).toDouble();
+  final textYRatio = (data['textYRatio'] as num).toDouble();
   final cardsPerPage = data['cardsPerPage'] as int;
-  final imageWidth = data['imageWidth'] as double;
-  final imageHeight = data['imageHeight'] as double;
-  final markerWidthRatio = data['markerWidthRatio'] as double;
-  final markerHeightRatio = data['markerHeightRatio'] as double;
-  final printDate = data['printDate'] as String;   // تاريخ الطباعة (يظهر في البطاقة)
-  final category = data['category'] as String;     // فئة الكارت (يظهر في البطاقة واسم الملف)
+  final imageWidth = (data['imageWidth'] as num).toDouble();
+  final imageHeight = (data['imageHeight'] as num).toDouble();
+  final markerWidthRatio = (data['markerWidthRatio'] as num).toDouble();
+  final markerHeightRatio = (data['markerHeightRatio'] as num).toDouble();
+  final fontBytes = data['fontBytes'] as Uint8List?;
 
-  final doc = pw.Document();
+  if (cardUsernames.isEmpty) {
+    throw const FormatException('لا توجد كروت لإنشاء ملف PDF.');
+  }
+  for (final username in cardUsernames) {
+    final normalized = username.trim();
+    if (normalized.isEmpty ||
+        normalized.length > 128 ||
+        normalized.contains(RegExp(r'[\r\n]'))) {
+      throw const FormatException('اسم كرت غير صالح أو يتجاوز حدود قالب PDF.');
+    }
+  }
+  if (cardsPerPage < 1 || cardsPerPage > 1000) {
+    throw const FormatException('عدد الكروت في الصفحة غير صالح.');
+  }
+  final imageFile = File(imagePath);
+  if (!imageFile.existsSync()) {
+    throw const FileSystemException('صورة قالب PDF غير موجودة.');
+  }
+  final imageLength = imageFile.lengthSync();
+  if (imageLength <= 0 || imageLength > PdfTemplate.maxImageBytes) {
+    throw const FileSystemException('حجم صورة قالب PDF غير مسموح به.');
+  }
+  _validateRatio(textXRatio, 'موضع النص الأفقي');
+  _validateRatio(textYRatio, 'موضع النص العمودي');
+  _validateRatio(markerWidthRatio, 'عرض منطقة النص');
+  _validateRatio(markerHeightRatio, 'ارتفاع منطقة النص');
+
+  final pdfFont =
+      fontBytes == null ? null : pw.Font.ttf(_asByteData(fontBytes));
+  final doc = pw.Document(
+    theme: pdfFont == null
+        ? null
+        : pw.ThemeData.withFont(base: pdfFont, bold: pdfFont),
+  );
+  final imageBytes = await imageFile.readAsBytes();
   final imageProvider = pw.MemoryImage(imageBytes);
+  final columns = cardsPerPage < 3 ? cardsPerPage : 3;
 
-  int step = cardsPerPage;
-  for (var i = 0; i < cardUsernames.length; i += step) {
-    final pageCards = cardUsernames.sublist(
-        i, i + step > cardUsernames.length ? cardUsernames.length : i + step);
+  for (var start = 0; start < cardUsernames.length; start += cardsPerPage) {
+    final end = (start + cardsPerPage).clamp(0, cardUsernames.length);
+    final pageCards = cardUsernames.sublist(start, end);
+    final rows = (pageCards.length / columns).ceil();
+    final slotCount = rows * columns;
+    final gridChildren = <pw.Widget>[];
 
-    doc.addPage(
-      pw.Page(
-        margin: const pw.EdgeInsets.all(20),
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          final List<pw.Widget> gridChildren = [];
+    for (var index = 0; index < slotCount; index++) {
+      if (index >= pageCards.length) {
+        gridChildren.add(pw.SizedBox.expand());
+        continue;
+      }
+      final username = pageCards[index];
+      gridChildren.add(
+        pw.LayoutBuilder(
+          builder: (context, constraints) {
+            final safeConstraints = constraints;
+            if (safeConstraints == null) return pw.SizedBox.shrink();
+            final cellWidth = safeConstraints.maxWidth;
+            final cellHeight = safeConstraints.maxHeight;
+            final boxWidth =
+                (markerWidthRatio * cellWidth).clamp(1.0, cellWidth).toDouble();
+            final boxHeight = (markerHeightRatio * cellHeight)
+                .clamp(1.0, cellHeight)
+                .toDouble();
+            final centerX = textXRatio * cellWidth;
+            final centerY = textYRatio * cellHeight;
+            final boxLeft = (centerX - boxWidth / 2)
+                .clamp(0.0, (cellWidth - boxWidth).clamp(0.0, cellWidth))
+                .toDouble();
+            final boxTop = (centerY - boxHeight / 2)
+                .clamp(0.0, (cellHeight - boxHeight).clamp(0.0, cellHeight))
+                .toDouble();
+            final fontSize = (boxHeight * 0.42).clamp(7.0, 22.0).toDouble();
 
-          for (var user in pageCards) {
-            gridChildren.add(
-              pw.LayoutBuilder(builder: (ctx, constraints) {
-                final cellWidth = constraints!.maxWidth;
-                final cellHeight = constraints.maxHeight;
-
-                // حساب موقع النص بناءً على نسب القالب
-                final boxWidth = markerWidthRatio * cellWidth;
-                final boxHeight = markerHeightRatio * cellHeight;
-                final boxLeft = (textXRatio * cellWidth) - (boxWidth / 2);
-                final boxTop = (textYRatio * cellHeight) - (boxHeight / 2);
-
-                return pw.Container(
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black, width: 1.5),
-                  ),
-                  child: pw.Stack(
-                    fit: pw.StackFit.expand,
-                    children: [
-                      // صورة الخلفية
-                      pw.Image(imageProvider, fit: pw.BoxFit.fill),
-                      
-                      // اسم المستخدم + الفئة + التاريخ
-                      pw.Positioned(
-                        left: boxLeft,
-                        top: boxTop,
-                        child: pw.Container(
-                          width: boxWidth,
-                          height: boxHeight,
-                          child: pw.Column(
-                            mainAxisAlignment: pw.MainAxisAlignment.center,
-                            children: [
-                              pw.Text(
-                                user,
-                                textAlign: pw.TextAlign.center,
-                                style: const pw.TextStyle(
-                                  color: PdfColors.black,
-                                  fontSize: 10,
-                                  fontWeight: pw.FontWeight.bold,
-                                ),
-                              ),
-                              pw.SizedBox(height: 2),
-                              pw.Text(
-                                'فئة: $category',
-                                style: const pw.TextStyle(
-                                  color: PdfColors.grey,
-                                  fontSize: 8,
-                                ),
-                              ),
-                              pw.Text(
-                                'تاريخ: $printDate',
-                                style: const pw.TextStyle(
-                                  color: PdfColors.grey,
-                                  fontSize: 8,
-                                ),
-                              ),
-                            ],
+            return pw.Container(
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.black, width: 1.2),
+              ),
+              child: pw.Stack(
+                fit: pw.StackFit.expand,
+                children: [
+                  pw.Image(imageProvider, fit: pw.BoxFit.fill),
+                  pw.Positioned(
+                    left: boxLeft,
+                    top: boxTop,
+                    child: pw.SizedBox(
+                      width: boxWidth,
+                      height: boxHeight,
+                      child: pw.Center(
+                        child: pw.Text(
+                          username,
+                          maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
+                          textAlign: pw.TextAlign.center,
+                          textDirection: pw.TextDirection.ltr,
+                          style: pw.TextStyle(
+                            font: pdfFont,
+                            fontSize: fontSize,
+                            color: PdfColors.black,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                );
-              }),
+                ],
+              ),
             );
-          }
+          },
+        ),
+      );
+    }
 
-          // ملء الفراغات المتبقية في الشبكة
-          int remainingSlots = cardsPerPage - pageCards.length;
-          for (var j = 0; j < remainingSlots; j++) {
-            gridChildren.add(pw.SizedBox.shrink());
-          }
-
-          return pw.GridView(
-            crossAxisSpacing: 5,
-            mainAxisSpacing: 5,
-            crossAxisCount: 3,
-            childAspectRatio: imageWidth / imageHeight,
-            children: gridChildren,
-          );
-        },
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        textDirection: pw.TextDirection.rtl,
+        build: (context) => pw.GridView(
+          crossAxisCount: columns,
+          crossAxisSpacing: 5,
+          mainAxisSpacing: 5,
+          childAspectRatio: imageWidth / imageHeight,
+          children: gridChildren,
+        ),
       ),
     );
   }
@@ -126,74 +153,195 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   return doc.save();
 }
 
-/// فئة مسؤولة عن توليد ومشاركة الـ PDF
+ByteData _asByteData(Uint8List bytes) {
+  return ByteData.view(
+    bytes.buffer,
+    bytes.offsetInBytes,
+    bytes.lengthInBytes,
+  );
+}
+
+void _validateRatio(double value, String label) {
+  if (!value.isFinite || value < 0 || value > 1) {
+    throw FormatException('$label يجب أن يكون بين 0 و1.');
+  }
+}
+
 class PdfGenerator {
-  /// توليد ومشاركة ملف PDF يحتوي على بطاقات Wi-Fi
-  /// 
-  /// - [cardUsernames]: قائمة بأسماء المستخدمين
-  /// - [template]: قالب البطاقة (يحتوي على مسار الصورة والنسب)
-  /// - [category]: فئة الكارت (مثلاً "500" أو "300")، تظهر في اسم الملف وداخل البطاقة
+  static const _fontAsset = 'fonts/Tajawal-Regular.ttf';
+
+  static Future<Map<String, dynamic>> _generationData({
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    template.validate();
+    if (cardUsernames.isEmpty) {
+      throw const FormatException('لا توجد كروت لإنشاء ملف PDF.');
+    }
+    final image = File(template.imagePath);
+    if (!await image.exists()) {
+      throw const FileSystemException('صورة قالب PDF غير موجودة.');
+    }
+    final imageLength = await image.length();
+    if (imageLength <= 0 || imageLength > PdfTemplate.maxImageBytes) {
+      throw const FileSystemException('حجم صورة قالب PDF غير مسموح به.');
+    }
+
+    late final Uint8List fontBytes;
+    try {
+      final fontData = await rootBundle.load(_fontAsset);
+      fontBytes = fontData.buffer.asUint8List(
+        fontData.offsetInBytes,
+        fontData.lengthInBytes,
+      );
+    } catch (error) {
+      throw StateError('تعذر تحميل خط Tajawal المضمّن لقالب PDF: $error');
+    }
+
+    final normalizedUsernames = cardUsernames
+        .map((username) => username.trim())
+        .toList(growable: false);
+    for (final username in normalizedUsernames) {
+      if (username.isEmpty ||
+          username.length > 128 ||
+          username.contains(RegExp(r'[\r\n]'))) {
+        throw const FormatException(
+            'اسم كرت غير صالح أو يتجاوز حدود قالب PDF.');
+      }
+    }
+
+    return {
+      'cardUsernames': normalizedUsernames,
+      'imagePath': template.imagePath,
+      'textXRatio': template.textXRatio,
+      'textYRatio': template.textYRatio,
+      'cardsPerPage': template.cardsPerPage,
+      'imageWidth': template.imageWidth,
+      'imageHeight': template.imageHeight,
+      'markerWidthRatio': template.markerWidthRatio,
+      'markerHeightRatio': template.markerHeightRatio,
+      'fontBytes': fontBytes,
+    };
+  }
+
+  static Future<Uint8List> generatePdfBytes({
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    final data = await _generationData(
+      cardUsernames: cardUsernames,
+      template: template,
+    );
+    return compute(_generatePdfInBackground, data);
+  }
+
+  static Future<void> previewPdf(
+    BuildContext context, {
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    if (cardUsernames.isEmpty) {
+      showErrorSnackBar(context, 'لا توجد كروت لمعاينتها.');
+      return;
+    }
+    _showProgressDialog(context);
+    try {
+      final pdfBytes = await generatePdfBytes(
+        cardUsernames: cardUsernames,
+        template: template,
+      );
+      if (context.mounted) _closeProgressDialog(context);
+      await Printing.layoutPdf(
+        name: _fileName(template.profileName),
+        onLayout: (_) async => pdfBytes,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        _closeProgressDialog(context);
+        showErrorSnackBar(context, 'فشل فتح معاينة PDF: $e');
+      }
+    }
+  }
+
   static Future<void> sharePdf(
     BuildContext context, {
     required List<String> cardUsernames,
     required PdfTemplate template,
-    String category = 'general', // قيمة افتراضية
   }) async {
-    // إظهار مؤشر التحميل
-    showDialog(
+    if (cardUsernames.isEmpty) {
+      showErrorSnackBar(context, 'لا توجد كروت لمشاركتها.');
+      return;
+    }
+    _showProgressDialog(context);
+    try {
+      final pdfBytes = await generatePdfBytes(
+        cardUsernames: cardUsernames,
+        template: template,
+      );
+      if (context.mounted) _closeProgressDialog(context);
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: _fileName(template.profileName),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        _closeProgressDialog(context);
+        showErrorSnackBar(context, 'فشل إنشاء ملف PDF: $e');
+      }
+    }
+  }
+
+  static Future<String?> savePdf(
+    BuildContext context, {
+    required List<String> cardUsernames,
+    required PdfTemplate template,
+  }) async {
+    if (cardUsernames.isEmpty) {
+      showErrorSnackBar(context, 'لا توجد كروت لحفظها.');
+      return null;
+    }
+    _showProgressDialog(context);
+    try {
+      final pdfBytes = await generatePdfBytes(
+        cardUsernames: cardUsernames,
+        template: template,
+      );
+      final docsDir = await getApplicationDocumentsDirectory();
+      final exportsDir = Directory('${docsDir.path}/pdf_exports');
+      await exportsDir.create(recursive: true);
+      final savePath = '${exportsDir.path}/${_fileName(template.profileName)}';
+      await File(savePath).writeAsBytes(pdfBytes, flush: true);
+
+      if (!context.mounted) return savePath;
+      _closeProgressDialog(context);
+      showSuccessSnackBar(context, 'تم حفظ PDF في: $savePath');
+      return savePath;
+    } catch (e) {
+      if (context.mounted) {
+        _closeProgressDialog(context);
+        showErrorSnackBar(context, 'فشل حفظ PDF: $e');
+      }
+      return null;
+    }
+  }
+
+  static void _showProgressDialog(BuildContext context) {
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
+  }
 
-    try {
-      // قراءة الصورة في الواجهة الرئيسية (لضمان التوافق مع Web)
-      final imageBytes = await File(template.imagePath).readAsBytes();
+  static void _closeProgressDialog(BuildContext context) {
+    Navigator.of(context, rootNavigator: true).pop();
+  }
 
-      // تحضير التاريخ
-      final now = DateTime.now();
-      final dateForFilename =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}';
-      final dateForCard =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-
-      // تجهيز البيانات التي سترسل إلى Isolate
-      final Map<String, dynamic> generationData = {
-        'cardUsernames': cardUsernames,
-        'imageBytes': imageBytes,
-        'textXRatio': template.textXRatio,
-        'textYRatio': template.textYRatio,
-        'cardsPerPage': template.cardsPerPage,
-        'imageWidth': template.imageWidth,
-        'imageHeight': template.imageHeight,
-        'markerWidthRatio': template.markerWidthRatio,
-        'markerHeightRatio': template.markerHeightRatio,
-        'printDate': dateForCard,
-        'category': category,
-      };
-
-      // توليد الـ PDF في الخلفية
-      final pdfBytes = await compute(_generatePdfInBackground, generationData);
-
-      // إغلاق مؤشر التحميل
-      if (context.mounted) Navigator.of(context).pop();
-
-      // اسم الملف: wifi-cards_فئة_تاريخ.pdf
-      final filename = 'wifi-cards_${category}_$dateForFilename.pdf';
-      await Printing.sharePdf(bytes: pdfBytes, filename: filename);
-    } catch (e) {
-      // إغلاق مؤشر التحميل وإظهار رسالة خطأ
-      if (context.mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فشل إنشاء ملف PDF. الرجاء التأكد من وجود القالب وصلاحية الصورة.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      // يمكنك أيضاً طباعة الخطأ للتشخيص
-      debugPrint('Error generating PDF: $e');
-    }
+  static String _fileName(String profileName) {
+    final safeProfile = profileName
+        .trim()
+        .replaceAll(RegExp(r'[^a-zA-Z0-9\u0600-\u06FF_-]+'), '_');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return 'wifi-cards-${safeProfile.isEmpty ? 'cards' : safeProfile}-$timestamp.pdf';
   }
 }

@@ -1,0 +1,697 @@
+// ============================================================
+//  Diagnostics Provider — Riverpod state management
+//  يدير: الإعدادات + المحادثة + التشخيص
+// ============================================================
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
+
+import 'diagnostics_models.dart';
+import 'mikrotik_data_collector.dart';
+import 'ai_service.dart';
+import 'ai_settings_service.dart';
+import 'command_executor.dart';
+import 'diagnostics_history.dart';
+import 'script_executor.dart';
+import 'auto_fix_service.dart';
+import 'agentic_service.dart';
+
+// ============================================================
+//  Providers أساسية
+// ============================================================
+
+/// يحمّل الإعدادات المحفوظة عند بدء التطبيق
+final aiSettingsProvider = FutureProvider<AiSettings>((ref) async {
+  return await AiSettingsService.instance.load();
+});
+
+/// StateNotifier لإدارة إعدادات الـ AI
+final aiSettingsNotifierProvider =
+    StateNotifierProvider<AiSettingsNotifier, AsyncValue<AiSettings>>((ref) {
+  final initial = ref.watch(aiSettingsProvider);
+  return AiSettingsNotifier(initial);
+});
+
+class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
+  AiSettingsNotifier(super.initial);
+
+  Future<void> update(AiSettings settings) async {
+    state = AsyncData(settings);
+    await AiSettingsService.instance.save(settings);
+  }
+
+  Future<void> setApiKey(String apiKey) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(apiKey: apiKey);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+  }
+
+  Future<void> setProvider(AiProvider provider) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    // عند تغيير المزود، نضبط الموديل على الافتراضي للمزود الجديد
+    final newSettings = current.copyWith(
+      provider: provider,
+      model: provider.defaultModel,
+    );
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+  }
+
+  Future<void> setModel(String model) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(model: model);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+  }
+
+  /// يبدّل المزود والموديل معاً (يُستخدم من شاشة المحادثة للتبديل السريع
+  /// إلى gemini-2.5-flash أو غيره دون فتح شاشة الإعدادات)
+  Future<void> setProviderAndModel(AiProvider provider, String model) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(provider: provider, model: model);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+    debugPrint('[AiSettingsNotifier] Provider=$provider, Model=$model');
+  }
+
+  Future<void> setBaseUrl(String baseUrl) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings =
+        current.copyWith(baseUrl: baseUrl.isEmpty ? null : baseUrl);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+  }
+
+  Future<void> setConnectionMethod(MikrotikConnectionMethod method) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(connectionMethod: method);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+  }
+
+  Future<void> setMode(DiagnosticMode mode) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(mode: mode);
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+    debugPrint('[AiSettingsNotifier] Mode changed to: ${mode.name}');
+  }
+
+  /// يضبط حد خطوات الاستقصاء في التشخيص الوكيل (1..12)
+  Future<void> setAgenticMaxSteps(int steps) async {
+    final current = state.valueOrNull ?? AiSettings.default_;
+    final newSettings = current.copyWith(agenticMaxSteps: steps.clamp(1, 12));
+    state = AsyncData(newSettings);
+    await AiSettingsService.instance.save(newSettings);
+  }
+}
+
+// ============================================================
+//  History Provider — يحمّل الجلسات السابقة
+// ============================================================
+
+final diagnosticsHistoryProvider =
+    FutureProvider<List<DiagnosticSession>>((ref) async {
+  return await DiagnosticsHistoryService.instance.loadAll();
+});
+
+/// StateNotifier لإدارة الجلسات المحفوظة (تحديث بعد الحذف/الحفظ)
+final historyManagerProvider =
+    StateNotifierProvider<HistoryManager, AsyncValue<List<DiagnosticSession>>>(
+        (ref) {
+  return HistoryManager();
+});
+
+class HistoryManager
+    extends StateNotifier<AsyncValue<List<DiagnosticSession>>> {
+  HistoryManager() : super(const AsyncValue.loading()) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final sessions = await DiagnosticsHistoryService.instance.loadAll();
+      state = AsyncValue.data(sessions);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> refresh() async => _load();
+
+  Future<void> deleteSession(String id) async {
+    await DiagnosticsHistoryService.instance.delete(id);
+    await _load();
+  }
+
+  Future<void> clearAll() async {
+    await DiagnosticsHistoryService.instance.clearAll();
+    await _load();
+  }
+}
+
+final diagnosticsProvider =
+    StateNotifierProvider<DiagnosticsNotifier, DiagnosticsState>((ref) {
+  final settings =
+      ref.watch(aiSettingsProvider).valueOrNull ?? AiSettings.default_;
+  // نمرّر ref للـ notifier لكي يستطيع تحديث الـ historyManagerProvider
+  return DiagnosticsNotifier(settings, ref);
+});
+
+class DiagnosticsNotifier extends StateNotifier<DiagnosticsState> {
+  DiagnosticSession? _currentSession;
+  final Ref _ref;
+
+  DiagnosticsNotifier(AiSettings settings, this._ref)
+      : super(DiagnosticsState.initial(settings)) {
+    // ابدأ جلسة جديدة عند الإنشاء
+    _currentSession = DiagnosticSession.start(
+      mode: settings.mode,
+      mikrotikIp: null, // سيُحدّث لاحقاً عند جمع البيانات
+    );
+  }
+
+  /// الجلسة الحالية (للوصول من UI)
+  DiagnosticSession? get currentSession => _currentSession;
+
+  /// ينفذ أمر RouterOS مباشرة
+  Future<CommandResult> executeCommand(String command) async {
+    if (state.isLoading) {
+      throw Exception('جاري تنفيذ عملية أخرى. انتظر...');
+    }
+
+    state = state.copyWith(
+      isLoading: true,
+      loadingStage: 'جاري تنفيذ الأمر...',
+      clearLastCommandResult: true,
+    );
+
+    try {
+      final result = await CommandExecutor.execute(
+        command: command,
+        method: MikrotikConnectionMethod.routerOS, // تنفيذ عبر API حصراً
+      );
+
+      // أضف رسالة بنتيجة الأمر للمحادثة
+      final resultMessage = result.success
+          ? DiagnosticMessage.assistant(
+              '✅ تم تنفيذ الأمر بنجاح (${result.elapsed.inMilliseconds}ms):\n\n'
+              '```\n$command\n```\n\n'
+              '**المخرجات:**\n```\n${result.output.isEmpty ? "(لا مخرجات)" : result.output}\n```',
+              commands: [command],
+            )
+          : DiagnosticMessage.error(
+              '❌ فشل تنفيذ الأمر:\n\n'
+              '```\n$command\n```\n\n'
+              '**الخطأ:** ${result.error ?? "غير معروف"}',
+            );
+
+      state = state.copyWith(
+        messages: [...state.messages, resultMessage],
+        isLoading: false,
+        clearLoadingStage: true,
+        lastCommandResult: result,
+      );
+
+      // أضف الأمر للجلسة
+      if (_currentSession != null) {
+        _currentSession = _currentSession!.copyWith(
+          executedCommands: [..._currentSession!.executedCommands, result],
+        );
+        await _saveSession();
+      }
+
+      return result;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  //  تنفيذ السكربتات (متعددة الأوامر)
+  // ============================================================
+
+  /// ينفذ سكربت كامل (عدة أوامر RouterOS بالتسلسل)
+  ///
+  /// يُحدّث الـ UI برسالة لكل أمر + رسالة نهائية بالنتيجة
+  Future<ScriptExecutionResult> executeScript(
+    RouterOsScript script, {
+    bool stopOnError = false,
+    bool makeBackupFirst = true,
+  }) async {
+    if (state.isLoading) {
+      throw Exception('جاري تنفيذ عملية أخرى. انتظر...');
+    }
+
+    // 1) رسالة بداية التنفيذ
+    state = state.copyWith(
+      isLoading: true,
+      loadingStage: 'جاري تنفيذ السكربت: ${script.title}...',
+    );
+
+    // أضف رسالة نظامية تبدا التنفيذ
+    state = state.copyWith(
+      messages: [
+        ...state.messages,
+        DiagnosticMessage.system(
+          '🎬 بدء تنفيذ السكربت: ${script.title}\n'
+          '📦 عدد الأوامر: ${script.commands.length}\n'
+          '⚠️ مستوى الخطورة: ${script.overallRisk.displayName}',
+        ),
+      ],
+    );
+
+    try {
+      // 2) عمل backup قبل التنفيذ (إن طُلب والسكربت ليس آمناً)
+      if (makeBackupFirst && script.overallRisk != CommandRiskLevel.safe) {
+        state = state.copyWith(
+          loadingStage: 'جاري عمل backup قبل التنفيذ...',
+        );
+        final backupScript = ScriptExecutor.createBackupScript(
+          label:
+              'before-${script.category ?? "fix"}-${DateTime.now().millisecondsSinceEpoch}',
+        );
+        for (final cmd in backupScript.commands) {
+          try {
+            await CommandExecutor.execute(
+              command: cmd,
+              method: MikrotikConnectionMethod.routerOS,
+              timeout: const Duration(seconds: 30),
+            );
+          } catch (e) {
+            debugPrint('[executeScript] Backup command failed: $cmd → $e');
+          }
+        }
+      }
+
+      // 3) تنفيذ السكربت
+      state = state.copyWith(
+        loadingStage: 'جاري تنفيذ أوامر السكربت...',
+      );
+
+      final result = await ScriptExecutor.execute(
+        script: script,
+        method: MikrotikConnectionMethod.routerOS,
+        stopOnError: stopOnError,
+        onProgress: (currentIndex, total, cmdResult) {
+          // حدّث رسالة التحميل
+          state = state.copyWith(
+            loadingStage:
+                'تنفيذ ${currentIndex + 1}/$total: ${cmdResult.success ? "✅" : "❌"} ${cmdResult.command.substring(0, cmdResult.command.length > 60 ? 60 : cmdResult.command.length)}...',
+          );
+        },
+      );
+
+      // 4) أضف رسالة بالنتيجة النهائية
+      final resultMessage = result.overallSuccess
+          ? DiagnosticMessage.assistant(
+              '✅ تم تنفيذ السكربت بنجاح كامل!\n\n'
+              '🎬 **${script.title}**\n'
+              '📦 الأوامر: ${result.successCount}/${script.commands.length} ناجحة\n'
+              '⏱️ الزمن: ${result.totalElapsed.inMilliseconds}ms\n\n'
+              '```\n${script.commands.join('\n')}\n```',
+              commands: script.commands,
+            )
+          : DiagnosticMessage.error(
+              '⚠️ اكتمل تنفيذ السكربت مع بعض الأخطاء\n\n'
+              '🎬 **${script.title}**\n'
+              '✅ ناجحة: ${result.successCount}\n'
+              '❌ فاشلة: ${result.failureCount}\n'
+              '⏱️ الزمن: ${result.totalElapsed.inMilliseconds}ms\n\n'
+              '**الأوامر الفاشلة:**\n'
+              '${result.results.where((r) => !r.success).map((r) => "• ${r.command}\n  └─ ${r.error ?? 'خطأ غير معروف'}").join('\n')}',
+            );
+
+      state = state.copyWith(
+        messages: [...state.messages, resultMessage],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+
+      // حدّث السجل
+      if (_currentSession != null) {
+        for (final r in result.results) {
+          _currentSession = _currentSession!.copyWith(
+            executedCommands: [..._currentSession!.executedCommands, r],
+          );
+        }
+        await _saveSession();
+      }
+
+      // حدّث قائمة السجل في الـ UI
+      _ref.read(historyManagerProvider.notifier).refresh();
+
+      return result;
+    } catch (e) {
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.error('فشل تنفيذ السكربت: $e'),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  //  Auto-Fix (إصلاح تلقائي بدون AI)
+  // ============================================================
+
+  /// يحلل الـ snapshot الحالي ويُرجع إصلاحات مقترحة محلياً (بدون AI)
+  /// يستخدم AutoFixService الذي يحتوي على قاعدة معرفة RouterOS
+  List<ProposedFix> getProposedAutoFixes() {
+    final snapshot = state.lastSnapshot;
+    if (snapshot == null) return [];
+    return AutoFixService.analyze(snapshot, mode: state.settings.mode);
+  }
+
+  /// يطبّق إصلاحاً تلقائياً واحداً (يستدعي executeScript)
+  Future<ScriptExecutionResult> applyAutoFix(ProposedFix fix) async {
+    return executeScript(
+      fix.script,
+      makeBackupFirst: fix.risk != CommandRiskLevel.safe,
+    );
+  }
+
+  /// يحفظ الجلسة الحالية
+  Future<void> _saveSession() async {
+    if (_currentSession == null) return;
+    final session = _currentSession!.copyWith(
+      messages: state.messages,
+      endedAt: DateTime.now(),
+    );
+    await DiagnosticsHistoryService.instance.save(session);
+  }
+
+  /// يجمع بيانات MikroTik ثم يحللها بالـ AI
+  Future<void> runDiagnostics({String? userQuery}) async {
+    if (state.isLoading) return;
+
+    final query = userQuery ?? 'حلل حالة الجهاز وحدد أي مشاكل محتملة.';
+
+    // أضف رسالة المستخدم
+    state = state.copyWith(
+      messages: [...state.messages, DiagnosticMessage.user(query)],
+      isLoading: true,
+      loadingStage: 'جاري جمع البيانات من MikroTik...',
+    );
+
+    try {
+      // 1) جمع البيانات — عبر RouterOS API حصراً
+      //    نمرّر وضع التشخيص ليتمكن الـ collector من جمع بيانات إضافية
+      //    خاصة بالـ security/hotspot/vpn/qos/...إلخ
+      final settings = state.settings;
+      final snapshot = await MikrotikDataCollector.collectViaRouterOS(
+        mode: settings.mode,
+      );
+
+      state = state.copyWith(
+        lastSnapshot: snapshot,
+        loadingStage: 'جاري التحليل بالـ AI...',
+      );
+
+      // 2) تحليل بالـ AI
+      final result = await AiService.analyze(
+        settings: settings,
+        userQuery: query,
+        snapshotContext: snapshot.toAiContext(),
+        conversationHistory: state.messages,
+      );
+
+      // 3) أضف رد الـ AI
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.assistant(
+            result.content,
+            commands: result.suggestedCommands,
+          ),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+    } catch (e) {
+      debugPrint('[DiagnosticsNotifier] Error: $e');
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.error(_friendlyError(e, 'فشل التشخيص')),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+    }
+  }
+
+  // ============================================================
+  //  التشخيص الوكيل (Agentic Loop)
+  //  يجمع البيانات ثم يستقصي خطوة بخطوة: الـ AI يطلب أوامر قراءة
+  //  آمنة تُنفَّذ تلقائياً، حتى يصل للسبب الجذري ويقترح إصلاحاً.
+  //  أوامر التعديل لا تُنفَّذ إطلاقاً هنا (تبقى باقتراح + موافقة يدوية).
+  // ============================================================
+  Future<void> runAgenticDiagnostics({String? userQuery}) async {
+    if (state.isLoading) return;
+
+    final query = userQuery ??
+        'حلّل حالة الجهاز بدقة، واستقصِ المشكلة حتى السبب الجذري ثم اقترح الحل.';
+    final settings = state.settings;
+
+    state = state.copyWith(
+      messages: [...state.messages, DiagnosticMessage.user(query)],
+      isLoading: true,
+      loadingStage: 'جاري جمع البيانات من MikroTik...',
+    );
+
+    try {
+      // 1) لقطة أولية
+      final snapshot =
+          await MikrotikDataCollector.collectViaRouterOS(mode: settings.mode);
+      state = state.copyWith(lastSnapshot: snapshot);
+
+      final maxSteps = settings.agenticMaxSteps.clamp(1, 12).toInt();
+      final investigationLog = <CommandResult>[];
+
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.system(
+            '🧠 بدء التشخيص الوكيل — سأستقصي البيانات خطوة بخطوة '
+            '(حد أقصى $maxSteps خطوة). أوامر القراءة تُنفَّذ تلقائياً؛ '
+            'أي إصلاح يبقى بانتظار موافقتك.',
+          ),
+        ],
+      );
+
+      var producedFinal = false;
+
+      // 2) حلقة الاستقصاء
+      for (var step = 1; step <= maxSteps; step++) {
+        final forceFinal = step == maxSteps;
+        state = state.copyWith(
+          loadingStage: 'الاستقصاء بالـ AI (خطوة $step/$maxSteps)...',
+        );
+
+        final decision = await AgenticService.decideNextStep(
+          settings: settings,
+          userQuery: query,
+          snapshotContext: snapshot.toAiContext(),
+          investigationLog: investigationLog,
+          conversationHistory: state.messages,
+          forceFinal: forceFinal,
+        );
+
+        // 2a) تقرير نهائي → أضف رد الـ AI مع أوامر الإصلاح المقترحة
+        if (decision.isFinal) {
+          state = state.copyWith(
+            messages: [
+              ...state.messages,
+              DiagnosticMessage.assistant(
+                decision.report,
+                commands: decision.fixCommands,
+              ),
+            ],
+          );
+          producedFinal = true;
+          break;
+        }
+
+        // 2b) استقصاء → اعرض التفكير ثم نفّذ أوامر القراءة الآمنة تلقائياً
+        final thought = decision.thought.trim();
+        state = state.copyWith(
+          messages: [
+            ...state.messages,
+            DiagnosticMessage.system(
+              '🔍 خطوة $step: ${thought.isEmpty ? "استقصاء إضافي" : thought}',
+            ),
+          ],
+        );
+
+        for (final cmd in decision.commands) {
+          // حاجز الأمان: لا تنفيذ تلقائي إلا لأوامر القراءة
+          if (!AgenticService.isReadOnly(cmd)) {
+            investigationLog.add(CommandResult(
+              command: cmd,
+              success: false,
+              output: '',
+              error:
+                  'رُفض التنفيذ التلقائي: ليس أمر قراءة فقط (يتطلب موافقة يدوية).',
+              elapsed: Duration.zero,
+              executedAt: DateTime.now(),
+            ));
+            state = state.copyWith(
+              messages: [
+                ...state.messages,
+                DiagnosticMessage.system(
+                  '⛔ تجاهلت أمراً غير آمن للتنفيذ التلقائي (يحتاج موافقتك):\n'
+                  '```\n$cmd\n```',
+                ),
+              ],
+            );
+            continue;
+          }
+
+          state = state.copyWith(loadingStage: 'تنفيذ أمر قراءة: $cmd');
+          final result = await CommandExecutor.execute(
+            command: cmd,
+            method: MikrotikConnectionMethod.routerOS,
+            timeout: const Duration(seconds: 20),
+          );
+          investigationLog.add(result);
+
+          final preview = result.success
+              ? (result.output.trim().isEmpty
+                  ? '(لا مخرجات)'
+                  : result.output.trim())
+              : 'فشل: ${result.error ?? "غير معروف"}';
+
+          state = state.copyWith(
+            messages: [
+              ...state.messages,
+              DiagnosticMessage.system(
+                '▶️ $cmd\n```\n${_clipOutput(preview)}\n```',
+              ),
+            ],
+          );
+
+          if (_currentSession != null) {
+            _currentSession = _currentSession!.copyWith(
+              executedCommands: [..._currentSession!.executedCommands, result],
+            );
+          }
+        }
+      }
+
+      if (!producedFinal) {
+        state = state.copyWith(
+          messages: [
+            ...state.messages,
+            DiagnosticMessage.system(
+              'انتهت خطوات الاستقصاء دون تقرير نهائي واضح. '
+              'جرّب رفع "حد خطوات الاستقصاء" من الإعدادات أو صياغة السؤال بدقة.',
+            ),
+          ],
+        );
+      }
+
+      state = state.copyWith(isLoading: false, clearLoadingStage: true);
+      await _saveSession();
+      _ref.read(historyManagerProvider.notifier).refresh();
+    } catch (e) {
+      debugPrint('[DiagnosticsNotifier] Agentic error: $e');
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.error(_friendlyError(e, 'فشل التشخيص الوكيل')),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+    }
+  }
+
+  /// يقتطع المخرجات الطويلة لعرضها في المحادثة (السجل الكامل يُرسَل للـ AI)
+  String _clipOutput(String s, {int max = 1500}) =>
+      s.length <= max ? s : '${s.substring(0, max)}\n… (اقتُطع للعرض)';
+
+  /// يحوّل الاستثناء إلى رسالة عربية مفهومة (يعرض رسالة AiServiceException كما هي)
+  String _friendlyError(Object e, String prefix) {
+    if (e is AiServiceException) return e.message;
+    return '$prefix: $e';
+  }
+
+  /// يرسل سؤال متابعة بدون جمع بيانات جديدة (يستخدم آخر snapshot)
+  Future<void> askFollowUp(String question) async {
+    if (state.isLoading) return;
+    if (state.lastSnapshot == null) {
+      // لا يوجد snapshot — نشغّل تشخيص كامل
+      await runDiagnostics(userQuery: question);
+      return;
+    }
+
+    state = state.copyWith(
+      messages: [...state.messages, DiagnosticMessage.user(question)],
+      isLoading: true,
+      loadingStage: 'جاري التحليل بالـ AI...',
+    );
+
+    try {
+      final result = await AiService.analyze(
+        settings: state.settings,
+        userQuery: question,
+        snapshotContext: state.lastSnapshot!.toAiContext(),
+        conversationHistory: state.messages,
+      );
+
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.assistant(
+            result.content,
+            commands: result.suggestedCommands,
+          ),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          DiagnosticMessage.error(_friendlyError(e, 'فشل التحليل')),
+        ],
+        isLoading: false,
+        clearLoadingStage: true,
+      );
+    }
+  }
+
+  /// يمسح المحادثة ويبدأ جلسة جديدة
+  Future<void> clearChat() async {
+    // احفظ الجلسة الحالية قبل بدء جديدة
+    if (_currentSession != null && _currentSession!.messages.isNotEmpty) {
+      await _saveSession();
+    }
+    // ابدأ جلسة جديدة
+    _currentSession = DiagnosticSession.start(
+      mode: state.settings.mode,
+      mikrotikIp: state.lastSnapshot?.ipAddress,
+    );
+    state = DiagnosticsState.initial(state.settings);
+  }
+
+  /// يحدّث الإعدادات (عند تغييرها من شاشة الإعدادات)
+  void updateSettings(AiSettings settings) {
+    // لا تُطلق تحديث حالة إن لم تتغيّر الإعدادات فعلياً (يمنع إعادة بناء زائدة)
+    if (state.settings == settings) return;
+    state = state.copyWith(settings: settings);
+    // DiagnosticSession.copyWith لا يقبل mode أو mikrotikIp بشكل منفصل
+    // نُنشئ جلسة جديدة بالـ mode الجديد عند الحاجة (يحدث في clearChat)
+  }
+}

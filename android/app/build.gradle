@@ -1,3 +1,8 @@
+// ============================================================
+//  build.gradle (Groovy) — محسّن لأصغر حجم APK ممكن
+//  كل تقنيات تقليل الحجم مُفعّلة
+// ============================================================
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -12,30 +17,21 @@ if (localPropertiesFile.exists()) {
     }
 }
 
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode') ?: '1'
+def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.0'
 
 android {
-    namespace "com.example.mikrotik_manager"
+    namespace "com.mikrotik.manager"
     compileSdk 36
 
-    // ✨ هذا هو التعديل المهم ✨
-    ndkVersion "27.0.12077973"
-
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
+        freeCompilerArgs += ['-Xno-param-assertions', '-Xno-call-assertions']
     }
 
     sourceSets {
@@ -43,26 +39,161 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.mikrotik_manager"
-        minSdkVersion flutter.minSdkVersion
+        applicationId "com.mikrotik.manager"
+        minSdk 21
         targetSdk 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
 
+        // ===== لا نضع abiFilters في defaultConfig عند استخدام splits =====
+        // splits.abi سيتكفّل بالفصل
+        vectorDrawables {
+            useSupportLibrary = true
+        }
+
+        // تجاهل حزم اللغات غير المستخدمة (Fluter يدعم 78 لغة افتراضياً)
+        // نُبقي العربية والإنجليزية فقط
+        resConfigs 'ar', 'en'
+    }
+
+    // ===== تفعيل buildConfig (مطلوب لـ buildConfigField) =====
+    buildFeatures {
+        buildConfig true
+    }
+
+    // ===== لا نستخدم splits.abi هنا =====
+    // Flutter يضيف abiFilters افتراضياً التي تتعارض مع splits.abi
+    // بدلاً من ذلك نستخدم --target-platform + --split-per-abi في flutter build
+    // هذا يعطي نفس النتيجة (APK منفصل لكل معمارية) بدون تعارض
+
+    // ============================================================
+    //  تكوين توقيع Release للاستخدام الشخصي (APK updates)
+    //  - يقرأ بيانات الاعتماد من android/key.properties
+    //  - keystore مُخزّن في android/app/release-keystore.jks
+    //  - مُخصّص للاستخدام الشخصي (ليس لـ Google Play)
+    // ============================================================
+    def keystoreProperties = new Properties()
+    def keystorePropertiesFile = rootProject.file('key.properties')
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            buildConfigField "Boolean", "DEBUG_MODE", "false"
+
+            // ===== تفعيل التوقيع لـ release builds =====
+            signingConfig signingConfigs.release
+        }
+
+        debug {
             minifyEnabled false
             shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "Boolean", "DEBUG_MODE", "true"
+        }
+
+        profile {
+            minifyEnabled false
+            shrinkResources false
+            buildConfigField "Boolean", "DEBUG_MODE", "false"
+        }
+    }
+
+    // ===== إزالة الملفات غير الضرورية من APK =====
+    packagingOptions {
+        // ملفات META-INF مكررة بين المكتبات
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/*.kotlin_module'
+        exclude 'META-INF/versions/**'
+        exclude 'META-INF/AL2.0'
+        exclude 'META-INF/LGPL2.1'
+        exclude 'META-INF/io.netty.versions.properties'
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.RSA'
+        exclude 'META-INF/MANIFEST.MF'
+
+        // ملفات ProGuard المُدمجة من المكتبات
+        exclude 'META-INF/proguard/**'
+
+        // ملفات ترخيص Mentor Graphics (من PDF libraries)
+        exclude 'META-INF/maven/**'
+        exclude 'about_files/**'
+        exclude 'about.html'
+        exclude 'plugin.properties'
+        exclude 'OSGI-INF/**'
+
+        // ضغط الموارد غير المضغوطة (يقلل الحجم)
+        jniLibs {
+            useLegacyPackaging false  // يستخرج .so من APK (أصغر)
         }
     }
 }
 
 flutter {
     source '../..'
+    // تمرير --split-debug-info لفصل debug symbols عن APK
+    // يقلل حجم APK بشكل كبير جداً (~20-40%)
+    // لكنه يتطلب تخزين الـ symbols لإعادة الـ stack traces
 }
 
 dependencies {}
+
+// ============================================================
+//  ترقيم تلقائي (Auto-Version)
+//  يزيد رقم البناء (+N) في pubspec.yaml تلقائياً بعد كل بناء إصدار.
+//  مثال: 1.0.0+1  →  1.0.0+2  →  1.0.0+3 ...
+//  يعمل مع: flutter build apk / appbundle (assembleRelease / bundleRelease)
+//  ملاحظة: البناء الحالي يستخدم الرقم الحالي، ثم يُرفَع الرقم للبناء التالي.
+// ============================================================
+def bumpPubspecBuildNumber = {
+    def pubspec = rootProject.file('../pubspec.yaml')
+    if (!pubspec.exists()) {
+        println "⚠️ [auto-version] لم أجد pubspec.yaml"
+        return
+    }
+    def text = pubspec.text
+    def matcher = (text =~ /(?m)^version:\s*(\d+\.\d+\.\d+)\+(\d+)\s*$/)
+    if (matcher.find()) {
+        def base = matcher.group(1)
+        def next = matcher.group(2).toInteger() + 1
+        def replacement = java.util.regex.Matcher.quoteReplacement("version: ${base}+${next}")
+        def updated = text.replaceFirst(/(?m)^version:\s*\d+\.\d+\.\d+\+\d+\s*$/, replacement)
+        pubspec.write(updated, 'UTF-8')
+        println "🔼 [auto-version] رقم البناء أصبح ${base}+${next}"
+    } else {
+        println "⚠️ [auto-version] صيغة version غير متوقعة (المطلوب: x.y.z+N)"
+    }
+}
+
+// نربط الترقيم بمهام بناء الإصدار فقط (لا يُزعج بناء debug أثناء التطوير)
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        if (task.name == 'assembleRelease' || task.name == 'bundleRelease') {
+            task.doLast {
+                bumpPubspecBuildNumber()
+            }
+        }
+    }
+}

@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "skills": {
+    "dart-memory": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/dart/dart-memory/SKILL.md",
+      "computedHash": "47e07e760c51fec64c891a52f7d611fd1b4e3ac662b3bd085acedfd23153faf5"
+    },
+    "dart-optimization": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/dart/dart-optimization/SKILL.md",
+      "computedHash": "f41b31ff66da0f5e1bde34f9122293c6427095a397357e27ebb318b37fb946b7"
+    },
+    "flutter-apply-architecture-best-practices": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-apply-architecture-best-practices/SKILL.md",
+      "computedHash": "4be05006f67b0568a2c6aad95b856541db9aa3861b7608c546c1faed0e9cc425"
+    },
+    "flutter-debugging": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-debugging/SKILL.md",
+      "computedHash": "6ac92b0da7f550e17039e2de13983450cf43475e53fc28f5106254daf635a468"
+    },
+    "flutter-devtools": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-devtools/SKILL.md",
+      "computedHash": "57860b24b953f245d56e13a2696f0ef59f0de7d6678afdf4dde6addf5dd8b720"
+    },
+    "flutter-dio": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-dio/SKILL.md",
+      "computedHash": "c67c0a85d05878619aeee0c05020727b70ff9980d7bb0a79b0eb2c68d83db5b4"
+    },
+    "flutter-fix-layout-issues": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-fix-layout-issues/SKILL.md",
+      "computedHash": "c8e79061f250e74e823bec9f8869d2edfdd375bb6ad864705a98a2870c3ec37a"
+    },
+    "flutter-security": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-security/SKILL.md",
+      "computedHash": "60d8a8800b5708e121c091442103da530b856b7bf7e82534841ec347b3efa92d"
+    },
+    "flutter-testing": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-testing/SKILL.md",
+      "computedHash": "71c785fee70c6ea9883971d21fd827d731dba64b955ad0627e24fba6671f373c"
+    },
+    "flutter-ui": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter/flutter-ui/SKILL.md",
+      "computedHash": "94aec46008d6e2a24f801c840b7a84223cdc5ec0bfb51ffbcf1989a3573fb290"
+    },
+    "git-commit": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/github/git-commit/SKILL.md",
+      "computedHash": "0fde88eb915b814d845aa840cc3a87b133e33b4b4086704c6d302afb52dc3ade"
+    },
+    "github-actions": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/github/github-actions/SKILL.md",
+      "computedHash": "9df026653ad858ed5fcdbae1ff2ae24c6e8cddf0079f3497810ff4ab6e492f21"
+    },
+    "github-pr": {
+      "source": "dhruvanbhalara/skills",
+      "sourceType": "github",
+      "skillPath": "skills/github/github-pr/SKILL.md",
+      "computedHash": "be2f090d7522657c638900781b3202b02ec0a9fe61ad5e95de8763042f057ce8"
+    }
+  }
+}

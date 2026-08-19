@@ -1,0 +1,132 @@
+name: Bump Version
+
+# ============================================================
+#  يزيد رقم الإصدار في pubspec.yaml ويُنشئ tag + push تلقائياً
+#
+#  عند تشغيله يدوياً، يختار المستخدم نوع الزيادة:
+#    - patch : 1.0.0 → 1.0.1
+#    - minor : 1.0.0 → 1.1.0
+#    - major : 1.0.0 → 2.0.0
+#
+#  ثم يُنشئ tag بصيغة v{VERSION} ويدفعه — مما يُطلق build-release.yml
+# ============================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'نوع الزيادة'
+        required: true
+        type: choice
+        default: 'patch'
+        options:
+          - patch
+          - minor
+          - major
+        # مثال: patch يحوّل 1.2.3 → 1.2.4
+        #       minor يحوّل 1.2.3 → 1.3.0
+        #       major يحوّل 1.2.3 → 2.0.0
+
+permissions:
+  contents: write   # مطلوب لدفع الـ tag
+
+jobs:
+  bump:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # نستخدم GitHub App token أو PAT مع صلاحيات contents:write
+          # الـ GITHUB_TOKEN الافتراضي لا يُطلق workflows أخرى عند الدفع
+          # لذا يجب استخدام PAT لتفعيل build-release.yml تلقائياً
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read current version
+        id: current
+        run: |
+          CURRENT=$(grep '^version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d '+' -f 1)
+          echo "current_version=${CURRENT}" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT"
+
+      - name: Compute new version
+        id: new
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+          CURRENT: ${{ steps.current.outputs.current_version }}
+        run: |
+          # تقسيم الإصدار إلى major.minor.patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "$BUMP_TYPE" in
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION (bump: $BUMP_TYPE)"
+
+      - name: Update pubspec.yaml
+        env:
+          NEW_VERSION: ${{ steps.new.outputs.new_version }}
+        run: |
+          # رقم البناء سيُحدَّد تلقائياً في build-release.yml
+          # نكتب الإصدار بدون رقم بناء هنا
+          sed -i -E "s|^version: .*|version: ${NEW_VERSION}|" pubspec.yaml
+          echo "Updated pubspec.yaml:"
+          grep '^version:' pubspec.yaml
+
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit version bump
+        env:
+          NEW_VERSION: ${{ steps.new.outputs.new_version }}
+        run: |
+          git add pubspec.yaml
+          git commit -m "chore(release): bump version to ${NEW_VERSION}"
+
+      - name: Push commit
+        run: git push
+
+      - name: Create and push tag
+        env:
+          NEW_VERSION: ${{ steps.new.outputs.new_version }}
+        run: |
+          TAG="v${NEW_VERSION}"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "::notice::تم إنشاء tag $TAG — سيُطلق build-release.yml تلقائياً"
+
+      - name: Summary
+        env:
+          CURRENT: ${{ steps.current.outputs.current_version }}
+          NEW: ${{ steps.new.outputs.new_version }}
+          BUMP: ${{ inputs.bump_type }}
+        run: |
+          echo "## 📦 Version Bump" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| النوع | القيمة |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| السابق | \`$CURRENT\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| الجديد | \`$NEW\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| نوع الزيادة | \`$BUMP\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Tag:** \`v${NEW}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏳ سيبدأ workflow **Build and Release** تلقائياً خلال لحظات." >> $GITHUB_STEP_SUMMARY

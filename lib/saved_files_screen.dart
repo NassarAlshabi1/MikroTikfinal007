@@ -9,8 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'snackbar_helpers.dart';
 
 import 'card_list_screen.dart';
-import 'pdf_generator.dart';      // <-- ١. استيراد جديد
-import 'pdf_templates_screen.dart'; // <-- ٢. استيراد جديد
+import 'theme/app_theme.dart';
+import 'pdf_generator.dart'; // <-- ١. استيراد جديد
+import 'services/pdf_template_storage.dart';
 
 class SavedFile {
   final String path;
@@ -63,23 +64,27 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
     await _loadLinkStatus(); // تحميل حالة الربط
     await _loadSavedFiles(); // تحميل الملفات
-    setState(() { _isLoading = false; });
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _loadSavedFiles() async {
     final prefs = await SharedPreferences.getInstance();
     final filesJson = prefs.getStringList('saved_files') ?? [];
     if (mounted) {
-       _savedFiles = filesJson
-        .map((jsonString) => SavedFile.fromJson(jsonDecode(jsonString)))
-        .toList();
+      _savedFiles = filesJson
+          .map((jsonString) => SavedFile.fromJson(jsonDecode(jsonString)))
+          .toList();
       _savedFiles.sort((a, b) => b.date.compareTo(a.date));
     }
   }
-  
+
   // --- ٤. دالة جديدة لتحميل بيانات الربط ---
   Future<void> _loadLinkStatus() async {
     final prefs = await SharedPreferences.getInstance();
@@ -120,7 +125,6 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     final updatedFilesJson =
         _savedFiles.map((file) => jsonEncode(file.toJson())).toList();
     await prefs.setStringList('saved_files', updatedFilesJson);
-    if (!mounted) return;
     setState(() {});
   }
 
@@ -128,18 +132,10 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     try {
       final file = File(path);
       final fileContent = await file.readAsString();
-      // تحويل كل سطر إلى بنية موحدة متوافقة مع شاشة عرض الكروت.
+      // إزالة أي أسطر فارغة قد تنتج عن الانقسام
       final cardList = fileContent
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
-          .map((line) {
-            final usernameMatch = RegExp(r'username:\s*([^,\n]+)', caseSensitive: false).firstMatch(line);
-            final passwordMatch = RegExp(r'password:\s*([^,\n]+)', caseSensitive: false).firstMatch(line);
-            return <String, String>{
-              'username': usernameMatch?.group(1)?.trim() ?? line.trim(),
-              'password': passwordMatch?.group(1)?.trim() ?? '',
-            };
-          })
           .toList();
 
       if (mounted) {
@@ -160,24 +156,27 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       showErrorSnackBar(context, 'فشل عرض الملف.');
     }
   }
-  
+
   // --- ٦. دالة جديدة للمشاركة كملف PDF ---
   Future<void> _shareAsPdf(SavedFile savedFile) async {
+    if (!mounted) return;
     showSuccessSnackBar(context, 'جاري تحضير ملف PDF...');
 
     try {
-      // البحث عن القالب المطابق لاسم الفئة
-      final prefs = await SharedPreferences.getInstance();
-      final templatesJson = prefs.getStringList('pdf_templates') ?? [];
-      final relevantTemplateJson = templatesJson.firstWhere(
-        (json) => PdfTemplate.fromJson(jsonDecode(json)).profileName == savedFile.profileName,
-      );
-      final relevantTemplate = PdfTemplate.fromJson(jsonDecode(relevantTemplateJson));
+      // البحث عن القالب المطابق لاسم الفئة مع التحقق من الصورة.
+      final relevantTemplate =
+          await PdfTemplateStorage.findForProfile(savedFile.profileName);
+      if (relevantTemplate == null) {
+        throw StateError('template_not_found');
+      }
 
       // قراءة أسماء المستخدمين من الملف النصي
       final file = File(savedFile.path);
       final fileContent = await file.readAsString();
-      final cardUsernames = fileContent.split('\n').where((line) => line.trim().isNotEmpty).toList();
+      final cardUsernames = fileContent
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .toList();
 
       // استدعاء دالة إنشاء ومشاركة الـ PDF
       if (!mounted) return;
@@ -186,15 +185,17 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
         cardUsernames: cardUsernames,
         template: relevantTemplate,
       );
-
-    } on StateError { // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
-       if (!mounted) return;
-       showErrorSnackBar(context, 'لم يتم العثور على قالب PDF للفئة "${savedFile.profileName}".');
+    } on StateError {
+      // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
+      if (!mounted) return;
+      showErrorSnackBar(context,
+          'لم يتم العثور على قالب PDF للفئة "${savedFile.profileName}".');
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'فشل إنشاء ملف PDF.');
     }
   }
+
   // ----------------------------------------
 
   @override
@@ -202,15 +203,18 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ملفات الكروت المحفوظة'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _savedFiles.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     'لا توجد ملفات محفوظة.',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: Theme.of(context).textTheme.titleMedium?.color ??
+                            Theme.of(context).colorScheme.onSurface),
                   ),
                 )
               : ListView.builder(
@@ -218,36 +222,46 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
                   itemCount: _savedFiles.length,
                   itemBuilder: (context, index) {
                     final file = _savedFiles[index];
-                    final formattedDate = DateFormat('yyyy-MM-dd – hh:mm a').format(file.date);
+                    final formattedDate =
+                        DateFormat('yyyy-MM-dd – hh:mm a').format(file.date);
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
                       child: ListTile(
-                        leading: const Icon(Icons.description, color: Colors.cyan, size: 30),
-                        title: Text('فئة: ${file.profileName}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('العدد: ${file.userCount} كرت\nالتاريخ: $formattedDate'),
+                        leading: Icon(Icons.description,
+                            color: Theme.of(context).appColors.info, size: 30),
+                        title: Text('فئة: ${file.profileName}',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(
+                            'العدد: ${file.userCount} كرت\nالتاريخ: $formattedDate'),
                         isThreeLine: true,
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.visibility, color: Colors.blueAccent),
+                              icon: Icon(Icons.visibility,
+                                  color: Theme.of(context).appColors.info),
                               onPressed: () => _viewFile(file.path),
                               tooltip: 'عرض',
                             ),
                             // --- ٧. زر المشاركة كـ PDF الجديد ---
-                             IconButton(
-                              icon: const Icon(Icons.picture_as_pdf, color: Colors.orangeAccent),
+                            IconButton(
+                              icon: Icon(Icons.picture_as_pdf,
+                                  color: Theme.of(context).appColors.warning),
                               onPressed: () => _shareAsPdf(file),
                               tooltip: 'مشاركة كـ PDF',
                             ),
                             // ----------------------------------
                             IconButton(
-                              icon: const Icon(Icons.share, color: Colors.greenAccent),
+                              icon: Icon(Icons.share,
+                                  color: Theme.of(context).appColors.success),
                               onPressed: () => _shareFile(file.path),
                               tooltip: 'مشاركة كملف نصي',
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                              icon: Icon(Icons.delete_outline,
+                                  color: Theme.of(context).appColors.error),
                               onPressed: () => _deleteFile(file),
                               tooltip: 'حذف',
                             ),

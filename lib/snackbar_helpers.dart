@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
-import 'theme/app_palette.dart';
 
 void showErrorSnackBar(BuildContext context, String message) {
   if (!context.mounted) return;
@@ -8,7 +7,8 @@ void showErrorSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.white, size: 24),
+          Icon(Icons.error_outline,
+              color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -18,16 +18,16 @@ void showErrorSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: AppPalette.error,
+      backgroundColor: Theme.of(context).appColors.error,
       duration: const Duration(seconds: 5),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
       margin: const EdgeInsets.all(16),
       action: SnackBarAction(
         label: 'إغلاق',
-        textColor: Colors.white,
+        textColor: Theme.of(context).colorScheme.onSurface,
         onPressed: () {},
       ),
     ),
@@ -40,7 +40,8 @@ void showSuccessSnackBar(BuildContext context, String message) {
     SnackBar(
       content: Row(
         children: [
-          const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
+          Icon(Icons.check_circle_outline,
+              color: Theme.of(context).colorScheme.onSurface, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -50,11 +51,11 @@ void showSuccessSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: AppPalette.success,
+      backgroundColor: Theme.of(context).appColors.success,
       duration: const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
       margin: const EdgeInsets.all(16),
     ),

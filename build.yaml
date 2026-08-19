@@ -1,0 +1,14 @@
+# تكوين build_runner لتوليد كود drift
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # تخزين DateTime كـ TEXT (أوضح في SQLite)
+          store_date_time_values_as_text: true
+          # استخدام named_parameters للوضوح
+          named_parameters: true
+          # توليد تحذيرات قاتلة للأخطاء الحرجة
+          fatal_warnings: true
+          # تخطي التحقق من الكود المُولّد (أسرع)
+          skip_verification_code: false

@@ -1,24 +1,29 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'mqtt_service.dart';
+import 'perf/device_capability.dart';
 
-class QahtaniLinkScreen extends StatefulWidget {
+import 'theme/app_theme.dart';
+
+class QahtaniLinkScreen extends ConsumerStatefulWidget {
   const QahtaniLinkScreen({super.key});
 
   @override
-  State<QahtaniLinkScreen> createState() => _QahtaniLinkScreenState();
+  ConsumerState<QahtaniLinkScreen> createState() => _QahtaniLinkScreenState();
 }
 
-class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
+class _QahtaniLinkScreenState extends ConsumerState<QahtaniLinkScreen> {
   late MqttService _mqttService;
   StreamSubscription? _mqttSubscription;
 
   final _accountIdController = TextEditingController();
   final _verificationCodeController = TextEditingController();
-  
+
   // --- متغيرات جديدة لتتبع الحالة ---
   String? _correlationId; // سيستخدم كـ Job ID لعملية التحقق
   Timer? _verificationTimer;
@@ -40,10 +45,14 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     super.initState();
   }
 
+  bool _initialized = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _mqttService = Provider.of<MqttService>(context, listen: false);
+    if (_initialized) return;
+    _initialized = true;
+    _mqttService = ref.read(mqttServiceProvider);
     _setupMqttListener();
     _loadInitialData();
   }
@@ -62,7 +71,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
         });
       }
       Future.delayed(const Duration(milliseconds: 200), () {
-        if(mounted) {
+        if (mounted) {
           _mqttService.publish({'command': 'get_latest_network_details'});
         }
       });
@@ -72,6 +81,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
   }
 
   void _resetStateForNewVerification() {
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
       _isAwaitingCode = false;
@@ -104,13 +114,13 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
             _statusMessage = 'تم استلام طلبك، جاري المعالجة...';
           });
           break;
-        
+
         case 'job_status_response':
           final jobStatus = message['job_status'];
           debugPrint("ℹ️ [التحقق] حالة الطلب هي: $jobStatus");
           if (jobStatus == 'not_found' && _isAwaitingCode) {
             debugPrint("🔁 [التحقق] الطلب لم يوجد، جاري إعادة الإرسال...");
-             _verificationTimer?.cancel();
+            _verificationTimer?.cancel();
             _confirmVerificationCode(); // إعادة إرسال الطلب
           }
           break;
@@ -124,12 +134,12 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
             _statusMessage = message['message'] ?? 'تم إرسال الرمز.';
           });
           break;
-        
+
         case 'success':
           _verificationTimer?.cancel();
           _handleSuccess(message['data']);
           break;
-          
+
         case 'verification_failed':
           _verificationTimer?.cancel();
           setState(() {
@@ -138,7 +148,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
             _isAwaitingCode = true; // ابق في شاشة الكود
           });
           break;
-        
+
         case 'error':
           _verificationTimer?.cancel();
           setState(() {
@@ -195,10 +205,11 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
       _isJobAcknowledged = false; // إعادة تعيين عند كل محاولة
       _statusMessage = 'جاري إرسال الرمز للتأكيد...';
     });
-    
+
     // إلغاء أي مؤقت سابق وبدء مؤقت جديد
     _verificationTimer?.cancel();
-    _verificationTimer = Timer(const Duration(seconds: 7), _checkVerificationStatus);
+    _verificationTimer =
+        Timer(const Duration(seconds: 7), _checkVerificationStatus);
 
     _mqttService.publish({
       'command': 'verify_code_and_get_details',
@@ -206,23 +217,24 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
       'correlation_id': _correlationId, // استخدام نفس المعرف
     });
   }
-  
+
   // ==== دالة جديدة لفحص حالة الطلب بعد انتهاء المهلة ====
   void _checkVerificationStatus() {
     if (!mounted || !_isLoading) return;
 
     // إذا استلمنا تأكيداً بالوصول، لا تفعل شيئاً وانتظر الرد
     if (_isJobAcknowledged) {
-      debugPrint("⏰ [التحقق] انتهت المهلة، لكن الطلب تم استلامه. ننتظر الرد النهائي.");
+      debugPrint(
+          "⏰ [التحقق] انتهت المهلة، لكن الطلب تم استلامه. ننتظر الرد النهائي.");
       setState(() {
-          _statusMessage = 'المعالجة تستغرق وقتاً أطول من المعتاد...';
+        _statusMessage = 'المعالجة تستغرق وقتاً أطول من المعتاد...';
       });
       return;
     }
-    
+
     debugPrint("⏰ [التحقق] لم يتم استلام تأكيد، جاري فحص حالة الطلب...");
     setState(() {
-        _statusMessage = 'الشبكة بطيئة، جاري التحقق من حالة الطلب...';
+      _statusMessage = 'الشبكة بطيئة، جاري التحقق من حالة الطلب...';
     });
 
     _mqttService.publish({
@@ -231,12 +243,12 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     });
   }
 
-
   Future<void> _unlinkAccount() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('is_network_linked');
     await prefs.remove('qahtani_linked_data');
     _resetStateForNewVerification();
+    if (!mounted) return;
     setState(() {
       _isLinked = false;
       _linkedData = {};
@@ -248,7 +260,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ربط الشبكة بـ م/نصار الشعبي'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           if (_isLinked)
             IconButton(
@@ -265,7 +277,11 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
-                  Text(_statusMessage, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center,),
+                  Text(
+                    _statusMessage,
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               )
             : _isLinked
@@ -283,35 +299,45 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
+        scrollCacheExtent: ScrollCacheExtent.pixels(
+            DeviceCapability.instance.listViewCacheExtent),
+        addAutomaticKeepAlives: false,
         children: [
-          const Icon(Icons.cloud_done, color: Colors.green, size: 80),
+          Icon(Icons.cloud_done,
+              color: Theme.of(context).appColors.success, size: 80),
           const SizedBox(height: 16),
-          const Center(
+          Center(
               child: Text('الشبكة مرتبطة بنجاح',
                   style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green))),
+                      color: Theme.of(context).appColors.success))),
           const SizedBox(height: 24),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.person),
-              title: Text(clientInfo['name'] ?? 'غير متوفر'),
-              subtitle: const Text('اسم العميل'),
+          RepaintBoundary(
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.person),
+                title: Text(clientInfo['name'] ?? 'غير متوفر'),
+                subtitle: const Text('اسم العميل'),
+              ),
             ),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.router),
-              title: Text(networkDetails['network_name'] ?? 'غير متوفر'),
-              subtitle: const Text('اسم الشبكة'),
+          RepaintBoundary(
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.router),
+                title: Text(networkDetails['network_name'] ?? 'غير متوفر'),
+                subtitle: const Text('اسم الشبكة'),
+              ),
             ),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.confirmation_number),
-              title: Text(_linkedData['account_id'] ?? 'غير متوفر'),
-              subtitle: const Text('رقم حساب م/نصار الشعبي'),
+          RepaintBoundary(
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.confirmation_number),
+                title: Text(_linkedData['account_id'] ?? 'غير متوفر'),
+                subtitle: const Text('رقم حساب م/نصار الشعبي'),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -320,17 +346,20 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
             child: Text('الفئات (الباقات) المتاحة:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           ),
-          if (units.isEmpty) const Center(child: Text('لا توجد فئات متاحة حالياً.'))
-          else ...units
-              .map((unit) => Card(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    child: ListTile(
-                      leading: const Icon(Icons.wifi_tethering,
-                          color: Colors.cyan),
-                      title: Text(unit['name'] ?? 'فئة غير مسماة'),
-                    ),
-                  ))
-              ,
+          if (units.isEmpty)
+            const Center(child: Text('لا توجد فئات متاحة حالياً.'))
+          else
+            for (final unit in units)
+              RepaintBoundary(
+                child: Card(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  child: ListTile(
+                    leading: Icon(Icons.wifi_tethering,
+                        color: Theme.of(context).appColors.info),
+                    title: Text(unit['name'] ?? 'فئة غير مسماة'),
+                  ),
+                ),
+              ),
         ],
       ),
     );
@@ -343,11 +372,11 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.link_off, color: Colors.orange, size: 80),
+          Icon(Icons.link_off,
+              color: Theme.of(context).appColors.warning, size: 80),
           const SizedBox(height: 16),
           Center(
-              child: Text(
-                  _isAwaitingCode ? 'التحقق بخطوتين' : 'ربط حساب جديد',
+              child: Text(_isAwaitingCode ? 'التحقق بخطوتين' : 'ربط حساب جديد',
                   style: const TextStyle(
                       fontSize: 22, fontWeight: FontWeight.bold))),
           const SizedBox(height: 24),
@@ -356,13 +385,14 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Text(_errorMessage!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Colors.redAccent, fontSize: 12)),
+                  style: TextStyle(
+                      color: Theme.of(context).appColors.error, fontSize: 12)),
             ),
           if (_isAwaitingCode)
             Text(_statusMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.amber, fontSize: 16)),
+                style: TextStyle(
+                    color: Theme.of(context).appColors.warning, fontSize: 16)),
           const SizedBox(height: 16),
           if (!_isAwaitingCode)
             TextField(
@@ -385,8 +415,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
             onPressed: _isAwaitingCode
                 ? _confirmVerificationCode
                 : _requestVerificationCode,
-            child:
-                Text(_isAwaitingCode ? 'تأكيد الرمز' : 'طلب رمز التحقق'),
+            child: Text(_isAwaitingCode ? 'تأكيد الرمز' : 'طلب رمز التحقق'),
           ),
         ],
       ),
