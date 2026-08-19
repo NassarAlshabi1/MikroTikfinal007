@@ -28,7 +28,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Install dependencies
@@ -63,7 +63,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Install dependencies
@@ -73,7 +73,7 @@ jobs:
         run: flutter pub run flutter_launcher_icons || echo "Icon generation skipped"
 
       - name: Build Web
-        run: flutter build web --release --web-renderer canvaskit
+        run: flutter build web --release
 
       - name: Upload Web artifacts
         uses: actions/upload-artifact@v4
@@ -98,7 +98,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Enable Linux desktop
@@ -131,7 +131,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Enable Windows desktop
@@ -144,6 +144,10 @@ jobs:
         run: flutter pub run flutter_launcher_icons
 
       - name: Build Windows
+        env:
+          # permission_handler_windows يستخدم experimental/coroutine مع MSVC الحديث.
+          # تعريف الكاشف يمنع STL1011 دون تعطيل تحذيرات المشروع الأخرى.
+          CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
         run: flutter build windows --release
 
       - name: Upload Windows artifacts
@@ -164,7 +168,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.3'
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Enable macOS desktop

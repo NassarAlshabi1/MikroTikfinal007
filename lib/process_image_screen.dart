@@ -98,9 +98,11 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
         if (cardNumbers.length >= widget.total) break;
       }
 
+      if (!mounted) return;
       Navigator.pop(context, cardNumbers.toList());
     } catch (e) {
       debugPrint("Error processing image: $e");
+      if (!mounted) return;
       Navigator.pop(context, []);
     }
   }

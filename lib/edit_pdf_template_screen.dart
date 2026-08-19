@@ -218,16 +218,16 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                       child: Column(
                         children: [
                           DropdownButtonFormField<String>(
-                            value: _selectedProfile,
-                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                            dropdownColor: Colors.white,
+                            initialValue: _selectedProfile,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            dropdownColor: Theme.of(context).cardColor,
                             decoration: const InputDecoration(
                                 labelText: 'اختر الفئة (البروفايل)',
                                 prefixIcon: Icon(Icons.category_outlined)),
                             items: widget.profiles
                                 .map((p) => DropdownMenuItem(
                                       value: p['name'] as String,
-                                      child: Text(p['name'] as String, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                                      child: Text(p['name'] as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                     ))
                                 .toList(),
                             onChanged: (v) =>

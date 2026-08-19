@@ -90,10 +90,10 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
       if (!mounted) return;
 
       final status = message['status'];
-      final job_id = message['job_id'] ?? message['correlation_id'];
+      final jobId = message['job_id'] ?? message['correlation_id'];
 
       // تجاهل الرسائل التي لا تخص العملية الحالية
-      if (_correlationId != null && job_id != _correlationId) return;
+      if (_correlationId != null && jobId != _correlationId) return;
 
       switch (status) {
         // --- الحالات الجديدة لتتبع الطلب ---
@@ -330,7 +330,7 @@ class _QahtaniLinkScreenState extends State<QahtaniLinkScreen> {
                       title: Text(unit['name'] ?? 'فئة غير مسماة'),
                     ),
                   ))
-              .toList(),
+              ,
         ],
       ),
     );

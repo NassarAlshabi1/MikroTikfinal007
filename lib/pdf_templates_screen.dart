@@ -208,7 +208,7 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
             // --- عدد الكروت ---
             Text(
               'عدد الكروت بالصفحة: ${template.cardsPerPage}',
-              style: TextStyle(fontSize: 15, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+              style: const TextStyle(fontSize: 15, color: Colors.white),
             ),
             const Divider(height: 24),
             // --- أزرار الإجراءات ---
@@ -254,10 +254,10 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            Text(
+            const Text(
               'اضغط على زر الإضافة (+) في الأسفل لإنشاء قالب PDF جديد خاص بك.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87),
+              style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ],
         ),

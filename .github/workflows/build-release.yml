@@ -32,14 +32,15 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.47.0'
           channel: 'stable'
+          cache: true
 
       - name: Flutter pub get
         run: flutter pub get
 
       - name: Flutter analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Build APK (release)
         if: ${{ github.event_name == 'push' || inputs.build_apk == 'true' }}

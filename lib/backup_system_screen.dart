@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
-import 'theme/app_theme.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
 
@@ -57,8 +56,10 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
   }
 
   Future<void> _createNewBackup() async {
-    final backupName = await _showBackupNameDialog();
-    if (backupName == null || backupName.isEmpty) return;
+    final result = await _showBackupNameDialog();
+    if (result == null || !mounted) return;
+    final backupName = result['name'] as String;
+    final encrypt = result['encrypt'] as bool;
 
     setState(() => _isCreatingBackup = true);
 
@@ -66,14 +67,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       const SnackBar(
         content: Row(
           children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(context.theme.appColors.onPrimary),
-              ),
-            ),
+            SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white))),
             SizedBox(width: 16),
             Text('جاري إنشاء النسخة الاحتياطية...'),
           ],
@@ -86,11 +80,14 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     try {
       client = await MikrotikConnector.connect();
 
-      await client.talk([
+      final command = [
         '/system/backup/save',
         '=name=$backupName',
-        '=dont-encrypt=yes',
-      ]);
+      ];
+      // الإصلاح: خيار تشفير النسخة بدلاً من تعطيله دائماً
+      if (!encrypt) command.add('=dont-encrypt=yes');
+
+      await client.talk(command);
 
       await Future.delayed(const Duration(seconds: 3));
 
@@ -111,32 +108,46 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
   }
 
-  Future<String?> _showBackupNameDialog() async {
+  Future<Map<String, dynamic>?> _showBackupNameDialog() async {
     final TextEditingController controller = TextEditingController(
       text: 'backup_${DateTime.now().day}-${DateTime.now().month}_${DateTime.now().hour}-${DateTime.now().minute}',
     );
+    bool encrypt = false;
 
-    return showDialog<String>(
+    return showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('اسم النسخة الاحتياطية'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'الاسم',
-            hintText: 'backup_01-11_10-30',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('إنشاء نسخة احتياطية'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'الاسم',
+                  hintText: 'backup_01-11_10-30',
+                ),
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('تشفير النسخة', style: TextStyle(fontSize: 14)),
+                subtitle: const Text('يُنصح بالتشفير لحماية الإعدادات', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                value: encrypt,
+                activeThumbColor: Theme.of(context).primaryColor,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (v) => setDialogState(() => encrypt = v),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, {'name': controller.text, 'encrypt': encrypt}),
+              child: const Text('إنشاء'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('إنشاء'),
-          ),
-        ],
       ),
     );
   }
@@ -157,13 +168,13 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: context.theme.appColors.border,
+                color: Colors.grey,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: Icon(Icons.info_outline, color: context.theme.appColors.info),
+              leading: const Icon(Icons.info_outline, color: Colors.blue),
               title: const Text('معلومات النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -171,7 +182,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.restore, color: context.theme.appColors.warning),
+              leading: const Icon(Icons.restore, color: Colors.orange),
               title: const Text('استعادة النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -179,7 +190,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.delete, color: context.theme.appColors.error),
+              leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text('حذف النسخة'),
               onTap: () {
                 Navigator.pop(context);
@@ -242,7 +253,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.warning, color: context.theme.appColors.warning),
+            Icon(Icons.warning, color: Colors.orange),
             SizedBox(width: 8),
             Text('تحذير'),
           ],
@@ -258,8 +269,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: context.theme.appColors.warning,
-              foregroundColor: context.theme.appColors.onWarning,
+              backgroundColor: Colors.orange,
             ),
             child: const Text('استعادة'),
           ),
@@ -305,8 +315,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: context.theme.appColors.error,
-              foregroundColor: context.theme.appColors.onError,
+              backgroundColor: Colors.red,
             ),
             child: const Text('حذف'),
           ),
@@ -397,7 +406,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
     final isUserManager = type == 'user manager database';
     final backupType = isUserManager ? 'يوزر متجر' : 'ويوكس';
-    final typeColor = isUserManager ? context.theme.appColors.success : context.theme.appColors.secondary;
+    final typeColor = isUserManager ? Colors.green : Colors.purple;
 
     final timeAgo = _calculateTimeAgo(creationTime);
 
@@ -432,13 +441,13 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                   children: [
                     Icon(
                       isUserManager ? Icons.group : Icons.router,
-                      color: context.theme.appColors.onPrimary,
+                      color: Colors.white,
                       size: 28,
                     ),
                     Text(
                       backupType,
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black87,
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -455,13 +464,13 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: context.theme.appColors.secondary,
+                        color: const Color(0xFFB39DDB),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         name,
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black87,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -473,19 +482,19 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                     Row(
                       children: [
                         const Icon(Icons.data_usage,
-                            size: 16, color: null), // استخدام اللون الافتراضي
+                            size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: context.theme.appColors.secondary.withOpacity(0.3),
+                            color: const Color(0xFFB39DDB).withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             sizeText,
-                            style: TextStyle(
-                              color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 12,
                             ),
                           ),
@@ -496,12 +505,12 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                     Row(
                       children: [
                         const Icon(Icons.access_time,
-                            size: 16, color: null), // استخدام اللون الافتراضي
+                            size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
                           timeAgo,
-                          style: TextStyle(
-                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7) ?? Colors.black54,
+                          style: const TextStyle(
+                            color: Colors.white70,
                             fontSize: 12,
                           ),
                         ),
@@ -511,7 +520,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.more_vert, color: Theme.of(context).iconTheme.color),
+                icon: const Icon(Icons.more_vert, color: Colors.white),
                 onPressed: () => _showBackupOptions(backup),
               ),
             ],
@@ -540,20 +549,20 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
 
     if (_backups.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.backup, size: 80, color: context.theme.appColors.muted),
-            const SizedBox(height: 16),
-            const Text(
+            Icon(Icons.backup, size: 80, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
               'لا توجد نسخ احتياطية',
-              style: TextStyle(fontSize: 20, color: context.theme.appColors.muted),
+              style: TextStyle(fontSize: 20, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'اضغط على الزر أدناه لإنشاء نسخة جديدة',
-              style: TextStyle(color: context.theme.appColors.muted),
+              style: TextStyle(color: Colors.grey),
             ),
           ],
         ),
@@ -589,15 +598,15 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ),
       body: _buildBody(),
       floatingActionButton: _isCreatingBackup
-          ? FloatingActionButton(
+          ? const FloatingActionButton(
               onPressed: null,
-              backgroundColor: context.theme.appColors.muted,
-              child: const SizedBox(
+              backgroundColor: Colors.grey,
+              child: SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(context.theme.appColors.onSurface),
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
                 ),
               ),
             )
