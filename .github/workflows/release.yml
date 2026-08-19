@@ -83,6 +83,8 @@ jobs:
         run: flutter pub get
       - name: Generate drift code
         run: dart run build_runner build --delete-conflicting-outputs
+      - name: Prepare Isar schema for Web
+        run: python3 tool/patch_isar_web_ids.py
 
       - name: Generate app icons
         run: flutter pub run flutter_launcher_icons
@@ -151,7 +153,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
