@@ -12,6 +12,8 @@ void main() {
         expect(prompt, contains('الخلاصة التنفيذية'));
         expect(prompt, contains('لا تخترع'));
         expect(prompt, contains('لم يُنفّذ'));
+        expect(prompt, contains('بوابة RouterOS v6'));
+        expect(prompt, contains('أمر تحقق قراءة فقط'));
       }
     });
 
@@ -32,6 +34,8 @@ void main() {
       expect(prompt, contains('WireGuard'));
       expect(prompt, contains('لا تُخرج سكربت تعديل أو حذف'));
       expect(prompt, contains('اقتراح فقط'));
+      expect(prompt, contains('لا تستخدم `placeholders`'));
+      expect(prompt, contains('إذا تعارضت بيانات المستخدم مع snapshot'));
     });
   });
 }

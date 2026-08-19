@@ -316,34 +316,36 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
           // قائمة الرسائل
           Expanded(
-            child: RepaintBoundary(
-              child: ListView.builder(
-                scrollCacheExtent: const ScrollCacheExtent.pixels(300),
-                controller: _scrollController,
-                padding: const EdgeInsets.all(12),
-                itemCount: state.messages.length,
-                itemBuilder: (context, index) {
-                  final msg = state.messages[index];
-                  return _MessageBubble(
-                    message: msg,
-                    onCopyCommand: _copyCommand,
-                    onExecuteCommand: _handleExecuteCommand,
-                    onExecuteScript: _handleExecuteScript,
-                    onCopyAllCommands: (commands) async {
-                      await SecureClipboard.copy(
-                        commands.join('\n'),
-                        sensitive: false,
-                      );
-                      if (context.mounted) {
-                        showSuccessSnackBar(
-                            context, 'تم نسخ ${commands.length} أمر');
-                      }
-                    },
-                    onCopyMessage: _copyMessage,
-                  );
-                },
-              ),
-            ),
+            child: state.messages.isEmpty
+                ? _buildEmptyState(state)
+                : RepaintBoundary(
+                    child: ListView.builder(
+                      scrollCacheExtent: const ScrollCacheExtent.pixels(300),
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(12),
+                      itemCount: state.messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = state.messages[index];
+                        return _MessageBubble(
+                          message: msg,
+                          onCopyCommand: _copyCommand,
+                          onExecuteCommand: _handleExecuteCommand,
+                          onExecuteScript: _handleExecuteScript,
+                          onCopyAllCommands: (commands) async {
+                            await SecureClipboard.copy(
+                              commands.join('\\n'),
+                              sensitive: false,
+                            );
+                            if (context.mounted) {
+                              showSuccessSnackBar(
+                                  context, 'تم نسخ ${commands.length} أمر');
+                            }
+                          },
+                          onCopyMessage: _copyMessage,
+                        );
+                      },
+                    ),
+                  ),
           ),
 
           // شريط حالة التحميل
@@ -1457,70 +1459,236 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     );
   }
 
-  Widget _buildInputBar(DiagnosticsState state) {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.1)),
+  Widget _buildEmptyState(DiagnosticsState state) {
+    final theme = Theme.of(context);
+    final colors = theme.appColors;
+    final isConfigured = state.settings.isConfigured;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(Icons.health_and_safety_outlined,
+                        color: colors.onPrimaryContainer, size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('مركز تشخيص MikroTik v6',
+                            style: theme.textTheme.titleLarge),
+                        const SizedBox(height: 6),
+                        Text(
+                          'تحليل قائم على بيانات الراوتر، مع فصل الأدلة عن الاستنتاجات واقتراحات آمنة قابلة للمراجعة.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colors.textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildContextChip(Icons.router_outlined, 'RouterOS v6'),
+                  _buildContextChip(Icons.lan_outlined, 'Native API 8728'),
+                  _buildContextChip(
+                    isConfigured ? Icons.verified_user_outlined : Icons.key_off,
+                    isConfigured ? 'AI مهيأ' : 'يلزم إعداد AI',
+                    color: isConfigured ? colors.success : colors.warning,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: state.isLoading ? null : _handleQuickDiagnose,
+                      icon: const Icon(Icons.fact_check_outlined),
+                      label: const Text('تشخيص سريع'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          state.isLoading ? null : _handleAgenticDiagnose,
+                      icon: const Icon(Icons.psychology_outlined),
+                      label: const Text('تشخيص عميق'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        child: Row(
-          children: [
-            // زر التشخيص السريع (لقطة واحدة)
-            IconButton(
-              icon: const Icon(Icons.auto_fix_high),
-              tooltip: 'تشخيص سريع (لقطة واحدة)',
-              onPressed: state.isLoading ? null : _handleQuickDiagnose,
-              color: Theme.of(context).primaryColor,
-            ),
-            // زر التشخيص العميق الوكيل (استقصاء خطوة بخطوة)
-            IconButton(
-              icon: const Icon(Icons.psychology),
-              tooltip: 'تشخيص عميق وكيل (استقصاء خطوة بخطوة)',
-              onPressed: state.isLoading ? null : _handleAgenticDiagnose,
-              color: Theme.of(context).appColors.primary,
-            ),
-            // حقل الإدخال
-            Expanded(
-              child: TextField(
-                controller: _inputController,
-                enabled: _inputEnabled && !state.isLoading,
-                decoration: InputDecoration(
-                  hintText: 'اكتب سؤالك أو صف المشكلة...',
-                  hintStyle: const TextStyle(fontSize: 13),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Theme.of(context).scaffoldBackgroundColor,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                ),
-                style: const TextStyle(fontSize: 14),
-                maxLines: 3,
-                minLines: 1,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _handleSend(),
+        const SizedBox(height: 16),
+        Text('أو اكتب سؤالك بالأسفل',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.textTertiary,
+            )),
+      ],
+    );
+  }
+
+  Widget _buildContextChip(IconData icon, String label, {Color? color}) {
+    final theme = Theme.of(context);
+    final foreground = color ?? theme.appColors.textSecondary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: foreground.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: foreground.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: foreground),
+          const SizedBox(width: 6),
+          Text(label,
+              style: theme.textTheme.labelMedium?.copyWith(color: foreground)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputBar(DiagnosticsState state) {
+    final theme = Theme.of(context);
+    final colors = theme.appColors;
+    final enabled = _inputEnabled && !state.isLoading;
+
+    return SafeArea(
+      top: false,
+      child: Material(
+        color: colors.surface,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.forum_outlined,
+                      size: 16, color: colors.textTertiary),
+                  const SizedBox(width: 6),
+                  Text('اسأل عن الشبكة أو اطلب تفسير نتيجة',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colors.textSecondary,
+                      )),
+                  const Spacer(),
+                  if (state.isLoading)
+                    Text('جارٍ التحليل…',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.primary,
+                        )),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            // زر الإرسال
-            IconButton(
-              icon: const Icon(Icons.send),
-              onPressed: _inputEnabled && !state.isLoading ? _handleSend : null,
-              color: Theme.of(context).primaryColor,
-            ),
-          ],
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Tooltip(
+                    message: 'تشخيص سريع: لقطة واحدة من بيانات الراوتر',
+                    child: IconButton(
+                      onPressed: enabled ? _handleQuickDiagnose : null,
+                      icon: const Icon(Icons.fact_check_outlined),
+                      style: IconButton.styleFrom(
+                        foregroundColor: colors.primary,
+                        backgroundColor: colors.primary.withValues(alpha: 0.10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'تشخيص عميق: استقصاء قراءة فقط خطوة بخطوة',
+                    child: IconButton(
+                      onPressed: enabled ? _handleAgenticDiagnose : null,
+                      icon: const Icon(Icons.psychology_outlined),
+                      style: IconButton.styleFrom(
+                        foregroundColor: colors.secondary,
+                        backgroundColor:
+                            colors.secondary.withValues(alpha: 0.10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _inputController,
+                      enabled: enabled,
+                      decoration: InputDecoration(
+                        hintText: 'مثال: لماذا تنخفض سرعة Hotspot؟',
+                        prefixIcon: const Icon(Icons.edit_note_outlined),
+                        prefixIconColor: colors.textTertiary,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: colors.outlineVariant),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: colors.outlineVariant),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide:
+                              BorderSide(color: colors.primary, width: 1.5),
+                        ),
+                        filled: true,
+                        fillColor: colors.surfaceVariant,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                      ),
+                      style: theme.textTheme.bodyMedium,
+                      maxLines: 3,
+                      minLines: 1,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _handleSend(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: enabled ? _handleSend : null,
+                    icon: const Icon(Icons.arrow_upward_rounded),
+                    tooltip: 'إرسال السؤال',
+                    style: IconButton.styleFrom(
+                      foregroundColor: colors.onPrimary,
+                      backgroundColor: colors.primary,
+                      disabledBackgroundColor: colors.surfaceVariant,
+                      disabledForegroundColor: colors.textDisabled,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

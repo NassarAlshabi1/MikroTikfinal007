@@ -205,6 +205,8 @@ class ProfessionalTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: ProfessionalColors.lightSurface,
         foregroundColor: ProfessionalColors.lightTextPrimary,
+        actionsIconTheme:
+            IconThemeData(color: ProfessionalColors.lightTextPrimary),
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: true,
@@ -309,6 +311,13 @@ class ProfessionalTheme {
       ),
       iconTheme:
           const IconThemeData(color: ProfessionalColors.lightTextPrimary),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: ProfessionalColors.lightTextPrimary,
+          disabledForegroundColor: ProfessionalColors.lightTextDisabled,
+          overlayColor: ProfessionalColors.primary.withValues(alpha: 0.12),
+        ),
+      ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -424,6 +433,8 @@ class ProfessionalTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: ProfessionalColors.darkSurface,
         foregroundColor: ProfessionalColors.darkTextPrimary,
+        actionsIconTheme:
+            IconThemeData(color: ProfessionalColors.darkTextPrimary),
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: true,
@@ -573,6 +584,13 @@ class ProfessionalTheme {
         space: 1,
       ),
       iconTheme: const IconThemeData(color: ProfessionalColors.darkTextPrimary),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: ProfessionalColors.darkTextPrimary,
+          disabledForegroundColor: ProfessionalColors.darkTextDisabled,
+          overlayColor: ProfessionalColors.primaryLight.withValues(alpha: 0.16),
+        ),
+      ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {

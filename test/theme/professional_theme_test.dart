@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mikrotik_manager/theme/app_palette.dart';
+import 'package:mikrotik_manager/theme/app_theme.dart';
 import 'package:mikrotik_manager/theme/professional_theme.dart';
 
 void main() {
@@ -30,5 +32,31 @@ void main() {
 
     expect(theme.appBarTheme.titleTextStyle?.fontFamily, 'Tajawal');
     expect(theme.textTheme.bodyLarge?.fontFamily, 'Tajawal');
+  });
+
+  test('أيقونات الوضع الداكن تستخدم ألواناً مقروءة مركزياً', () {
+    final theme = ProfessionalTheme.dark;
+
+    expect(theme.iconTheme.color, ProfessionalColors.darkTextPrimary);
+    expect(
+        theme.appBarTheme.iconTheme?.color, ProfessionalColors.darkTextPrimary);
+    expect(theme.appBarTheme.actionsIconTheme?.color,
+        ProfessionalColors.darkTextPrimary);
+    expect(
+      theme.iconButtonTheme.style?.foregroundColor?.resolve({}),
+      ProfessionalColors.darkTextPrimary,
+    );
+  });
+
+  test('الثيم المتوافق مع الشاشات القديمة يضبط IconButtonTheme أيضاً', () {
+    final theme = AppTheme.dark;
+
+    expect(theme.iconTheme.color, AppPalette.darkTextPrimary);
+    expect(
+        theme.appBarTheme.actionsIconTheme?.color, AppPalette.darkTextPrimary);
+    expect(
+      theme.iconButtonTheme.style?.foregroundColor?.resolve({}),
+      AppPalette.darkTextPrimary,
+    );
   });
 }

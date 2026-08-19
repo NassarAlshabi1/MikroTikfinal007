@@ -153,8 +153,10 @@ class AppTheme with ChangeNotifier {
             .copyWith(color: AppPalette.lightTextTertiary),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppPalette.lightSurface,
+        backgroundColor: AppPalette.lightBackground,
         foregroundColor: AppPalette.lightTextPrimary,
+        actionsIconTheme:
+            const IconThemeData(color: AppPalette.lightTextPrimary),
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: true,
@@ -274,6 +276,13 @@ class AppTheme with ChangeNotifier {
       iconTheme: const IconThemeData(
         color: AppPalette.lightTextPrimary,
         size: 24,
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: AppPalette.lightTextPrimary,
+          disabledForegroundColor: AppPalette.lightTextDisabled,
+          overlayColor: AppPalette.primary.withValues(alpha: 0.12),
+        ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppPalette.lightSurface,
@@ -471,6 +480,8 @@ class AppTheme with ChangeNotifier {
       appBarTheme: AppBarTheme(
         backgroundColor: AppPalette.darkBackground,
         foregroundColor: AppPalette.darkTextPrimary,
+        actionsIconTheme:
+            const IconThemeData(color: AppPalette.darkTextPrimary),
         elevation: 0,
         scrolledUnderElevation: 2,
         centerTitle: true,
@@ -591,6 +602,13 @@ class AppTheme with ChangeNotifier {
       iconTheme: const IconThemeData(
         color: AppPalette.darkTextPrimary,
         size: 24,
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: AppPalette.darkTextPrimary,
+          disabledForegroundColor: AppPalette.darkTextDisabled,
+          overlayColor: AppPalette.primaryLight.withValues(alpha: 0.16),
+        ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppPalette.darkSurface,
