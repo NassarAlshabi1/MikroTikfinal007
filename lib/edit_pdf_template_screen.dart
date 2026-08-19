@@ -177,7 +177,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     final cardsPerPage = int.tryParse(_cardsPerPageController.text.trim());
 
     if (selectedProfile.isEmpty || !_routerProfiles.contains(selectedProfile)) {
-      showErrorSnackBar(context, 'اختر فئة كروت جُلبت من MikroTik أولًا.');
+      showErrorSnackBar(context, 'اختر فئة User Manager جُلبت من MikroTik أولًا.');
       return;
     }
     if (imageFile == null || imageContext == null) {
@@ -256,7 +256,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       }
 
       if (!mounted) return;
-      showSuccessSnackBar(context, 'تم حفظ قالب فئة الكروت بنجاح.');
+      showSuccessSnackBar(context, 'تم حفظ قالب فئة User Manager بنجاح.');
       Navigator.of(context).pop(true);
     } catch (error) {
       if (mounted) {
@@ -335,7 +335,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                         strokeWidth: 2),
                                   ),
                                   SizedBox(width: 10),
-                                  Text('جاري جلب فئات الكروت من MikroTik...'),
+                                  Text('جاري جلب فئات User Manager من MikroTik...'),
                                 ],
                               ),
                             )
@@ -345,7 +345,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               children: [
                                 Text(
                                   _profileLoadError ??
-                                      'لم يُرجع User Manager أي فئة بروفايل.',
+                                      'لم يُرجع User Manager أي فئة متاحة.',
                                   style: TextStyle(
                                     color: Theme.of(context).colorScheme.error,
                                   ),
@@ -365,15 +365,15 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                   profileNames.contains(_selectedProfile)
                                       ? _selectedProfile
                                       : null,
-                              style: const TextStyle(
-                                color: Colors.black,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
-                              dropdownColor: Colors.white,
+                              dropdownColor: Theme.of(context).colorScheme.surface,
                               decoration: const InputDecoration(
-                                labelText: 'فئة الكروت (Profile)',
+                                labelText: 'فئة كروت User Manager',
                                 helperText:
-                                    'اختر فئة User Manager التي سيُستخدم لها القالب',
+                                    'اختر فئة User Manager v6 التي سيُستخدم لها القالب',
                                 prefixIcon: Icon(Icons.category_outlined),
                               ),
                               items: profileNames
@@ -382,8 +382,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                       value: name,
                                       child: Text(
                                         name,
-                                        style: const TextStyle(
-                                          color: Colors.black,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -395,7 +395,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               ),
                               validator: (value) =>
                                   value == null || value.trim().isEmpty
-                                      ? 'الرجاء اختيار فئة الكروت'
+                                      ? 'الرجاء اختيار فئة User Manager'
                                       : null,
                             ),
                           const SizedBox(height: 16),
@@ -404,7 +404,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                             decoration: const InputDecoration(
                                 labelText: 'عدد الكروت في كل صفحة',
                                 prefixIcon: Icon(Icons.view_module_outlined)),
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                             keyboardType: TextInputType.number,
                             validator: (v) {
                               if (v == null || v.isEmpty) return 'الحقل مطلوب';

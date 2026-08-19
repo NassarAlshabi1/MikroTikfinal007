@@ -25,7 +25,7 @@ class AddUserScreen extends StatefulWidget {
     required this.profiles,
     required this.isVersion7OrNewer,
     required this.customer,
-    this.serviceMode = MikrotikServiceMode.hotspot,
+    this.serviceMode = MikrotikServiceMode.userManager,
   });
 
   @override
@@ -109,7 +109,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
           password: password,
           profile: profile,
           sharedUsers: sharedUsers,
-          isVersion7OrNewer: widget.isVersion7OrNewer,
+          isVersion7OrNewer: false,
           customer: widget.customer,
         ),
       );
@@ -231,7 +231,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      'وضع Hotspot v6 مفعّل. سيُطبّق عدد Shared Users من بروفايل Hotspot على الراوتر.',
+                      'وضع User Manager v6 مفعّل. سيُطبّق عدد Shared Users على المستخدم في الراوتر.',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),

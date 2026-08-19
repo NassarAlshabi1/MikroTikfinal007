@@ -323,7 +323,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       charType: _charType,
       cardType: _cardType,
       linkPasswordToFirstUser: _linkPasswordToFirstUser,
-      isVersion7OrNewer: widget.isVersion7OrNewer,
+      isVersion7OrNewer: false,
       connectionConfig: connectionConfig,
       customer: widget.username,
       serviceMode: widget.serviceMode,
@@ -1358,7 +1358,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       decoration: _fieldDecoration(
                         labelText: 'Shared Users',
                         helperText:
-                            'في Hotspot v6 يُؤخذ التطبيق الفعلي من بروفايل المستخدم',
+                            'في User Manager v6 يُطبّق العدد على المستخدم أثناء إنشاء الكرت',
                         prefixIcon: Icons.people_alt_rounded,
                       ),
                       style: _fieldTextStyle(),

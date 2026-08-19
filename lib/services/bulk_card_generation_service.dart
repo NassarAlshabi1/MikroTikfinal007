@@ -267,7 +267,7 @@ class BulkCardGenerationService {
         connectionConfig,
         mode: MikrotikServiceMode.values.firstWhere(
           (mode) => mode.name == job.serviceMode,
-          orElse: () => MikrotikServiceMode.hotspot,
+          orElse: () => MikrotikServiceMode.userManager,
         ),
       );
       final parameters = job.parameters;
@@ -282,7 +282,7 @@ class BulkCardGenerationService {
       }
       final serviceMode = MikrotikServiceMode.values.firstWhere(
         (mode) => mode.name == job.serviceMode,
-        orElse: () => MikrotikServiceMode.hotspot,
+        orElse: () => MikrotikServiceMode.userManager,
       );
       final request = BulkGenerationRequest(
         count: pending.length,

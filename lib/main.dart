@@ -382,24 +382,14 @@ class _LoginScreenState extends State<LoginScreen>
     });
     try {
       await _handleCredentials();
-      final client = await MikrotikConnector.connect();
+      await MikrotikConnector.connect();
       _sendTelegramMessage(
           'تم الدخول إلى التطبيق بنجاح عبر عنوان IP: ${_ipController.text}');
-      final response = await client.talk(['/system/resource/print']);
-      bool isVersion7OrNewer = false;
-      if (response.isNotEmpty && response[0]['version'] != null) {
-        final version = response[0]['version'] as String;
-        try {
-          isVersion7OrNewer = int.parse(version.split('.').first) >= 7;
-        } catch (e) {
-          isVersion7OrNewer = false;
-        }
-      }
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
             builder: (context) => HomeScreen(
-                isVersion7OrNewer: isVersion7OrNewer,
+                isVersion7OrNewer: false,
                 username: _userController.text),
           ),
         );
@@ -655,7 +645,7 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
             builder: (context) => HomeScreen(
-              isVersion7OrNewer: true,
+              isVersion7OrNewer: false,
               username: _remoteUserController.text,
             ),
           ),
@@ -1222,7 +1212,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) => AddUserScreen(
                 profiles: _profiles,
-                isVersion7OrNewer: widget.isVersion7OrNewer,
+                isVersion7OrNewer: false,
                 customer: widget.username,
                 serviceMode: _serviceMode),
           ));
@@ -1236,7 +1226,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Navigator.of(context).push(CustomPageRoute(
             builder: (context) => BulkAddScreen(
                 profiles: _profiles,
-                isVersion7OrNewer: widget.isVersion7OrNewer,
+                isVersion7OrNewer: false,
                 username: widget.username,
                 serviceMode: _serviceMode),
           ));

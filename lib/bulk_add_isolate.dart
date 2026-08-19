@@ -38,7 +38,7 @@ class BulkAddIsolateData {
     required this.isVersion7OrNewer,
     required this.connectionConfig,
     required this.customer,
-    this.serviceMode = MikrotikServiceMode.hotspot,
+    this.serviceMode = MikrotikServiceMode.userManager,
     this.plannedUsers,
   });
 }
@@ -92,7 +92,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         password: password,
         profile: profile,
         sharedUsers: data.sharedUsers,
-        isVersion7OrNewer: data.isVersion7OrNewer,
+        isVersion7OrNewer: false,
         customer: data.customer,
       );
 
@@ -166,7 +166,7 @@ void _validateInput(BulkAddIsolateData data) {
     }
   }
   if (data.selectedProfile == null || data.selectedProfile!.trim().isEmpty) {
-    throw const FormatException('يجب اختيار بروفايل Hotspot.');
+    throw const FormatException('يجب اختيار فئة User Manager.');
   }
   final sharedUsers =
       CardNumberPolicy.parseAsciiInteger(data.sharedUsers.trim());
