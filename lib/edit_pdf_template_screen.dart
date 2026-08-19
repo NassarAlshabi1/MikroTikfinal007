@@ -1,6 +1,5 @@
 // edit_pdf_template_screen.dart
 
-import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -38,7 +37,6 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
 
   double _markerWidth = 100.0;
   double _markerHeight = 25.0;
-
 
   String? _selectedProfile;
   final _cardsPerPageController = TextEditingController();
@@ -80,12 +78,10 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      final response = await client
-          .talk([
-            '/ip/hotspot/user/profile/print',
-            '=.proplist=name',
-          ])
-          .timeout(const Duration(seconds: 20));
+      final response = await client.talk([
+        '/ip/hotspot/user/profile/print',
+        '=.proplist=name',
+      ]).timeout(const Duration(seconds: 20));
 
       final names = response
           .whereType<Map>()
@@ -130,8 +126,10 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
           _normalizedOffset.dy * imageSize.height,
         );
         if (widget.existingTemplate != null) {
-          _markerWidth = widget.existingTemplate!.markerWidthRatio * imageSize.width;
-          _markerHeight = widget.existingTemplate!.markerHeightRatio * imageSize.height;
+          _markerWidth =
+              widget.existingTemplate!.markerWidthRatio * imageSize.width;
+          _markerHeight =
+              widget.existingTemplate!.markerHeightRatio * imageSize.height;
         }
       });
     }
@@ -157,7 +155,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
         final renderObject = _imageKey.currentContext!.findRenderObject();
         if (renderObject is! RenderBox || !renderObject.hasSize) return;
         setState(() {
-          _offset = Offset(renderObject.size.width / 2, renderObject.size.height / 2);
+          _offset =
+              Offset(renderObject.size.width / 2, renderObject.size.height / 2);
         });
       });
     } catch (error) {
@@ -184,7 +183,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       return;
     }
     if (cardsPerPage == null || cardsPerPage < 1 || cardsPerPage > 1000) {
-      showErrorSnackBar(context, 'عدد الكروت في الصفحة يجب أن يكون بين 1 و1000.');
+      showErrorSnackBar(
+          context, 'عدد الكروت في الصفحة يجب أن يكون بين 1 و1000.');
       return;
     }
 
@@ -223,9 +223,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
 
       final appDir = await getApplicationDocumentsDirectory();
       final extension = p.extension(imageFile.path).toLowerCase();
-      final safeExtension = extension == '.png' || extension == '.webp'
-          ? extension
-          : '.jpg';
+      final safeExtension =
+          extension == '.png' || extension == '.webp' ? extension : '.jpg';
       final fileName =
           'pdf_template_${DateTime.now().microsecondsSinceEpoch}$safeExtension';
       final savedImage = File(p.join(appDir.path, fileName));
@@ -240,10 +239,10 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
         cardsPerPage: cardsPerPage,
         imageWidth: imageWidth,
         imageHeight: imageHeight,
-        markerWidthRatio: (_markerWidth / imageSizeOnScreen.width)
-            .clamp(0.001, 1.0),
-        markerHeightRatio: (_markerHeight / imageSizeOnScreen.height)
-            .clamp(0.001, 1.0),
+        markerWidthRatio:
+            (_markerWidth / imageSizeOnScreen.width).clamp(0.001, 1.0),
+        markerHeightRatio:
+            (_markerHeight / imageSizeOnScreen.height).clamp(0.001, 1.0),
       )..validate();
 
       await PdfTemplateStorage.save(newTemplate);
@@ -281,15 +280,16 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final profileNames = _routerProfiles;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_imageKey.currentContext != null && _offset == Offset.zero) {
-        final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
+        final RenderBox renderBox =
+            _imageKey.currentContext!.findRenderObject() as RenderBox;
         setState(() {
-          _offset = Offset(renderBox.size.width * _normalizedOffset.dx, renderBox.size.height * _normalizedOffset.dy);
+          _offset = Offset(renderBox.size.width * _normalizedOffset.dx,
+              renderBox.size.height * _normalizedOffset.dy);
         });
       }
     });
@@ -329,7 +329,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                   SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   ),
                                   SizedBox(width: 10),
                                   Text('جاري جلب فئات الكروت من MikroTik...'),
@@ -351,15 +352,17 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                 OutlinedButton.icon(
                                   onPressed: _loadProfilesFromRouter,
                                   icon: const Icon(Icons.refresh),
-                                  label: const Text('إعادة جلب الفئات من MikroTik'),
+                                  label: const Text(
+                                      'إعادة جلب الفئات من MikroTik'),
                                 ),
                               ],
                             )
                           else
                             DropdownButtonFormField<String>(
-                              initialValue: profileNames.contains(_selectedProfile)
-                                  ? _selectedProfile
-                                  : null,
+                              initialValue:
+                                  profileNames.contains(_selectedProfile)
+                                      ? _selectedProfile
+                                      : null,
                               style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
@@ -367,7 +370,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               dropdownColor: Colors.white,
                               decoration: const InputDecoration(
                                 labelText: 'فئة الكروت (Profile)',
-                                helperText: 'اختر فئة Hotspot التي سيُستخدم لها القالب',
+                                helperText:
+                                    'اختر فئة Hotspot التي سيُستخدم لها القالب',
                                 prefixIcon: Icon(Icons.category_outlined),
                               ),
                               items: profileNames
@@ -420,77 +424,79 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          const Text(
-                              'حرك المربع لتحديد منطقة طباعة الرقم',
+                          const Text('حرك المربع لتحديد منطقة طباعة الرقم',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 12),
                           GestureDetector(
                             onPanUpdate: (details) {
-                               if (_imageKey.currentContext == null) return;
-                               final RenderBox renderBox = _imageKey.currentContext!.findRenderObject() as RenderBox;
-                               final newOffset = _offset + details.delta;
+                              if (_imageKey.currentContext == null) return;
+                              final RenderBox renderBox =
+                                  _imageKey.currentContext!.findRenderObject()
+                                      as RenderBox;
+                              final newOffset = _offset + details.delta;
 
-                               final constrainedDx = newOffset.dx.clamp(0.0, renderBox.size.width);
-                               final constrainedDy = newOffset.dy.clamp(0.0, renderBox.size.height);
+                              final constrainedDx =
+                                  newOffset.dx.clamp(0.0, renderBox.size.width);
+                              final constrainedDy = newOffset.dy
+                                  .clamp(0.0, renderBox.size.height);
 
-                               setState(() {
-                                 _offset = Offset(constrainedDx, constrainedDy);
-                               });
+                              setState(() {
+                                _offset = Offset(constrainedDx, constrainedDy);
+                              });
                             },
                             child: Container(
-                                constraints:
-                                    const BoxConstraints(maxHeight: 300),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.grey.shade700),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Stack(
-                                  children: [
-                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: _imageFile == null
-                                          ? const Center(
-                                              child: Text(
-                                                  'اختر صورة للقالب أولاً'))
-                                          : Image.file(
-                                              _imageFile!,
-                                              key: _imageKey,
-                                              fit: BoxFit.contain,
-                                            ),
-                                    ),
-                                    if (_imageFile != null)
-                                      Positioned(
-                                        left: _offset.dx - (_markerWidth / 2),
-                                        top: _offset.dy - (_markerHeight / 2),
-                                        child: IgnorePointer(
-                                          child: Container(
-                                            width: _markerWidth,
-                                            height: _markerHeight,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.redAccent,
-                                                  width: 2),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              color: Colors.redAccent
-                                                  .withAlpha((255 * 0.3).round()),
-                                            ),
+                              constraints: const BoxConstraints(maxHeight: 300),
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade700),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: _imageFile == null
+                                        ? const Center(
+                                            child:
+                                                Text('اختر صورة للقالب أولاً'))
+                                        : Image.file(
+                                            _imageFile!,
+                                            key: _imageKey,
+                                            fit: BoxFit.contain,
+                                          ),
+                                  ),
+                                  if (_imageFile != null)
+                                    Positioned(
+                                      left: _offset.dx - (_markerWidth / 2),
+                                      top: _offset.dy - (_markerHeight / 2),
+                                      child: IgnorePointer(
+                                        child: Container(
+                                          width: _markerWidth,
+                                          height: _markerHeight,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                                color: Colors.redAccent,
+                                                width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            color: Colors.redAccent
+                                                .withAlpha((255 * 0.3).round()),
                                           ),
                                         ),
                                       ),
-                                  ],
-                                ),
+                                    ),
+                                ],
                               ),
+                            ),
                           ),
-
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              const Text('العرض:', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const Text('العرض:',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                               Expanded(
                                 child: Slider(
                                   value: _markerWidth,
@@ -509,7 +515,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                           ),
                           Row(
                             children: [
-                              const Text('الارتفاع:', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const Text('الارتفاع:',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                               Expanded(
                                 child: Slider(
                                   value: _markerHeight,
@@ -526,14 +534,14 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: _pickImage,
                             icon: const Icon(Icons.image_outlined),
                             label: const Text('اختر/غير صورة القالب'),
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).primaryColor),
+                                backgroundColor:
+                                    Theme.of(context).primaryColor),
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
