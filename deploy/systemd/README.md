@@ -4,9 +4,9 @@
 
 ## الوظائف المدعومة
 
-الخدمة تدعم مراقبة RouterOS v6، قراءة موارد الراوتر وواجهاته وجلسات User Manager، جلب فئات User Manager من `/tool/user-manager/profile/print`، واستقبال رقم كرت مثل `554377` ثم عرض الفئات كأزرار وإنشاء ملف PDF قياسي وإرساله إلى Telegram.
+الخدمة تدعم مراقبة RouterOS v6، قراءة موارد الراوتر وواجهاته وجلسات User Manager، جلب فئات User Manager من `/tool/user-manager/profile/print`، واستقبال رقم كرت مثل `554377` ثم عرض الفئات كأزرار وإنشاء ملف PDF قياسي وإرساله إلى Telegram. كما تعرض `/usage` استهلاك واجهة WAN منذ أول قراءة في اليوم، وترسل تقريراً يومياً، وتعرض `/uptime` و`/users` و`/logs`.
 
-هذا الإصدار لا ينفذ أوامر SSH عشوائية ولا ينشئ مستخدمي Hotspot أو User Manager؛ فهو يستخدم حساب MikroTik محدود القراءة ويتحقق من وجود المستخدم قبل إنشاء PDF. توليد المستخدمين أو تغييرهم يحتاج إلى طبقة أوامر منفصلة بقائمة سماح وتأكيد مزدوج.
+يسمح الجسر بأمر تحكم واحد فقط هو `/reboot`. لا ينفذ إعادة التشغيل مباشرة؛ بل يرسل زري تأكيد وإلغاء، ويتحقق من chat ID وnonce صالح لمدة 60 ثانية قبل إرسال `/system/reboot`. لا ينفذ أوامر SSH عشوائية ولا ينشئ مستخدمي Hotspot أو User Manager.
 
 ## المتطلبات
 
@@ -54,14 +54,18 @@ TELEGRAM_POLL_SECONDS=20
 TELEGRAM_OFFSET_FILE=/var/lib/mikrotik-telegram/.telegram_offset
 MONITOR_TARGET=1.1.1.1
 MONITOR_INTERVAL_SECONDS=30
+TRAFFIC_INTERFACE=ether1
+TRAFFIC_INTERVAL_SECONDS=60
+TRAFFIC_STATE_FILE=/var/lib/mikrotik-telegram/traffic-state.json
+TRAFFIC_DAILY_REPORT_TIME=23:59
 ```
 
 ## إعداد MikroTik RouterOS v6
 
-عنوان MikroTik المستخدم في هذا المشروع هو `192.168.1.100`. أنشئ مستخدم API للقراءة فقط من Terminal MikroTik، واستبدل كلمة المرور:
+عنوان MikroTik المستخدم في هذا المشروع هو `192.168.1.100`. أنشئ مستخدم API مخصصاً للجسر من Terminal MikroTik، بصلاحيات `read,api,test,write` فقط حتى يعمل أمر إعادة التشغيل المسموح، واستبدل كلمة المرور:
 
 ```routeros
-/user group add name=telegram-monitor policy=read,api,test comment="Telegram RouterOS v6 monitoring"
+/user group add name=telegram-monitor policy=read,api,test,write comment="Telegram RouterOS v6 bridge"
 /user add name=telegram-monitor group=telegram-monitor password="<كلمة-مرور-قوية>" comment="Telegram bridge API user"
 ```
 
@@ -72,7 +76,9 @@ MONITOR_INTERVAL_SECONDS=30
 /ip firewall filter add chain=input action=accept protocol=tcp dst-port=8728 src-address=192.168.1.50/32 place-before=0 comment="Allow Telegram bridge API"
 ```
 
-لا تستخدم `0.0.0.0/0` ولا تفتح منفذ `8728` على الإنترنت العام.
+لا تستخدم `0.0.0.0/0` ولا تفتح منفذ `8728` على الإنترنت العام. صلاحية `write` مطلوبة فقط لأن `/reboot` أمر تغيير؛ لا تمنح `ssh` أو `policy` كاملة، واختبر الحساب من جهاز الجسر قبل تفعيل الخدمة.
+
+تقرير الاستهلاك يعتمد على عدادات `rx-byte` و`tx-byte` التراكمية من RouterOS v6. عيّن `TRAFFIC_INTERFACE` إلى واجهة WAN واحدة مثل `ether1`; إذا تركتها فارغة سيجمع الجسر كل الواجهات المفعلة وقد يكرر المرور في bridge أو VLAN. يُحفظ ملف الحالة في `/var/lib/mikrotik-telegram` لأن وحدة systemd تسمح بالكتابة هناك فقط.
 
 ## تفعيل الخدمة
 
