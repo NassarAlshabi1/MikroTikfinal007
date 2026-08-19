@@ -37,5 +37,13 @@ void main() {
       expect(prompt, contains('لا تستخدم `placeholders`'));
       expect(prompt, contains('إذا تعارضت بيانات المستخدم مع snapshot'));
     });
+
+    test('أوصاف أوضاع التشخيص لا تعرض تقنيات RouterOS v7', () {
+      for (final mode in DiagnosticMode.values) {
+        expect(mode.displayName.toLowerCase(), isNot(contains('v7')));
+        expect(mode.description.toLowerCase(), isNot(contains('v7')));
+        expect(mode.description.toLowerCase(), isNot(contains('wireguard')));
+      }
+    });
   });
 }

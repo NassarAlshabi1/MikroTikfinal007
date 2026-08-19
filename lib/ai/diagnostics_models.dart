@@ -62,7 +62,7 @@ extension DiagnosticModeExtension on DiagnosticMode {
       case DiagnosticMode.hotspot:
         return 'مشاكل تسجيل الدخول والكروت والملفات الشخصية';
       case DiagnosticMode.vpn:
-        return 'IPSec, WireGuard, L2TP, OpenVPN, SSTP';
+        return 'IPSec, L2TP, OpenVPN, SSTP';
       case DiagnosticMode.routing:
         return 'Static routes, BGP, OSPF, BFD, policy routing';
       case DiagnosticMode.wifi:
