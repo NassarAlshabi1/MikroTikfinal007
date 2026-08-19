@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mikrotik_manager/snackbar_helpers.dart';
+import 'package:mikrotik_manager/theme/app_palette.dart';
 
 Future<BuildContext> pumpScaffold(WidgetTester tester) async {
   late BuildContext capturedContext;
@@ -36,7 +37,7 @@ void main() {
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
 
       final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
-      expect(snackBar.backgroundColor, Colors.redAccent);
+      expect(snackBar.backgroundColor, AppPalette.error);
       expect(snackBar.duration, const Duration(seconds: 5));
       expect(snackBar.behavior, SnackBarBehavior.floating);
       expect(snackBar.margin, const EdgeInsets.all(16));
@@ -55,7 +56,7 @@ void main() {
       expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
 
       final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
-      expect(snackBar.backgroundColor, const Color(0xFF4CAF50));
+      expect(snackBar.backgroundColor, AppPalette.success);
       expect(snackBar.duration, const Duration(seconds: 3));
       expect(snackBar.behavior, SnackBarBehavior.floating);
       expect(snackBar.margin, const EdgeInsets.all(16));
