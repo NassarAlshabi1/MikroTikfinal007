@@ -79,7 +79,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     try {
       client = await MikrotikConnector.connect();
       final response = await client.talk([
-        '/ip/hotspot/user/profile/print',
+        '/tool/user-manager/profile/print',
         '=.proplist=name',
       ]).timeout(const Duration(seconds: 20));
 
@@ -92,7 +92,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
         ..sort();
 
       if (names.isEmpty) {
-        throw const FormatException('لم يعثر MikroTik على أي فئة Hotspot.');
+        throw const FormatException(
+          'لم يعثر User Manager على أي فئة بروفايل.',
+        );
       }
 
       if (!mounted) return;
@@ -107,7 +109,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       if (!mounted) return;
       setState(() {
         _isLoadingProfiles = false;
-        _profileLoadError = 'تعذر جلب فئات الكروت من MikroTik: $error';
+        _profileLoadError = 'تعذر جلب فئات User Manager من MikroTik: $error';
         _selectedProfile = null;
       });
     } finally {
@@ -343,7 +345,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               children: [
                                 Text(
                                   _profileLoadError ??
-                                      'لم يُرجع MikroTik أي فئة Hotspot.',
+                                      'لم يُرجع User Manager أي فئة بروفايل.',
                                   style: TextStyle(
                                     color: Theme.of(context).colorScheme.error,
                                   ),
@@ -371,7 +373,7 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'فئة الكروت (Profile)',
                                 helperText:
-                                    'اختر فئة Hotspot التي سيُستخدم لها القالب',
+                                    'اختر فئة User Manager التي سيُستخدم لها القالب',
                                 prefixIcon: Icon(Icons.category_outlined),
                               ),
                               items: profileNames

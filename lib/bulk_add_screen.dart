@@ -42,7 +42,7 @@ class BulkAddScreen extends ConsumerStatefulWidget {
     required this.profiles,
     required this.isVersion7OrNewer,
     required this.username,
-    this.serviceMode = MikrotikServiceMode.hotspot,
+    this.serviceMode = MikrotikServiceMode.userManager,
   });
 
   @override
@@ -137,7 +137,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     } catch (e) {
       debugPrint('[BulkAdd] local job cleanup error: $e');
     }
-    // بروفايلات فئة الكروت مصدرها MikroTik؛ القائمة الممررة أو الكاش
+    // فئات الكروت مصدرها User Manager في MikroTik؛ القائمة الممررة أو الكاش
     // تستخدم فقط كبيانات أولية/بديلة أثناء تعذر الاتصال.
     await _loadProfilesFromSources();
   }
@@ -159,15 +159,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     }
   }
 
-  String get _profileCommand =>
-      widget.serviceMode == MikrotikServiceMode.userManager
-          ? '/tool/user-manager/profile/print'
-          : '/ip/hotspot/user/profile/print';
-
-  String get _profileSourceLabel =>
-      widget.serviceMode == MikrotikServiceMode.userManager
-          ? 'User Manager'
-          : 'Hotspot';
+  static const _userManagerProfilesCommand = '/tool/user-manager/profile/print';
+  static const _profileSourceLabel = 'User Manager';
 
   Future<bool> _loadProfilesFromRouter({bool showErrors = true}) async {
     if (_isLoadingProfiles) return false;
@@ -177,7 +170,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     try {
       client = await MikrotikConnector.connect();
       final response = await client.talk([
-        _profileCommand,
+        _userManagerProfilesCommand,
         '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
       ]);
       final profiles = response
@@ -211,7 +204,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       if (showErrors && mounted) {
         showErrorSnackBar(
           context,
-          'تعذر تحميل فئات $_profileSourceLabel من MikroTik: $e',
+          'تعذر تحميل فئات User Manager من MikroTik: $e',
         );
       }
       return false;

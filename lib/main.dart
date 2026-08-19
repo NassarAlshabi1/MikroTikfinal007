@@ -972,9 +972,7 @@ class ServiceItem {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>> _profiles = [];
   bool _isLoadingProfiles = true;
-  // نبدأ بـ User Manager لأنه المصدر الظاهر لفئات الكروت في الإصدارات
-  // المستخدمة للتطبيق، ثم نرجع تلقائياً إلى Hotspot عند عدم توفره.
-  MikrotikMode _selectedMode = MikrotikMode.userManager;
+  // فئات الكروت في شاشة الإدارة مصدرها User Manager فقط.
   bool _isNetworkLinked = false;
   String _clientName = '';
 
@@ -1170,63 +1168,41 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     showErrorSnackBar(context, message);
   }
 
-  String _profileCommandFor(MikrotikMode mode) =>
-      mode == MikrotikMode.userManager
-          ? '/tool/user-manager/profile/print'
-          : '/ip/hotspot/user/profile/print';
+  static const _userManagerProfilesCommand = '/tool/user-manager/profile/print';
 
-  MikrotikServiceMode get _serviceMode =>
-      _selectedMode == MikrotikMode.userManager
-          ? MikrotikServiceMode.userManager
-          : MikrotikServiceMode.hotspot;
+  MikrotikServiceMode get _serviceMode => MikrotikServiceMode.userManager;
 
   Future<void> _fetchProfiles() async {
     if (mounted) setState(() => _isLoadingProfiles = true);
     RouterOSClient? client;
-    Object? lastError;
     try {
       client = await MikrotikConnector.connect();
-      final modes = <MikrotikMode>[
-        _selectedMode,
-        if (_selectedMode != MikrotikMode.hotspot) MikrotikMode.hotspot,
-        if (_selectedMode != MikrotikMode.userManager) MikrotikMode.userManager,
-      ];
-
-      for (final mode in modes) {
-        try {
-          final response = await client.talk([
-            _profileCommandFor(mode),
-            '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
-          ]);
-          final profiles = response
-              .whereType<Map>()
-              .map((profile) => Map<String, dynamic>.from(profile))
-              .where((profile) =>
-                  profile['name']?.toString().trim().isNotEmpty == true)
-              .toList(growable: false);
-          if (profiles.isEmpty) continue;
-
-          if (mounted) {
-            setState(() {
-              _selectedMode = mode;
-              _profiles = profiles;
-            });
-          }
-          return;
-        } catch (e) {
-          lastError = e;
-          debugPrint('[Home] ${mode.name} profile loading error: $e');
-        }
+      final response = await client.talk([
+        _userManagerProfilesCommand,
+        '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
+      ]);
+      final profiles = response
+          .whereType<Map>()
+          .map((profile) => Map<String, dynamic>.from(profile))
+          .where((profile) =>
+              profile['name']?.toString().trim().isNotEmpty == true)
+          .toList(growable: false);
+      if (profiles.isEmpty) {
+        throw StateError(
+          'لم يعثر User Manager على أي فئات بروفايل.',
+        );
       }
-
-      throw StateError(
-        lastError == null
-            ? 'لم يعثر الراوتر على أي فئات User Manager أو Hotspot.'
-            : 'تعذر جلب فئات User Manager أو Hotspot: $lastError',
-      );
+      if (mounted) {
+        setState(() {
+          _profiles = profiles;
+        });
+      }
     } catch (e) {
       if (mounted) {
-        showErrorSnackBar(context, 'حدث خطأ أثناء جلب فئات الكروت: $e');
+        showErrorSnackBar(
+          context,
+          'تعذر جلب فئات User Manager من MikroTik: $e',
+        );
       }
     } finally {
       MikrotikConnector.release(client);
