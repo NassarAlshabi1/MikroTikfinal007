@@ -53,3 +53,5 @@ app.*.map.json
 .telegram_offset
 telegram_bridge/__pycache__/
 
+# Local RouterOS files may contain Telegram tokens or router credentials
+deploy/routeros/*-local.rsc

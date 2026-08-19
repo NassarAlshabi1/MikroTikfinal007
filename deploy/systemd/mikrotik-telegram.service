@@ -1,0 +1,23 @@
+[Unit]
+Description=MikroTik RouterOS v6 Telegram Bridge
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=mikrotik-telegram
+Group=mikrotik-telegram
+WorkingDirectory=/opt/mikrotik-telegram
+EnvironmentFile=/etc/mikrotik-telegram/bridge.env
+ExecStart=/usr/bin/python3 /opt/mikrotik-telegram/telegram_bridge.py
+Restart=always
+RestartSec=10
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/mikrotik-telegram
+
+[Install]
+WantedBy=multi-user.target
