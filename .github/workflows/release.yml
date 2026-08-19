@@ -202,16 +202,32 @@ jobs:
           path: release-artifacts
 
       - name: Prepare release files
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p release-files
-          # Android files
-          cp release-artifacts/android-release-${{ env.RELEASE_VERSION }}/app-release.apk release-files/mikrotik-manager-${{ env.RELEASE_VERSION }}.apk
-          cp release-artifacts/android-release-${{ env.RELEASE_VERSION }}/app-release.aab release-files/mikrotik-manager-${{ env.RELEASE_VERSION }}.aab
-          
-          # Other platform files
-          cp release-artifacts/web-release-${{ env.RELEASE_VERSION }}/mikrotik-manager-web-${{ env.RELEASE_VERSION }}.tar.gz release-files/
-          cp release-artifacts/windows-release-${{ env.RELEASE_VERSION }}/mikrotik-manager-windows-${{ env.RELEASE_VERSION }}.zip release-files/
-          cp release-artifacts/linux-release-${{ env.RELEASE_VERSION }}/mikrotik-manager-linux-${{ env.RELEASE_VERSION }}.tar.gz release-files/
+
+          # upload-artifact may retain the build directory prefix. Locate files
+          # by their stable artifact names instead of assuming one layout.
+          apk_path="$(find release-artifacts -type f -name 'app-release.apk' -print -quit)"
+          aab_path="$(find release-artifacts -type f -name 'app-release.aab' -print -quit)"
+          web_path="$(find release-artifacts -type f -name 'mikrotik-manager-web-${{ env.RELEASE_VERSION }}.tar.gz' -print -quit)"
+          windows_path="$(find release-artifacts -type f -name 'mikrotik-manager-windows-${{ env.RELEASE_VERSION }}.zip' -print -quit)"
+          linux_path="$(find release-artifacts -type f -name 'mikrotik-manager-linux-${{ env.RELEASE_VERSION }}.tar.gz' -print -quit)"
+
+          for artifact in "$apk_path" "$aab_path" "$web_path" "$windows_path" "$linux_path"; do
+            if [[ -z "$artifact" || ! -f "$artifact" ]]; then
+              echo "Required release artifact was not found: $artifact" >&2
+              find release-artifacts -type f -print >&2
+              exit 1
+            fi
+          done
+
+          cp "$apk_path" "release-files/mikrotik-manager-${{ env.RELEASE_VERSION }}.apk"
+          cp "$aab_path" "release-files/mikrotik-manager-${{ env.RELEASE_VERSION }}.aab"
+          cp "$web_path" release-files/
+          cp "$windows_path" release-files/
+          cp "$linux_path" release-files/
 
       - name: Generate release notes
         id: release-notes
