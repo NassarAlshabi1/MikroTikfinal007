@@ -14,6 +14,7 @@ import 'package:dio/dio.dart';
 import 'services/app_logger.dart';
 import 'services/secure_credentials_storage.dart';
 import 'services/mikrotik_service_mode.dart';
+import 'services/user_manager_profile_parser.dart';
 
 // --- افترض أن هذه الملفات موجودة في مشروعك ---
 import 'add_user_screen.dart';
@@ -1167,25 +1168,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      final response = await client.talk([
+      var response = await client.talk([
         _userManagerProfilesCommand,
         '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
       ]);
-      final profiles = response
-          .whereType<Map>()
-          .map((profile) => Map<String, dynamic>.from(profile))
-          .where((profile) =>
-              profile['name']?.toString().trim().isNotEmpty == true)
-          .toList(growable: false);
+      var profiles = UserManagerProfileParser.parse(
+        response
+            .whereType<Map>()
+            .map((profile) => Map<String, dynamic>.from(profile)),
+      );
+
+      // بعض إصدارات User Manager v6 أو wrappers القديمة لا تعيد الحقول
+      // عند استخدام proplist؛ أعد القراءة بدون proplist قبل اعتبار النتيجة
+      // فارغة، مع إبقاء المسار User Manager فقط.
       if (profiles.isEmpty) {
-        throw StateError(
-          'لم يعثر User Manager على أي فئات بروفايل.',
+        response = await client.talk([_userManagerProfilesCommand]);
+        profiles = UserManagerProfileParser.parse(
+          response
+              .whereType<Map>()
+              .map((profile) => Map<String, dynamic>.from(profile)),
         );
       }
+
       if (mounted) {
         setState(() {
           _profiles = profiles;
         });
+        if (profiles.isEmpty) {
+          showSuccessSnackBar(
+            context,
+            'تم الاتصال بـ User Manager، لكن لا توجد فئات بروفايل بعد. '
+            'أنشئ فئة من User Manager ثم اضغط تحديث.',
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
