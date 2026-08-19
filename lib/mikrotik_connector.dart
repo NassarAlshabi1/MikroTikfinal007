@@ -112,16 +112,19 @@ class MikrotikConnector {
         ? (int.tryParse(portString) ?? (useSsl ? 8729 : 8728))
         : (useSsl ? 8729 : 8728);
 
-    if (ip == null ||
-        ip.trim().isEmpty ||
-        user == null ||
-        user.trim().isEmpty) {
+    if (ip == null || ip.trim().isEmpty) {
       throw const MikrotikCredentialsMissingException(
-          'IP address or username is not set.');
+        'عنوان IP غير محدد. الرجاء إدخال عنوان الراوتر.',
+      );
+    }
+    if (user == null || user.trim().isEmpty) {
+      throw const MikrotikCredentialsMissingException('اسم المستخدم غير محدد.');
     }
     if (pass == null) {
-      throw const MikrotikCredentialsMissingException(
-          'MikroTik password is not set.');
+      throw const MikrotikCredentialsMissingException('كلمة المرور غير محددة.');
+    }
+    if (port < 1 || port > 65535) {
+      throw MikrotikCredentialsMissingException('رقم المنفذ غير صالح: $port');
     }
 
     return MikrotikConnectionConfig(

@@ -244,12 +244,12 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
                     children: [
                       pw.Text(
                         'Wi-Fi',
-                        style: const pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.purple),
+                        style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.purple),
                       ),
                       pw.SizedBox(height: 12),
                       pw.Text(
                         username,
-                        style: const pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+                        style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
                         textAlign: pw.TextAlign.center,
                       ),
                       pw.SizedBox(height: 4),
