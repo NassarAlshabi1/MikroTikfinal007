@@ -972,8 +972,9 @@ class ServiceItem {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>> _profiles = [];
   bool _isLoadingProfiles = true;
-  // التطبيق مخصص لكروت Hotspot المحلية في RouterOS v6.
-  final MikrotikMode _selectedMode = MikrotikMode.hotspot;
+  // نبدأ بـ User Manager لأنه المصدر الظاهر لفئات الكروت في الإصدارات
+  // المستخدمة للتطبيق، ثم نرجع تلقائياً إلى Hotspot عند عدم توفره.
+  MikrotikMode _selectedMode = MikrotikMode.userManager;
   bool _isNetworkLinked = false;
   String _clientName = '';
 
@@ -1169,25 +1170,63 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     showErrorSnackBar(context, message);
   }
 
-  Future<void> _fetchProfiles() async {
-    setState(() => _isLoadingProfiles = true);
-    RouterOSClient? client;
-    try {
-      client = await MikrotikConnector.connect();
-      final command = _selectedMode == MikrotikMode.userManager
+  String _profileCommandFor(MikrotikMode mode) =>
+      mode == MikrotikMode.userManager
           ? '/tool/user-manager/profile/print'
           : '/ip/hotspot/user/profile/print';
-      final response = await client.talk([command]);
-      if (mounted) {
-        setState(() {
-          _profiles =
-              response.map((p) => Map<String, dynamic>.from(p)).toList();
-        });
+
+  MikrotikServiceMode get _serviceMode =>
+      _selectedMode == MikrotikMode.userManager
+          ? MikrotikServiceMode.userManager
+          : MikrotikServiceMode.hotspot;
+
+  Future<void> _fetchProfiles() async {
+    if (mounted) setState(() => _isLoadingProfiles = true);
+    RouterOSClient? client;
+    Object? lastError;
+    try {
+      client = await MikrotikConnector.connect();
+      final modes = <MikrotikMode>[
+        _selectedMode,
+        if (_selectedMode != MikrotikMode.hotspot) MikrotikMode.hotspot,
+        if (_selectedMode != MikrotikMode.userManager) MikrotikMode.userManager,
+      ];
+
+      for (final mode in modes) {
+        try {
+          final response = await client.talk([
+            _profileCommandFor(mode),
+            '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
+          ]);
+          final profiles = response
+              .whereType<Map>()
+              .map((profile) => Map<String, dynamic>.from(profile))
+              .where((profile) =>
+                  profile['name']?.toString().trim().isNotEmpty == true)
+              .toList(growable: false);
+          if (profiles.isEmpty) continue;
+
+          if (mounted) {
+            setState(() {
+              _selectedMode = mode;
+              _profiles = profiles;
+            });
+          }
+          return;
+        } catch (e) {
+          lastError = e;
+          debugPrint('[Home] ${mode.name} profile loading error: $e');
+        }
       }
+
+      throw StateError(
+        lastError == null
+            ? 'لم يعثر الراوتر على أي فئات User Manager أو Hotspot.'
+            : 'تعذر جلب فئات User Manager أو Hotspot: $lastError',
+      );
     } catch (e) {
       if (mounted) {
-        showErrorSnackBar(
-            context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
+        showErrorSnackBar(context, 'حدث خطأ أثناء جلب فئات الكروت: $e');
       }
     } finally {
       MikrotikConnector.release(client);
@@ -1209,7 +1248,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 profiles: _profiles,
                 isVersion7OrNewer: widget.isVersion7OrNewer,
                 customer: widget.username,
-                serviceMode: MikrotikServiceMode.hotspot),
+                serviceMode: _serviceMode),
           ));
         },
       ),
@@ -1223,7 +1262,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 profiles: _profiles,
                 isVersion7OrNewer: widget.isVersion7OrNewer,
                 username: widget.username,
-                serviceMode: MikrotikServiceMode.hotspot),
+                serviceMode: _serviceMode),
           ));
         },
       ),

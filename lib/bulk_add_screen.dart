@@ -159,6 +159,16 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     }
   }
 
+  String get _profileCommand =>
+      widget.serviceMode == MikrotikServiceMode.userManager
+          ? '/tool/user-manager/profile/print'
+          : '/ip/hotspot/user/profile/print';
+
+  String get _profileSourceLabel =>
+      widget.serviceMode == MikrotikServiceMode.userManager
+          ? 'User Manager'
+          : 'Hotspot';
+
   Future<bool> _loadProfilesFromRouter({bool showErrors = true}) async {
     if (_isLoadingProfiles) return false;
     if (mounted) setState(() => _isLoadingProfiles = true);
@@ -166,11 +176,21 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      final response = await client.talk(['/ip/hotspot/user/profile/print']);
+      final response = await client.talk([
+        _profileCommand,
+        '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
+      ]);
       final profiles = response
+          .whereType<Map>()
           .map((profile) => Map<String, dynamic>.from(profile))
-          .toList();
+          .toList(growable: false);
       final normalizedProfiles = _normalizeProfiles(profiles);
+
+      // لا نمسح القائمة الممررة من الشاشة الأم إذا أعاد الراوتر استجابة فارغة.
+      // هذا يحافظ على إمكانية إنشاء الكروت حتى مع صلاحية API جزئية أو راوتر بلا
+      // بروفايلات ظاهرة في هذه اللحظة.
+      if (normalizedProfiles.isEmpty) return false;
+
       try {
         await CardPersistenceService.cacheHotspotProfiles(normalizedProfiles);
       } catch (e) {
@@ -185,11 +205,14 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
           }
         });
       }
-      return normalizedProfiles.isNotEmpty;
+      return true;
     } catch (e) {
       debugPrint('[BulkAdd] profile loading error: $e');
       if (showErrors && mounted) {
-        showErrorSnackBar(context, 'تعذر تحميل بروفايلات Hotspot: $e');
+        showErrorSnackBar(
+          context,
+          'تعذر تحميل فئات $_profileSourceLabel من MikroTik: $e',
+        );
       }
       return false;
     } finally {
@@ -1171,10 +1194,10 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                       decoration: _fieldDecoration(
                         labelText: 'الفئة (البروفايل)',
                         helperText: _isLoadingProfiles
-                            ? 'جاري تحميل بروفايلات Hotspot من MikroTik...'
+                            ? 'جاري تحميل فئات $_profileSourceLabel من MikroTik...'
                             : _availableProfiles.isEmpty
-                                ? 'لا توجد بروفايلات محملة؛ اضغط تحديث أو تحقق من الاتصال.'
-                                : 'المصدر: بروفايلات Hotspot الحالية من MikroTik',
+                                ? 'لا توجد بروفايلات محملة (فئات)؛ اضغط تحديث أو تحقق من الاتصال.'
+                                : 'المصدر: فئات $_profileSourceLabel الحالية من MikroTik',
                         prefixIcon: Icons.category_rounded,
                         suffixIcon: IconButton(
                           tooltip: 'تحديث البروفايلات',
