@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
+import 'theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
+import 'active_users_screen.dart';
+import 'network_doctor_screen.dart';
 
 class SystemDashboardScreen extends StatefulWidget {
   const SystemDashboardScreen({super.key});
@@ -16,17 +19,25 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     with AutomaticKeepAliveClientMixin {
   Timer? _refreshTimer;
   bool _isLoading = false;
+  bool _refreshInFlight = false;
   String? _errorMessage;
+  String? _lastShownError;
+  DateTime? _lastErrorSnackAt;
 
   // System Resource data
   String _uptime = '';
   String _version = '';
   String _boardName = '';
+  String _cpu = ''; // ignore: unused_field
+  String _cpuCount = ''; // ignore: unused_field
+  String _cpuFrequency = ''; // ignore: unused_field
   int _cpuLoad = 0;
   int _freeMemory = 0;
   int _totalMemory = 0;
   int _freeHddSpace = 0;
   int _totalHddSpace = 0;
+  String _architectureName = ''; // ignore: unused_field
+  String _platform = ''; // ignore: unused_field
 
   // System Health data
   String _voltage = 'غير متاح';
@@ -34,6 +45,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   // RouterBoard data
   String _model = '';
+  String _serialNumber = ''; // ignore: unused_field
+  String _firmwareType = ''; // ignore: unused_field
+  String _factoryFirmware = ''; // ignore: unused_field
+  String _currentFirmware = ''; // ignore: unused_field
+  String _upgradeFirmware = ''; // ignore: unused_field
 
   // Interface Statistics
   int _rxBitsPerSecond = 0;
@@ -46,6 +62,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   // System Clock
   String _time = '';
   String _date = '';
+  String _timeZoneName = ''; // ignore: unused_field
 
   // History for Charts (last 20 data points)
   List<FlSpot> _cpuHistory = [];
@@ -59,7 +76,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   final double _cpuThreshold = 80.0;
   final double _memoryThreshold = 90.0;
   final double _temperatureThreshold = 70.0;
-  
+
   // Track last alert times to avoid spam
   DateTime? _lastCpuAlertTime;
   DateTime? _lastMemoryAlertTime;
@@ -88,15 +105,17 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   }
 
   Future<void> _fetchData() async {
-    if (!mounted) return;
+    if (!mounted || _refreshInFlight) return;
+    _refreshInFlight = true;
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
+    RouterOSClient? client;
     try {
-      final client = await MikrotikConnector.connect();
+      client = await MikrotikConnector.connect();
 
       // جلب معلومات النظام والأداء
       await _fetchSystemResource(client);
@@ -122,6 +141,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       // Check for alerts
       _checkAlerts();
 
+      _lastShownError = null;
+      _lastErrorSnackAt = null;
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -129,12 +150,42 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       }
     } catch (e) {
       if (mounted) {
+        // 🔧 رسالة خطأ أوضح للمستخدم — تصنيف حسب نوع الخطأ
+        String userMessage;
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('credentials') || errorStr.contains('password')) {
+          userMessage =
+              'بيانات الاعتماد غير مكتملة. تأكد من تسجيل الدخول أولاً.';
+        } else if (errorStr.contains('timeout') ||
+            errorStr.contains('timed out')) {
+          userMessage =
+              'انتهت مهلة الاتصال. تأكد من أن الراوتر يعمل وقابل للوصول.';
+        } else if (errorStr.contains('socket') ||
+            errorStr.contains('connection refused')) {
+          userMessage = 'تعذّر الاتصال بالراوتر. تحقق من الـ IP والمنفذ.';
+        } else if (errorStr.contains('login')) {
+          userMessage = 'فشل تسجيل الدخول. تحقق من اسم المستخدم وكلمة المرور.';
+        } else {
+          userMessage = 'فشل الاتصال: ${e.toString()}';
+        }
+
         setState(() {
           _isLoading = false;
-          _errorMessage = 'فشل الاتصال بالراوتر: ${e.toString()}';
+          _errorMessage = userMessage;
         });
-        showErrorSnackBar(context, 'فشل الاتصال بالراوتر. تحقق من إعدادات الشبكة.');
+        final now = DateTime.now();
+        final shouldShowSnackBar = _lastShownError != userMessage ||
+            _lastErrorSnackAt == null ||
+            now.difference(_lastErrorSnackAt!) >= const Duration(seconds: 30);
+        if (shouldShowSnackBar) {
+          _lastShownError = userMessage;
+          _lastErrorSnackAt = now;
+          showErrorSnackBar(context, userMessage);
+        }
       }
+    } finally {
+      MikrotikConnector.release(client);
+      _refreshInFlight = false;
     }
   }
 
@@ -146,11 +197,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _uptime = data['uptime'] ?? '';
         _version = data['version'] ?? '';
         _boardName = data['board-name'] ?? '';
+        _cpu = data['cpu'] ?? '';
+        _cpuCount = data['cpu-count'] ?? '';
+        _cpuFrequency = data['cpu-frequency'] ?? '';
         _cpuLoad = int.tryParse(data['cpu-load']?.toString() ?? '0') ?? 0;
         _freeMemory = int.tryParse(data['free-memory']?.toString() ?? '0') ?? 0;
-        _totalMemory = int.tryParse(data['total-memory']?.toString() ?? '0') ?? 0;
-        _freeHddSpace = int.tryParse(data['free-hdd-space']?.toString() ?? '0') ?? 0;
-        _totalHddSpace = int.tryParse(data['total-hdd-space']?.toString() ?? '0') ?? 0;
+        _totalMemory =
+            int.tryParse(data['total-memory']?.toString() ?? '0') ?? 0;
+        _freeHddSpace =
+            int.tryParse(data['free-hdd-space']?.toString() ?? '0') ?? 0;
+        _totalHddSpace =
+            int.tryParse(data['total-hdd-space']?.toString() ?? '0') ?? 0;
+        _architectureName = data['architecture-name'] ?? '';
+        _platform = data['platform'] ?? '';
       }
     } catch (e) {
       debugPrint('Error fetching system resource: $e');
@@ -178,6 +237,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       if (response.isNotEmpty) {
         final data = response.first;
         _model = data['model'] ?? '';
+        _serialNumber = data['serial-number'] ?? '';
+        _firmwareType = data['firmware-type'] ?? '';
+        _factoryFirmware = data['factory-firmware'] ?? '';
+        _currentFirmware = data['current-firmware'] ?? '';
+        _upgradeFirmware = data['upgrade-firmware'] ?? '';
       }
     } catch (e) {
       debugPrint('Error fetching routerboard: $e');
@@ -188,12 +252,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     try {
       // جلب قائمة الـ interfaces
       final interfaces = await client.talk(['/interface/print']);
-      
+
       // البحث عن Interface مناسب (ether1 أو أول interface نشط)
       String? targetInterface;
       for (var iface in interfaces) {
         final name = iface['name']?.toString() ?? '';
-        if (name.toLowerCase().contains('ether1') || name.toLowerCase().contains('wan')) {
+        if (name.toLowerCase().contains('ether1') ||
+            name.toLowerCase().contains('wan')) {
           targetInterface = name;
           break;
         }
@@ -213,8 +278,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
         if (response.isNotEmpty) {
           final data = response.first;
-          _rxBitsPerSecond = int.tryParse(data['rx-bits-per-second']?.toString() ?? '0') ?? 0;
-          _txBitsPerSecond = int.tryParse(data['tx-bits-per-second']?.toString() ?? '0') ?? 0;
+          _rxBitsPerSecond =
+              int.tryParse(data['rx-bits-per-second']?.toString() ?? '0') ?? 0;
+          _txBitsPerSecond =
+              int.tryParse(data['tx-bits-per-second']?.toString() ?? '0') ?? 0;
         }
       }
     } catch (e) {
@@ -226,23 +293,28 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Future<void> _fetchActiveUsers(RouterOSClient client) async {
     try {
-      // محاولة جلب المستخدمين من Hotspot
+      // Hotspot المحلي هو المصدر الأساسي للتطبيق، مع fallback صريح فقط.
+      var hotspotAvailable = false;
       try {
         final hotspotResponse = await client.talk(['/ip/hotspot/active/print']);
         _activeUsers = hotspotResponse.length;
+        hotspotAvailable = true;
       } catch (e) {
-        // إذا فشل Hotspot، جرب User Manager
         try {
-          final userManagerResponse = await client.talk(['/tool/user-manager/session/print']);
+          final userManagerResponse =
+              await client.talk(['/tool/user-manager/session/print']);
           _activeUsers = userManagerResponse.length;
         } catch (e) {
           _activeUsers = 0;
         }
       }
 
-      // جلب إجمالي المستخدمين (من User Manager)
       try {
-        final allUsers = await client.talk(['/tool/user-manager/user/print']);
+        final allUsers = await client.talk([
+          hotspotAvailable
+              ? '/ip/hotspot/user/print'
+              : '/tool/user-manager/user/print',
+        ]);
         _totalUsers = allUsers.length;
       } catch (e) {
         _totalUsers = 0;
@@ -261,6 +333,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         final data = response.first;
         _time = data['time'] ?? '';
         _date = data['date'] ?? '';
+        _timeZoneName = data['time-zone-name'] ?? '';
       }
     } catch (e) {
       debugPrint('Error fetching system clock: $e');
@@ -342,7 +415,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         : 0.0;
 
     _cpuHistory.add(FlSpot(_dataPointIndex.toDouble(), cpuValue));
-    _memoryHistory.add(FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage));
+    _memoryHistory
+        .add(FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage));
 
     // Keep only last 20 data points using sublist to avoid repeated removals
     if (_cpuHistory.length > 20) {
@@ -357,17 +431,17 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   void _checkAlerts() {
     final now = DateTime.now();
-    
+
     // Check CPU Alert
     if (_cpuLoad >= _cpuThreshold) {
       _cpuAlert = true;
-      if (_lastCpuAlertTime == null || 
+      if (_lastCpuAlertTime == null ||
           now.difference(_lastCpuAlertTime!).inMinutes >= 5) {
         _showAlert(
           'تحذير: استخدام المعالج مرتفع!',
           'استخدام المعالج وصل إلى $_cpuLoad% (الحد: ${_cpuThreshold.toInt()}%)',
           Icons.warning_amber_rounded,
-          Colors.orange,
+          Theme.of(context).appColors.warning,
         );
         _lastCpuAlertTime = now;
       }
@@ -379,16 +453,16 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     final memoryUsedPercentage = _totalMemory > 0
         ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
         : 0.0;
-    
+
     if (memoryUsedPercentage >= _memoryThreshold) {
       _memoryAlert = true;
-      if (_lastMemoryAlertTime == null || 
+      if (_lastMemoryAlertTime == null ||
           now.difference(_lastMemoryAlertTime!).inMinutes >= 5) {
         _showAlert(
           'تحذير: الذاكرة ممتلئة!',
           'استخدام الذاكرة وصل إلى ${memoryUsedPercentage.toStringAsFixed(1)}% (الحد: ${_memoryThreshold.toInt()}%)',
           Icons.memory,
-          Colors.red,
+          Theme.of(context).appColors.error,
         );
         _lastMemoryAlertTime = now;
       }
@@ -401,13 +475,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       final temp = double.tryParse(_temperature);
       if (temp != null && temp >= _temperatureThreshold) {
         _temperatureAlert = true;
-        if (_lastTempAlertTime == null || 
+        if (_lastTempAlertTime == null ||
             now.difference(_lastTempAlertTime!).inMinutes >= 5) {
           _showAlert(
             'تحذير: حرارة الجهاز مرتفعة!',
             'درجة الحرارة وصلت إلى $temp°C (الحد: ${_temperatureThreshold.toInt()}°C)',
             Icons.thermostat,
-            Colors.red,
+            Theme.of(context).appColors.error,
           );
           _lastTempAlertTime = now;
         }
@@ -419,12 +493,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   void _showAlert(String title, String message, IconData icon, Color color) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 28),
+            Icon(icon,
+                color: Theme.of(context).colorScheme.onSurface, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -473,12 +548,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+              Icon(Icons.error_outline,
+                  size: 64, color: Theme.of(context).appColors.error),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -519,7 +595,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildAlertBanner(),
               if (_cpuAlert || _memoryAlert || _temperatureAlert)
                 const SizedBox(height: 16),
-              
+
               // بطاقة معلومات النظام الرئيسية
               _buildMainSystemCard(theme),
               const SizedBox(height: 16),
@@ -529,7 +605,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildChartCard(
                   title: 'استخدام المعالج (CPU)',
                   data: _cpuHistory,
-                  color: _cpuAlert ? Colors.red : Colors.purple,
+                  color: _cpuAlert
+                      ? Theme.of(context).appColors.error
+                      : Theme.of(context).appColors.primary,
                   unit: '%',
                   isAlert: _cpuAlert,
                 ),
@@ -537,7 +615,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildChartCard(
                   title: 'استخدام الذاكرة (RAM)',
                   data: _memoryHistory,
-                  color: _memoryAlert ? Colors.red : Colors.blue,
+                  color: _memoryAlert
+                      ? Theme.of(context).appColors.error
+                      : Theme.of(context).appColors.info,
                   unit: '%',
                   isAlert: _memoryAlert,
                 ),
@@ -557,25 +637,25 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     'مدة التشغيل',
                     _formatUptime(_uptime),
                     Icons.timer,
-                    Colors.blue,
+                    Theme.of(context).appColors.info,
                   ),
                   _buildInfoCard(
                     'المستخدمين النشطين',
                     '$_activeUsers من $_totalUsers',
                     Icons.people,
-                    Colors.green,
+                    Theme.of(context).appColors.success,
                   ),
                   _buildInfoCard(
                     'سرعة النت',
                     '${_formatSpeed(_rxBitsPerSecond)} ⬇\n${_formatSpeed(_txBitsPerSecond)} ⬆',
                     Icons.speed,
-                    Colors.cyan,
+                    Theme.of(context).appColors.info,
                   ),
                   _buildInfoCard(
                     'التخزين',
                     '${_formatBytes(_totalHddSpace - _freeHddSpace)} من ${_formatBytes(_totalHddSpace)}\n${_calculatePercentage(_freeHddSpace, _totalHddSpace).toStringAsFixed(1)}%',
                     Icons.storage,
-                    Colors.orange,
+                    Theme.of(context).appColors.warning,
                   ),
                 ],
               ),
@@ -594,7 +674,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     const SizedBox(width: 12),
                     const Text(
                       'البحث عن المشاكل',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -610,46 +691,26 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 mainAxisSpacing: 12,
                 children: [
                   _buildActionButton(
-                    'الأكتشف',
-                    Icons.person_search,
+                    'المستخدمون النشطون',
+                    Icons.people_alt_outlined,
                     theme.primaryColor,
                     () {
-                      // TODO: Navigate to HotspotActiveUsersScreen
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ActiveUsersScreen(),
+                        ),
                       );
                     },
                   ),
                   _buildActionButton(
-                    'البروديائد',
-                    Icons.wifi_tethering,
-                    Colors.grey,
+                    'فحص الشبكة',
+                    Icons.network_check,
+                    Theme.of(context).appColors.info,
                     () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
-                    'يوزر متجر',
-                    Icons.group,
-                    Colors.grey,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
-                  _buildActionButton(
-                    'هوتسبوت',
-                    Icons.wifi,
-                    theme.primaryColor,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NetworkDoctorScreen(),
+                        ),
                       );
                     },
                   ),
@@ -677,7 +738,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -686,23 +748,24 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          const Icon(Icons.router, size: 64, color: Colors.white),
+          Icon(Icons.router,
+              size: 64, color: Theme.of(context).colorScheme.onSurface),
           const SizedBox(height: 16),
           Text(
             _boardName.isEmpty ? _model : _boardName,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             _version,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: Colors.white70,
+              color: Theme.of(context).textTheme.bodySmall?.color,
             ),
           ),
           const SizedBox(height: 24),
@@ -713,23 +776,29 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 'الفولت',
                 _voltage,
                 Icons.bolt,
-                Colors.yellow,
+                Theme.of(context).appColors.warning,
                 false,
               ),
-              Container(width: 1, height: 40, color: Colors.white30),
+              Container(
+                  width: 1, height: 40, color: Theme.of(context).dividerColor),
               _buildMiniInfoCard(
                 'الحرارة',
                 _temperature == 'غير متاح' ? _temperature : '$_temperature°',
                 Icons.thermostat,
-                _temperatureAlert ? Colors.red : Colors.orange,
+                _temperatureAlert
+                    ? Theme.of(context).appColors.error
+                    : Theme.of(context).appColors.warning,
                 _temperatureAlert,
               ),
-              Container(width: 1, height: 40, color: Colors.white30),
+              Container(
+                  width: 1, height: 40, color: Theme.of(context).dividerColor),
               _buildMiniInfoCard(
                 'المعالج',
                 '$_cpuLoad%',
                 Icons.memory,
-                _cpuAlert ? Colors.red : Colors.purple,
+                _cpuAlert
+                    ? Theme.of(context).appColors.error
+                    : Theme.of(context).appColors.primary,
                 _cpuAlert,
               ),
             ],
@@ -739,7 +808,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildMiniInfoCard(String label, String value, IconData icon, Color color, bool isAlert) {
+  Widget _buildMiniInfoCard(
+      String label, String value, IconData icon, Color color, bool isAlert) {
     return Expanded(
       child: Column(
         children: [
@@ -750,14 +820,14 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               if (isAlert)
                 Container(
                   padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).appColors.error,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.warning,
                     size: 12,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
             ],
@@ -765,31 +835,38 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.white70,
+              color: Theme.of(context).textTheme.bodySmall?.color,
             ),
           ),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isAlert ? Colors.red.withValues(alpha: 0.9) : const Color(0xFFB39DDB),
+              color: isAlert
+                  ? context.theme.appColors.error.withValues(alpha: 0.9)
+                  : context.theme.appColors.secondary,
               borderRadius: BorderRadius.circular(8),
-              boxShadow: isAlert ? [
-                BoxShadow(
-                  color: Colors.red.withValues(alpha: 0.5),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ] : null,
+              boxShadow: isAlert
+                  ? [
+                      BoxShadow(
+                        color: Theme.of(context)
+                            .appColors
+                            .error
+                            .withValues(alpha: 0.5),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
             ),
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -798,7 +875,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
+  Widget _buildInfoCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -818,7 +896,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             title,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.color
+                      ?.withValues(alpha: 0.7) ??
+                  Theme.of(context).textTheme.bodySmall?.color,
             ),
             textAlign: TextAlign.center,
           ),
@@ -826,15 +909,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFB39DDB),
+              color: context.theme.appColors.secondary,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -850,11 +933,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -863,12 +947,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.access_time, color: Colors.black54),
+          Icon(Icons.access_time,
+              color: Theme.of(context).textTheme.bodySmall?.color),
           const SizedBox(width: 8),
           Text(
             'وقت الشبكة: $_date $_time',
-            style: const TextStyle(
-              color: Colors.black87,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -878,7 +963,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildActionButton(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionButton(
+      String title, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -968,13 +1054,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isAlert ? color.withValues(alpha: 0.9) : const Color(0xFFB39DDB),
+                  color: isAlert
+                      ? color.withValues(alpha: 0.9)
+                      : context.theme.appColors.secondary,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: (isAlert ? color : Colors.black).withValues(alpha: 0.3),
+                      color: (isAlert
+                              ? color
+                              : Theme.of(context).colorScheme.onSurface)
+                          .withValues(alpha: 0.3),
                       blurRadius: isAlert ? 6 : 4,
                       offset: const Offset(0, 2),
                     ),
@@ -982,10 +1074,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 ),
                 child: Text(
                   '${currentValue.toStringAsFixed(1)}$unit',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -1002,7 +1094,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   horizontalInterval: 25,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.1),
                       strokeWidth: 1,
                     );
                   },
@@ -1026,7 +1121,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                         return Text(
                           '${value.toInt()}$unit',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                Theme.of(context).disabledColor,
                             fontSize: 12,
                           ),
                         );
@@ -1060,7 +1160,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                           radius: 3,
                           color: color,
                           strokeWidth: 2,
-                          strokeColor: Colors.white,
+                          strokeColor: Theme.of(context).colorScheme.onSurface,
                         );
                       },
                     ),
@@ -1084,8 +1184,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                       return touchedBarSpots.map((barSpot) {
                         return LineTooltipItem(
                           '${barSpot.y.toStringAsFixed(1)}$unit',
-                          const TextStyle(
-                            color: Colors.white,
+                          TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -1101,11 +1201,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildChartStat('الحد الأدنى', minY, unit, Colors.green),
-              _buildChartStat('الحد الأقصى', maxY, unit, Colors.red),
-              _buildChartStat('المتوسط', 
-                data.map((e) => e.y).reduce((a, b) => a + b) / data.length, 
-                unit, Colors.orange),
+              _buildChartStat('الحد الأدنى', minY, unit,
+                  Theme.of(context).appColors.success),
+              _buildChartStat(
+                  'الحد الأقصى', maxY, unit, Theme.of(context).appColors.error),
+              _buildChartStat(
+                  'المتوسط',
+                  data.map((e) => e.y).reduce((a, b) => a + b) / data.length,
+                  unit,
+                  Theme.of(context).appColors.warning),
             ],
           ),
         ],
@@ -1120,7 +1224,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withValues(alpha: 0.6),
+            color: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.color
+                    ?.withValues(alpha: 0.6) ??
+                Theme.of(context).textTheme.bodySmall?.color,
           ),
         ),
         const SizedBox(height: 4),
@@ -1149,16 +1258,16 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Widget _buildAlertBanner() {
     final alerts = <Map<String, dynamic>>[];
-    
+
     if (_cpuAlert) {
       alerts.add({
         'title': 'استخدام المعالج مرتفع',
         'value': '$_cpuLoad%',
         'icon': Icons.memory,
-        'color': Colors.orange,
+        'color': Theme.of(context).appColors.warning,
       });
     }
-    
+
     if (_memoryAlert) {
       final memoryUsedPercentage = _totalMemory > 0
           ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
@@ -1167,16 +1276,16 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'title': 'الذاكرة ممتلئة',
         'value': '${memoryUsedPercentage.toStringAsFixed(1)}%',
         'icon': Icons.storage,
-        'color': Colors.red,
+        'color': Theme.of(context).appColors.error,
       });
     }
-    
+
     if (_temperatureAlert) {
       alerts.add({
         'title': 'الحرارة مرتفعة',
         'value': '$_temperature°C',
         'icon': Icons.thermostat,
-        'color': Colors.red,
+        'color': Theme.of(context).appColors.error,
       });
     }
 
@@ -1185,8 +1294,8 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.red.shade700,
-            Colors.orange.shade600,
+            Theme.of(context).appColors.error,
+            Theme.of(context).appColors.warning,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1194,7 +1303,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withValues(alpha: 0.4),
+            color: Theme.of(context).appColors.error.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 4),
             spreadRadius: 2,
@@ -1208,17 +1317,20 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.warning_rounded,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   size: 28,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1227,15 +1339,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'تم الكشف عن مشكلات في الأداء',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white70,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                   ],
@@ -1245,54 +1357,64 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           ),
           const SizedBox(height: 16),
           ...alerts.map((alert) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        alert['icon'] as IconData,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          alert['title'] as String,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          alert['value'] as String,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    alert['icon'] as IconData,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      alert['title'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      alert['value'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )),
+              )),
         ],
       ),
     );

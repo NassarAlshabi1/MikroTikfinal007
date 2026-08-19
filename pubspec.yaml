@@ -1,22 +1,20 @@
 name: mikrotik_manager
-description: "تطبيق احترافي لإدارة شبكات MikroTik وكروت الإنترنت."
-publish_to: none
+description: "A new Flutter project."
+publish_to: 'none'
+# رقم البناء (+N) يُحدَّد تلقائياً من GitHub Actions (build-release.yml)
+# لا تعدّله يدوياً — استخدم bump-version.yml لزيادة الإصدار.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.7.0 <4.0.0"
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.44.0'  # مطلوب لـ scrollCacheExtent API المستخدم في عدة شاشات
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
+
   cupertino_icons: ^1.0.8
-  flutter_riverpod: ^2.6.1
-  provider: ^6.1.2
-  google_fonts: ^6.3.3
-  intl: ^0.20.3
-  router_os_client: ^2.0.0
+  router_os_client: ^2.0.1  # تحديث: استفادة من ميزات TaggedCommand, talkMultiple, streamData
   dio: ^5.5.0+1
   mqtt_client: ^10.2.1
   url_launcher: ^6.3.0
@@ -29,38 +27,92 @@ dependencies:
   google_mlkit_text_recognition: ^0.11.0
   camera: ^0.10.6
   path: ^1.9.0
+  crypto: ^3.0.6
   share_plus: ^11.1.0
   permission_handler: ^11.3.1
+  intl: ^0.19.0
   font_awesome_flutter: ^10.7.0
+  provider: ^6.1.2
+  flutter_riverpod: ^2.5.1
   device_info_plus: ^10.1.0
   uuid: ^4.4.0
   graphview: ^1.2.0
   dart_ping: ^8.0.1
-  file_picker: ^8.0.0+1
-  syncfusion_flutter_pdf: ^34.2.3
+  file_picker: ^8.0.0+1   # <-- ✨ الحزمة الجديدة التي تمت إضافتها
+  syncfusion_flutter_pdf: ^26.1.39
   image: ^4.5.4
   google_mlkit_document_scanner: ^0.4.0
   network_info_plus: ^5.0.3
   fl_chart: ^0.69.0
-  excel_plus: ^2.0.0
-  web_socket_channel: ^2.4.0
+  # --- ✨ caching لطلبات HTTP ---
+  dio_cache_interceptor: ^3.5.0
+  dio_cache_interceptor_db_store: ^5.1.0
+  # --- ✨ AI Diagnostics ---
+  dartssh2: ^2.22.5               # اتصال SSH متوافق مع Dart 3.13 بـ MikroTik
+  flutter_secure_storage: ^9.2.2  # تخزين آمن لمفاتيح API
+  flutter_dotenv: ^5.1.0          # تحميل إعدادات من .env
+  # --- ✨ NoSQL Database (Isar) — بدل Drift ---
+  # هجرة كاملة من Drift/SQLite إلى Isar لأداء أعلى وبحث فوري
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^3.0.0
+  flutter_app_name: ^0.1.1
   flutter_launcher_icons: ^0.14.1
+  integration_test:
+    sdk: flutter
+  # --- Isar code generation ---
+  isar_generator: ^3.1.0+1
+  build_runner: ^2.4.0
+  # ملاحظة: dart_code_linter أُزيل بسبب تعارض analyzer مع isar_generator
+  # قواعد flutter_lints كافية للحفاظ على جودة الكود
 
 flutter:
   uses-material-design: true
+  
   assets:
     - assets/images/
-    - assets/icon/
+    # ملاحظة: .env غير مُضاف كـ asset لأنه في .gitignore
+    # المفاتيح تُحمّل من flutter_secure_storage بدل .env
 
-# تثبيت نسخة GraphView المتوافقة مع بقية مكونات الرسم.
+  # ============================================================
+  #  Custom Fonts — Tajawal + Cairo (من amolood/Mikrotik-flutter-app)
+  # ============================================================
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: fonts/Tajawal-Regular.ttf
+          weight: 400
+        - asset: fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: fonts/Tajawal-Bold.ttf
+          weight: 700
+        - asset: fonts/Tajawal-ExtraBold.ttf
+          weight: 800
+        - asset: fonts/Tajawal-Black.ttf
+          weight: 900
+        - asset: fonts/Tajawal-ExtraLight.ttf
+          weight: 200
+        - asset: fonts/Tajawal-Light.ttf
+          weight: 300
+    - family: Cairo
+      fonts:
+        - asset: fonts/Cairo-Regular.ttf
+          weight: 400
+
+flutter_app_name:
+  name: "اداره الكروت"
+
+# --- ✨ تم إضافة هذا القسم لحل مشكلة التعارض ---
 dependency_overrides:
+  xml: ^6.3.0
   graphview: 1.2.0
 
+# --- ✨ تكوين flutter_launcher_icons ---
 flutter_launcher_icons:
   android: true
   ios: true

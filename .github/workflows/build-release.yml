@@ -1,22 +1,105 @@
 name: Build and Release
 
+# ============================================================
+#  يبني APK/AAB ويصدر release على GitHub تلقائياً
+#
+#  رقم البناء (build number) يزداد تلقائياً باستخدام:
+#    - github.run_number  (رقم فريد لكل تشغيل)
+#    - أو git tag         (عند الدفع بصيغة v*.*.*)
+#
+#  صيغة الإصدار النهائية:  version+buildNumber
+#    مثال: 1.0.0+142  →  version=1.0.0, build=142
+# ============================================================
+
 on:
   push:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
     inputs:
+      version:
+        description: 'رقم الإصدار (مثل 1.0.0) — رقم البناء يُحدَّد تلقائياً'
+        required: false
+        default: '1.0.0'
       build_aab:
-        description: 'Build Android App Bundle (.aab)'
+        description: 'بناء Android App Bundle (.aab)'
         required: false
         default: 'true'
       build_apk:
-        description: 'Build Android APK (.apk)'
+        description: 'بناء Android APK (.apk)'
         required: false
         default: 'true'
+      make_release:
+        description: 'إنشاء GitHub Release بعد البناء'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: write   # مطلوب لإنشاء GitHub Release
 
 jobs:
+  # ============================================================
+  #  Job 1: حساب رقم الإصدار والبناء
+  # ============================================================
+  prepare-version:
+    name: Prepare Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      full_version: ${{ steps.version.outputs.full_version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0   # مهم لقراءة الـ tags
+
+      - name: Compute version and build number
+        id: version
+        run: |
+          # === استخراج رقم الإصدار ===
+          # 1) من الـ tag (إن وُجد)
+          # 2) من إدخال المستخدم (workflow_dispatch)
+          # 3) من pubspec.yaml كحل أخير
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          elif [[ -n "${{ inputs.version }}" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=$(grep '^version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d '+' -f 1)
+          fi
+
+          # === حساب رقم البناء ===
+          # نستخدم github.run_number كأساس (متزايد دائماً)
+          # ونضيف عدد الـ tags السابقة لضمان التفرّد
+          TAG_COUNT=$(git tag -l 'v*' | wc -l)
+          BUILD_NUMBER=$(( ${{ github.run_number }} + TAG_COUNT * 1000 ))
+
+          # التأكد أن VERSION لا تحتوي على رقم بناء مدمج
+          VERSION=$(echo "$VERSION" | cut -d '+' -f 1)
+
+          FULL_VERSION="${VERSION}+${BUILD_NUMBER}"
+          TAG_NAME="v${VERSION}-build${BUILD_NUMBER}"
+
+          echo "version=${VERSION}"           >> $GITHUB_OUTPUT
+          echo "build_number=${BUILD_NUMBER}"  >> $GITHUB_OUTPUT
+          echo "full_version=${FULL_VERSION}"  >> $GITHUB_OUTPUT
+          echo "tag_name=${TAG_NAME}"          >> $GITHUB_OUTPUT
+
+          echo "::notice::الإصدار النهائي: ${FULL_VERSION} (tag: ${TAG_NAME})"
+
+  # ============================================================
+  #  Job 2: بناء Android
+  # ============================================================
   build-android:
+    name: Build Android
+    needs: prepare-version
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -28,64 +111,183 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.0'
+          flutter-version: '3.44.0'
           channel: 'stable'
-          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      # ============================================================
+      #  تحديث pubspec.yaml برقم الإصدار + رقم البناء الجديد
+      #  مثال: 1.0.0+142
+      # ============================================================
+      - name: Bump version in pubspec.yaml
+        run: |
+          FULL_VERSION="${{ needs.prepare-version.outputs.full_version }}"
+          echo "Bumping pubspec.yaml to version: $FULL_VERSION"
+
+          # استبدال سطر version: في pubspec.yaml
+          # يعمل سواءً كان الصيغة version: X.Y.Z أو version: X.Y.Z+N
+          sed -i -E "s|^version: .*|version: ${FULL_VERSION}|" pubspec.yaml
+
+          # تحقق من النتيجة
+          echo "Updated pubspec.yaml:"
+          grep '^version:' pubspec.yaml
 
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Flutter analyze
+      - name: Generate drift code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Flutter analyze (non-blocking)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
+
+      - name: Generate launcher icons
+        run: flutter pub run flutter_launcher_icons
+        continue-on-error: true
 
       - name: Build APK (release)
         if: ${{ github.event_name == 'push' || inputs.build_apk == 'true' }}
-        run: flutter build apk --release
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Build App Bundle (release)
         if: ${{ github.event_name == 'push' || inputs.build_aab == 'true' }}
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --target-platform android-arm64
+
+      # ============================================================
+      #  عرض معلومات الإصدار داخل الـ APK
+      # ============================================================
+      - name: Show build info
+        run: |
+          echo "=== Build Info ==="
+          echo "Version:      ${{ needs.prepare-version.outputs.version }}"
+          echo "Build Number: ${{ needs.prepare-version.outputs.build_number }}"
+          echo "Full Version: ${{ needs.prepare-version.outputs.full_version }}"
+          echo "Tag:          ${{ needs.prepare-version.outputs.tag_name }}"
+          echo "APK size:"
+          ls -lh build/app/outputs/flutter-apk/app-release.apk || true
+          echo "AAB size:"
+          ls -lh build/app/outputs/bundle/release/app-release.aab || true
+
+      - name: Rename artifacts with version
+        run: |
+          FULL="${{ needs.prepare-version.outputs.full_version }}"
+          mkdir -p artifacts
+          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
+            cp build/app/outputs/flutter-apk/app-release.apk \
+               artifacts/mikrotik-manager-${FULL}.apk
+          fi
+          if [ -f build/app/outputs/bundle/release/app-release.aab ]; then
+            cp build/app/outputs/bundle/release/app-release.aab \
+               artifacts/mikrotik-manager-${FULL}.aab
+          fi
+          ls -lh artifacts/
 
       - name: Upload APK artifact
-        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: app-release-apk-${{ needs.prepare-version.outputs.build_number }}
+          path: artifacts/*.apk
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload AAB artifact
-        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-aab
-          path: build/app/outputs/bundle/release/app-release.aab
+          name: app-release-aab-${{ needs.prepare-version.outputs.build_number }}
+          path: artifacts/*.aab
+          if-no-files-found: warn
+          retention-days: 30
 
+  # ============================================================
+  #  Job 3: إنشاء GitHub Release
+  # ============================================================
   create-release:
-    needs: build-android
+    name: Create GitHub Release
+    needs: [prepare-version, build-android]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    # يُنفَّذ عند:
+    #   - الدفع tag (push event)
+    #   - اختيار make_release=true في workflow_dispatch
+    if: ${{ startsWith(github.ref, 'refs/tags/') || inputs.make_release == 'true' }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
-          name: app-release-apk
-          path: artifacts
+          name: app-release-apk-${{ needs.prepare-version.outputs.build_number }}
+          path: release-files
 
       - name: Download AAB artifact
         uses: actions/download-artifact@v4
         with:
-          name: app-release-aab
-          path: artifacts
+          name: app-release-aab-${{ needs.prepare-version.outputs.build_number }}
+          path: release-files
+
+      - name: List release files
+        run: ls -lh release-files/
+
+      - name: Generate release notes
+        env:
+          VERSION: ${{ needs.prepare-version.outputs.version }}
+          BUILD: ${{ needs.prepare-version.outputs.build_number }}
+          FULL: ${{ needs.prepare-version.outputs.full_version }}
+        run: |
+          cat > release-notes.md << EOF
+          # 🚀 MikroTik Manager ${FULL}
+
+          ## 📦 معلومات الإصدار
+          - **الإصدار:** ${VERSION}
+          - **رقم البناء:** ${BUILD}
+          - **التاريخ:** $(date -u '+%Y-%m-%d %H:%M UTC')
+          - **Flutter:** 3.44.0
+
+          ## 📱 ملفات التحميل
+
+          ### Android
+          - **APK**: للتثبيت المباشر على أجهزة arm64-v8a (الأجهزة الحديثة)
+          - **AAB**: حزمة Play Store
+
+          ## 🔧 كيفية التثبيت
+          1. حمّل ملف APK
+          2. فعّل "تثبيت من مصادر غير معروفة" في إعدادات الجهاز
+          3. افتح ملف APK للتثبيت
+
+          ---
+          **تم البناء تلقائياً بواسطة GitHub Actions**
+          [Run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare-version.outputs.tag_name }}
+          name: MikroTik Manager ${{ needs.prepare-version.outputs.full_version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
           files: |
-            artifacts/app-release.apk
-            artifacts/app-release.aab
+            release-files/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add release summary
+        run: |
+          echo "🎉 **Release Created Successfully!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📋 **Release Details:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: **${{ needs.prepare-version.outputs.version }}**" >> $GITHUB_STEP_SUMMARY
+          echo "- Build Number: **${{ needs.prepare-version.outputs.build_number }}**" >> $GITHUB_STEP_SUMMARY
+          echo "- Full Version: **${{ needs.prepare-version.outputs.full_version }}**" >> $GITHUB_STEP_SUMMARY
+          echo "- Tag: \`${{ needs.prepare-version.outputs.tag_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Release URL:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.prepare-version.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY

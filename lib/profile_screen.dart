@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -26,16 +28,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (isLinked) {
       final dataString = prefs.getString('qahtani_linked_data');
-      if (dataString != null) {
-        setState(() {
-          _profileData = jsonDecode(dataString);
-          _isLinked = true;
-        });
+      if (dataString != null && mounted) {
+        try {
+          final decoded = jsonDecode(dataString);
+          if (decoded is Map<String, dynamic>) {
+            setState(() {
+              _profileData = decoded;
+              _isLinked = true;
+            });
+          }
+        } catch (_) {
+          // بيانات الربط القديمة غير صالحة؛ نعرض حالة غير مرتبطة بدلاً من crash.
+        }
       }
     }
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -43,7 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('الملف الشخصي للشبكة'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -56,12 +67,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileView() {
     final clientInfo = _profileData['client_info'] ?? {};
     final networkDetails = _profileData['network_details'] ?? {};
-    
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
         children: [
-          const Icon(Icons.account_circle, size: 100, color: Colors.deepOrange),
+          Icon(Icons.account_circle,
+              size: 100, color: context.theme.appColors.primary),
           const SizedBox(height: 16),
           _buildInfoCard(
             context,
@@ -87,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             subtitle: 'اسم الشبكة المرتبطة',
             icon: Icons.wifi_outlined,
           ),
-           _buildInfoCard(
+          _buildInfoCard(
             context,
             title: networkDetails['network_id'] ?? 'غير متوفر',
             subtitle: 'معرّف الشبكة (Network ID)',
@@ -98,7 +110,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, {required String title, required String subtitle, required IconData icon}) {
+  Widget _buildInfoCard(BuildContext context,
+      {required String title,
+      required String subtitle,
+      required IconData icon}) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -110,30 +125,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color ??
+                  Theme.of(context).textTheme.bodySmall?.color),
         ),
       ),
     );
   }
 
   Widget _buildNotLinkedView() {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_amber_rounded, size: 80, color: Colors.amber),
-            SizedBox(height: 20),
-            Text(
+            Icon(Icons.warning_amber_rounded,
+                size: 80, color: context.theme.appColors.warning),
+            const SizedBox(height: 20),
+            const Text(
               'لم يتم ربط الشبكة!',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'الرجاء الذهاب إلى شاشة "ربط الشبكة بـ م/نصار الشعبي" لإكمال عملية الربط أولاً.',
-              style: TextStyle(fontSize: 16, color: Colors.white),
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      Theme.of(context).colorScheme.onSurface),
               textAlign: TextAlign.center,
             ),
           ],

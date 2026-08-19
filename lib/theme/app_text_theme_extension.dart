@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// ThemeExtension for text styles with color adaptation for light/dark mode.
-/// 
+///
 /// This extension provides a complete set of text styles that automatically
 /// adapt their colors based on the current theme mode.
 class AppTextThemeExtension extends ThemeExtension<AppTextThemeExtension> {

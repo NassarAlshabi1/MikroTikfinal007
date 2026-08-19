@@ -1,22 +1,31 @@
-import 'dart:math';
+// ملف: add_user_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:router_os_client/router_os_client.dart';
+import 'dart:math';
+import 'package:dio/dio.dart';
 
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
-import 'notification_service.dart';
+import 'theme/app_theme.dart';
+
+import 'services/secure_clipboard.dart';
+import 'services/card_persistence_service.dart';
+import 'services/mikrotik_card_commands.dart';
+import 'services/mikrotik_service_mode.dart';
 
 class AddUserScreen extends StatefulWidget {
   final List<Map<String, dynamic>> profiles;
   final bool isVersion7OrNewer;
   final String customer;
+  final MikrotikServiceMode serviceMode;
 
   const AddUserScreen({
     super.key,
     required this.profiles,
     required this.isVersion7OrNewer,
     required this.customer,
+    this.serviceMode = MikrotikServiceMode.hotspot,
   });
 
   @override
@@ -33,26 +42,50 @@ class _AddUserScreenState extends State<AddUserScreen> {
   String _cardType = 'username_only';
   String _charType = 'numbers';
 
-  /// الإصلاح: استخدام Random.secure() بدلاً من Random()
+  final String telegramBotToken = '';
+  final String telegramChatId = '';
+
+  Future<void> _sendTelegramMessage(String message) async {
+    final dio = Dio();
+    if (telegramBotToken.isEmpty || telegramChatId.isEmpty) return;
+    final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
+    try {
+      await dio.post(url, data: {
+        'chat_id': telegramChatId,
+        'text': message,
+      });
+    } catch (e) {
+      // print("Failed to send Telegram message: $e");
+    }
+  }
+
   String _generateRandomString(int length, String type) {
     const charsMixed = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const charsLetters = 'abcdefghijklmnopqrstuvwxyz';
     const charsNumbers = '0123456789';
     String chars;
     switch (type) {
-      case 'letters': chars = charsLetters; break;
-      case 'numbers': chars = charsNumbers; break;
-      default: chars = charsMixed;
+      case 'letters':
+        chars = charsLetters;
+        break;
+      case 'numbers':
+        chars = charsNumbers;
+        break;
+      default:
+        chars = charsMixed;
     }
-    final random = Random.secure();
     return String.fromCharCodes(Iterable.generate(
-        length, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+        length, (_) => chars.codeUnitAt(Random().nextInt(chars.length))));
   }
 
   Future<void> _addUser() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     RouterOSClient? client;
     try {
@@ -68,30 +101,49 @@ class _AddUserScreenState extends State<AddUserScreen> {
         password = _generateRandomString(8, _charType);
       }
 
-      final List<String> addUserCommand = [
-        '/tool/user-manager/user/add',
-        '=username=$username',
-        '=password=$password',
-        '=shared-users=$sharedUsers',
-      ];
-      if (!widget.isVersion7OrNewer) {
-        addUserCommand.add('=customer=${widget.customer}');
-      }
-      await client.talk(addUserCommand);
-
-      await client.talk([
-        '/tool/user-manager/user/create-and-activate-profile',
-        '=customer=${widget.customer}',
-        '=numbers=$username',
-        '=profile=$_selectedProfile',
-      ]);
-
-      // الإصلاح: استخدام NotificationService المركزي
-      NotificationService.instance.notifySingleCardAdded(
-        username: username,
-        profile: _selectedProfile,
-        address: client.address,
+      final profile = _selectedProfile!.trim();
+      await client.talk(
+        MikrotikCardCommands.addUser(
+          mode: widget.serviceMode,
+          username: username,
+          password: password,
+          profile: profile,
+          sharedUsers: sharedUsers,
+          isVersion7OrNewer: widget.isVersion7OrNewer,
+          customer: widget.customer,
+        ),
       );
+
+      if (widget.serviceMode == MikrotikServiceMode.userManager) {
+        await client.talk(
+          MikrotikCardCommands.userManagerActivateProfile(
+            customer: widget.customer,
+            username: username,
+            profile: profile,
+          ),
+        );
+      }
+
+      try {
+        await CardPersistenceService.saveGeneratedCards(
+          profileName: profile,
+          users: [
+            {'username': username, 'password': password},
+          ],
+        );
+      } catch (e) {
+        debugPrint('[AddUser] Isar persistence error: $e');
+        if (mounted) {
+          showErrorSnackBar(
+              context, 'تمت الإضافة إلى الراوتر لكن تعذر الحفظ المحلي: $e');
+        }
+      }
+
+      final String notificationMessage = "تم إضافة كرت فردي جديد بنجاح!\n"
+          "IP: ${client.address}\n"
+          "اسم المستخدم: $username\n"
+          "الفئة: $_selectedProfile";
+      _sendTelegramMessage(notificationMessage);
 
       final String cardDetails = _cardType == 'username_only'
           ? 'اسم المستخدم: $username'
@@ -99,19 +151,29 @@ class _AddUserScreenState extends State<AddUserScreen> {
 
       if (mounted) {
         showSuccessSnackBar(context, 'تمت إضافة المستخدم "$username" بنجاح');
-        Clipboard.setData(ClipboardData(text: cardDetails));
+        SecureClipboard.copy(cardDetails, sensitive: false);
         showSuccessSnackBar(context, 'تم نسخ تفاصيل الكرت!');
         Navigator.of(context).pop(true);
       }
     } on MikrotikCredentialsMissingException catch (e) {
-      if (mounted) showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
+      if (mounted) {
+        showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
+      }
     } on MikrotikConnectionException catch (e) {
-      if (mounted) showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
+      if (mounted) {
+        showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
+      }
     } catch (e) {
-      if (mounted) showErrorSnackBar(context, 'فشلت الإضافة. تحقق من الاتصال بالشبكة.');
+      if (mounted) {
+        showErrorSnackBar(context, 'فشلت الإضافة. تحقق من الاتصال بالشبكة.');
+      }
     } finally {
-      client?.close();
-      if (mounted) setState(() { _isLoading = false; });
+      MikrotikConnector.release(client);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -125,78 +187,125 @@ class _AddUserScreenState extends State<AddUserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إضافة كرت جديد'), backgroundColor: Theme.of(context).cardColor),
+      appBar: AppBar(
+        title: const Text('إضافة كرت جديد'),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+      ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            TextFormField(
-              controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'اسم المستخدم', border: OutlineInputBorder()),
-              style: const TextStyle(color: Colors.white),
-              validator: (value) => (value == null || value.isEmpty) ? 'هذا الحقل مطلوب' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _sharedUsersController,
-              decoration: const InputDecoration(labelText: 'Shared Users', border: OutlineInputBorder()),
-              style: const TextStyle(color: Colors.white),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'هذا الحقل مطلوب';
-                if (int.tryParse(value) == null) return 'الرجاء إدخال رقم صحيح';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedProfile,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              dropdownColor: Theme.of(context).cardColor,
-              decoration: const InputDecoration(labelText: 'الفئة (البروفايل)', border: OutlineInputBorder()),
-              hint: const Text('اختر فئة', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-              items: widget.profiles.map((profile) {
-                final profileName = profile['name'] as String;
-                return DropdownMenuItem(value: profileName, child: Text(profileName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)));
-              }).toList(),
-              onChanged: (value) => setState(() { _selectedProfile = value; }),
-              validator: (value) => (value == null) ? 'الرجاء اختيار فئة' : null,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _cardType,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              dropdownColor: Theme.of(context).cardColor,
-              decoration: const InputDecoration(labelText: 'نوع الكرت', border: OutlineInputBorder()),
-              items: const [
-                DropdownMenuItem(value: 'username_only', child: Text('اسم مستخدم فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'username_and_password_equal', child: Text('اسم مستخدم وكلمة مرور متساوية', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'username_and_password_different', child: Text('اسم مستخدم وكلمة مرور مختلفة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              ],
-              onChanged: (v) => setState(() => _cardType = v!),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _charType,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              dropdownColor: Theme.of(context).cardColor,
-              decoration: const InputDecoration(labelText: 'نوع أحرف المستخدم', border: OutlineInputBorder()),
-              items: const [
-                DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'letters', child: Text('حروف فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              ],
-              onChanged: (v) => setState(() => _charType = v!),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _addUser,
-              child: _isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                  : const Text('حفظ وإضافة'),
-            ),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                    labelText: 'اسم المستخدم', border: OutlineInputBorder()),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'هذا الحقل مطلوب';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              if (widget.serviceMode == MikrotikServiceMode.userManager)
+                TextFormField(
+                  controller: _sharedUsersController,
+                  decoration: const InputDecoration(
+                      labelText: 'Shared Users', border: OutlineInputBorder()),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'هذا الحقل مطلوب';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'الرجاء إدخال رقم صحيح';
+                    }
+                    return null;
+                  },
+                ),
+              if (widget.serviceMode == MikrotikServiceMode.hotspot)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      'وضع Hotspot v6 مفعّل. سيُطبّق عدد Shared Users من بروفايل Hotspot على الراوتر.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedProfile,
+                decoration: const InputDecoration(
+                    labelText: 'الفئة (البروفايل)',
+                    border: OutlineInputBorder()),
+                hint: const Text('اختر فئة'),
+                items: widget.profiles.map((profile) {
+                  final profileName = profile['name'] as String;
+                  return DropdownMenuItem(
+                    value: profileName,
+                    child: Text(profileName),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedProfile = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'الرجاء اختيار فئة';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _cardType,
+                decoration: const InputDecoration(
+                    labelText: 'نوع الكرت', border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'username_only', child: Text('اسم مستخدم فقط')),
+                  DropdownMenuItem(
+                      value: 'username_and_password_equal',
+                      child: Text('اسم مستخدم وكلمة مرور متساوية')),
+                  DropdownMenuItem(
+                      value: 'username_and_password_different',
+                      child: Text('اسم مستخدم وكلمة مرور مختلفة')),
+                ],
+                onChanged: (v) => setState(() => _cardType = v!),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _charType,
+                decoration: const InputDecoration(
+                    labelText: 'نوع أحرف المستخدم',
+                    border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'mixed', child: Text('حروف وأرقام')),
+                  DropdownMenuItem(value: 'letters', child: Text('حروف فقط')),
+                  DropdownMenuItem(value: 'numbers', child: Text('أرقام فقط')),
+                ],
+                onChanged: (v) => setState(() => _charType = v!),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _addUser,
+                child: _isLoading
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(
+                                context.theme.appColors.onPrimary)))
+                    : const Text('حفظ وإضافة'),
+              ),
+            ],
+          ),
         ),
       ),
     );
