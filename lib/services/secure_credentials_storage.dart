@@ -35,6 +35,10 @@ abstract class SecureCredentialsStorage {
   Future<String?> getOomolApiKey();
   Future<void> setOomolApiKey(String? apiKey);
 
+  // ─── Telegram Bot Token ───
+  Future<String?> getTelegramBotToken();
+  Future<void> setTelegramBotToken(String? token);
+
   // ─── Utilities ───
   Future<void> clearAll();
   Future<void> clearMikrotikCredentials();
@@ -60,6 +64,7 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
   static const _keyMikrotikPass = 'mikrotik_pass';
   static const _keyRemotePass = 'remote_pass';
   static const _keyOomolApiKey = 'legacy_integration_api_key';
+  static const _keyTelegramBotToken = 'telegram_bot_token';
 
   /// علامة تشير لترحيل البيانات من SharedPreferences إلى SecureStorage
   static const _migrationDoneKey = 'secure_storage_migrated';
@@ -215,11 +220,46 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
   }
 
   @override
+  Future<String?> getTelegramBotToken() async {
+    try {
+      final token = await _storage.read(key: _keyTelegramBotToken);
+      if (token != null && token.isNotEmpty) return token;
+      final prefs = await SharedPreferences.getInstance();
+      final legacy = prefs.getString(_keyTelegramBotToken);
+      if (legacy != null && legacy.isNotEmpty) {
+        await _storage.write(key: _keyTelegramBotToken, value: legacy);
+        await prefs.remove(_keyTelegramBotToken);
+        AppLogger.security('telegram_bot_token migrated lazily from prefs');
+        return legacy;
+      }
+      return null;
+    } catch (e) {
+      AppLogger.error('Failed to read telegram_bot_token',
+          error: e, category: LogCategory.storage);
+      return null;
+    }
+  }
+
+  @override
+  Future<void> setTelegramBotToken(String? token) async {
+    if (token == null || token.trim().isEmpty) {
+      await _storage.delete(key: _keyTelegramBotToken);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyTelegramBotToken);
+      AppLogger.security('telegram_bot_token cleared');
+      return;
+    }
+    await _storage.write(key: _keyTelegramBotToken, value: token.trim());
+    AppLogger.security('telegram_bot_token set');
+  }
+
+  @override
   Future<void> clearAll() async {
     try {
       await _storage.delete(key: _keyMikrotikPass);
       await _storage.delete(key: _keyRemotePass);
       await _storage.delete(key: _keyOomolApiKey);
+      await _storage.delete(key: _keyTelegramBotToken);
       AppLogger.security('All credentials cleared');
     } catch (e) {
       AppLogger.error('Failed to clear credentials',
@@ -301,10 +341,14 @@ class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
     String? mikrotikPass,
     String? remotePass,
     String? legacy_integrationApiKey,
+    String? telegramBotToken,
   }) {
     if (mikrotikPass != null) _store['mikrotik_pass'] = mikrotikPass;
     if (remotePass != null) _store['remote_pass'] = remotePass;
     if (legacy_integrationApiKey != null) _store['legacy_integration_api_key'] = legacy_integrationApiKey;
+    if (telegramBotToken != null) {
+      _store['telegram_bot_token'] = telegramBotToken;
+    }
   }
 
   @override
@@ -340,6 +384,18 @@ class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
       _store.remove('legacy_integration_api_key');
     } else {
       _store['legacy_integration_api_key'] = apiKey;
+    }
+  }
+
+  @override
+  Future<String?> getTelegramBotToken() async => _store['telegram_bot_token'];
+
+  @override
+  Future<void> setTelegramBotToken(String? token) async {
+    if (token == null || token.trim().isEmpty) {
+      _store.remove('telegram_bot_token');
+    } else {
+      _store['telegram_bot_token'] = token.trim();
     }
   }
 

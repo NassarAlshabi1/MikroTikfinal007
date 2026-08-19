@@ -19,9 +19,24 @@ sudo apt install -y python3 python3-reportlab
 
 يُفضّل استخدام جهاز دائم التشغيل خارج شبكة MikroTik إذا كان مطلوباً وصول تنبيه فوري عند انقطاع الإنترنت؛ لأن الجسر داخل الشبكة لن يستطيع الوصول إلى Telegram أثناء الانقطاع نفسه.
 
-## تثبيت الملفات
+## التثبيت المحلي الموصى به
 
-نفّذ الأوامر من جذر المستودع:
+من جذر المستودع شغّل المثبت التفاعلي؛ سيطلب Bot Token وكلمة مرور MikroTik دون إظهار كلمة المرور، وينشئ virtual environment وملف البيئة وخدمة systemd تلقائياً:
+
+```bash
+sudo ./scripts/setup_telegram_bridge_local.sh
+```
+
+بعد التشغيل:
+
+```bash
+sudo systemctl status mikrotik-telegram --no-pager
+sudo journalctl -u mikrotik-telegram -f
+```
+
+## التثبيت اليدوي
+
+نفّذ الأوامر التالية من جذر المستودع إذا كنت لا تريد استخدام المثبت:
 
 ```bash
 sudo useradd --system --home /opt/mikrotik-telegram --shell /usr/sbin/nologin mikrotik-telegram 2>/dev/null || true
@@ -30,6 +45,9 @@ sudo install -m 0750 telegram_bridge/telegram_bridge.py /opt/mikrotik-telegram/t
 sudo chown -R mikrotik-telegram:mikrotik-telegram /opt/mikrotik-telegram /var/lib/mikrotik-telegram
 sudo install -m 0644 deploy/systemd/mikrotik-telegram.service /etc/systemd/system/mikrotik-telegram.service
 sudo install -m 0640 -o root -g mikrotik-telegram deploy/systemd/bridge.env.example /etc/mikrotik-telegram/bridge.env
+# عند استخدام Python virtual environment، أنشئ البيئة وثبّت المتطلبات:
+sudo python3 -m venv /opt/mikrotik-telegram/.venv
+sudo /opt/mikrotik-telegram/.venv/bin/pip install -r telegram_bridge/requirements.txt
 ```
 
 افتح ملف البيئة، ثم أدخل Bot Token الجديد محلياً وكلمة مرور مستخدم MikroTik:
@@ -65,8 +83,8 @@ TRAFFIC_DAILY_REPORT_TIME=23:59
 عنوان MikroTik المستخدم في هذا المشروع هو `192.168.1.100`. أنشئ مستخدم API مخصصاً للجسر من Terminal MikroTik، بصلاحيات `read,api,test,write` فقط حتى يعمل أمر إعادة التشغيل المسموح، واستبدل كلمة المرور:
 
 ```routeros
-/user group add name=telegram-monitor policy=read,api,test,write comment="Telegram RouterOS v6 bridge"
-/user add name=telegram-monitor group=telegram-monitor password="<كلمة-مرور-قوية>" comment="Telegram bridge API user"
+/user group add name=telegram-bridge policy=read,api,test,write comment="Telegram RouterOS v6 bridge"
+/user add name=telegram-monitor group=telegram-bridge password="<كلمة-مرور-قوية>" comment="Telegram bridge API user"
 ```
 
 يجب تقييد خدمة API على عنوان جهاز تشغيل الجسر، وليس على عنوان MikroTik. إذا كان جهاز الجسر مثلاً `192.168.1.50`:
@@ -128,7 +146,7 @@ nc -vz 192.168.1.100 8728
 
 ```bash
 sudo install -m 0750 telegram_bridge/telegram_bridge.py /opt/mikrotik-telegram/telegram_bridge.py
-sudo chown mikrotik-telegram:mikrotik-telegram /opt/mikrotik-telegram/telegram_bridge.py
+sudo chown root:mikrotik-telegram /opt/mikrotik-telegram/telegram_bridge.py
 sudo systemctl restart mikrotik-telegram.service
 sudo journalctl -u mikrotik-telegram.service -n 50 --no-pager
 ```

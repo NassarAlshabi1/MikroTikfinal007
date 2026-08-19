@@ -51,6 +51,9 @@ app.*.map.json
 
 # Telegram bridge runtime state and Python artifacts
 .telegram_offset
+traffic-state.json
+.traffic_state.json
+bridge.env
 telegram_bridge/__pycache__/
 
 # Local RouterOS files may contain Telegram tokens or router credentials

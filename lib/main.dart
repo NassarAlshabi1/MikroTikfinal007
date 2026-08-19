@@ -8,7 +8,6 @@ import 'package:provider/provider.dart' as provider;
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔧 مطلوب لـ ProviderScope
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
 
 // 🔒 Security services (من مهارة flutter-security)
 import 'services/app_logger.dart';
@@ -40,6 +39,7 @@ import 'database/isar_provider.dart';
 import 'database/migration_service.dart';
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
+import 'telegram_bridge_settings_screen.dart';
 // -----------------------------------------
 
 /// قاعدة البيانات العامة (Isar Singleton — تُستخدم عبر كل التطبيق)
@@ -236,19 +236,8 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isRemotePasswordObscured = true;
   bool _isScanning = false;
 
-  final String telegramBotToken = '';
-  final String telegramChatId = '';
-
-  // --- جميع الدوال والوظائف الأصلية تبقى كما هي ---
-  Future<void> _sendTelegramMessage(String message) async {
-    final dio = Dio();
-    final url = 'https://api.telegram.org/bot$telegramBotToken/sendMessage';
-    try {
-      await dio.post(url, data: {'chat_id': telegramChatId, 'text': message});
-    } catch (e) {
-      // Failed to send Telegram message
-    }
-  }
+  // إعدادات Telegram تُدار من شاشة "إعداد جسر Telegram"، ولا تُحفظ
+  // داخل شاشة الدخول أو كثوابت في التطبيق.
 
   Future<void> _launchPrivacyPolicy() async {
     // تم تعطيل رابط سياسة الخصوصية
@@ -384,8 +373,6 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       await _handleCredentials();
       await MikrotikConnector.connect();
-      _sendTelegramMessage(
-          'تم الدخول إلى التطبيق بنجاح عبر عنوان IP: ${_ipController.text}');
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
@@ -1363,6 +1350,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
               builder: (context) => const MonthlyReportScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'إعداد جسر Telegram',
+        icon: Icons.telegram,
+        color: context.theme.appColors.primary,
+        onTap: () {
+          Navigator.of(context).push(CustomPageRoute(
+              builder: (context) => const TelegramBridgeSettingsScreen()));
         },
       ),
     ];
