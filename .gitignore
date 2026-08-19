@@ -49,3 +49,7 @@ app.*.map.json
 .env.local
 .env.production
 
+# Telegram bridge runtime state and Python artifacts
+.telegram_offset
+telegram_bridge/__pycache__/
+
