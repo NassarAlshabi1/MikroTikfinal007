@@ -53,12 +53,32 @@ class ConnectionService {
   Future<RouterOSClient> _createNewClient(_ConnectionIdentity? identity) async {
     _isConnecting = true;
     try {
-      _client = await MikrotikConnector.connect(
-        address: identity?.address,
-        username: identity?.username,
-        password: identity?.password,
-        port: identity?.port,
-      );
+      if (identity == null) {
+        _client = await MikrotikConnector.connect();
+      } else {
+        final address = identity.address?.trim();
+        final username = identity.username?.trim();
+        final password = identity.password;
+        if (address == null ||
+            address.isEmpty ||
+            username == null ||
+            username.isEmpty ||
+            password == null) {
+          throw ArgumentError(
+            'Complete MikroTik connection credentials are required.',
+          );
+        }
+
+        _client = await MikrotikConnector.connectWithConfig(
+          MikrotikConnectionConfig(
+            address: address,
+            user: username,
+            password: password,
+            port: identity.port ?? 8728,
+            useSsl: identity.port == 8729,
+          ),
+        );
+      }
       _activeIdentity = identity;
       _lastUsed = DateTime.now();
       return _client!;

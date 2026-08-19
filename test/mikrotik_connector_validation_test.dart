@@ -74,7 +74,7 @@ void main() {
     });
 
     test('uses a readable exception string for credentials errors', () {
-      final exception = MikrotikCredentialsMissingException('بيانات ناقصة');
+      const exception = MikrotikCredentialsMissingException('بيانات ناقصة');
 
       expect(
         exception.toString(),

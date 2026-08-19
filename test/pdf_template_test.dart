@@ -17,6 +17,8 @@ void main() {
       );
 
       expect(template.toJson(), {
+        'schemaVersion': PdfTemplate.currentSchemaVersion,
+        'id': template.id,
         'profileName': 'خمس ساعات',
         'imagePath': '/tmp/card.png',
         'textXRatio': 0.25,
