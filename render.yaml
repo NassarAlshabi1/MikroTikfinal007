@@ -29,9 +29,17 @@ services:
         value: "false"
       - key: TRAFFIC_INTERFACE
         sync: false
+      - key: TRAFFIC_INTERVAL_SECONDS
+        value: "60"
       - key: TRAFFIC_STATE_FILE
         value: "/tmp/traffic_state.json"
       - key: MONITOR_TARGET
         value: "1.1.1.1"
+      - key: MONITOR_INTERVAL_SECONDS
+        value: "30"
       - key: TRAFFIC_DAILY_REPORT_TIME
         value: "23:59"
+      - key: TELEGRAM_POLL_SECONDS
+        value: "20"
+      - key: TELEGRAM_OFFSET_FILE
+        value: "/tmp/.telegram_offset"
