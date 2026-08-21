@@ -24,36 +24,65 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     unawaited(_loadBackups());
   }
 
+  Future<List<Map<String, String>>> _fetchFileRows(
+      RouterOSClient client) async {
+    try {
+      return await client.talk([
+        '/file/print',
+        '=.proplist=name,type,size,last-modified',
+      ]);
+    } catch (error) {
+      final message = error.toString().toLowerCase();
+      final unsupportedTimestamp =
+          message.contains('unknown parameter') ||
+          message.contains('unknown property') ||
+          message.contains('not supported');
+      if (!unsupportedTimestamp) rethrow;
+      return client.talk([
+        '/file/print',
+        '=.proplist=name,type,size,creation-time',
+      ]);
+    }
+  }
+
+  String _backupTimestamp(Map<String, dynamic> backup) {
+    return backup['last-modified']?.toString() ??
+        backup['creation-time']?.toString() ??
+        '';
+  }
+
+  int _backupSizeBytes(dynamic value) {
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
   Future<bool> _loadBackups({
     bool retryOnSocketError = true,
     bool retryOnTimeout = true,
     bool showError = true,
   }) async {
     if (!mounted) return false;
+    if (_isCreatingBackup && showError) return false;
     setState(() => _isLoading = true);
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      final response = await client
-          .talk([
-            '/file/print',
-            '=.proplist=name,type,size,creation-time',
-          ])
+      final response = await _fetchFileRows(client)
           .timeout(const Duration(seconds: 20));
 
       if (mounted) {
         setState(() {
           _backups = response
               .where((file) {
-                final type = file['type']?.toString() ?? '';
+                final type = file['type']?.toString().trim().toLowerCase() ?? '';
                 return type == 'backup' || type == 'user manager database';
               })
               .map((file) => Map<String, dynamic>.from(file))
               .toList();
 
           _backups.sort((a, b) {
-            final timeA = a['creation-time']?.toString() ?? '';
-            final timeB = b['creation-time']?.toString() ?? '';
+            final timeA = _backupTimestamp(a);
+            final timeB = _backupTimestamp(b);
             return timeB.compareTo(timeA);
           });
         });
@@ -305,10 +334,17 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
             const SizedBox(height: 8),
             _buildInfoRow('النوع', backup['type'] ?? 'غير معروف'),
             const SizedBox(height: 8),
-            _buildInfoRow('الحجم', '${backup['size'] ?? '0'} بايت'),
+            _buildInfoRow(
+              'الحجم',
+              '${_backupSizeBytes(backup['size'])} بايت',
+            ),
             const SizedBox(height: 8),
             _buildInfoRow(
-                'تاريخ الإنشاء', backup['creation-time'] ?? 'غير معروف'),
+              'تاريخ الإنشاء',
+              _backupTimestamp(backup).isEmpty
+                  ? 'غير معروف'
+                  : _backupTimestamp(backup),
+            ),
           ],
         ),
         actions: [
@@ -440,61 +476,68 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     }
   }
 
-  String _calculateTimeAgo(String creationTime) {
-    try {
-      final parts = creationTime.split(' ');
-      if (parts.length != 2) return creationTime;
+  DateTime? _parseRouterOsTimestamp(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return null;
 
-      final dateParts = parts[0].split('/');
-      final timeParts = parts[1].split(':');
+    final isoValue = normalized.replaceFirst(' ', 'T');
+    final isoTime = DateTime.tryParse(isoValue);
+    if (isoTime != null) return isoTime;
 
-      if (dateParts.length != 3 || timeParts.length != 3) return creationTime;
+    final parts = normalized.split(' ');
+    if (parts.length != 2) return null;
+    final dateParts = parts[0].split('/');
+    final timeParts = parts[1].split(':');
+    if (dateParts.length != 3 || timeParts.length != 3) return null;
 
-      final months = {
-        'jan': 1,
-        'feb': 2,
-        'mar': 3,
-        'apr': 4,
-        'may': 5,
-        'jun': 6,
-        'jul': 7,
-        'aug': 8,
-        'sep': 9,
-        'oct': 10,
-        'nov': 11,
-        'dec': 12,
-      };
+    const months = {
+      'jan': 1,
+      'feb': 2,
+      'mar': 3,
+      'apr': 4,
+      'may': 5,
+      'jun': 6,
+      'jul': 7,
+      'aug': 8,
+      'sep': 9,
+      'oct': 10,
+      'nov': 11,
+      'dec': 12,
+    };
+    final month = months[dateParts[0].toLowerCase()];
+    final day = int.tryParse(dateParts[1]);
+    final year = int.tryParse(dateParts[2]);
+    final hour = int.tryParse(timeParts[0]);
+    final minute = int.tryParse(timeParts[1]);
+    final second = int.tryParse(timeParts[2]);
+    if (month == null || day == null || year == null || hour == null ||
+        minute == null || second == null) {
+      return null;
+    }
+    return DateTime(year, month, day, hour, minute, second);
+  }
 
-      final month = months[dateParts[0].toLowerCase()] ?? 1;
-      final day = int.parse(dateParts[1]);
-      final year = int.parse(dateParts[2]);
-      final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1]);
-      final second = int.parse(timeParts[2]);
+  String _calculateTimeAgo(String timestamp) {
+    final backupTime = _parseRouterOsTimestamp(timestamp);
+    if (backupTime == null) return timestamp;
 
-      final backupTime = DateTime(year, month, day, hour, minute, second);
-      final now = DateTime.now();
-      final difference = now.difference(backupTime);
-
-      if (difference.inSeconds < 60) {
-        return 'منذ ${difference.inSeconds} ثانية';
-      } else if (difference.inMinutes < 60) {
-        return 'منذ ${difference.inMinutes} دقيقة';
-      } else if (difference.inHours < 24) {
-        return 'منذ ${difference.inHours} ساعة';
-      } else {
-        return 'منذ ${difference.inDays} يوم';
-      }
-    } catch (e) {
-      return creationTime;
+    final difference = DateTime.now().difference(backupTime);
+    if (difference.isNegative || difference.inSeconds < 60) {
+      return 'الآن';
+    } else if (difference.inMinutes < 60) {
+      return 'منذ ${difference.inMinutes} دقيقة';
+    } else if (difference.inHours < 24) {
+      return 'منذ ${difference.inHours} ساعة';
+    } else {
+      return 'منذ ${difference.inDays} يوم';
     }
   }
 
   Widget _buildBackupCard(Map<String, dynamic> backup) {
-    final name = backup['name'] ?? '';
-    final size = backup['size'] ?? '0';
-    final creationTime = backup['creation-time'] ?? '';
-    final type = backup['type'] ?? '';
+    final name = backup['name']?.toString() ?? '';
+    final sizeBytes = _backupSizeBytes(backup['size']);
+    final timestamp = _backupTimestamp(backup);
+    final type = backup['type']?.toString().trim().toLowerCase() ?? '';
 
     final isUserManager = type == 'user manager database';
     final backupType = isUserManager ? 'يوزر متجر' : 'ويوكس';
@@ -502,9 +545,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         ? context.theme.appColors.success
         : context.theme.appColors.secondary;
 
-    final timeAgo = _calculateTimeAgo(creationTime);
+    final timeAgo = _calculateTimeAgo(timestamp);
 
-    final sizeKB = (int.tryParse(size) ?? 0) / 1024;
+    final sizeKB = sizeBytes / 1024;
     final sizeText = sizeKB >= 1024
         ? '${(sizeKB / 1024).toStringAsFixed(2)} م.ب'
         : '${sizeKB.toStringAsFixed(2)} ك.ب';
@@ -680,6 +723,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
+        if (_isCreatingBackup) return;
         await _loadBackups();
       },
       child: ListView.builder(
@@ -702,7 +746,9 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => unawaited(_loadBackups()),
+            onPressed: _isCreatingBackup
+                ? null
+                : () => unawaited(_loadBackups()),
             tooltip: 'تحديث',
           ),
         ],
