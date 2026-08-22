@@ -1,8 +1,10 @@
 name: Multi-Platform Build
 
 on:
+  # البناء متعدد المنصات مكلف؛ فروع feature تعتمد على Code Quality،
+  # بينما يمكن تشغيل هذا workflow يدوياً عند الحاجة.
   push:
-    branches: [ main, develop, 'feature/**', 'capy/**' ]
+    branches: [ main, develop, 'capy/**' ]
   pull_request:
     branches: [ '**' ]
   workflow_dispatch:  # يسمح بالتشغيل اليدوي من تبويب Actions
