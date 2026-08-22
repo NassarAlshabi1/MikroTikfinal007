@@ -47,6 +47,7 @@ jobs:
         run: flutter build appbundle --release --target-platform android-arm64
 
       - name: Upload Android artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
           name: android-builds-${{ github.sha }}
@@ -134,6 +135,7 @@ jobs:
         run: flutter build linux --release
 
       - name: Upload Linux artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
           name: linux-build-${{ github.sha }}
@@ -176,7 +178,7 @@ jobs:
         continue-on-error: true  # قد تفشل بسبب Visual Studio — لا نوقف الـ workflow
 
       - name: Upload Windows artifacts
-        if: always()
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')) }}
         uses: actions/upload-artifact@v4
         with:
           name: windows-build-${{ github.sha }}
@@ -213,6 +215,7 @@ jobs:
         run: flutter build macos --release
 
       - name: Upload macOS artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
           name: macos-build-${{ github.sha }}
@@ -229,13 +232,13 @@ jobs:
         run: |
           echo "# 🚀 Multi-Platform Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Status | Artifacts |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|--------|-----------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🤖 Android | ${{ needs.build-android.result }} | android-builds-${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🌐 Web | ${{ needs.build-web.result }} | web-build-${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐧 Linux | ${{ needs.build-linux.result }} | linux-build-${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🪟 Windows | ${{ needs.build-windows.result }} | windows-build-${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🍎 macOS | ${{ needs.build-macos.result }} | macos-build-${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status | Artifact policy |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|-----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🤖 Android | ${{ needs.build-android.result }} | manual/tag only |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌐 Web | ${{ needs.build-web.result }} | disabled |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐧 Linux | ${{ needs.build-linux.result }} | manual/tag only |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🪟 Windows | ${{ needs.build-windows.result }} | manual/tag only |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🍎 macOS | ${{ needs.build-macos.result }} | manual/tag only |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**✨ Features:**" >> $GITHUB_STEP_SUMMARY
           echo "- Updated app icon with Qahtani logo" >> $GITHUB_STEP_SUMMARY
