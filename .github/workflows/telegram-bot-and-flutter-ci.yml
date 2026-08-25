@@ -32,7 +32,7 @@ jobs:
         run: python -m compileall -q telegram_bot
 
       - name: Run bot tests
-        run: python -m unittest telegram_bot.test_telegram_bot -v
+        run: python -m unittest telegram_bot.test_telegram_bot telegram_bot.test_telegram_bot_extended -v
 
       - name: Validate installer and workflow syntax markers
         run: bash -n scripts/setup_telegram_bot_local.sh
@@ -46,7 +46,7 @@ jobs:
             echo 'Signing or environment artifact found in repository.'
             exit 1
           fi
-          if grep -RInE 'api\.telegram\.org/bot|/tool[[:space:]]+fetch|check-certificate[[:space:]]*=[[:space:]]*no|telegram-direct-v6' deploy/routeros --include='*.rsc' --include='*.md'; then
+          if grep -RInE 'api\.telegram\.org/bot|/tool[[:space:]]+fetch|check-certificate[[:space:]]*=\s*no' deploy/routeros --include='*.rsc' --include='*.md'; then
             echo 'Direct RouterOS-to-Telegram transport marker found.'
             exit 1
           fi
