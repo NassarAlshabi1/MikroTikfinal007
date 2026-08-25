@@ -46,8 +46,8 @@ void main() {
 
     expect(profile.name, 'premium');
     expect(profile.sharedUsers, 3);
-    expect(profile.uptimeUsedSeconds, 95_400);
-    expect(profile.uptimeLimitSeconds, 604_800);
+    expect(profile.uptimeUsedSeconds, 95400);
+    expect(profile.uptimeLimitSeconds, 604800);
     expect(profile.lastSyncedAt, isNotNull);
   });
 
