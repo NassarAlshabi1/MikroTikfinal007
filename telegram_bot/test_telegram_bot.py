@@ -35,6 +35,8 @@ class Tests(unittest.TestCase):
   self.assertEqual(_parse_sentence(['!re','=x=y'])['x'],'y')
  def test_reads_and_print_projection(self):
   g=FakeGateway();t=FakeTelegram();r=CommandRouter(g,t,policy=TelegramPolicy(),admin_user_ids=frozenset({'9'}));r.handle('1','9','/status');r.handle('1','9','/print active');self.assertTrue(any('=.proplist=' in a for _,args in g.calls for a in args))
+ def test_user_details_are_read_only(self):
+  g=FakeGateway();t=FakeTelegram();r=CommandRouter(g,t,policy=TelegramPolicy(),admin_user_ids=frozenset({'9'}));r.handle('1','9','/users card01');self.assertIn('card01',t.messages[-1][1]);self.assertTrue(any(path=='/tool/user-manager/user/print' for path,_ in g.calls));self.assertFalse(any(path.endswith('/add') for path,_ in g.calls))
  def test_reboot_binds_user_and_confirmation(self):
   g=FakeGateway();t=FakeTelegram();r=CommandRouter(g,t,policy=TelegramPolicy(),admin_user_ids=frozenset({'9'}));r.handle('1','9','/reboot'); data=t.messages[-1][2]['inline_keyboard'][0][0]['callback_data'];r.handle_callback('1','8','cb',data);self.assertNotIn('/system/reboot',[x[0] for x in g.calls]);r.handle_callback('1','9','cb2',data);self.assertEqual(g.calls[-1][0],'/system/reboot')
  def test_reboot_expiry(self):

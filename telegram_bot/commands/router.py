@@ -23,10 +23,17 @@ LOGGER = logging.getLogger("mikrotik_telegram_bot")
 
 def _rows_text(title: str, rows: list[dict[str, Any]]) -> str:
     lines = [title, "=" * len(title)]
+    omitted = 0
     for row in rows[:200]:
         values = [f"{key}: {value}" for key, value in row.items() if key != "!type"]
         if values:
-            lines.append(" | ".join(values))
+            candidate = " | ".join(values)
+            if len("\n".join(lines)) + len(candidate) + 1 > 3800:
+                omitted += 1
+                continue
+            lines.append(candidate)
+    if omitted:
+        lines.append(f"… تم إخفاء {omitted} سجل إضافي لتقليل حجم الرسالة.")
     return "\n".join(lines) or title
 
 
@@ -45,7 +52,7 @@ class CommandRouter:
         "/status حالة الراوتر والموارد\n/internet حالة الراوتر والإنترنت\n"
         "/resources و /uptime موارد ومدة التشغيل\n/interfaces الواجهات\n"
         "/active الجلسات النشطة\n/sessions [username] جلسات مستخدم\n"
-        "/users و /profiles مستخدمو وفئات User Manager\n/user-manager ملخص User Manager\n"
+        "/users [username] مستخدمو أو تفاصيل User Manager /profiles الفئات\n/user-manager ملخص User Manager\n"
         "/card username و /check username فحص بطاقة\n/card-create username profile إنشاء بطاقة بعد تأكيد Admin\n/c200 [profile] إنشاء بطاقة تلقائية بعد تأكيد Admin\n/delete-expired و /clean معاينة ثم حذف المنتهية بعد تأكيد Admin\n"
         "/usage استهلاك الواجهة\n/logs آخر سجلات النظام\n"
         "/report html|pdf تقرير قابل للإرسال\n/sales تقرير تشغيلي للمخزون حسب العميل والفئة\n"
@@ -354,9 +361,21 @@ class CommandRouter:
             if rows is not None:
                 self.telegram.send_message(chat_id, _rows_text("جلسات المستخدم" if argument else "الجلسات النشطة", rows))
         elif command == "/users":
-            rows = self._read_or_report(chat_id, "المستخدمين", self.operations.users)
-            if rows is not None:
-                self.telegram.send_message(chat_id, f"عدد مستخدمي User Manager: {len(rows)}")
+            if argument:
+                try:
+                    username = validate_username(argument)
+                except ValueError:
+                    self.telegram.send_message(chat_id, "اسم المستخدم غير صالح. استخدم أحرفًا وأرقامًا و._- فقط.")
+                    return
+                user = self._read_or_report(chat_id, "المستخدم", lambda: self.operations.user(username))
+                if user is None:
+                    self.telegram.send_message(chat_id, "لم يعثر User Manager على هذا المستخدم.")
+                else:
+                    self.telegram.send_message(chat_id, _dict_text(f"بيانات User Manager: {username}", user))
+            else:
+                rows = self._read_or_report(chat_id, "المستخدمين", self.operations.users)
+                if rows is not None:
+                    self.telegram.send_message(chat_id, _rows_text(f"مستخدمو User Manager ({len(rows)})", rows))
         elif command == "/profiles":
             rows = self._read_or_report(chat_id, "الفئات", self.operations.profiles)
             if rows is not None:
