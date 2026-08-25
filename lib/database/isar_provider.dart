@@ -57,9 +57,8 @@ class IsarProvider {
       ExecutedCommandCollectionSchema,
     ];
 
-    final directory = kIsWeb
-        ? ''
-        : (await getApplicationDocumentsDirectory()).path;
+    final directory =
+        kIsWeb ? '' : (await getApplicationDocumentsDirectory()).path;
 
     return Isar.open(
       schemas,

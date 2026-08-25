@@ -28,6 +28,7 @@ class TelegramPolicy:
         "/usage": CommandRule("READ_ONLY", False, False),
         "/card": CommandRule("LOW_RISK", False, False),
         "/card-check": CommandRule("LOW_RISK", False, False),
+        "/check": CommandRule("LOW_RISK", False, False),
         "/card-usage": CommandRule("LOW_RISK", False, False),
         "/logs": CommandRule("READ_ONLY", False, False),
         "/print": CommandRule("READ_ONLY", False, False),
@@ -35,7 +36,9 @@ class TelegramPolicy:
         "/sales": CommandRule("READ_ONLY", False, False),
         "/user-manager": CommandRule("READ_ONLY", False, False),
         "/card-create": CommandRule("HIGH_RISK", True, True, True),
+        "/c200": CommandRule("HIGH_RISK", True, True, True),
         "/delete-expired": CommandRule("HIGH_RISK", True, True, True),
+        "/clean": CommandRule("HIGH_RISK", True, True, True),
         "/reboot": CommandRule("HIGH_RISK", True, True, True),
     }
 

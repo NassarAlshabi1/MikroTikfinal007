@@ -29,8 +29,7 @@ class AiDiagnosticsDao {
   // ============================================================
 
   Future<int> insertDiagnostic(AiDiagnosticCollection diagnostic) async {
-    await _isar.writeTxn(
-        () => _isar.aiDiagnosticCollections.put(diagnostic));
+    await _isar.writeTxn(() => _isar.aiDiagnosticCollections.put(diagnostic));
     return diagnostic.id;
   }
 

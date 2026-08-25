@@ -116,7 +116,8 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
         await _storage.write(key: entry.key, value: value);
         final verified = await _storage.read(key: entry.key);
         if (verified != value) {
-          throw StateError('Secure storage verification failed for ${entry.key}');
+          throw StateError(
+              'Secure storage verification failed for ${entry.key}');
         }
       }
       for (final key in ['pass', 'remote_pass', _keyTelegramBotToken]) {
@@ -139,10 +140,12 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
 class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
   final Map<String, String> _store = {};
 
-  void seed({String? mikrotikPass, String? remotePass, String? telegramBotToken}) {
+  void seed(
+      {String? mikrotikPass, String? remotePass, String? telegramBotToken}) {
     if (mikrotikPass != null) _store['mikrotik_pass'] = mikrotikPass;
     if (remotePass != null) _store['remote_pass'] = remotePass;
-    if (telegramBotToken != null) _store['telegram_bot_token'] = telegramBotToken;
+    if (telegramBotToken != null)
+      _store['telegram_bot_token'] = telegramBotToken;
   }
 
   @override
@@ -167,10 +170,12 @@ class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
       _store[key] = value;
     }
   }
+
   @override
   Future<void> clearAll() async => _store.clear();
   @override
-  Future<void> clearMikrotikCredentials() async => _store.remove('mikrotik_pass');
+  Future<void> clearMikrotikCredentials() async =>
+      _store.remove('mikrotik_pass');
   @override
   Future<bool> hasStoredCredentials() async =>
       (_store['mikrotik_pass'] ?? '').isNotEmpty;

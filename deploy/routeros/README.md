@@ -27,3 +27,20 @@
 يجب أن تكون `TELEGRAM_ADMIN_USER_IDS` في إعداد البوت مجموعة فرعية من `TELEGRAM_ALLOWED_USER_IDS`. هذه القائمة تتحكم في `/reboot` و`/card-create` و`/delete-expired`، ولا يغني امتلاك حساب RouterOS لصلاحية عن التحقق من هوية Telegram. لا تضع Bot Token أو كلمة مرور RouterOS في RouterOS أو Git.
 
 المراجع الرسمية: [User](https://help.mikrotik.com/docs/spaces/ROS/pages/8978504/User) و[API](https://help.mikrotik.com/docs/spaces/ROS/pages/47579160/API).
+
+## بخصوص السكربت المرفق ذي polling إلى Telegram
+
+السكربت المرفق الذي يخزن رمز البوت داخل RouterOS وينفذ طلبات HTTP إلى خدمة الرسائل لا يُستورد إلى MikroTik في هذا المشروع. فهو يجعل الراوتر ينفذ polling وقراءة أوامر الرسائل، ويستخدم parsing يدويًا لـ JSON وصلاحيات تغيير مباشرة. هذا يتعارض مع التصميم المعتمد ومسار الأمان في المشروع.
+
+تم اعتماد وظائفه المطلوبة فقط، مثل حالة الراوتر، المستخدمين والجلسات، فحص البطاقة، إنشاء/حذف User Manager والتقارير، داخل Telegram Bot على Linux وخلف RouterOSOperations وTelegramPolicy وAuditTrail. الإشعارات التلقائية تنفذها `InternetMonitor` في خدمة البوت؛ فهي تفحص RouterOS API ثم اختبار الإنترنت، وترسل إشعارًا عند تغير الحالة بين `ONLINE` و`INTERNET_DOWN` و`ROUTER_OFFLINE` إلى المحادثات المسموح بها.
+
+للتشغيل التلقائي، شغّل خدمة systemd على خادم Linux وأضف إلى `bot.env` ما يلي:
+
+```dotenv
+MIKROTIK_PORT=8729
+MIKROTIK_USE_SSL=true
+MONITOR_TARGET=1.1.1.1
+MONITOR_INTERVAL_SECONDS=30
+```
+
+بعد إعداد مستخدم API-SSL من القالب، شغّل خدمة البوت. لا تحتاج إلى Scheduler أو System Script أو Telegram Token على MikroTik، ولا تشغّل السكربت المرفق بالتوازي مع البوت حتى لا يصبح للمنظومة مساران متعارضان للتحكم والإشعار.

@@ -46,8 +46,7 @@ class CommandRouter:
         "/resources و /uptime موارد ومدة التشغيل\n/interfaces الواجهات\n"
         "/active الجلسات النشطة\n/sessions [username] جلسات مستخدم\n"
         "/users و /profiles مستخدمو وفئات User Manager\n/user-manager ملخص User Manager\n"
-        "/card username فحص وطباعة بطاقة\n/card-check username فحص بطاقة\n/card-usage username استهلاك وجلسات بطاقة\n"
-        "/card-create username profile إنشاء بطاقة بعد تأكيد Admin\n/delete-expired معاينة ثم حذف المنتهية بعد تأكيد Admin\n"
+        "/card username و /check username فحص بطاقة\n/card-create username profile إنشاء بطاقة بعد تأكيد Admin\n/c200 [profile] إنشاء بطاقة تلقائية بعد تأكيد Admin\n/delete-expired و /clean معاينة ثم حذف المنتهية بعد تأكيد Admin\n"
         "/usage استهلاك الواجهة\n/logs آخر سجلات النظام\n"
         "/report html|pdf تقرير قابل للإرسال\n/sales تقرير تشغيلي للمخزون حسب العميل والفئة\n"
         "/print active|users|profiles|interfaces إرسال بيانات محدودة\n/reboot إعادة التشغيل بعد تأكيد Admin\n/help عرض هذه المساعدة"
@@ -104,6 +103,11 @@ class CommandRouter:
         alphabet = string.ascii_letters + string.digits
         return "".join(secrets.choice(alphabet) for _ in range(12))
 
+    @staticmethod
+    def _generated_username() -> str:
+        alphabet = string.ascii_lowercase + string.digits
+        return "c" + "".join(secrets.choice(alphabet) for _ in range(8))
+
     def _begin_card_print(self, chat_id: str, username: str, user_id: str = "") -> None:
         try:
             username = validate_username(username)
@@ -124,7 +128,7 @@ class CommandRouter:
         keyboard = [[{"text": name, "callback_data": f"card:{nonce}:{index}"}] for index, name in enumerate(profile_names)]
         self.telegram.send_message(chat_id, f"اختر فئة User Manager للكرت {username}:", {"inline_keyboard": keyboard})
 
-    def _begin_create(self, chat_id: str, user_id: str, argument: str) -> None:
+    def _begin_create(self, chat_id: str, user_id: str, argument: str, command_name: str = "/card-create") -> None:
         fields = argument.split()
         if len(fields) != 2:
             self.telegram.send_message(chat_id, "الاستخدام الآمن: /card-create username profile\nسيولد البوت كلمة مرور عشوائية بعد التأكيد.")
@@ -138,14 +142,15 @@ class CommandRouter:
         operation_id = AuditTrail.operation_id()
         nonce = self._nonce(chat_id, user_id, username, operation_id)
         self._pending_creates[nonce] = (chat_id, user_id, username, profile, self._generated_password(), time.time() + 120, operation_id)
-        self._audit(source="Telegram", user_id=user_id, chat_id=chat_id, command="/card-create", risk="HIGH_RISK", authorization="ALLOW", confirmation="PENDING", device=self.gateway.address, result="AWAITING_CONFIRMATION", duration_ms=0, operation_id=operation_id)
+        self._audit(source="Telegram", user_id=user_id, chat_id=chat_id,             command=command_name, risk="HIGH_RISK", authorization="ALLOW", confirmation="PENDING", device=self.gateway.address, result="AWAITING_CONFIRMATION", duration_ms=0, operation_id=operation_id)
+
         keyboard = [[
             {"text": "✅ إنشاء البطاقة", "callback_data": f"create-card:{nonce}:confirm"},
             {"text": "❌ إلغاء", "callback_data": f"create-card:{nonce}:cancel"},
         ]]
         self.telegram.send_message(chat_id, f"تأكيد إنشاء البطاقة {username} بالفئة {profile}؟ سيولد البوت كلمة مرور عشوائية.", {"inline_keyboard": keyboard})
 
-    def _begin_delete_expired(self, chat_id: str, user_id: str) -> None:
+    def _begin_delete_expired(self, chat_id: str, user_id: str, command_name: str = "/delete-expired") -> None:
         try:
             expired = self.operations.expired_users()
         except Exception as error:
@@ -160,7 +165,8 @@ class CommandRouter:
         self._pending_deletes[nonce] = (chat_id, user_id, expired[:100], time.time() + 120, operation_id)
         names = ", ".join(row.get("username", "?") for row in expired[:20])
         more = " …" if len(expired) > 20 else ""
-        self._audit(source="Telegram", user_id=user_id, chat_id=chat_id, command="/delete-expired", risk="HIGH_RISK", authorization="ALLOW", confirmation="PENDING", device=self.gateway.address, result="AWAITING_CONFIRMATION", duration_ms=0, operation_id=operation_id)
+        self._audit(source="Telegram", user_id=user_id, chat_id=chat_id,             command=command_name, risk="HIGH_RISK", authorization="ALLOW", confirmation="PENDING", device=self.gateway.address, result="AWAITING_CONFIRMATION", duration_ms=0, operation_id=operation_id)
+
         keyboard = [[
             {"text": "✅ حذف القائمة", "callback_data": f"delete-expired:{nonce}:confirm"},
             {"text": "❌ إلغاء", "callback_data": f"delete-expired:{nonce}:cancel"},
@@ -376,10 +382,10 @@ class CommandRouter:
             rows = self._read_or_report(chat_id, "السجلات", self.operations.logs)
             if rows is not None:
                 self.telegram.send_message(chat_id, _rows_text("آخر سجلات MikroTik", rows))
-        elif command in {"/card", "/card-check"}:
+        elif command in {"/card", "/card-check", "/check"}:
             if not argument:
                 self.telegram.send_message(chat_id, "استخدم: /card username أو /card-check username")
-            elif command == "/card-check":
+            elif command in {"/card-check", "/check"}:
                 user = self._read_or_report(chat_id, "البطاقة", lambda: self.operations.user(argument))
                 self.telegram.send_message(chat_id, _dict_text("فحص البطاقة", user) if user else "لم يعثر User Manager على البطاقة.")
             else:
@@ -391,16 +397,24 @@ class CommandRouter:
                 result = self._read_or_report(chat_id, "استهلاك البطاقة", lambda: self.operations.card_usage(argument))
                 if result is not None:
                     self.telegram.send_message(chat_id, _dict_text("استهلاك وجلسات البطاقة", result))
-        elif command == "/card-create":
+        elif command in {"/card-create", "/c200"}:
             if user_id not in self.admin_user_ids:
                 self.telegram.send_message(chat_id, "إنشاء البطاقات متاح للمسؤولين فقط.")
                 return
-            self._begin_create(chat_id, user_id, argument)
-        elif command == "/delete-expired":
+            if command == "/c200":
+                fields = argument.split()
+                if len(fields) > 1:
+                    self.telegram.send_message(chat_id, "استخدم: /c200 أو /c200 profile")
+                    return
+                profile = fields[0] if fields else "default"
+                self._begin_create(chat_id, user_id, f"{self._generated_username()} {profile}", "/c200")
+            else:
+                self._begin_create(chat_id, user_id, argument)
+        elif command in {"/delete-expired", "/clean"}:
             if user_id not in self.admin_user_ids:
                 self.telegram.send_message(chat_id, "حذف البطاقات متاح للمسؤولين فقط.")
                 return
-            self._begin_delete_expired(chat_id, user_id)
+            self._begin_delete_expired(chat_id, user_id, command)
         elif command == "/reboot":
             self._cmd_reboot(chat_id, user_id)
         elif command == "/print":

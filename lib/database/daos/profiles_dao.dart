@@ -41,10 +41,7 @@ class ProfilesDao {
   // ============================================================
 
   Future<List<ProfileCollection>> getAllProfiles() async {
-    return await _isar.profileCollections
-        .where()
-        .sortByName()
-        .findAll();
+    return await _isar.profileCollections.where().sortByName().findAll();
   }
 
   Future<ProfileCollection?> getProfileById(int id) async {
@@ -52,10 +49,7 @@ class ProfilesDao {
   }
 
   Future<ProfileCollection?> getProfileByName(String name) async {
-    return await _isar.profileCollections
-        .where()
-        .nameEqualTo(name)
-        .findFirst();
+    return await _isar.profileCollections.where().nameEqualTo(name).findFirst();
   }
 
   /// Stream للملفات الشخصية

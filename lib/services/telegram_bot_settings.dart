@@ -50,7 +50,9 @@ class TelegramBotSettings {
   }
 
   bool get isConfigured =>
-      botToken.trim().isNotEmpty && allowedChatIds.trim().isNotEmpty && allowedUserIds.trim().isNotEmpty;
+      botToken.trim().isNotEmpty &&
+      allowedChatIds.trim().isNotEmpty &&
+      allowedUserIds.trim().isNotEmpty;
 
   TelegramBotSettings copyWith({
     String? botToken,
@@ -99,29 +101,30 @@ class TelegramBotSettingsStore {
 
   Future<TelegramBotSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = await SecureCredentialsStorageContainer.instance
-        .getTelegramBotToken();
+    final token =
+        await SecureCredentialsStorageContainer.instance.getTelegramBotToken();
     final defaults = TelegramBotSettings.defaults(botToken: token ?? '');
 
     return TelegramBotSettings(
       botToken: token ?? '',
       allowedChatIds:
           prefs.getString(_allowedChatIdsKey) ?? defaults.allowedChatIds,
-      allowedUserIds: prefs.getString(_allowedUserIdsKey) ?? defaults.allowedUserIds,
+      allowedUserIds:
+          prefs.getString(_allowedUserIdsKey) ?? defaults.allowedUserIds,
       pollSeconds: prefs.getInt(_pollSecondsKey) ?? defaults.pollSeconds,
       monitorTarget:
           prefs.getString(_monitorTargetKey) ?? defaults.monitorTarget,
-      monitorIntervalSeconds: prefs.getInt(_monitorIntervalKey) ??
-          defaults.monitorIntervalSeconds,
-      trafficInterface: prefs.getString(_trafficInterfaceKey) ??
-          defaults.trafficInterface,
-      trafficIntervalSeconds: prefs.getInt(_trafficIntervalKey) ??
-          defaults.trafficIntervalSeconds,
+      monitorIntervalSeconds:
+          prefs.getInt(_monitorIntervalKey) ?? defaults.monitorIntervalSeconds,
+      trafficInterface:
+          prefs.getString(_trafficInterfaceKey) ?? defaults.trafficInterface,
+      trafficIntervalSeconds:
+          prefs.getInt(_trafficIntervalKey) ?? defaults.trafficIntervalSeconds,
       dailyReportTime:
           prefs.getString(_dailyReportTimeKey) ?? defaults.dailyReportTime,
       offsetFile: prefs.getString(_offsetFileKey) ?? defaults.offsetFile,
-      trafficStateFile: prefs.getString(_trafficStateFileKey) ??
-          defaults.trafficStateFile,
+      trafficStateFile:
+          prefs.getString(_trafficStateFileKey) ?? defaults.trafficStateFile,
     );
   }
 
@@ -133,13 +136,11 @@ class TelegramBotSettingsStore {
     await prefs.setString(_allowedUserIdsKey, settings.allowedUserIds.trim());
     await prefs.setInt(_pollSecondsKey, settings.pollSeconds);
     await prefs.setString(_monitorTargetKey, settings.monitorTarget.trim());
-    await prefs.setInt(
-        _monitorIntervalKey, settings.monitorIntervalSeconds);
+    await prefs.setInt(_monitorIntervalKey, settings.monitorIntervalSeconds);
     await prefs.setString(
         _trafficInterfaceKey, settings.trafficInterface.trim());
     await prefs.setInt(_trafficIntervalKey, settings.trafficIntervalSeconds);
-    await prefs.setString(
-        _dailyReportTimeKey, settings.dailyReportTime.trim());
+    await prefs.setString(_dailyReportTimeKey, settings.dailyReportTime.trim());
     await prefs.setString(_offsetFileKey, settings.offsetFile.trim());
     await prefs.setString(
         _trafficStateFileKey, settings.trafficStateFile.trim());

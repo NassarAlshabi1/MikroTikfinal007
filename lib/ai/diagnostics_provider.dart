@@ -57,7 +57,8 @@ class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
 
   Future<void> setProvider(AiProvider provider) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    await _persist(current.copyWith(provider: provider, model: provider.defaultModel));
+    await _persist(
+        current.copyWith(provider: provider, model: provider.defaultModel));
   }
 
   Future<void> setModel(String model) async {

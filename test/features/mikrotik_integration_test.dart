@@ -385,7 +385,9 @@ void main() {
       expect(
           await SecureCredentialsStorageContainer.instance.getRemotePassword(),
           'remote');
-      expect(await SecureCredentialsStorageContainer.instance.getTelegramBotToken(),
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .getTelegramBotToken(),
           'telegram-token');
     });
 
@@ -403,7 +405,9 @@ void main() {
       expect(
           await SecureCredentialsStorageContainer.instance.getRemotePassword(),
           isNull);
-      expect(await SecureCredentialsStorageContainer.instance.getTelegramBotToken(),
+      expect(
+          await SecureCredentialsStorageContainer.instance
+              .getTelegramBotToken(),
           isNull);
     });
 

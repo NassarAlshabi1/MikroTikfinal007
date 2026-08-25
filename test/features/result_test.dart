@@ -237,6 +237,5 @@ void main() {
       expect(AppConstants.maxLogLines, greaterThan(100));
       expect(AppConstants.maxEventsDisplayed, 100);
     });
-
   });
 }

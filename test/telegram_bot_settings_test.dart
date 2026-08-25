@@ -16,8 +16,10 @@ void main() {
   });
 
   test('copyWith preserves values not explicitly changed', () {
-    final settings = TelegramBotSettings.defaults(botToken: 'token')
-        .copyWith(allowedChatIds: '5944227208', allowedUserIds: '5944227208', trafficInterface: 'pppoe-out1');
+    final settings = TelegramBotSettings.defaults(botToken: 'token').copyWith(
+        allowedChatIds: '5944227208',
+        allowedUserIds: '5944227208',
+        trafficInterface: 'pppoe-out1');
 
     expect(settings.botToken, 'token');
     expect(settings.allowedChatIds, '5944227208');

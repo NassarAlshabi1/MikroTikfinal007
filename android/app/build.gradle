@@ -77,6 +77,9 @@ android {
     def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
     def releaseStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
     def releaseSigningConfigured = [releaseStoreFile, releaseKeyAlias, releaseKeyPassword, releaseStorePassword].every { value -> value != null && !value.trim().isEmpty() } && file(releaseStoreFile).isFile()
+    def requestedReleaseTask = gradle.startParameter.taskNames.any { task ->
+        task.toLowerCase(Locale.ROOT).contains('release')
+    }
 
     signingConfigs {
         release {
@@ -98,7 +101,7 @@ android {
             buildConfigField "Boolean", "DEBUG_MODE", "false"
 
             // ===== التوقيع إلزامي للإصدار ولا يجوز استخدام unsigned APK =====
-            if (!releaseSigningConfigured) {
+            if (!releaseSigningConfigured && requestedReleaseTask) {
                 throw new GradleException('Release signing secrets are missing; provide ANDROID_KEYSTORE_PATH, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD, and ANDROID_STORE_PASSWORD outside Git.')
             }
             signingConfig signingConfigs.release

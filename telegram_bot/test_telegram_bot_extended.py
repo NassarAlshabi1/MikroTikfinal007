@@ -72,9 +72,23 @@ class ExtendedTests(unittest.TestCase):
 
     def test_policy_marks_mutations_admin_only(self):
         policy = TelegramPolicy()
-        for command in ("/reboot", "/card-create", "/delete-expired"):
+        for command in ("/reboot", "/card-create", "/c200", "/delete-expired", "/clean"):
             rule = policy.rule_for(command)
             self.assertTrue(rule and rule.mutating and rule.admin_only and rule.confirmation)
+
+    def test_script_aliases_remain_safe(self):
+        gateway = FakeGateway()
+        telegram = FakeTelegram()
+        router = CommandRouter(gateway, telegram, policy=TelegramPolicy(), admin_user_ids=frozenset({"9"}))
+        router.handle("1", "8", "/c200")
+        self.assertIn("المسؤولين", telegram.messages[-1][1])
+        self.assertFalse(any(path.endswith("/add") for path, _ in gateway.calls))
+        router.handle("1", "9", "/c200 basic")
+        create_data = telegram.messages[-1][2]["inline_keyboard"][0][0]["callback_data"]
+        self.assertTrue(create_data.startswith("create-card:"))
+        router.handle("1", "9", "/clean")
+        delete_data = telegram.messages[-1][2]["inline_keyboard"][0][0]["callback_data"]
+        self.assertTrue(delete_data.startswith("delete-expired:"))
 
     def test_create_card_requires_bound_confirmation(self):
         gateway = FakeGateway()

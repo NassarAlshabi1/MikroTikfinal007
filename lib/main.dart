@@ -377,8 +377,7 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
             builder: (context) => HomeScreen(
-                isVersion7OrNewer: false,
-                username: _userController.text),
+                isVersion7OrNewer: false, username: _userController.text),
           ),
         );
       }

@@ -107,8 +107,7 @@ final watchRecentCommandsProvider =
 // ============================================================
 
 /// إحصائيات الكروت
-final cardsStatisticsProvider =
-    FutureProvider<CardsStatistics>((ref) async {
+final cardsStatisticsProvider = FutureProvider<CardsStatistics>((ref) async {
   final dao = await ref.watch(cardsDaoProvider.future);
   return dao.getStatistics();
 });

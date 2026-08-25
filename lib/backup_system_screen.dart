@@ -33,8 +33,7 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
       ]);
     } catch (error) {
       final message = error.toString().toLowerCase();
-      final unsupportedTimestamp =
-          message.contains('unknown parameter') ||
+      final unsupportedTimestamp = message.contains('unknown parameter') ||
           message.contains('unknown property') ||
           message.contains('not supported');
       if (!unsupportedTimestamp) rethrow;
@@ -67,14 +66,15 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      final response = await _fetchFileRows(client)
-          .timeout(const Duration(seconds: 20));
+      final response =
+          await _fetchFileRows(client).timeout(const Duration(seconds: 20));
 
       if (mounted) {
         setState(() {
           _backups = response
               .where((file) {
-                final type = file['type']?.toString().trim().toLowerCase() ?? '';
+                final type =
+                    file['type']?.toString().trim().toLowerCase() ?? '';
                 return type == 'backup' || type == 'user manager database';
               })
               .map((file) => Map<String, dynamic>.from(file))
@@ -224,7 +224,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
 
       snackBar.close();
       if (mounted) {
-        showSuccessSnackBar(context, 'تم إنشاء النسخة الاحتياطية والتحقق منها بنجاح');
+        showSuccessSnackBar(
+            context, 'تم إنشاء النسخة الاحتياطية والتحقق منها بنجاح');
       }
     } catch (e) {
       snackBar.close();
@@ -510,8 +511,12 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
     final hour = int.tryParse(timeParts[0]);
     final minute = int.tryParse(timeParts[1]);
     final second = int.tryParse(timeParts[2]);
-    if (month == null || day == null || year == null || hour == null ||
-        minute == null || second == null) {
+    if (month == null ||
+        day == null ||
+        year == null ||
+        hour == null ||
+        minute == null ||
+        second == null) {
       return null;
     }
     return DateTime(year, month, day, hour, minute, second);
@@ -746,9 +751,8 @@ class _BackupSystemScreenState extends State<BackupSystemScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _isCreatingBackup
-                ? null
-                : () => unawaited(_loadBackups()),
+            onPressed:
+                _isCreatingBackup ? null : () => unawaited(_loadBackups()),
             tooltip: 'تحديث',
           ),
         ],

@@ -280,64 +280,64 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     final isEditing = existingNode != null;
     try {
       return await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isEditing ? 'تعديل جهاز' : 'إضافة جهاز جديد'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                    labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyMedium?.color ??
-                        Theme.of(context).colorScheme.onSurface),
-                validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
-              ),
-              TextFormField(
-                controller: ipController,
-                decoration: const InputDecoration(labelText: 'عنوان IP'),
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyMedium?.color ??
-                        Theme.of(context).colorScheme.onSurface),
-                validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
-              ),
-            ],
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(isEditing ? 'تعديل جهاز' : 'إضافة جهاز جديد'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                      labelText: 'اسم الجهاز (مثال: صحن رئيسي)'),
+                  style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color ??
+                          Theme.of(context).colorScheme.onSurface),
+                  validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
+                ),
+                TextFormField(
+                  controller: ipController,
+                  decoration: const InputDecoration(labelText: 'عنوان IP'),
+                  style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color ??
+                          Theme.of(context).colorScheme.onSurface),
+                  validator: (v) => v!.isEmpty ? 'الحقل مطلوب' : null,
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('إلغاء')),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                if (isEditing) {
-                  existingNode.name = nameController.text;
-                  existingNode.ip = ipController.text;
-                } else {
-                  final newNode = DeviceNode(
-                    id: _uuid.v4(),
-                    name: nameController.text,
-                    ip: ipController.text,
-                  );
-                  if (parentNode != null) {
-                    parentNode.children.add(newNode);
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('إلغاء')),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  if (isEditing) {
+                    existingNode.name = nameController.text;
+                    existingNode.ip = ipController.text;
                   } else {
-                    _rootNode = newNode;
+                    final newNode = DeviceNode(
+                      id: _uuid.v4(),
+                      name: nameController.text,
+                      ip: ipController.text,
+                    );
+                    if (parentNode != null) {
+                      parentNode.children.add(newNode);
+                    } else {
+                      _rootNode = newNode;
+                    }
                   }
+                  _rebuildGraph();
+                  Navigator.of(context).pop();
                 }
-                _rebuildGraph();
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        ),
       );
     } finally {
       nameController.dispose();

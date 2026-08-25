@@ -52,14 +52,13 @@ class ExecutedCommandsDao {
   // ============================================================
 
   Future<int> insertCommand(ExecutedCommandCollection command) async {
-    await _isar.writeTxn(
-        () => _isar.executedCommandCollections.put(command));
+    await _isar.writeTxn(() => _isar.executedCommandCollections.put(command));
     return command.id;
   }
 
   Future<bool> deleteCommand(int id) async {
-    return await _isar.writeTxn(
-        () => _isar.executedCommandCollections.delete(id));
+    return await _isar
+        .writeTxn(() => _isar.executedCommandCollections.delete(id));
   }
 
   // ============================================================
@@ -163,7 +162,8 @@ class ExecutedCommandsDao {
     }
 
     final failed = all.length - successful;
-    final avgDuration = durationCount > 0 ? (totalDuration ~/ durationCount) : 0;
+    final avgDuration =
+        durationCount > 0 ? (totalDuration ~/ durationCount) : 0;
 
     return CommandsStatistics(
       totalCommands: all.length,
@@ -190,16 +190,15 @@ class ExecutedCommandsDao {
     for (final month in sortedMonths.take(12)) {
       final commands = byMonth[month]!;
       final successful = commands.where((c) => c.success).length;
-      final totalDuration = commands.fold<int>(
-          0, (sum, c) => sum + (c.durationMs ?? 0));
+      final totalDuration =
+          commands.fold<int>(0, (sum, c) => sum + (c.durationMs ?? 0));
       reports.add(MonthlyCommandReport(
         month: month,
         total: commands.length,
         successful: successful,
         failed: commands.length - successful,
-        avgDurationMs: commands.isNotEmpty
-            ? totalDuration ~/ commands.length
-            : 0,
+        avgDurationMs:
+            commands.isNotEmpty ? totalDuration ~/ commands.length : 0,
       ));
     }
     return reports;

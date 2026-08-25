@@ -33,8 +33,7 @@ class MigrationService {
 
   Future<bool> isMigrationDone() async {
     final prefs = await SharedPreferences.getInstance();
-    return (prefs.getInt(_migrationVersionKey) ?? 0) >=
-        currentMigrationVersion;
+    return (prefs.getInt(_migrationVersionKey) ?? 0) >= currentMigrationVersion;
   }
 
   /// ينفذ الهجرة القديمة مرة واحدة لكل إصدار schema.
@@ -56,8 +55,7 @@ class MigrationService {
 
   Future<void> _runMigration() async {
     final prefs = await SharedPreferences.getInstance();
-    if ((prefs.getInt(_migrationVersionKey) ?? 0) >=
-        currentMigrationVersion) {
+    if ((prefs.getInt(_migrationVersionKey) ?? 0) >= currentMigrationVersion) {
       debugPrint('[Migration] Already done — skipping');
       return;
     }
@@ -249,7 +247,8 @@ class MigrationService {
       } catch (error, stackTrace) {
         // Failure to remove the legacy source must not invalidate the data
         // already migrated. The next migration run will safely skip duplicates.
-        debugPrint('[Migration] Could not delete ${entity.path}: $error\\n$stackTrace');
+        debugPrint(
+            '[Migration] Could not delete ${entity.path}: $error\\n$stackTrace');
       }
     }
 
@@ -264,7 +263,8 @@ class MigrationService {
 
     final profiles = await isar.profileCollections.where().findAll();
     final validIds = profiles.map((profile) => profile.id).toSet();
-    final invalid = cards.where((card) => !validIds.contains(card.profileId)).toList();
+    final invalid =
+        cards.where((card) => !validIds.contains(card.profileId)).toList();
     if (invalid.isEmpty) return;
 
     const fallbackName = '__unassigned__';

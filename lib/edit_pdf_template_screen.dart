@@ -177,7 +177,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
     final cardsPerPage = int.tryParse(_cardsPerPageController.text.trim());
 
     if (selectedProfile.isEmpty || !_routerProfiles.contains(selectedProfile)) {
-      showErrorSnackBar(context, 'اختر فئة User Manager جُلبت من MikroTik أولًا.');
+      showErrorSnackBar(
+          context, 'اختر فئة User Manager جُلبت من MikroTik أولًا.');
       return;
     }
     if (imageFile == null || imageContext == null) {
@@ -335,7 +336,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                         strokeWidth: 2),
                                   ),
                                   SizedBox(width: 10),
-                                  Text('جاري جلب فئات User Manager من MikroTik...'),
+                                  Text(
+                                      'جاري جلب فئات User Manager من MikroTik...'),
                                 ],
                               ),
                             )
@@ -369,7 +371,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                 color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
-                              dropdownColor: Theme.of(context).colorScheme.surface,
+                              dropdownColor:
+                                  Theme.of(context).colorScheme.surface,
                               decoration: const InputDecoration(
                                 labelText: 'فئة كروت User Manager',
                                 helperText:
@@ -383,7 +386,9 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
                                       child: Text(
                                         name,
                                         style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

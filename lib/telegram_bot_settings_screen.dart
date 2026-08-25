@@ -12,8 +12,7 @@ class TelegramBotSettingsScreen extends StatefulWidget {
       _TelegramBotSettingsScreenState();
 }
 
-class _TelegramBotSettingsScreenState
-    extends State<TelegramBotSettingsScreen> {
+class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tokenController = TextEditingController();
   final _chatIdsController = TextEditingController();
@@ -47,9 +46,11 @@ class _TelegramBotSettingsScreenState
     _userIdsController.text = settings.allowedUserIds;
     _pollController.text = settings.pollSeconds.toString();
     _targetController.text = settings.monitorTarget;
-    _monitorIntervalController.text = settings.monitorIntervalSeconds.toString();
+    _monitorIntervalController.text =
+        settings.monitorIntervalSeconds.toString();
     _interfaceController.text = settings.trafficInterface;
-    _trafficIntervalController.text = settings.trafficIntervalSeconds.toString();
+    _trafficIntervalController.text =
+        settings.trafficIntervalSeconds.toString();
     _reportTimeController.text = settings.dailyReportTime;
     _offsetFileController.text = settings.offsetFile;
     _stateFileController.text = settings.trafficStateFile;
@@ -91,14 +92,16 @@ class _TelegramBotSettingsScreenState
   String? _chatIds(String? value) {
     final raw = value?.trim() ?? '';
     if (raw.isEmpty) return 'أدخل Chat ID واحداً على الأقل';
-    final valid = raw.split(',').every((id) => RegExp(r'^-?\d+$').hasMatch(id.trim()));
+    final valid =
+        raw.split(',').every((id) => RegExp(r'^-?\d+$').hasMatch(id.trim()));
     return valid ? null : 'استخدم Chat IDs رقمية مفصولة بفواصل';
   }
 
   String? _userIds(String? value) {
     final raw = value?.trim() ?? '';
     if (raw.isEmpty) return 'أدخل Telegram User ID واحداً على الأقل';
-    final valid = raw.split(',').every((id) => RegExp(r'^\d+$').hasMatch(id.trim()));
+    final valid =
+        raw.split(',').every((id) => RegExp(r'^\d+$').hasMatch(id.trim()));
     return valid ? null : 'استخدم User IDs رقمية مفصولة بفواصل';
   }
 
@@ -172,7 +175,8 @@ class _TelegramBotSettingsScreenState
     } on DioException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('تعذر الوصول إلى Telegram API. تحقق من الإنترنت والتوكن.'),
+        content:
+            Text('تعذر الوصول إلى Telegram API. تحقق من الإنترنت والتوكن.'),
         behavior: SnackBarBehavior.floating,
       ));
     } finally {
@@ -297,7 +301,8 @@ class _TelegramBotSettingsScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Telegram API', style: Theme.of(context).textTheme.titleMedium),
+            Text('Telegram API',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             _field(
               controller: _tokenController,
@@ -373,8 +378,8 @@ class _TelegramBotSettingsScreenState
               controller: _monitorIntervalController,
               label: 'فترة فحص انقطاع الإنترنت بالثواني',
               icon: Icons.timer_outlined,
-              validator: (value) => _positiveNumber(
-                  value, 'فترة فحص الإنترنت', minimum: 10),
+              validator: (value) =>
+                  _positiveNumber(value, 'فترة فحص الإنترنت', minimum: 10),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
@@ -390,8 +395,8 @@ class _TelegramBotSettingsScreenState
               controller: _trafficIntervalController,
               label: 'فترة قراءة عدادات الاستهلاك بالثواني',
               icon: Icons.data_usage,
-              validator: (value) => _positiveNumber(
-                  value, 'فترة الاستهلاك', minimum: 30),
+              validator: (value) =>
+                  _positiveNumber(value, 'فترة الاستهلاك', minimum: 30),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),

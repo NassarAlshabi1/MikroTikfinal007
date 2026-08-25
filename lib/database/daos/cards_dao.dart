@@ -78,10 +78,7 @@ class CardsDao {
 
   /// كل الكروت (مرتبة بالأحدث)
   Future<List<CardCollection>> getAllCards() async {
-    return await _isar.cardCollections
-        .where()
-        .sortByCreatedAtDesc()
-        .findAll();
+    return await _isar.cardCollections.where().sortByCreatedAtDesc().findAll();
   }
 
   /// كرت بالـ ID
@@ -127,10 +124,8 @@ class CardsDao {
 
   /// أعلى N مستخدمين استهلاكاً
   Future<List<CardCollection>> getTopConsumers(int limit) async {
-    final all = await _isar.cardCollections
-        .filter()
-        .statusEqualTo('active')
-        .findAll();
+    final all =
+        await _isar.cardCollections.filter().statusEqualTo('active').findAll();
     all.sort((a, b) => b.totalBytes.compareTo(a.totalBytes));
     return all.take(limit).toList();
   }
@@ -227,7 +222,8 @@ class CardsDao {
           cards[i]!.status = newStatus;
         }
       }
-      await _isar.cardCollections.putAll(cards.whereType<CardCollection>().toList());
+      await _isar.cardCollections
+          .putAll(cards.whereType<CardCollection>().toList());
     });
   }
 

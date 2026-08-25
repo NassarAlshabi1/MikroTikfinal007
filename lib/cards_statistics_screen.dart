@@ -94,12 +94,10 @@ class _CardsStatisticsScreenState extends State<CardsStatisticsScreen>
     // RouterOS API يدعم =.proplist، لكنه لا يدعم =.skip و=.limit
     // كمعاملات عامة لأوامر print. إرسالها يسبب unknown parameter في RouterOS v6.
     // لذلك نجلب السجلات المطلوبة مرة واحدة ونطبق الحد محليًا بأمان.
-    final response = await client
-        .talk([
-          path,
-          '=.proplist=$fields',
-        ])
-        .timeout(const Duration(seconds: 15));
+    final response = await client.talk([
+      path,
+      '=.proplist=$fields',
+    ]).timeout(const Duration(seconds: 15));
 
     final records = response
         .whereType<Map>()
