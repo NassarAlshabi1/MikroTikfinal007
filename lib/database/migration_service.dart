@@ -227,7 +227,7 @@ class MigrationService {
             cards.add(
               CardCollection.fromData(
                 username: username,
-                profileId: profile!.id,
+                profileId: profile.id,
                 createdAt: DateTime.now(),
               ),
             );

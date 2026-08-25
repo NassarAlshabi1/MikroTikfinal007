@@ -4,9 +4,8 @@ publish_to: 'none'
 # رقم البناء (+N) يُحدَّد تلقائياً من GitHub Actions (build-release.yml)
 # لا تعدّله يدوياً — استخدم bump-version.yml لزيادة الإصدار.
 version: 1.0.0+1
-
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
   flutter: '>=3.44.0'  # مطلوب لـ scrollCacheExtent API المستخدم في عدة شاشات
 
 dependencies:
@@ -45,9 +44,8 @@ dependencies:
   network_info_plus: ^5.0.3
   fl_chart: ^0.69.0
   # --- ✨ caching لطلبات HTTP ---
-  dio_cache_interceptor: ^3.5.0
-  # Persistent HTTP cache backed by Isar; avoids the legacy Drift/SQLite cache store.
-  http_cache_isar_store: ^2.0.1
+  dio_cache_interceptor: ^4.0.7
+  # Dio cache uses an in-memory store to keep native Isar single-sourced.
   # --- ✨ AI Diagnostics ---
   dartssh2: ^2.22.5               # اتصال SSH متوافق مع Dart 3.13 بـ MikroTik
   flutter_secure_storage: ^9.2.2  # تخزين آمن لمفاتيح API

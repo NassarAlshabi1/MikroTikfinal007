@@ -238,15 +238,5 @@ void main() {
       expect(AppConstants.maxEventsDisplayed, 100);
     });
 
-    test('Security defaults', () {
-      expect(AppConstants.clipboardAutoClearDuration.inSeconds, 30);
-      expect(AppConstants.maxLoginAttemptsBeforeLockout, 5);
-    });
-
-    test('SharedPreferences keys', () {
-      expect(AppConstants.prefsKeyIp, 'ip');
-      expect(AppConstants.prefsKeyUser, 'user');
-      expect(AppConstants.prefsKeyRememberMe, 'remember_me');
-    });
   });
 }

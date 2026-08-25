@@ -1,11 +1,11 @@
 // ============================================================
-// DioCacheService — persistent HTTP cache backed by Isar.
-// The previous DbCacheStore used Drift/SQLite and is intentionally removed.
+// DioCacheService — bounded in-memory HTTP cache.
+// The previous persistent stores were removed to keep the Android native
+// dependency set single-sourced and avoid cache data outliving credentials.
 // ============================================================
 
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
-import 'package:http_cache_isar_store/http_cache_isar_store.dart';
 
 class _CacheStoreHolder {
   static CacheStore? _store;
@@ -29,10 +29,7 @@ class _CacheStoreHolder {
   }
 
   static Future<CacheStore> _open() async {
-    // The store manages its own Isar cache database. It is deliberately
-    // separate from the application's domain Isar instance so that the
-    // cache schema can evolve independently.
-    return IsarCacheStore();
+    return MemCacheStore();
   }
 
   static Future<void> close() async {
@@ -58,7 +55,6 @@ Future<Dio> createCachedDio({
   final options = CacheOptions(
     store: store,
     policy: forceRefresh ? CachePolicy.refresh : CachePolicy.request,
-    hitCacheOnErrorExcept: const [401, 403],
     maxStale: maxStale,
     priority: priority,
     keyBuilder: CacheOptions.defaultCacheKeyBuilder,
