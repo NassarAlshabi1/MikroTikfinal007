@@ -35,6 +35,7 @@ def main() -> int:
             recovery_target=settings.monitor_target,
             recovery_attempts=settings.reboot_recovery_attempts,
             recovery_interval_seconds=settings.reboot_recovery_interval_seconds,
+            user_manager_customer=settings.user_manager_customer,
         )
         monitor=InternetMonitor(monitor_gateway,telegram,settings.allowed_chat_ids,settings.monitor_target,settings.monitor_interval_seconds)
         traffic=TrafficMonitor(usage,telegram,settings.allowed_chat_ids,settings.traffic_interval_seconds,settings.daily_report_time)
@@ -60,12 +61,17 @@ def main() -> int:
                         _save_offset(settings.offset_file,update_id+1); offset=update_id+1; continue
                     message=update.get("message") or {}; chat=message.get("chat") or {}
                     chat_id=str(chat.get("id","")); user=str((message.get("from") or {}).get("id","")); text=str(message.get("text","")).strip()
-                    if text and policy.authorize(chat_id=chat_id,user_id=user,allowed_chats=settings.allowed_chat_ids,allowed_users=settings.allowed_user_ids):
+                    command = text.split(maxsplit=1)[0].lower().split("@", 1)[0] if text else ""
+                    authorized = text and policy.authorize(chat_id=chat_id,user_id=user,allowed_chats=settings.allowed_chat_ids,allowed_users=settings.allowed_user_ids,command=command,admin_users=settings.admin_user_ids)
+                    if authorized:
                         try: router.handle(chat_id,user,text)
                         except Exception as error:
                             LOGGER.warning("command failed: %s",type(error).__name__)
                             try: telegram.send_message(chat_id,f"تعذر تنفيذ الطلب بأمان: {type(error).__name__}")
                             except Exception: pass
+                    elif text and chat_id in settings.allowed_chat_ids and user in settings.allowed_user_ids:
+                        try: telegram.send_message(chat_id,"ليس لديك صلاحية تنفيذ هذا الأمر.")
+                        except Exception: pass
                     _save_offset(settings.offset_file,update_id+1); offset=update_id+1
             except KeyboardInterrupt: break
             except Exception as error:

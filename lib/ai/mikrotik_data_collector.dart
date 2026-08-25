@@ -826,7 +826,6 @@ class MikrotikDataCollector {
     ],
 
     // ============================================================
-    //  وضع DHCP — مستوحى من integration tools: list_dhcp_servers, list_dhcp_leases, ...
     // ============================================================
     DiagnosticMode.dhcp: [
       _CollectorCommand(
@@ -880,7 +879,6 @@ class MikrotikDataCollector {
     ],
 
     // ============================================================
-    //  وضع المراقبة — مستوحى من integration: list_netwatch, list_arp_table, list_neighbors, ...
     // ============================================================
     DiagnosticMode.monitoring: [
       _CollectorCommand(
@@ -1116,7 +1114,6 @@ class MikrotikDataCollector {
     ],
 
     // ============================================================
-    //  وضع البنية التحتية — مستوحى من integration: bridge, vlan, bonding, tunnels, ipv6
     // ============================================================
     DiagnosticMode.infrastructure: [
       _CollectorCommand(
@@ -1214,8 +1211,6 @@ class MikrotikDataCollector {
           '=.proplist=address,interface,network,disabled',
         ],
       ),
-      // ===== أوامر v6 جديدة مستوحاة من router diagnostics (بدون LTE) =====
-      // VRRP instances — مستوحاة من list_vrrp_instances في router diagnostics
       _CollectorCommand(
         sectionName: 'INTERFACE VRRP (v6)',
         sshCommand: 'interface vrrp print',
@@ -1233,7 +1228,6 @@ class MikrotikDataCollector {
           '=.proplist=name,interface,vrid,priority,interval,preemption-mode,authentication,authentication-type,authentication-password,master,backup,comment,disabled',
         ],
       ),
-      // Certificates — مستوحاة من list_certificates في router diagnostics
       _CollectorCommand(
         sectionName: 'CERTIFICATES (v6)',
         sshCommand: 'certificate print',
@@ -1243,7 +1237,6 @@ class MikrotikDataCollector {
         ],
         // v6: certificates submenu (CA, server, client certs)
       ),
-      // Interface Lists — مستوحاة من list_interface_lists في router diagnostics
       _CollectorCommand(
         sectionName: 'INTERFACE LIST (v6)',
         sshCommand: 'interface list print',
@@ -1261,7 +1254,6 @@ class MikrotikDataCollector {
           '=.proplist=list,interface,comment',
         ],
       ),
-      // Policy routing rules + tables — مستوحاة من list_routing_rules/tables في router diagnostics
       _CollectorCommand(
         sectionName: 'IP ROUTE RULE (v6 policy routing)',
         sshCommand: 'ip route rule print',
@@ -1271,7 +1263,6 @@ class MikrotikDataCollector {
         ],
         // v6: policy-based routing rules
       ),
-      // Backup files listing — مستوحاة من create_backup في router diagnostics
       _CollectorCommand(
         sectionName: 'FILE LIST (v6 — لمراجعة backups)',
         sshCommand: 'file print where name~".backup" or name~".rsc"',
@@ -1543,7 +1534,6 @@ class MikrotikDataCollector {
   }
 
   // ============================================================
-  //  أوامر تشخيص من الموجّه (router-originated) — مستوحاة من router diagnostics
   //  تقوم بتنفيذ ping/traceroute/bandwidth-test/torch من الموجّه نفسه
   //  هذا يكشف مشاكل التوجيه الداخلي التي لا يراها ping الـ client
   // ============================================================

@@ -124,7 +124,7 @@ class DailyChecklist:
         if usage is not None:
             lines.extend(["", TrafficUsageTracker.report(usage)])
         else:
-            lines.extend(["", "الاستهلاك: غير مهيأ في إعدادات الجسر."])
+            lines.extend(["", "الاستهلاك: غير مهيأ في إعدادات البوت."])
 
         logs = report.get("logs", [])
         lines.extend(["", "آخر السجلات:"])

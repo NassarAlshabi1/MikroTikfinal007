@@ -136,7 +136,6 @@ class _TerminalScreenState extends State<TerminalScreen> {
       '/ip arp print',
     ],
     // فئة التشخيص الشبكي — أوامر تُنفّذ من الموجّه نفسه (router-originated)
-    // مستوحاة من router diagnostics: ping, traceroute, bandwidth-test, fetch, torch
     // ملاحظة: هذه أوامر v6 متوافقة بالكامل (لا حاجة لـ v7)
     _CmdCategory.diagnostics: <String>[
       '/ping count=5 address=8.8.8.8',
@@ -149,7 +148,6 @@ class _TerminalScreenState extends State<TerminalScreen> {
       '/tool netwatch print',
     ],
     // فئة الأدوات المتقدمة — VRRP, certificates, interface lists, backup, export
-    // مستوحاة من router diagnostics: list_vrrp_instances, list_certificates, list_interface_lists, create_backup, export_config
     _CmdCategory.advanced: <String>[
       '/interface vrrp print',
       '/interface vrrp print detail',

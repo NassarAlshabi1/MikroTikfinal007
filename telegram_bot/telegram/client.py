@@ -28,7 +28,13 @@ class TelegramClient:
     def send_document(self, chat_id: str, filename: str, content: bytes | str) -> None:
         boundary = "----MikroTikTelegramBoundary"
         raw_content = content.encode("utf-8") if isinstance(content, str) else content
-        content_type = "application/pdf" if filename.lower().endswith(".pdf") else "text/plain; charset=utf-8"
+        lower_name = filename.lower()
+        if lower_name.endswith(".pdf"):
+            content_type = "application/pdf"
+        elif lower_name.endswith(".html") or lower_name.endswith(".htm"):
+            content_type = "text/html; charset=utf-8"
+        else:
+            content_type = "text/plain; charset=utf-8"
         body = (
             f"--{boundary}\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\n{chat_id}\r\n"
             f"--{boundary}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{filename}\"\r\n"

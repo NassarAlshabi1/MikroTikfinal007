@@ -3,7 +3,9 @@
 # حدّد عنوان خادم البوت فقط في address، ولا تفتح API-SSL على الإنترنت.
 
 /user group
-add name=telegram-bot-policy policy=read,api,reboot,test comment="Dedicated direct Telegram Bot API account"
+# read + api + test تغطي القراءة والفحوص، reboot لإعادة التشغيل.
+# write + policy مطلوبتان فقط لأن /card-create و/delete-expired يديران User Manager.
+add name=telegram-bot-policy policy=read,write,policy,api,reboot,test comment="Dedicated direct Telegram Bot API account"
 
 /user
 add name=telegram-bot group=telegram-bot-policy password="REPLACE_WITH_LONG_RANDOM_PASSWORD" address="REPLACE_BOT_SERVER_CIDR"
@@ -20,5 +22,5 @@ set [find name="api-ssl"] disabled=no address="REPLACE_BOT_SERVER_CIDR" port=872
 # /ip service print where name="api"
 # /ip service print where name="api-ssl"
 
-# ملاحظة: هذه المجموعة لا تمنح write؛ الأمر التغييري الوحيد المسموح هو reboot.
-# لا تضف ssh أو policy أو sensitive أو password إلى مجموعة البوت.
+# هذه المجموعة لا تمنح ssh أو ftp أو winbox أو web أو sensitive أو password.
+# إذا أوقفت أوامر إدارة User Manager، احذف write,policy واستخدم read,api,reboot,test فقط.

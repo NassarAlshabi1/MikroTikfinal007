@@ -1,6 +1,6 @@
 # Telegram Bot — Direct MikroTik RouterOS API
 
-هذه الخدمة تشغّل `telegram_bot` مباشرة. لا يوجد Bridge ولا integration ولا subprocess ولا مسار تحكم من MikroTik إلى Telegram.
+هذه الخدمة تشغّل `telegram_bot` مباشرة. لا توجد طبقة relay أو subprocess ولا مسار تحكم عكسي من MikroTik إلى Telegram.
 
 المسار:
 

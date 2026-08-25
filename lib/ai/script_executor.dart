@@ -399,7 +399,6 @@ class ScriptExecutor {
   }
 
   // ============================================================
-  //  Change Safety Layer — مستوحى من router diagnostics (dryRun + snapshot + rollback)
   //  هذا القسم يضيف طبقة أمان إنتاجية لتنفيذ الإصلاحات:
   //  1. dryRun: يُرجِع diff متوقّع دون تطبيق
   //  2. snapshot: ينشئ backup + export قبل أي تنفيذ
@@ -509,7 +508,6 @@ class ScriptExecutor {
 
   /// يتحقق إن كان أمر RouterOS idempotent (يعطي نفس النتيجة عند التكرار)
   ///
-  /// قواعد الـ idempotency (مستوحاة من router diagnostics):
   /// - `print`, `monitor`, `find` — آمنة و idempotent (قراءة فقط)
   /// - `set [find ...]` — idempotent (يحدّث قائمة مطابقة)
   /// - `add` بدون `comment=` — غالباً NOT idempotent (ينشئ نسخة جديدة)
@@ -543,7 +541,6 @@ class ScriptExecutor {
 
   /// ينفّذ سكربت بأمان كامل — snapshot + execute + rollback عند الفشل
   ///
-  /// المنهجية (مستوحاة من router diagnostics apply_plan):
   /// 1. ينشئ snapshot قبل التنفيذ (إن احتاج الأمر)
   /// 2. ينفّذ الأوامر بالتسلسل مع stopOnError=true
   /// 3. عند أول فشل: يُنشئ rollback script من الـ snapshot

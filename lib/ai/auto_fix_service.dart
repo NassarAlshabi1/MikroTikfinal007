@@ -496,7 +496,6 @@ class AutoFixService {
   }
 
   // ============================================================
-  //  تحليل DHCP — مستوحى من integration tools: list_dhcp_servers, list_dhcp_leases, ...
   // ============================================================
   static List<ProposedFix> _analyzeDhcp(MikrotikSnapshot snapshot) {
     final fixes = <ProposedFix>[];
@@ -635,7 +634,6 @@ class AutoFixService {
   }
 
   // ============================================================
-  //  تحليل المراقبة — مستوحى من integration: list_netwatch, list_snmp, ntp_client, ...
   // ============================================================
   static List<ProposedFix> _analyzeMonitoring(MikrotikSnapshot snapshot) {
     final fixes = <ProposedFix>[];
@@ -774,7 +772,6 @@ class AutoFixService {
   }
 
   // ============================================================
-  //  تحليل البنية التحتية — مستوحى من integration: bridge, vlan, bonding, ipv6, ...
   // ============================================================
   static List<ProposedFix> _analyzeInfrastructure(MikrotikSnapshot snapshot) {
     final fixes = <ProposedFix>[];
@@ -936,7 +933,6 @@ class AutoFixService {
 }
 
 // ============================================================
-//  Plan / Apply Workflow — مستوحى من router diagnostics (plan_changes + apply_plan)
 //
 //  يضيف طبقة إدارة أعلى فوق AutoFixService:
 //  1. planFixes: يأخذ قائمة fixes مقترحة ويولّد plan نصي للعرض

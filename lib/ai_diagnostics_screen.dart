@@ -910,7 +910,6 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   }
 
   /// يفتح نافذة خطة الإصلاح الشاملة (dry-run + تنفيذ آمن + rollback)
-  /// مستوحى من router diagnostics (plan_changes + apply_plan + rollback_change)
   Future<void> _showFixPlanDialog(
       BuildContext parentContext, List<ProposedFix> fixes) async {
     // أغلق نافذة قائمة الإصلاحات أولاً

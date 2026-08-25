@@ -27,6 +27,7 @@ class Settings:
     daily_report_time: str
     reboot_recovery_attempts: int
     reboot_recovery_interval_seconds: int
+    user_manager_customer: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -67,4 +68,5 @@ class Settings:
             os.getenv("TRAFFIC_DAILY_REPORT_TIME", "23:59").strip() or "23:59",
             max(0, int(os.getenv("REBOOT_RECOVERY_ATTEMPTS", "12"))),
             max(2, int(os.getenv("REBOOT_RECOVERY_INTERVAL_SECONDS", "5"))),
+            os.getenv("USER_MANAGER_CUSTOMER", "admin").strip() or "admin",
         )

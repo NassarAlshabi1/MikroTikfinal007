@@ -1,7 +1,6 @@
 // ============================================================
 //  Fix Plan Dialog — UI لعرض خطة إصلاح + dry-run + execute + rollback
 //
-//  مستوحى من router diagnostics (plan_changes + apply_plan + rollback_change)
 //
 //  المميزات:
 //  1. عرض الخطة (displayPlan) مع إحصائيات + قائمة fixes
