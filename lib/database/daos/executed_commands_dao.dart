@@ -1,7 +1,7 @@
 // ============================================================
 //  ExecutedCommandsDao (Isar) — Audit Trail للأوامر المنفّذة
 //
-//  يحل محل Drift ExecutedCommandsDao القديم.
+//  يحل محل قاعدة البيانات السابقة ExecutedCommandsDao القديم.
 // ============================================================
 
 import 'package:isar/isar.dart';

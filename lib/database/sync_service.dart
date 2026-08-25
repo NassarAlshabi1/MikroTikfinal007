@@ -87,7 +87,7 @@ class SyncService {
     }
     return [
       '/tool/user-manager/profile/print',
-      '=.proplist=.id,name,shared-users,rate-limit,uptime-used,upload-used,download-used',
+      '=.proplist=.id,name,shared-users,rate-limit,uptime-used,uptime-limit,upload-used,download-used',
     ];
   }
 
@@ -105,18 +105,25 @@ class SyncService {
   }
 
   Future<List<Map<String, dynamic>>> _safeTalk(
-      RouterOSClient client, List<String> args) async {
+    RouterOSClient client,
+    List<String> args,
+  ) async {
     try {
       final res = await client.talk(args).timeout(const Duration(seconds: 15));
       return res.map((e) => Map<String, dynamic>.from(e)).toList();
-    } catch (e) {
-      debugPrint('[SyncService] talk error for $args: $e');
-      return [];
+    } catch (e, stackTrace) {
+      // An empty list is valid RouterOS data. It must not also mean
+      // "the request failed" because callers would report a false-success
+      // sync and could make destructive decisions based on incomplete data.
+      debugPrint('[SyncService] talk error for $args: $e\n$stackTrace');
+      rethrow;
     }
   }
 
   Future<int> _syncProfiles(
-      Isar db, List<Map<String, dynamic>> profiles) async {
+    Isar db,
+    List<Map<String, dynamic>> profiles,
+  ) async {
     if (profiles.isEmpty) return 0;
 
     int count = 0;
@@ -132,6 +139,7 @@ class SyncService {
         final uploadUsed = _parseInt(p['upload-used']);
         final downloadUsed = _parseInt(p['download-used']);
         final uptimeUsed = _parseDuration(p['uptime-used']?.toString());
+        final uptimeLimit = _parseDuration(p['uptime-limit']?.toString());
 
         final profile = existing ??
             ProfileCollection.fromData(
@@ -144,6 +152,9 @@ class SyncService {
         profile.uploadUsedBytes = uploadUsed;
         profile.downloadUsedBytes = downloadUsed;
         profile.uptimeUsedSeconds = uptimeUsed;
+        if (uptimeLimit > 0) {
+          profile.uptimeLimitSeconds = uptimeLimit;
+        }
         profile.lastSyncedAt = DateTime.now();
         await db.profileCollections.put(profile);
         count++;
@@ -152,11 +163,17 @@ class SyncService {
     return count;
   }
 
-  Future<int> _syncCards(Isar db, List<Map<String, dynamic>> users,
-      MikrotikServiceMode mode) async {
+  Future<int> _syncCards(
+    Isar db,
+    List<Map<String, dynamic>> users,
+    MikrotikServiceMode mode,
+  ) async {
     if (users.isEmpty) return 0;
 
     int count = 0;
+    // Resolve the fallback once, outside the card write transaction. This
+    // avoids nested write transactions and guarantees a valid profile FK.
+    final fallbackProfileId = await _ensureFallbackProfile(db);
     await db.writeTxn(() async {
       for (final u in users) {
         final usernameKey =
@@ -173,7 +190,7 @@ class SyncService {
                 .where()
                 .nameEqualTo(profileName)
                 .findFirst();
-        final profileId = await _profileId(db, profile);
+        final profileId = profile?.id ?? fallbackProfileId;
         final existing = await db.cardCollections
             .where()
             .usernameEqualTo(username)
@@ -200,7 +217,9 @@ class SyncService {
             ? 0
             : _parseDuration(u['uptime-used']?.toString());
         card.mikrotikUserId = u['.id']?.toString();
-        card.lastUsedAt = DateTime.now();
+        // lastUsedAt is a domain event timestamp, not a sync timestamp.
+        // RouterOS data fetched here does not provide a trustworthy usage
+        // event, so preserve the existing value instead of fabricating one.
         await db.cardCollections.put(card);
         count++;
       }
@@ -208,17 +227,22 @@ class SyncService {
     return count;
   }
 
-  Future<int> _profileId(Isar db, ProfileCollection? profile) async {
-    if (profile != null) return profile.id;
-    final defaultProfile = await db.profileCollections.where().findFirst();
-    if (defaultProfile != null) return defaultProfile.id;
+  Future<int> _ensureFallbackProfile(Isar db) async {
+    const fallbackName = '__unassigned__';
+    final existing = await db.profileCollections
+        .where()
+        .nameEqualTo(fallbackName)
+        .findFirst();
+    if (existing != null) return existing.id;
 
-    final fallback = ProfileCollection.fromData(
-      name: 'default',
+    final created = ProfileCollection.fromData(
+      name: fallbackName,
       createdAt: DateTime.now(),
     );
-    await db.profileCollections.put(fallback);
-    return fallback.id;
+    await db.writeTxn(() async {
+      await db.profileCollections.put(created);
+    });
+    return created.id;
   }
 
   Future<void> _updateCardStatuses(Isar db) async {
@@ -226,11 +250,12 @@ class SyncService {
       final cards = await db.cardCollections.where().findAll();
       for (final card in cards) {
         final profile = await db.profileCollections.get(card.profileId);
-        if (profile?.uptimeLimitSeconds != null &&
-            profile!.uptimeLimitSeconds! > 0 &&
-            card.uptimeSeconds >= profile.uptimeLimitSeconds!) {
-          card.status = 'expired';
-          await db.cardCollections.put(card);
+        final limit = profile?.uptimeLimitSeconds;
+        if (limit != null && limit > 0 && card.uptimeSeconds >= limit) {
+          if (card.status != 'expired') {
+            card.status = 'expired';
+            await db.cardCollections.put(card);
+          }
         }
       }
     });
@@ -242,7 +267,11 @@ class SyncService {
   }
 
   bool _isDisabled(dynamic value) {
-    return value == true || value?.toString().toLowerCase() == 'true';
+    final normalized = value?.toString().trim().toLowerCase();
+    return value == true ||
+        normalized == 'true' ||
+        normalized == 'yes' ||
+        normalized == '1';
   }
 
   String? _nullableString(dynamic value) {

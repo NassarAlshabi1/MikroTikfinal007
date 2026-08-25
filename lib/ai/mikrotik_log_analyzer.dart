@@ -7,8 +7,7 @@
 //  3. كشف الأنماط الحرجة (هجمات، فشل اتصال، فقدان حزم، ...)
 //  4. إنتاج تقرير قابل للعرض + توصيات
 //  5. التكامل مع AiService للتحليل العميق
-//  6. التكامل مع OomolMcpClient لتشغيل pipeline سحابي عند الحاجة
-//
+////
 //  المصادر المستوحاة:
 //  - hreskiv/mikr: syslog receiver + threshold alerts
 //  - eworm-de/routeros-scripts: patterns جاهزة

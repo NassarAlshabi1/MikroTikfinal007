@@ -8,9 +8,9 @@
 
 ## 1. ملخّص تنفيذي
 
-**الهجرة إلى Isar مكتملة بالكامل** على الفرع `feature/isar-migration`. تم استبدال Drift/SQLite بالكامل بـ Isar في جميع طبقات المشروع:
+**الهجرة إلى Isar مكتملة بالكامل** على الفرع `feature/isar-migration`. تم استبدال SQLite/Drift بالكامل بـ Isar في جميع طبقات المشروع:
 
-- **`pubspec.yaml`**: تمت إزالة `drift`, `drift_dev`, `sqlite3_flutter_libs` واستبدالها بـ `isar: ^3.1.0+1`, `isar_flutter_libs: ^3.1.0+1`, `isar_generator: ^3.1.0+1`.
+- **`pubspec.yaml`**: طبقة التخزين الحالية تعتمد على `isar`, `isar_flutter_libs`, و`isar_generator`، كما تم استبدال مخزن HTTP القديم المبني على SQLite بمخزن Isar.
 - **`lib/database/`**: لا يوجد أي إشارة لـ Drift — جميع الملفات تستخدم `package:isar/isar.dart`.
 - **Schemas**: 4 collections كاملة في `lib/database/isar/`:
   - `CardCollection` (مع `@Index(unique: true)` على username)
@@ -73,7 +73,7 @@ lib/database/
 - UI يتحدّث تلقائياً عند تغيّر البيانات
 
 ### 3.4 Migration آمن
-- `MigrationService.migrateFromDriftIfNeeded()` يعمل مرة واحدة عند أول تشغيل
+- `` يعمل مرة واحدة عند أول تشغيل
 - يُرحّل جلسات التشخيص من SharedPreferences
 - يُرحّل الكروت المحفوظة من ملفات `.txt`
 - يضع علامة `isar_migration_done = true` بعد النجاح

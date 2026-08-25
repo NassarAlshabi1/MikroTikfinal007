@@ -115,17 +115,20 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
       final file = File(fileToDelete.path);
       if (await file.exists()) {
         await file.delete();
+        if (await file.exists()) {
+          throw StateError('file_delete_verification_failed');
+        }
       }
+      _savedFiles.remove(fileToDelete);
+      final prefs = await SharedPreferences.getInstance();
+      final updatedFilesJson =
+          _savedFiles.map((file) => jsonEncode(file.toJson())).toList();
+      await prefs.setStringList('saved_files', updatedFilesJson);
+      if (mounted) setState(() {});
     } catch (e) {
-      // تجاهل الخطأ إذا فشل حذف الملف الفعلي
+      if (!mounted) return;
+      showErrorSnackBar(context, 'فشل حذف الملف؛ لم يتم تحديث القائمة.');
     }
-
-    _savedFiles.remove(fileToDelete);
-    final prefs = await SharedPreferences.getInstance();
-    final updatedFilesJson =
-        _savedFiles.map((file) => jsonEncode(file.toJson())).toList();
-    await prefs.setStringList('saved_files', updatedFilesJson);
-    setState(() {});
   }
 
   Future<void> _viewFile(String path) async {

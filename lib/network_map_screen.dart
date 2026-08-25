@@ -278,8 +278,8 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
     final nameController = TextEditingController(text: existingNode?.name);
     final ipController = TextEditingController(text: existingNode?.ip);
     final isEditing = existingNode != null;
-
-    return showDialog(
+    try {
+      return await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(isEditing ? 'تعديل جهاز' : 'إضافة جهاز جديد'),
@@ -338,7 +338,11 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           ),
         ],
       ),
-    );
+      );
+    } finally {
+      nameController.dispose();
+      ipController.dispose();
+    }
   }
 
   void _handleDelete(DeviceNode nodeToDelete) {
@@ -405,7 +409,7 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         text: 'ملف النسخ الاحتياطي لخريطة الشبكة',
       ));
     } catch (e) {
-      // ignore: use_build_context_synchronously
+      if (!mounted) return;
       showErrorSnackBar(context, 'فشلت عملية التصدير.');
     }
   }
@@ -421,9 +425,8 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
         final file = File(result.files.single.path!);
         final content = await file.readAsString();
 
-        // ignore: use_build_context_synchronously
+        if (!mounted) return;
         final confirm = await showDialog<bool>(
-          // ignore: use_build_context_synchronously
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('تأكيد الاستيراد'),
@@ -450,7 +453,6 @@ class _NetworkMapScreenState extends State<NetworkMapScreen> {
           _rebuildGraph();
           await _saveMap();
         }
-        // ignore: use_build_context_synchronously
       }
     } catch (e) {
       if (!mounted) return;

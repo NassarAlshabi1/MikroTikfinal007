@@ -1,30 +1,53 @@
 // ============================================================
-//  DioCacheService — إعداد Dio مع cache تلقائي
-//  يُستخدم لطلبات HTTP (مثل Telegram API) لتقليل استهلاك الشبكة
+// DioCacheService — persistent HTTP cache backed by Isar.
+// The previous DbCacheStore used Drift/SQLite and is intentionally removed.
 // ============================================================
 
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
-import 'package:dio_cache_interceptor_db_store/dio_cache_interceptor_db_store.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:http_cache_isar_store/http_cache_isar_store.dart';
 
-/// Singleton لضمان استخدام نفس الـ cache store عبر كل التطبيق
 class _CacheStoreHolder {
   static CacheStore? _store;
-  static Future<CacheStore> getStore() async {
-    if (_store != null) return _store!;
-    final dir = await getApplicationDocumentsDirectory();
-    _store = DbCacheStore(databasePath: dir.path);
-    return _store!;
+  static Future<CacheStore>? _opening;
+
+  static Future<CacheStore> getStore() {
+    final current = _store;
+    if (current != null) return Future.value(current);
+
+    return _opening ??= _open().then(
+      (store) {
+        _store = store;
+        _opening = null;
+        return store;
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        _opening = null;
+        Error.throwWithStackTrace(error, stackTrace);
+      },
+    );
+  }
+
+  static Future<CacheStore> _open() async {
+    // The store manages its own Isar cache database. It is deliberately
+    // separate from the application's domain Isar instance so that the
+    // cache schema can evolve independently.
+    return IsarCacheStore();
+  }
+
+  static Future<void> close() async {
+    final store = _store;
+    _store = null;
+    _opening = null;
+    await store?.close();
   }
 }
 
-/// يُنشئ Dio مع cache لمدة معينة
-/// مثال:
-///   final dio = await createCachedDio(maxAge: Duration(hours: 1));
-///   final res = await dio.get('https://api.example.com/data');
+/// Creates a Dio client with persistent HTTP caching.
+///
+/// `maxStale` controls how long an expired cached response may still be used.
+/// Freshness itself follows the server's HTTP cache directives.
 Future<Dio> createCachedDio({
-  Duration maxAge = const Duration(minutes: 5),
   Duration maxStale = const Duration(hours: 1),
   CachePriority priority = CachePriority.normal,
   bool forceRefresh = false,
@@ -44,7 +67,6 @@ Future<Dio> createCachedDio({
 
   dio.interceptors.add(DioCacheInterceptor(options: options));
 
-  // إعدادات Dio الأساسية
   dio.options.connectTimeout = const Duration(seconds: 10);
   dio.options.receiveTimeout = const Duration(seconds: 15);
   dio.options.sendTimeout = const Duration(seconds: 10);
@@ -52,42 +74,26 @@ Future<Dio> createCachedDio({
   return dio;
 }
 
-/// Dio للأجهزة الضعيفة — timeouts أطول و retry محدود
-Future<Dio> createLowEndDio() async {
-  final dio = await createCachedDio(
-    maxAge: const Duration(minutes: 10), // cache أطول على الأجهزة الضعيفة
+Future<Dio> createLowEndDio() {
+  return createCachedDio(
     maxStale: const Duration(days: 1),
-  );
-  // timeouts أطول لأن المعالجة على الجهاز أبطأ
-  dio.options.connectTimeout = const Duration(seconds: 15);
-  dio.options.receiveTimeout = const Duration(seconds: 30);
-  dio.options.sendTimeout = const Duration(seconds: 15);
-  return dio;
+  ).then((dio) {
+    dio.options.connectTimeout = const Duration(seconds: 15);
+    dio.options.receiveTimeout = const Duration(seconds: 30);
+    dio.options.sendTimeout = const Duration(seconds: 15);
+    return dio;
+  });
 }
 
-/// مسح كل الـ cache — يُستخدم عند تسجيل الخروج أو الـ pull-to-refresh
 Future<void> clearDioCache() async {
   final store = await _CacheStoreHolder.getStore();
   await store.clean();
 }
 
-/// حذف مفتاح cache محدد
 Future<void> invalidateDioCache(String key) async {
   final store = await _CacheStoreHolder.getStore();
   await store.delete(key);
 }
 
-// ============================================================
-//  مثال على الاستخدام مع Telegram API (موجود في main.dart)
-// ============================================================
-//
-//  قبل:
-//    final dio = Dio();
-//    await dio.post(url, data: {...});
-//
-//  بعد:
-//    final dio = await createCachedDio(maxAge: Duration(minutes: 5));
-//    await dio.post(url, data: {...});
-//
-//  الـ cache سيُستخدم تلقائياً عند تكرار الطلب خلال 5 دقائق
-//  → توفير بطارية + بيانات + تسريع الاستجابة
+/// Call during application shutdown/tests.
+Future<void> closeDioCache() => _CacheStoreHolder.close();

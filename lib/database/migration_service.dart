@@ -22,11 +22,14 @@ class MigrationService {
   MigrationService._();
   static final MigrationService instance = MigrationService._();
 
-  static const int currentMigrationVersion = 1;
+  static const int currentMigrationVersion = 2;
   static const _migrationVersionKey = 'isar_migration_version';
   static const _migrationStateKey = 'isar_migration_state';
   static const _legacyMigrationDoneKey = 'isar_migration_done';
   static const _diagnosticsLegacyKey = 'diagnostics_sessions';
+
+  // Prevents two startup paths from running the same migration concurrently.
+  Future<void>? _runningMigration;
 
   Future<bool> isMigrationDone() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,7 +41,20 @@ class MigrationService {
   ///
   /// في حال الفشل يُعاد رمي الخطأ وتبقى الحالة failed، كي يعاد التنفيذ
   /// في التشغيل التالي بدل اعتبار الهجرة ناجحة بشكل جزئي.
-  Future<void> migrateLegacyDataIfNeeded() async {
+  Future<void> migrateLegacyDataIfNeeded() {
+    final running = _runningMigration;
+    if (running != null) return running;
+
+    final future = _runMigration();
+    _runningMigration = future;
+    return future.whenComplete(() {
+      if (identical(_runningMigration, future)) {
+        _runningMigration = null;
+      }
+    });
+  }
+
+  Future<void> _runMigration() async {
     final prefs = await SharedPreferences.getInstance();
     if ((prefs.getInt(_migrationVersionKey) ?? 0) >=
         currentMigrationVersion) {
@@ -53,9 +69,11 @@ class MigrationService {
       final isar = await IsarProvider().instance;
       final diagnosticsCount = await _migrateDiagnosticsSessions(isar, prefs);
       final cardsCount = await _migrateSavedCards(isar);
+      await _repairCardProfileReferences(isar);
 
+      // The version is advanced only after every source has been processed
+      // successfully. A failure therefore remains safely retryable.
       await prefs.setInt(_migrationVersionKey, currentMigrationVersion);
-      // الاحتفاظ بهذا المفتاح للتوافق مع الإصدارات السابقة.
       await prefs.setBool(_legacyMigrationDoneKey, true);
       await prefs.setString(_migrationStateKey, 'completed');
 
@@ -87,6 +105,7 @@ class MigrationService {
     }
 
     final diagnostics = <AiDiagnosticCollection>[];
+    final seenSnapshots = <String>{};
     for (final rawSession in decoded) {
       if (rawSession is! Map) {
         continue;
@@ -114,12 +133,15 @@ class MigrationService {
         }
       }
 
-      final startedAt = DateTime.tryParse(session['startedAt'] as String? ?? '') ??
+      final startedAt = DateTime.tryParse(
+            session['startedAt']?.toString() ?? '',
+          ) ??
           DateTime.now();
-      final endedAt = DateTime.tryParse(session['endedAt'] as String? ?? '');
+      final endedAt = DateTime.tryParse(session['endedAt']?.toString() ?? '');
       final snapshotJson = jsonEncode(session);
 
       // snapshotJson هو مفتاح idempotency للهجرة القديمة.
+      if (!seenSnapshots.add(snapshotJson)) continue;
       final alreadyMigrated = await isar.aiDiagnosticCollections
           .filter()
           .snapshotJsonEqualTo(snapshotJson)
@@ -128,14 +150,15 @@ class MigrationService {
 
       diagnostics.add(
         AiDiagnosticCollection.fromData(
-          mode: session['mode'] as String? ?? 'general',
-          mikrotikIp: session['mikrotikIp'] as String?,
+          mode: session['mode']?.toString() ?? 'general',
+          mikrotikIp: session['mikrotikIp']?.toString(),
           startedAt: startedAt,
           endedAt: endedAt,
           userQuery: userQuery,
           aiResponse: aiResponse,
           snapshotJson: snapshotJson,
-          isFavorite: session['isFavorite'] as bool? ?? false,
+          isFavorite: session['isFavorite'] == true ||
+              session['isFavorite']?.toString().toLowerCase() == 'true',
         ),
       );
     }
@@ -177,50 +200,94 @@ class MigrationService {
           .toSet();
       if (usernames.isEmpty) continue;
 
-      final profileName = p.basenameWithoutExtension(entity.path);
-      final existingProfile = await isar.profileCollections
-          .where()
-          .nameEqualTo(profileName)
-          .findFirst();
-      var profileId = existingProfile?.id;
+      final profileName = p.basenameWithoutExtension(entity.path).trim();
+      if (profileName.isEmpty) continue;
 
-      if (profileId == null) {
-        final newProfile = ProfileCollection.fromData(
+      // Profile creation and card insertion are one atomic operation per
+      // source file. This prevents a crash from leaving half a migrated file.
+      final inserted = await isar.writeTxn(() async {
+        var profile = await isar.profileCollections
+            .where()
+            .nameEqualTo(profileName)
+            .findFirst();
+
+        profile ??= ProfileCollection.fromData(
           name: profileName,
           createdAt: DateTime.now(),
         );
-        await isar.writeTxn(() async {
-          await isar.profileCollections.put(newProfile);
-        });
-        profileId = newProfile.id;
-      }
+        await isar.profileCollections.put(profile);
 
-      final cards = <CardCollection>[];
-      for (final username in usernames) {
-        final existing = await isar.cardCollections
-            .where()
-            .usernameEqualTo(username)
-            .findFirst();
-        if (existing == null) {
-          cards.add(
-            CardCollection.fromData(
-              username: username,
-              profileId: profileId,
-              createdAt: DateTime.now(),
-            ),
-          );
+        final cards = <CardCollection>[];
+        for (final username in usernames) {
+          final existing = await isar.cardCollections
+              .where()
+              .usernameEqualTo(username)
+              .findFirst();
+          if (existing == null) {
+            cards.add(
+              CardCollection.fromData(
+                username: username,
+                profileId: profile!.id,
+                createdAt: DateTime.now(),
+              ),
+            );
+          }
         }
-      }
 
-      if (cards.isNotEmpty) {
-        await isar.writeTxn(() async {
+        if (cards.isNotEmpty) {
           await isar.cardCollections.putAll(cards);
-        });
-        migratedCount += cards.length;
+        }
+        return cards.length;
+      });
+      migratedCount += inserted;
+
+      // Delete each legacy source only after its transaction committed.
+      // Re-running the migration is still safe because the username index
+      // makes card insertion idempotent.
+      try {
+        await entity.delete();
+      } catch (error, stackTrace) {
+        // Failure to remove the legacy source must not invalidate the data
+        // already migrated. The next migration run will safely skip duplicates.
+        debugPrint('[Migration] Could not delete ${entity.path}: $error\\n$stackTrace');
       }
     }
 
     return migratedCount;
+  }
+
+  /// Repairs cards whose profile was deleted or never existed in the legacy
+  /// source. Isar does not enforce relational foreign keys.
+  Future<void> _repairCardProfileReferences(Isar isar) async {
+    final cards = await isar.cardCollections.where().findAll();
+    if (cards.isEmpty) return;
+
+    final profiles = await isar.profileCollections.where().findAll();
+    final validIds = profiles.map((profile) => profile.id).toSet();
+    final invalid = cards.where((card) => !validIds.contains(card.profileId)).toList();
+    if (invalid.isEmpty) return;
+
+    const fallbackName = '__unassigned__';
+    ProfileCollection? fallback;
+    for (final profile in profiles) {
+      if (profile.name == fallbackName) {
+        fallback = profile;
+        break;
+      }
+    }
+
+    await isar.writeTxn(() async {
+      fallback ??= ProfileCollection.fromData(
+        name: fallbackName,
+        createdAt: DateTime.now(),
+      );
+      await isar.profileCollections.put(fallback!);
+      for (final card in invalid) {
+        card.profileId = fallback!.id;
+        await isar.cardCollections.put(card);
+      }
+    });
+    debugPrint('[Migration] Repaired ${invalid.length} orphan cards');
   }
 
   /// يعيد ضبط حالة الهجرة للاختبار أو لإعادة المحاولة يدويًا.

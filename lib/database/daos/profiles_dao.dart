@@ -1,12 +1,13 @@
 // ============================================================
 //  ProfilesDao (Isar) — Data Access Object لجدول الملفات الشخصية
 //
-//  يحل محل Drift ProfilesDao القديم.
+//  يحل محل قاعدة البيانات السابقة ProfilesDao القديم.
 // ============================================================
 
 import 'package:isar/isar.dart';
 
 import '../isar/profile_collection.dart';
+import '../isar/card_collection.dart';
 
 class ProfilesDao {
   final Isar _isar;
@@ -27,7 +28,12 @@ class ProfilesDao {
   }
 
   Future<bool> deleteProfile(int id) async {
-    return await _isar.writeTxn(() => _isar.profileCollections.delete(id));
+    return await _isar.writeTxn(() async {
+      // Isar has no relational FK cascade. Delete dependent cards first so
+      // no CardCollection keeps a dangling profileId.
+      await _isar.cardCollections.filter().profileIdEqualTo(id).deleteAll();
+      return _isar.profileCollections.delete(id);
+    });
   }
 
   // ============================================================
@@ -63,28 +69,23 @@ class ProfilesDao {
   /// مزامنة الملفات الشخصية من MikroTik (upsert)
   Future<void> syncProfiles(List<Map<String, dynamic>> mikrotikProfiles) async {
     await _isar.writeTxn(() async {
-      // حذف الملفات غير الموجودة في القائمة الجديدة
-      final existingNames = mikrotikProfiles.map((p) => p['name'] as String).toSet();
-      final allExisting = await _isar.profileCollections.where().findAll();
-      for (final profile in allExisting) {
-        if (!existingNames.contains(profile.name)) {
-          await _isar.profileCollections.delete(profile.id);
-        }
-      }
-
+      // Sync is intentionally upsert-only. An empty/partial RouterOS response
+      // must never be interpreted as a deletion command and must not orphan
+      // locally cached cards. Explicit pruning is a separate operation.
       // إضافة/تحديث الملفات الجديدة
       for (final p in mikrotikProfiles) {
-        final name = p['name'] as String;
+        final name = p['name']?.toString().trim() ?? '';
+        if (name.isEmpty) continue;
         final existing = await _isar.profileCollections
             .where()
             .nameEqualTo(name)
             .findFirst();
 
         if (existing != null) {
-          existing.mikrotikId = p['.id'] as String?;
-          existing.rateLimit = p['rate-limit'] as String?;
+          existing.mikrotikId = p['.id']?.toString();
+          existing.rateLimit = p['rate-limit']?.toString();
           existing.sharedUsers =
-              int.tryParse(p['shared-users'] as String? ?? '1') ?? 1;
+              int.tryParse(p['shared-users']?.toString() ?? '') ?? 1;
           existing.lastSyncedAt = DateTime.now();
           await _isar.profileCollections.put(existing);
         } else {

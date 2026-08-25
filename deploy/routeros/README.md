@@ -1,73 +1,29 @@
-# Telegram مباشر من MikroTik RouterOS v6
+# RouterOS API-SSL preparation for the direct Telegram Bot
 
-الملف `telegram-direct-v6.rsc` يضيف سكريبتات RouterOS v6 لإرسال إشعارات Telegram مباشرة من MikroTik `192.168.1.100` إلى `chat_id=5944227208`. يتضمن الإعداد اختباراً يدوياً ومراقبة اتصال إلى `1.1.1.1` كل 30 ثانية، مع إشعار واحد عند الانتقال إلى الانقطاع وإشعار واحد عند العودة.
+يتصل Telegram Bot من جهاز Linux مباشرةً إلى MikroTik عبر RouterOS API-SSL. لا يرسل MikroTik Bot Token إلى Telegram، ولا يحتوي هذا المشروع على RouterOS script أو scheduler لمسار Telegram مباشر.
 
-## قبل الاستيراد
+## الصلاحيات الأقل
 
-أنشئ Bot Token جديداً من BotFather إذا ظهر الرمز السابق في محادثة أو سجل، ثم انسخ الملف إلى جهازك المحلي. افتح نسخة محلية فقط واستبدل النص:
+الأوامر الحالية في `telegram_bot/commands/router.py` هي أوامر قراءة، و`/ping`، و`/system/reboot`. وفق توثيق MikroTik، يحتاج الحساب المخصص إلى `read,api,reboot,test`؛ لا تُضاف `write` ما لم يُثبت لاحقًا وجود أمر تغييري آخر. راجع الأمر الفعلي في الكود قبل توسيع المجموعة.
 
-```text
-REPLACE_WITH_NEW_BOT_TOKEN
-```
-
-بالرمز الجديد. لا ترفع النسخة المعدلة إلى GitHub ولا ترسلها إلى أي شخص.
-
-## الاستيراد عبر Terminal
-
-بعد رفع الملف إلى **Files** في MikroTik، نفّذ:
+القالب `telegram-bot-user-v6.rsc.example` يترك عنوان الخادم وكلمة المرور كقيم بديلة. استبدلهما محليًا فقط، وقيّد خدمة API-SSL بعنوان خادم البوت. لا تستخدم عنوانًا افتراضيًا ولا تفتح المنفذ 8729 على الإنترنت العام.
 
 ```routeros
-/import file-name=telegram-direct-v6.rsc
+/user group add name=telegram-bot-policy policy=read,api,reboot,test comment="Dedicated direct Telegram Bot API account"
+/user add name=telegram-bot group=telegram-bot-policy password="REPLACE_WITH_LONG_RANDOM_PASSWORD" address="REPLACE_BOT_SERVER_CIDR"
+/ip service set [find name="api"] disabled=yes
+/ip service set [find name="api-ssl"] disabled=no port=8729 address="REPLACE_BOT_SERVER_CIDR"
 ```
 
-إذا كان اسم الملف مختلفاً، استخدم الاسم الظاهر في `/file print`.
-
-بعد الاستيراد، نفّذ اختبار Telegram:
+إذا استُخدم جدار ناري، اسمح باتصالات TCP إلى 8729 من عنوان خادم البوت فقط قبل قواعد الإسقاط العامة. تحقق بعد التطبيق:
 
 ```routeros
-/system script run telegram-v6-test
+/user group print detail where name="telegram-bot-policy"
+/user print detail where name="telegram-bot"
+/ip service print detail where name="api"
+/ip service print detail where name="api-ssl"
 ```
 
-ثم راقب السجل:
+يجب أن تكون `TELEGRAM_ADMIN_USER_IDS` في إعداد البوت مجموعة فرعية من `TELEGRAM_ALLOWED_USER_IDS`؛ تركها فارغة يعطل `/reboot`، حتى لو كان حساب RouterOS يملك سياسة `reboot`. لا تضع Bot Token في RouterOS أو في Git.
 
-```routeros
-/log print where message~"telegram-v6"
-```
-
-## التحقق من العناصر
-
-```routeros
-/system script print where name~"telegram-v6"
-/system scheduler print where name="telegram-internet-monitor-v6"
-```
-
-اختبر فحص الإنترنت يدوياً:
-
-```routeros
-/system script run telegram-v6-monitor
-```
-
-## تغيير هدف الفحص
-
-يستخدم السكريبت `1.1.1.1` افتراضياً. لتغيير الهدف إلى `8.8.8.8`، عدّل سطر `telegramMonitorTarget` في السكريبت أو أضف قيمة عالمية من Terminal:
-
-```routeros
-:global telegramMonitorTarget "8.8.8.8"
-```
-
-## ملاحظات تشغيلية وأمنية
-
-يستخدم الإرسال المباشر `/tool fetch` إلى Telegram HTTPS، ولذلك يجب أن يكون MikroTik قادراً على الوصول إلى الإنترنت وDNS مضبوطاً. في بعض إصدارات RouterOS v6 قد تحتاج إلى إبقاء `check-certificate=no` بسبب مخزن الشهادات القديم؛ لا تفتح أي منفذ وارد لهذا السكريبت.
-
-السكريبت لا ينفذ SSH ولا يقبل أوامر نصية من Telegram، ولا ينشئ أو يحذف مستخدمي Hotspot أو User Manager. إنشاء البطاقات وملفات PDF واختيار الفئة يبقى من اختصاص جسر Linux، لأن RouterOS ليس بيئة مناسبة لإنشاء PDF وإرسال ملفات Telegram المعقدة.
-
-## إزالة الإعداد
-
-الأوامر التالية تزيل العناصر التي أنشأها هذا التكامل فقط:
-
-```routeros
-/system scheduler remove [find name="telegram-internet-monitor-v6"]
-/system script remove [find name="telegram-v6-send"]
-/system script remove [find name="telegram-v6-test"]
-/system script remove [find name="telegram-v6-monitor"]
-```
+المراجع الرسمية: [User](https://help.mikrotik.com/docs/spaces/ROS/pages/8978504/User) و[API](https://help.mikrotik.com/docs/spaces/ROS/pages/47579160/API).

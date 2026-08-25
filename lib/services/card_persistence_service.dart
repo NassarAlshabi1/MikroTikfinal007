@@ -181,7 +181,7 @@ class CardPersistenceService {
         card.password = _nullablePassword(user['password']);
         card.mikrotikUserId = _nullableString(user['mikrotikUserId']);
         card.status = 'active';
-        card.lastUsedAt = DateTime.now();
+        // Activation is not proof of actual use; preserve lastUsedAt.
         cardsToUpdate.add(card);
       }
       if (cardsToUpdate.isNotEmpty) {

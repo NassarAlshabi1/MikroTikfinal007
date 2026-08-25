@@ -36,7 +36,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
@@ -59,12 +59,9 @@ jobs:
           retention-days: 14
 
   build-web:
-    name: Build Web (skipped — app uses dart:ffi via drift/sqlite3)
+    name: Build Web (skipped — Isar Web support requires explicit validation)
     runs-on: ubuntu-latest
-    # ⚠️ Web build معطّل: التطبيق يستخدم drift + sqlite3 اللذين يتطلبان dart:ffi
-    # (غير متاح على Web). لإعادة التفعيل، استبدل drift بـ sql.js أو افصل قاعدة البيانات
-    # خلف واجهة تجريدية مع تنفيذ Web منفصل.
-    # راجع: https://drift.simonbinder.eu/web/
+    # ⚠️ لا نفعّل Web هنا قبل التحقق من دعم Isar/الـplugins المستخدمة في نسخة
     if: false
     steps:
       - name: Checkout repository
@@ -79,7 +76,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
@@ -112,8 +109,6 @@ jobs:
           # 🔒 libsecret-1-dev: مطلوب لـ flutter_secure_storage_linux
           # (لتخزين كلمات المرور بشكل آمن على Linux)
           sudo apt-get install -y libsecret-1-dev
-          # libsqlite3-dev: مطلوب لـ sqlite3 (drift dependency)
-          sudo apt-get install -y libsqlite3-dev
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -127,7 +122,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
@@ -168,7 +163,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
@@ -207,7 +202,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons

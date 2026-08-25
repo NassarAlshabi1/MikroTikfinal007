@@ -44,7 +44,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
@@ -81,7 +81,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
       - name: Prepare Isar schema for Web
         run: python3 tool/patch_isar_web_ids.py
@@ -123,7 +123,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
@@ -167,7 +167,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons

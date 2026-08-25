@@ -35,29 +35,14 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Format code
-        run: dart format .
-        
-      - name: Check for formatting changes
-        run: |
-          if git diff --quiet; then
-            echo "✅ Code is properly formatted"
-          else
-            echo "ℹ️ Code was automatically formatted"
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add .
-            git commit -m "🎨 Auto-format code with dart format" || echo "No changes to commit"
-          fi
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Analyze project source
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
-        # ملاحظة: --fatal-infos يجعل كل info warning خطأ قاتل
-        # تم إصلاح جميع الـ info-level issues سابقاً — الكود نظيف (0 issues)
-        # نُبقي --no-fatal-infos احترازياً لتفادي إيقاف CI بسبب تحذيرات non-blocking
 
       - name: Check for unused dependencies
         run: |
@@ -80,7 +65,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Run tests
@@ -135,7 +120,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Run pub audit
@@ -162,7 +147,7 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate app icons
@@ -172,9 +157,8 @@ jobs:
         run: flutter build apk --debug --target-platform android-arm64
 
       - name: Test Web build
-        # ⚠️ Web build معطّل: التطبيق يستخدم drift + sqlite3 (dart:ffi غير متاح على Web)
-        # لإعادة التفعيل: راجع https://drift.simonbinder.eu/web/
-        run: echo "⏭️ Web build skipped — app uses dart:ffi (drift/sqlite3)"
+        # ⚠️ Web build معطّل: التطبيق يستخدم Isar (dart:ffi غير متاح على Web)
+        run: echo "⏭️ Web build skipped — app uses Isar"
         # run: flutter build web --debug
 
       - name: Add build verification summary

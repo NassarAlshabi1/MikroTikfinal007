@@ -7,22 +7,17 @@
 //  3. قائمة الأحداث المُحلّلة (مع فلاتر حسب Severity/Category)
 //  4. أهم المشاكل + التوصيات
 //  5. زر "تحليل AI عميق" (يستخدم AiService للتحليل الذكي)
-//  6. زر "تحليل سحابي legacy integration" (يستخدم OomolCloudAiService)
 // ============================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../services/secure_credentials_storage.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_colors_extension.dart';
 import 'ai_service.dart';
 import 'diagnostics_models.dart';
 import 'diagnostics_provider.dart';
 import 'mikrotik_log_analyzer.dart';
-import 'legacy_integration_cloud_ai_service.dart';
-import 'legacy_integration_mcp_client.dart';
 import '../snackbar_helpers.dart';
 
 import '../services/secure_clipboard.dart';
@@ -36,11 +31,8 @@ class LogAnalysisScreen extends ConsumerStatefulWidget {
 
 class _LogAnalysisScreenState extends ConsumerState<LogAnalysisScreen> {
   bool _loading = false;
-  bool _analyzingCloud = false;
   bool _analyzingAi = false;
   LogAnalysisResult? _result;
-  OomolDashboard? _dashboard;
-  String? _cloudAnalysis;
   String? _aiAnalysis;
   String? _errorMessage;
 
@@ -148,71 +140,6 @@ Time: ${DateTime.now().toIso8601String()}
     }
   }
 
-  Future<void> _analyzeWithOomolCloud() async {
-    if (_result == null) return;
-    setState(() {
-      _analyzingCloud = true;
-      _errorMessage = null;
-    });
-
-    try {
-      // 🔒 قراءة API key من flutter_secure_storage + باقي الإعدادات من prefs
-      final apiKey =
-          await SecureCredentialsStorageContainer.instance.getOomolApiKey() ??
-              '';
-      final prefs = await SharedPreferences.getInstance();
-      final packageName = prefs.getString('legacy_integration_package_name');
-      final packageVersion = prefs.getString('legacy_integration_package_version');
-
-      if (!mounted) return;
-      if (apiKey.isEmpty) {
-        showSuccessSnackBar(
-            context, 'ضبط legacy integration API key أولاً من شاشة legacy integration Settings');
-        setState(() => _analyzingCloud = false);
-        return;
-      }
-
-      final settings = OomolAiSettings(
-        apiKey: apiKey,
-        packageName: packageName,
-        packageVersion: packageVersion,
-      );
-
-      final service = OomolCloudAiService(settings: settings);
-      await service.connect();
-
-      try {
-        // جلب dashboard لعرض معلومات الحساب
-        final dash = await service.getDashboard();
-        if (dash != null) {
-          setState(() => _dashboard = dash);
-        }
-
-        // تنفيذ التحليل السحابي
-        final result = await service.analyzeLogs(
-          ref.read(diagnosticsProvider).lastSnapshot?.logs ?? '',
-        );
-
-        setState(() {
-          _cloudAnalysis = result.content;
-          if (result.usedFallback) {
-            _errorMessage =
-                result.error ?? 'استُخدم التحليل المحلي (cloud غير متاح)';
-          }
-        });
-      } finally {
-        await service.disconnect();
-      }
-
-      setState(() => _analyzingCloud = false);
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'فشل تحليل legacy integration Cloud: $e';
-        _analyzingCloud = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
@@ -309,12 +236,6 @@ Time: ${DateTime.now().toIso8601String()}
           // Top issues
           if (_result!.topIssues.isNotEmpty) ...[
             _buildTopIssuesCard(colors),
-            const SizedBox(height: 16),
-          ],
-
-          // Cloud analysis (if available)
-          if (_cloudAnalysis != null) ...[
-            _buildCloudAnalysisCard(colors),
             const SizedBox(height: 16),
           ],
 
@@ -609,20 +530,6 @@ Time: ${DateTime.now().toIso8601String()}
             label: const Text('تحليل AI'),
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _analyzingCloud ? null : _analyzeWithOomolCloud,
-            icon: _analyzingCloud
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.cloud),
-            label: const Text('legacy integration Cloud'),
-          ),
-        ),
       ],
     );
   }
@@ -673,61 +580,6 @@ Time: ${DateTime.now().toIso8601String()}
                   ],
                 ),
               ))),
-        ],
-      ),
-    );
-  }
-
-  // ─── Cloud analysis card ───
-  Widget _buildCloudAnalysisCard(AppColorsExtension colors) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.infoContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.info.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.cloud_done, color: colors.info, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '☁️ تحليل legacy integration Cloud:',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: colors.onInfoContainer,
-                  ),
-                ),
-              ),
-              if (_dashboard != null)
-                Text(
-                  '5/${_dashboard!.maxConcurrency}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: colors.onInfoContainer.withValues(alpha: 0.7),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            constraints: const BoxConstraints(maxHeight: 300),
-            child: SingleChildScrollView(
-              child: SelectableText(
-                _cloudAnalysis!,
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.4,
-                  color: colors.onInfoContainer,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

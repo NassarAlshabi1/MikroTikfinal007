@@ -65,6 +65,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
       _isLoading = true;
     });
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final String? devicesJson = prefs.getString('monitored_devices');
     if (devicesJson != null) {
       final List<dynamic> decodedData = jsonDecode(devicesJson);
@@ -72,6 +73,7 @@ class _DeviceMonitoringScreenState extends State<DeviceMonitoringScreen> {
     }
     _displayedDevices =
         List.from(_allDevices); // Initially display all loaded devices
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });

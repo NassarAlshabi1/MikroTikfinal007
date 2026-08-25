@@ -1,7 +1,7 @@
 // ============================================================
 //  AiDiagnosticsDao (Isar) — Data Access Object لسجل التشخيصات AI
 //
-//  يحل محل Drift AiDiagnosticsDao القديم.
+//  يحل محل قاعدة البيانات السابقة AiDiagnosticsDao القديم.
 // ============================================================
 
 import 'package:isar/isar.dart';

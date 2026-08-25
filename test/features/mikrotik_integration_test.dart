@@ -370,7 +370,7 @@ void main() {
       await SecureCredentialsStorageContainer.instance
           .setRemotePassword('remote');
       await SecureCredentialsStorageContainer.instance
-          .setOomolApiKey('legacy_integration-key');
+          .setTelegramBotToken('telegram-token');
 
       // امسح mikrotik فقط
       await SecureCredentialsStorageContainer.instance
@@ -385,14 +385,14 @@ void main() {
       expect(
           await SecureCredentialsStorageContainer.instance.getRemotePassword(),
           'remote');
-      expect(await SecureCredentialsStorageContainer.instance.getOomolApiKey(),
-          'legacy_integration-key');
+      expect(await SecureCredentialsStorageContainer.instance.getTelegramBotToken(),
+          'telegram-token');
     });
 
     test('clearAll يحذف كل شيء', () async {
       await SecureCredentialsStorageContainer.instance.setMikrotikPassword('a');
       await SecureCredentialsStorageContainer.instance.setRemotePassword('b');
-      await SecureCredentialsStorageContainer.instance.setOomolApiKey('c');
+      await SecureCredentialsStorageContainer.instance.setTelegramBotToken('c');
 
       await SecureCredentialsStorageContainer.instance.clearAll();
 
@@ -403,7 +403,7 @@ void main() {
       expect(
           await SecureCredentialsStorageContainer.instance.getRemotePassword(),
           isNull);
-      expect(await SecureCredentialsStorageContainer.instance.getOomolApiKey(),
+      expect(await SecureCredentialsStorageContainer.instance.getTelegramBotToken(),
           isNull);
     });
 

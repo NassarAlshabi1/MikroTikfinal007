@@ -117,7 +117,7 @@ void main() {
           returnsNormally,
         );
         expect(
-          () => AppLogger.info('mcp', category: LogCategory.mcp),
+          () => AppLogger.info('other', category: LogCategory.other),
           returnsNormally,
         );
       });

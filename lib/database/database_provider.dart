@@ -1,7 +1,7 @@
 // ============================================================
 //  Database Providers — Riverpod providers للوصول لـ Isar
 //
-//  تمت الهجرة من Drift إلى Isar بالكامل.
+//  تمت الهجرة إلى Isar بالكامل.
 //  المميزات:
 //  - singleton عبر IsarProvider
 //  - DAOs تُنشأ عند الحاجة فقط (lazy)

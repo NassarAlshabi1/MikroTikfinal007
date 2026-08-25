@@ -67,23 +67,24 @@ android {
     // هذا يعطي نفس النتيجة (APK منفصل لكل معمارية) بدون تعارض
 
     // ============================================================
-    //  تكوين توقيع Release للاستخدام الشخصي (APK updates)
-    //  - يقرأ بيانات الاعتماد من android/key.properties
-    //  - keystore مُخزّن في android/app/release-keystore.jks
-    //  - مُخصّص للاستخدام الشخصي (ليس لـ Google Play)
+    // Release signing is supplied outside GitHub/Git.
+    // Required environment variables are materialized by CI or a
+    // local secret manager; missing values fail closed at release build.
     // ============================================================
-    def keystoreProperties = new Properties()
-    def keystorePropertiesFile = rootProject.file('key.properties')
-    if (keystorePropertiesFile.exists()) {
-        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-    }
+    def releaseStoreFile = System.getenv('ANDROID_KEYSTORE_PATH')
+    def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+    def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+    def releaseStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
+    def releaseSigningConfigured = [releaseStoreFile, releaseKeyAlias, releaseKeyPassword, releaseStorePassword].every { value -> value != null && !value.trim().isEmpty() } && file(releaseStoreFile).isFile()
 
     signingConfigs {
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+            if (releaseSigningConfigured) {
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+            }
         }
     }
 
@@ -95,7 +96,10 @@ android {
 
             buildConfigField "Boolean", "DEBUG_MODE", "false"
 
-            // ===== تفعيل التوقيع لـ release builds =====
+            // ===== التوقيع إلزامي للإصدار ولا يجوز استخدام unsigned APK =====
+            if (!releaseSigningConfigured) {
+                throw new GradleException('Release signing secrets are missing; provide ANDROID_KEYSTORE_PATH, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD, and ANDROID_STORE_PASSWORD outside Git.')
+            }
             signingConfig signingConfigs.release
         }
 

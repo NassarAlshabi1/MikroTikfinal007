@@ -39,7 +39,7 @@ import 'database/isar_provider.dart';
 import 'database/migration_service.dart';
 import 'monthly_report_screen.dart';
 import 'card_search_screen.dart';
-import 'telegram_bridge_settings_screen.dart';
+import 'telegram_bot_settings_screen.dart';
 // -----------------------------------------
 
 /// قاعدة البيانات العامة (Isar Singleton — تُستخدم عبر كل التطبيق)
@@ -236,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isRemotePasswordObscured = true;
   bool _isScanning = false;
 
-  // إعدادات Telegram تُدار من شاشة "إعداد جسر Telegram"، ولا تُحفظ
+  // إعدادات Telegram تُدار من شاشة "إعداد Telegram Bot"، ولا تُحفظ
   // داخل شاشة الدخول أو كثوابت في التطبيق.
 
   Future<void> _launchPrivacyPolicy() async {
@@ -1353,12 +1353,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'إعداد جسر Telegram',
+        title: 'إعداد Telegram Bot',
         icon: Icons.telegram,
         color: context.theme.appColors.primary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
-              builder: (context) => const TelegramBridgeSettingsScreen()));
+              builder: (context) => const TelegramBotSettingsScreen()));
         },
       ),
     ];

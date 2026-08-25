@@ -46,13 +46,12 @@ jobs:
       # 5. تحميل مكاتب وحزم المشروع
       - name: Install Dependencies
         run: flutter pub get
-      - name: Generate drift code
+      - name: Generate Isar code
         run: dart run build_runner build --delete-conflicting-outputs
 
       # 6. فحص جودة الكود (سريع — قبل تشغيل المحاكي)
       - name: Analyze Code
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
-        continue-on-error: true  # لا نوقف الـ workflow بسبب info lints
 
       # 7. تفعيل صلاحيات تسريع محاكي الأندرويد داخل خادم GitHub
       # مهم جداً للسرعة — بدونها المحاكي بطيء جداً أو يفشل

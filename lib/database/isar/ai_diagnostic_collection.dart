@@ -1,7 +1,7 @@
 // ============================================================
 //  AiDiagnostic Collection — Isar schema لسجل التشخيصات AI
 //
-//  يحل محل Drift AiDiagnostics table.
+//  يحل محل قاعدة البيانات السابقة AiDiagnostics table.
 //  المميزات:
 //  - index على mode للاستعلامات حسب النوع
 //  - composite index على (startedAt desc) للأحدث أولاً
@@ -35,7 +35,7 @@ class AiDiagnosticCollection {
   /// رد الـ AI
   late String aiResponse;
 
-  /// المزود: openAI, gemini, openRouter, legacy_integration
+  /// المزود: openAI, gemini, openRouter
   String? aiProvider;
 
   /// النموذج: gpt-4o-mini, gemini-2.5-flash, etc.

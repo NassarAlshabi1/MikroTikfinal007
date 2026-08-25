@@ -35,75 +35,61 @@ final aiSettingsNotifierProvider =
 class AiSettingsNotifier extends StateNotifier<AsyncValue<AiSettings>> {
   AiSettingsNotifier(super.initial);
 
-  Future<void> update(AiSettings settings) async {
-    state = AsyncData(settings);
-    await AiSettingsService.instance.save(settings);
+  Future<void> _persist(AiSettings next) async {
+    final previous = state;
+    try {
+      state = const AsyncLoading();
+      await AiSettingsService.instance.save(next);
+      state = AsyncData(next);
+    } catch (error, stackTrace) {
+      state = previous;
+      debugPrint('[AiSettingsNotifier] persistence failed: $error');
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
+
+  Future<void> update(AiSettings settings) => _persist(settings);
 
   Future<void> setApiKey(String apiKey) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings = current.copyWith(apiKey: apiKey);
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(apiKey: apiKey));
   }
 
   Future<void> setProvider(AiProvider provider) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    // عند تغيير المزود، نضبط الموديل على الافتراضي للمزود الجديد
-    final newSettings = current.copyWith(
-      provider: provider,
-      model: provider.defaultModel,
-    );
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(provider: provider, model: provider.defaultModel));
   }
 
   Future<void> setModel(String model) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings = current.copyWith(model: model);
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(model: model));
   }
 
-  /// يبدّل المزود والموديل معاً (يُستخدم من شاشة المحادثة للتبديل السريع
-  /// إلى gemini-2.5-flash أو غيره دون فتح شاشة الإعدادات)
   Future<void> setProviderAndModel(AiProvider provider, String model) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings = current.copyWith(provider: provider, model: model);
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(provider: provider, model: model));
     debugPrint('[AiSettingsNotifier] Provider=$provider, Model=$model');
   }
 
   Future<void> setBaseUrl(String baseUrl) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings =
-        current.copyWith(baseUrl: baseUrl.isEmpty ? null : baseUrl);
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(baseUrl: baseUrl.isEmpty ? null : baseUrl));
   }
 
   Future<void> setConnectionMethod(MikrotikConnectionMethod method) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings = current.copyWith(connectionMethod: method);
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(connectionMethod: method));
   }
 
   Future<void> setMode(DiagnosticMode mode) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings = current.copyWith(mode: mode);
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(mode: mode));
     debugPrint('[AiSettingsNotifier] Mode changed to: ${mode.name}');
   }
 
-  /// يضبط حد خطوات الاستقصاء في التشخيص الوكيل (1..12)
   Future<void> setAgenticMaxSteps(int steps) async {
     final current = state.valueOrNull ?? AiSettings.default_;
-    final newSettings = current.copyWith(agenticMaxSteps: steps.clamp(1, 12));
-    state = AsyncData(newSettings);
-    await AiSettingsService.instance.save(newSettings);
+    await _persist(current.copyWith(agenticMaxSteps: steps.clamp(1, 12)));
   }
 }
 

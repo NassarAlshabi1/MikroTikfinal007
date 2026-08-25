@@ -1,7 +1,7 @@
 // ============================================================
 //  ExecutedCommand Collection — Isar schema لسجل الأوامر المنفّذة
 //
-//  يحل محل Drift ExecutedCommands table (audit trail).
+//  يحل محل قاعدة البيانات السابقة ExecutedCommands table (audit trail).
 // ============================================================
 
 import 'package:isar/isar.dart';

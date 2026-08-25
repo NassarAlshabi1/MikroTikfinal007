@@ -66,7 +66,6 @@ enum LogCategory {
   security, // عمليات أمنية
   storage, // تخزين محلي
   system, // نظام + lifecycle
-  mcp, // legacy integration integration client
   other,
 }
 
@@ -85,8 +84,6 @@ extension LogCategoryX on LogCategory {
         return 'STORE';
       case LogCategory.system:
         return 'SYS';
-      case LogCategory.mcp:
-        return 'integration';
       case LogCategory.other:
         return 'GEN';
     }

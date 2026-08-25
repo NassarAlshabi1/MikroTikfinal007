@@ -1,0 +1,78 @@
+name: Telegram Bot and Flutter CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  telegram-bot:
+    name: Telegram Bot Python checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install bot dependencies
+        run: python -m pip install --disable-pip-version-check -r telegram_bot/requirements.txt
+
+      - name: Compile bot package
+        run: python -m compileall -q telegram_bot
+
+      - name: Run bot tests
+        run: python -m unittest telegram_bot.test_telegram_bot -v
+
+      - name: Validate installer and workflow syntax markers
+        run: bash -n scripts/setup_telegram_bot_local.sh
+
+      - name: Reject secrets and direct RouterOS Telegram transport
+        shell: bash
+        run: |
+          test ! -e android/key.properties
+          test ! -e android/app/release-keystore.jks
+          if find . -type f \( -name '*.jks' -o -name '*.keystore' -o -name '.env' -o -name 'bridge.env' \) -not -path './.git/*' | grep -q .; then
+            echo 'Signing or environment artifact found in repository.'
+            exit 1
+          fi
+          if grep -RInE 'api\.telegram\.org/bot|/tool[[:space:]]+fetch|check-certificate[[:space:]]*=[[:space:]]*no|telegram-direct-v6' deploy/routeros --include='*.rsc' --include='*.md'; then
+            echo 'Direct RouterOS-to-Telegram transport marker found.'
+            exit 1
+          fi
+
+  flutter:
+    name: Flutter analyze, tests, and debug build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.0"
+          channel: stable
+          cache: true
+
+      - name: Fetch dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Debug APK build
+        run: flutter build apk --debug
