@@ -137,6 +137,9 @@ class RouterOSOperations:
             "active_sessions": len(self.active_sessions()),
         }
 
+    def reboot(self) -> None:
+        self.gateway.command("/system/reboot")
+
     def create_card(self, username: str, password: str, profile: str, customer: str | None = None) -> dict[str, str]:
         username = validate_username(username)
         profile = validate_username(profile)

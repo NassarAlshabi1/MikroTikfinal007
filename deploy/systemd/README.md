@@ -41,9 +41,14 @@ sudo journalctl -u mikrotik-telegram -f
 - `/checklist`
 - `/usage`
 - `/logs`
-- `/card username`
+- `/card username` و`/card-check username`
+- `/card-usage username` و`/sessions [username]`
+- `/card-create username profile` بعد تأكيد Admin
+- `/delete-expired` معاينة ثم تأكيد Admin
 - `/print active|users|profiles|interfaces`
-- `/reboot` مع تأكيد صريح
+- `/report html|pdf`
+- `/sales` تقرير تشغيلي، وليس إيرادات إلا عند توفر payment records موثقة
+- `/reboot` مع تأكيد صريح وAdmin
 
 بعد `/reboot` يراقب البوت حالتي RouterOS API وWAN ويرسل إشعارًا عند عودة الراوتر والإنترنت.
 
@@ -53,4 +58,4 @@ sudo journalctl -u mikrotik-telegram -f
 
 ## Audit
 
-كل عملية تغيير مثل `/reboot` تسجل في `TELEGRAM_AUDIT_FILE` مع operation ID وuser/chat وrisk وauthorization وconfirmation والنتيجة والمدة، دون تسجيل الأسرار.
+كل عملية تغيير مثل `/reboot` و`/card-create` و`/delete-expired` تسجل في `TELEGRAM_AUDIT_FILE` مع operation ID وuser/chat وrisk وauthorization وconfirmation والنتيجة والمدة، دون تسجيل الأسرار. الحذف لا يتم إلا بعد معاينة قائمة ذات تواريخ قابلة للتحقق.

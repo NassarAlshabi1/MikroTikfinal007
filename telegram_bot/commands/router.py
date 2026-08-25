@@ -198,7 +198,7 @@ class CommandRouter:
             return
         started = time.monotonic()
         try:
-            self.gateway.command("/system/reboot")
+            self.operations.reboot()
             self._audit(source="Telegram", user_id=user_id, chat_id=chat_id, command="/reboot", risk="HIGH_RISK", authorization="ALLOW", confirmation="CONFIRMED", device=self.gateway.address, result="UNVERIFIED_ROUTER_DISCONNECTION", duration_ms=int((time.monotonic() - started) * 1000), operation_id=operation_id)
         except Exception as error:
             self._audit(source="Telegram", user_id=user_id, chat_id=chat_id, command="/reboot", risk="HIGH_RISK", authorization="ALLOW", confirmation="CONFIRMED", device=self.gateway.address, result="FAILED", duration_ms=int((time.monotonic() - started) * 1000), error_category=type(error).__name__, operation_id=operation_id)
