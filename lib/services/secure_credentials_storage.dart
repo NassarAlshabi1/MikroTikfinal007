@@ -144,8 +144,9 @@ class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
       {String? mikrotikPass, String? remotePass, String? telegramBotToken}) {
     if (mikrotikPass != null) _store['mikrotik_pass'] = mikrotikPass;
     if (remotePass != null) _store['remote_pass'] = remotePass;
-    if (telegramBotToken != null)
+    if (telegramBotToken != null) {
       _store['telegram_bot_token'] = telegramBotToken;
+    }
   }
 
   @override
