@@ -13,10 +13,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -28,6 +28,33 @@ jobs:
           channel: stable
           flutter-version: '3.44.0'
           cache: true
+
+      # The release keystore is reconstructed in the runner's temporary
+      # directory from encrypted GitHub Actions secrets; it is never committed.
+      - name: Prepare release signing
+        id: release-signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${ANDROID_KEYSTORE_BASE64:-}" ]] || missing+=(ANDROID_KEYSTORE_BASE64)
+          [[ -n "${ANDROID_KEY_ALIAS:-}" ]] || missing+=(ANDROID_KEY_ALIAS)
+          [[ -n "${ANDROID_KEY_PASSWORD:-}" ]] || missing+=(ANDROID_KEY_PASSWORD)
+          [[ -n "${ANDROID_STORE_PASSWORD:-}" ]] || missing+=(ANDROID_STORE_PASSWORD)
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing GitHub Actions secrets: ${missing[*]}. Configure them before running a release build."
+            exit 1
+          fi
+
+          keystore_path="$RUNNER_TEMP/release-keystore.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          test -s "$keystore_path"
+          chmod 600 "$keystore_path"
+          echo "keystore_path=$keystore_path" >> "$GITHUB_OUTPUT"
 
       - name: Verify Flutter version
         run: flutter --version
@@ -69,6 +96,11 @@ jobs:
       #  النتيجة المتوقعة: APK ~ 60-70% أصغر من البناء الافتراضي
       # ============================================================
       - name: Build optimized release APK (arm64 only - minimal size)
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ steps.release-signing.outputs.keystore_path }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
         run: |
           flutter build apk --release \
             --target-platform android-arm64 \

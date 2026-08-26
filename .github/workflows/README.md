@@ -79,6 +79,16 @@
 - **Java**: 17 (للأندرويد)
 - **Node.js**: للأدوات المساعدة
 
+### توقيع Android Release
+
+يحتاج `build-release.yml` إلى أربعة GitHub Actions Secrets حتى ينتج APK/AAB موقّعًا. لا تضع ملف keystore أو كلمات المرور داخل Git أو داخل `android/`. أضف الأسرار التالية من إعدادات المستودع، مع تحويل ملف keystore الموجود لديك إلى Base64 محليًا فقط:
+
+```bash
+base64 -w 0 release-keystore.jks > release-keystore.base64
+```
+
+الأسماء المطلوبة هي `ANDROID_KEYSTORE_BASE64` و`ANDROID_KEY_ALIAS` و`ANDROID_KEY_PASSWORD` و`ANDROID_STORE_PASSWORD`. تُنشئ GitHub Actions ملفًا مؤقتًا داخل runner وتستخدمه أثناء البناء، ثم ينتهي الملف بانتهاء التشغيل. يجب استخدام نفس keystore الحالي للحفاظ على إمكانية تحديث التطبيق المثبت؛ لا تُنشئ keystore جديدًا بدل المفتاح القديم دون معرفة أثر ذلك.
+
 ## 🚀 كيفية الاستخدام
 
 ### للتطوير اليومي
@@ -108,9 +118,10 @@
 ## 🔍 استكشاف الأخطاء
 
 ### مشاكل شائعة
-1. **فشل بناء Android**: تحقق من إعدادات Java 17
-2. **فشل بناء iOS**: يحتاج macOS runner + signing certificates
-3. **فشل النشر للويب**: تحقق من إعدادات GitHub Pages
+1. **فشل بناء Android Release**: تحقق من أسرار `ANDROID_KEYSTORE_BASE64` و`ANDROID_KEY_ALIAS` و`ANDROID_KEY_PASSWORD` و`ANDROID_STORE_PASSWORD`، ومن أن Base64 صالح وأن الـ keystore هو المفتاح الصحيح للتطبيق.
+2. **فشل بناء Android Debug**: لا يحتاج إلى أسرار Release؛ افحص أخطاء Gradle أو Flutter منفصلة.
+3. **فشل بناء iOS**: يحتاج macOS runner + signing certificates
+4. **فشل النشر للويب**: تحقق من إعدادات GitHub Pages
 
 ### السجلات
 - كل workflow يحتوي على سجلات مفصلة

@@ -55,7 +55,7 @@ jobs:
       tag_name: ${{ steps.version.outputs.tag_name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-tags: true
           fetch-depth: 0   # مهم لقراءة الـ tags
@@ -104,10 +104,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -118,6 +118,33 @@ jobs:
         with:
           flutter-version: '3.44.0'
           channel: 'stable'
+
+      # The release keystore is never stored in Git. It is reconstructed in
+      # the runner's temporary directory from encrypted repository secrets.
+      - name: Prepare release signing
+        id: release-signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${ANDROID_KEYSTORE_BASE64:-}" ]] || missing+=(ANDROID_KEYSTORE_BASE64)
+          [[ -n "${ANDROID_KEY_ALIAS:-}" ]] || missing+=(ANDROID_KEY_ALIAS)
+          [[ -n "${ANDROID_KEY_PASSWORD:-}" ]] || missing+=(ANDROID_KEY_PASSWORD)
+          [[ -n "${ANDROID_STORE_PASSWORD:-}" ]] || missing+=(ANDROID_STORE_PASSWORD)
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing GitHub Actions secrets: ${missing[*]}. Configure them before running a release build."
+            exit 1
+          fi
+
+          keystore_path="$RUNNER_TEMP/release-keystore.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          test -s "$keystore_path"
+          chmod 600 "$keystore_path"
+          echo "keystore_path=$keystore_path" >> "$GITHUB_OUTPUT"
 
       - name: Show Flutter version
         run: flutter --version
@@ -154,10 +181,20 @@ jobs:
 
       - name: Build APK (release)
         if: ${{ github.event_name == 'push' || inputs.build_apk == 'true' }}
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ steps.release-signing.outputs.keystore_path }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
         run: flutter build apk --release --target-platform android-arm64
 
       - name: Build App Bundle (release)
         if: ${{ github.event_name == 'push' || inputs.build_aab == 'true' }}
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ steps.release-signing.outputs.keystore_path }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
         run: flutter build appbundle --release --target-platform android-arm64
 
       # ============================================================
@@ -218,7 +255,7 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/') || inputs.make_release == 'true' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download APK artifact
         uses: actions/download-artifact@v4
