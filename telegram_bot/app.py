@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging,os,sys,time,threading
-from .config import Settings
+from .config import Settings, load_env_file
 from .common import TelegramBotError
 from .telegram.client import TelegramClient
 from .routeros.client import RouterOSV6Client
@@ -21,6 +21,44 @@ def _configure_logging() -> None:
         stream=sys.stdout,
     )
 
+def _selftest(settings: Settings) -> int:
+    """Verify the bot can actually run: Telegram token + RouterOS login.
+
+    Sends a real Telegram message to every allowed chat so the operator sees
+    a live confirmation. Returns a process exit code (0 = healthy)."""
+    ok = True
+    telegram = TelegramClient(settings.telegram_token)
+    try:
+        me = telegram.call("getMe", {})
+        LOGGER.info("Telegram token OK: bot @%s", (me or {}).get("username", "?"))
+    except Exception as error:
+        LOGGER.error("Telegram token check FAILED: %s", error)
+        return 2
+    gateway = RouterOSV6Client(
+        settings.mikrotik_address, settings.mikrotik_user, settings.mikrotik_password,
+        settings.mikrotik_port, settings.mikrotik_use_ssl, settings.mikrotik_ca_file)
+    try:
+        rows = gateway.command("/system/resource/print", "=.proplist=uptime,version")
+        info = next((r for r in rows if r.get("!type") == "!re"), {})
+        LOGGER.info("RouterOS login OK: version=%s uptime=%s",
+                    info.get("version", "?"), info.get("uptime", "?"))
+    except Exception as error:
+        LOGGER.error("RouterOS connection FAILED: %s", error)
+        ok = False
+    finally:
+        gateway.close()
+    message = ("\u2705 فحص Telegram Bot ناجح: التوكن والاتصال بـ MikroTik يعملان."
+               if ok else
+               "\u26a0\ufe0f فحص Telegram Bot: التوكن يعمل لكن الاتصال بـ MikroTik فشل. راجع العنوان/المنفذ/TLS.")
+    for chat_id in settings.allowed_chat_ids:
+        try:
+            telegram.send_message(chat_id, message)
+        except Exception as error:
+            LOGGER.warning("could not send selftest message to %s: %s", chat_id, error)
+            ok = False
+    return 0 if ok else 2
+
+
 def _load_offset(path):
     try:return int(path.read_text().strip()) if path.exists() else None
     except (OSError,ValueError):return None
@@ -31,10 +69,18 @@ def _save_offset(path,offset):
     tmp.write_text(str(offset),encoding="utf-8")
     tmp.replace(path)
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     _configure_logging()
+    argv = list(sys.argv[1:] if argv is None else argv)
+    load_env_file()
     try:
         settings=Settings.from_env()
+    except TelegramBotError as error:
+        LOGGER.error("startup failed: %s", error)
+        return 2
+    if "--selftest" in argv:
+        return _selftest(settings)
+    try:
         telegram=TelegramClient(settings.telegram_token)
         gateway=RouterOSV6Client(settings.mikrotik_address,settings.mikrotik_user,settings.mikrotik_password,settings.mikrotik_port,settings.mikrotik_use_ssl,settings.mikrotik_ca_file)
         monitor_gateway=RouterOSV6Client(settings.mikrotik_address,settings.mikrotik_user,settings.mikrotik_password,settings.mikrotik_port,settings.mikrotik_use_ssl,settings.mikrotik_ca_file)
@@ -55,6 +101,9 @@ def main() -> int:
         threading.Thread(target=traffic.run_forever,daemon=True,name="traffic-monitor").start()
         offset=_load_offset(settings.offset_file)
         LOGGER.info("Telegram Bot started in direct RouterOS API mode")
+        for chat_id in settings.allowed_chat_ids:
+            try: telegram.send_message(chat_id, "\U0001f7e2 Telegram Bot يعمل الآن وجاهز لاستقبال الأوامر.")
+            except Exception as error: LOGGER.warning("startup notice to %s failed: %s", chat_id, error)
         while True:
             try:
                 updates=telegram.updates(offset)
