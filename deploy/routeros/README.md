@@ -1,6 +1,6 @@
-# RouterOS API-SSL preparation for the direct Telegram Bot
+# RouterOS API-SSL and optional direct Telegram mode
 
-يتصل Telegram Bot من جهاز Linux مباشرةً إلى MikroTik عبر RouterOS API-SSL. لا يرسل MikroTik Bot Token إلى Telegram، ولا يحتوي هذا المشروع على RouterOS script أو scheduler لمسار Telegram مباشر.
+يدعم المشروع مسارين منفصلين: المسار المفضل Telegram Bot على Linux إلى MikroTik عبر RouterOS API-SSL، ومسار مباشر اختياري موثق لاحقًا يجعل MikroTik يتصل بـ Telegram. لا تُستخدم المساران معًا لنفس Bot Token.
 
 ## الصلاحيات الأقل
 
@@ -24,17 +24,19 @@
 /ip service print detail where name="api-ssl"
 ```
 
-يجب أن تكون `TELEGRAM_ADMIN_USER_IDS` في إعداد البوت مجموعة فرعية من `TELEGRAM_ALLOWED_USER_IDS`. هذه القائمة تتحكم في `/reboot` و`/card-create` و`/delete-expired`، ولا يغني امتلاك حساب RouterOS لصلاحية عن التحقق من هوية Telegram. لا تضع Bot Token أو كلمة مرور RouterOS في RouterOS أو Git.
+يجب أن تكون `TELEGRAM_ADMIN_USER_IDS` في إعداد Linux Bot مجموعة فرعية من `TELEGRAM_ALLOWED_USER_IDS`. هذه القائمة تتحكم في `/reboot` و`/card-create` و`/delete-expired`، ولا يغني امتلاك حساب RouterOS لصلاحية عن التحقق من هوية Telegram. في مسار Linux Bot لا تضع Bot Token أو كلمة مرور RouterOS في RouterOS أو Git؛ أما الوضع المباشر الاختياري فيستخدم placeholder محليًا داخل RouterOS ولا يرفع النسخة المملوءة إلى Git.
 
 المراجع الرسمية: [User](https://help.mikrotik.com/docs/spaces/ROS/pages/8978504/User) و[API](https://help.mikrotik.com/docs/spaces/ROS/pages/47579160/API).
 
-## بخصوص السكربت المرفق ذي polling إلى Telegram
+## الوضع المباشر من MikroTik إلى Telegram
 
-السكربت المرفق الذي يخزن رمز البوت داخل RouterOS وينفذ طلبات HTTP إلى خدمة الرسائل لا يُستورد إلى MikroTik في هذا المشروع. فهو يجعل الراوتر ينفذ polling وقراءة أوامر الرسائل، ويستخدم parsing يدويًا لـ JSON وصلاحيات تغيير مباشرة. هذا يتعارض مع التصميم المعتمد ومسار الأمان في المشروع.
+بناءً على طلب صريح، يوفّر المشروع الآن قالبًا اختياريًا للمسار المباشر في `telegram-direct-bot-v6.rsc.example`. هذا الوضع يجعل MikroTik يستدعي Telegram Bot API عبر `/tool fetch` ويستقبل الأوامر باستخدام `getUpdates` من خلال Scheduler. القالب لا ينفّذ السكربت المرفق القديم كما هو؛ بل يحصر الأوامر في `/status` و`/users` و`/check_card` و`/c200` و`/clean` و`/reboot`، ويتحقق من `chat_id` و`user_id`، ويضع تأكيدًا قصير العمر قبل العمليات التغييرية.
 
-تم اعتماد وظائفه المطلوبة فقط، مثل حالة الراوتر، المستخدمين والجلسات، فحص البطاقة، إنشاء/حذف User Manager والتقارير، داخل Telegram Bot على Linux وخلف RouterOSOperations وTelegramPolicy وAuditTrail. الإشعارات التلقائية تنفذها `InternetMonitor` في خدمة البوت؛ فهي تفحص RouterOS API ثم اختبار الإنترنت، وترسل إشعارًا عند تغير الحالة بين `ONLINE` و`INTERNET_DOWN` و`ROUTER_OFFLINE` إلى المحادثات المسموح بها.
+هذا المسار المباشر يضع Bot Token داخل RouterOS، ولذلك يجب اعتباره أقل أمانًا من تشغيل Python Bot على Linux. لا ترفع النسخة المملوءة إلى Git، ولا تستخدم الرمز الذي ظهر في المحادثة؛ أصدر رمزًا جديدًا من BotFather قبل وضعه على الراوتر. لا تشغّل الوضع المباشر وخدمة Linux Bot معًا لنفس Bot Token، لأن كلاهما سيستدعي `getUpdates` وقد يستهلك التحديثات من الطرف الآخر.
 
-للتشغيل التلقائي، شغّل خدمة systemd على خادم Linux وأضف إلى `bot.env` ما يلي:
+للاستخدام، انسخ القالب إلى مكان خاص، واستبدل `REPLACE_WITH_*` محليًا فقط، ثم استورده في MikroTik. يجب أن يكون `api-ssl` أو `/tool fetch` قادرًا على التحقق من شهادة HTTPS الخاصة بـ Telegram، ويجب تقييد وصول الإدارة إلى الشبكة الموثوقة. اختبر أولًا الأمر `/status` ثم `/users`، ولا تفعل أوامر الإنشاء أو التنظيف أو إعادة التشغيل إلا بعد مراجعة القالب.
+
+إذا اخترت المسار الأكثر أمانًا، استخدم بدلًا منه خدمة Linux Bot وإعدادات API-SSL التالية في `bot.env`:
 
 ```dotenv
 MIKROTIK_PORT=8729
@@ -43,4 +45,4 @@ MONITOR_TARGET=1.1.1.1
 MONITOR_INTERVAL_SECONDS=30
 ```
 
-بعد إعداد مستخدم API-SSL من القالب، شغّل خدمة البوت. لا تحتاج إلى Scheduler أو System Script أو Telegram Token على MikroTik، ولا تشغّل السكربت المرفق بالتوازي مع البوت حتى لا يصبح للمنظومة مساران متعارضان للتحكم والإشعار.
+القالب القديم ذي parsing اليدوي الواسع لا يُستورد كما هو؛ القالب الجديد هو النسخة المقيدة المقصودة للوضع المباشر، بينما يبقى `telegram-bot-user-v6.rsc.example` مخصصًا لمسار Linux Bot عبر RouterOS API-SSL.

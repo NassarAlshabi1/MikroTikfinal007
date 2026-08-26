@@ -37,7 +37,7 @@ jobs:
       - name: Validate installer and workflow syntax markers
         run: bash -n scripts/setup_telegram_bot_local.sh
 
-      - name: Reject secrets and direct RouterOS Telegram transport
+      - name: Validate RouterOS Telegram templates and reject real secrets
         shell: bash
         run: |
           test ! -e android/key.properties
@@ -46,8 +46,10 @@ jobs:
             echo 'Signing or environment artifact found in repository.'
             exit 1
           fi
-          if grep -RInE 'api\.telegram\.org/bot|/tool[[:space:]]+fetch|check-certificate[[:space:]]*=\s*no' deploy/routeros --include='*.rsc' --include='*.md'; then
-            echo 'Direct RouterOS-to-Telegram transport marker found.'
+          test -f deploy/routeros/telegram-direct-bot-v6.rsc.example
+          grep -q 'REPLACE_WITH_NEW_BOT_TOKEN' deploy/routeros/telegram-direct-bot-v6.rsc.example
+          if grep -RInE 'api\.telegram\.org/bot[0-9]{6,}:|TG_BOT_TOKEN[[:space:]]+"[^R]' deploy/routeros --include='*.rsc' --include='*.md'; then
+            echo 'A real Telegram bot token appears in RouterOS deployment files.'
             exit 1
           fi
 

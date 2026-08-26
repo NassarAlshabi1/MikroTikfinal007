@@ -1,0 +1,293 @@
+# RouterOS v6 — Direct Telegram Bot connector (template only)
+#
+# This is an opt-in direct mode: Telegram <-> MikroTik.
+# Replace only the REPLACE_* values on a private copy. Never commit the filled file.
+# Stop the Linux Telegram Bot while this direct polling script is active; both must
+# not call getUpdates for the same bot at the same time.
+#
+# Requirements: RouterOS 6.49.x, /tool fetch HTTPS, and a BotFather token.
+# The token below is a placeholder and MUST be replaced locally on the router only.
+
+:global TG_BOT_TOKEN "REPLACE_WITH_NEW_BOT_TOKEN"
+:global TG_ALLOWED_CHAT_ID "REPLACE_WITH_ALLOWED_CHAT_ID"
+:global TG_ALLOWED_USER_ID "REPLACE_WITH_ALLOWED_USER_ID"
+:global TG_ADMIN_USER_ID "REPLACE_WITH_ADMIN_USER_ID"
+:global TG_HOTSPOT_PROFILE "REPLACE_WITH_HOTSPOT_PROFILE"
+:global TG_UPDATE_OFFSET 0
+:global TG_LOCK false
+:global TG_PENDING_ACTION ""
+:global TG_PENDING_UNTIL 0
+:global TG_CARD_COUNTER 0
+
+:global tgSendMessage do={
+    :global TG_BOT_TOKEN
+    :local chatId [:tostr $1]
+    :local text [:tostr $2]
+    :if ($chatId = "") do={ :return false }
+    :local data ("chat_id=" . $chatId . "&text=" . $text)
+    :do {
+        /tool fetch url=("https://api.telegram.org/bot" . $TG_BOT_TOKEN . "/sendMessage") \
+            mode=https http-method=post http-data=$data http-percent-encoding=yes \
+            check-certificate=yes keep-result=no output=none idle-timeout=15s
+        :return true
+    } on-error={
+        :log warning "telegram-direct: sendMessage failed"
+        :return false
+    }
+}
+
+:global tgResetPending do={
+    :global TG_PENDING_ACTION
+    :global TG_PENDING_UNTIL
+    :set TG_PENDING_ACTION ""
+    :set TG_PENDING_UNTIL 0
+}
+
+:global tgTimeToSeconds do={
+    :local clockTime [:tostr $1]
+    :local firstColon [:find $clockTime ":"]
+    :local secondColon [:find $clockTime ":" ($firstColon + 1)]
+    :if ($firstColon = nil || $secondColon = nil) do={ :return 0 }
+    :return (([:tonum [:pick $clockTime 0 $firstColon]] * 3600) + \
+        ([:tonum [:pick $clockTime ($firstColon + 1) $secondColon]] * 60) + \
+        [:tonum [:pick $clockTime ($secondColon + 1) [:len $clockTime]]])
+}
+
+:global tgArm do={
+    :global TG_PENDING_ACTION
+    :global TG_PENDING_UNTIL
+    :global tgTimeToSeconds
+    :set TG_PENDING_ACTION $1
+    :set TG_PENDING_UNTIL ([$tgTimeToSeconds [/system clock get time]] + 300)
+}
+
+:global tgPendingValid do={
+    :global TG_PENDING_ACTION
+    :global TG_PENDING_UNTIL
+    :global tgResetPending
+    :global tgTimeToSeconds
+    :if ($TG_PENDING_ACTION != $1) do={ :return false }
+    :if ([$tgTimeToSeconds [/system clock get time]] > $TG_PENDING_UNTIL) do={
+        $tgResetPending
+        :return false
+    }
+    :return true
+}
+
+:global tgUsers do={
+    :local count [/ip hotspot active print count-only]
+    :local out ("Active users: " . $count . "\n")
+    :local shown 0
+    :foreach id in=[/ip hotspot active find] do={
+        :if ($shown < 20) do={
+            :local name [/ip hotspot active get $id user]
+            :local address [/ip hotspot active get $id address]
+            :set out ($out . "user=" . $name . " ip=" . $address . "\n")
+            :set shown ($shown + 1)
+        }
+    }
+    :if ($count > 20) do={ :set out ($out . "...first 20 shown") }
+    :return $out
+}
+
+:global tgStatus do={
+    :local identity [/system identity get name]
+    :local cpu [/system resource get cpu-load]
+    :local uptime [/system resource get uptime]
+    :local active [/ip hotspot active print count-only]
+    :return ("Router: " . $identity . "\nCPU: " . $cpu . "%\nUptime: " . $uptime . "\nActive: " . $active)
+}
+
+:global tgCheckCard do={
+    :local card [:tostr $1]
+    :if ([:len $card] = 0 || [:len $card] > 64) do={ :return "Invalid card name." }
+    :local ids [/ip hotspot user find where name=$card]
+    :if ([:len $ids] = 0) do={ :return ("Card not found: " . $card) }
+    :local id [:pick $ids 0]
+    :local disabled [/ip hotspot user get $id disabled]
+    :local profile [/ip hotspot user get $id profile]
+    :local uptime [/ip hotspot user get $id uptime]
+    :local limit ""
+    :do { :set limit [/ip hotspot user get $id limit-uptime] } on-error={ :set limit "not-set" }
+    :return ("Card: " . $card . "\nProfile: " . $profile . "\nDisabled: " . $disabled . "\nUsed: " . $uptime . "\nLimit: " . $limit)
+}
+
+:global tgCreateCard do={
+    :global TG_CARD_COUNTER
+    :global TG_HOTSPOT_PROFILE
+    :set TG_CARD_COUNTER ($TG_CARD_COUNTER + 1)
+    :local clockTime [/system clock get time]
+    :local suffix ([:pick $clockTime 0 2] . [:pick $clockTime 3 5] . [:pick $clockTime 6 8])
+    :local name ("c" . $suffix . $TG_CARD_COUNTER)
+    :if ([:len [/ip hotspot user find where name=$name]] > 0) do={ :set name ($name . "x") }
+    :do {
+        /ip hotspot user add name=$name password=$name profile=$TG_HOTSPOT_PROFILE comment="Created by direct Telegram mode"
+        :return ("Created card: " . $name . "\nPassword: " . $name . "\nProfile: " . $TG_HOTSPOT_PROFILE)
+    } on-error={
+        :return "Card creation failed; verify the configured Hotspot profile."
+    }
+}
+
+:global tgPreviewClean do={
+    :local count 0
+    :foreach id in=[/ip hotspot user find] do={
+        :local limit ""
+        :do { :set limit [/ip hotspot user get $id limit-uptime] } on-error={}
+        :if ($limit != "") do={
+            :local used [/ip hotspot user get $id uptime]
+            :if ($used >= $limit) do={ :set count ($count + 1) }
+        }
+    }
+    :return ("Expired cards ready for deletion: " . $count . "\nSend /confirm_clean within 5 minutes to continue.")
+}
+
+:global tgDeleteExpired do={
+    :local deleted 0
+    :foreach id in=[/ip hotspot user find] do={
+        :local limit ""
+        :do { :set limit [/ip hotspot user get $id limit-uptime] } on-error={}
+        :if ($limit != "") do={
+            :local used [/ip hotspot user get $id uptime]
+            :if ($used >= $limit) do={
+                /ip hotspot user remove $id
+                :set deleted ($deleted + 1)
+            }
+        }
+    }
+    :return ("Deleted expired cards: " . $deleted)
+}
+
+:global tgProcessUpdate do={
+    :global TG_UPDATE_OFFSET
+    :global TG_ALLOWED_CHAT_ID
+    :global TG_ALLOWED_USER_ID
+    :global TG_ADMIN_USER_ID
+    :global tgSendMessage
+    :global tgArm
+    :global tgPendingValid
+    :global tgResetPending
+    :global tgCreateCard
+    :global tgPreviewClean
+    :global tgDeleteExpired
+    :global tgStatus
+    :global tgUsers
+    :global tgCheckCard
+    :local update [:tostr $1]
+    :local pUpdate [:find $update "\"update_id\":"]
+    :if ($pUpdate = nil) do={ :return }
+    :local updateEnd [:find $update "," ($pUpdate + 12)]
+    :if ($updateEnd = nil) do={ :return }
+    :local updateId [:tonum [:pick $update ($pUpdate + 12) $updateEnd]]
+    :set TG_UPDATE_OFFSET ($updateId + 1)
+
+    :local pMessage [:find $update "\"message\":"]
+    :if ($pMessage = nil) do={ :return }
+    :local pChat [:find $update "\"chat\":{\"id\":" $pMessage]
+    :if ($pChat = nil) do={ :return }
+    :local chatEnd [:find $update "," ($pChat + 13)]
+    :if ($chatEnd = nil) do={ :return }
+    :local chatId [:tostr [:pick $update ($pChat + 13) $chatEnd]]
+    :local pFrom [:find $update "\"from\":{\"id\":" $pMessage]
+    :if ($pFrom = nil) do={ :return }
+    :local userEnd [:find $update "," ($pFrom + 13)]
+    :if ($userEnd = nil) do={ :return }
+    :local userId [:tostr [:pick $update ($pFrom + 13) $userEnd]]
+
+    # Both identifiers are required. Unauthorized updates are acknowledged by offset
+    # but never executed and never echoed to Telegram.
+    :if ($chatId != [:tostr $TG_ALLOWED_CHAT_ID] || $userId != [:tostr $TG_ALLOWED_USER_ID]) do={ :return }
+
+    :local pText [:find $update "\"text\":\"" $pMessage]
+    :if ($pText = nil) do={ :return }
+    :local textEnd [:find $update "\"" ($pText + 8)]
+    :if ($textEnd = nil) do={ :return }
+    :local text [:pick $update ($pText + 8) $textEnd]
+
+    :if ($text = "/start" || $text = "/help") do={
+        $tgSendMessage $chatId "Direct MikroTik Bot\n/status\n/users\n/check_card username\n/c200\n/clean\n/reboot"
+        :return
+    }
+    :if ($text = "/status") do={ $tgSendMessage $chatId [$tgStatus]; :return }
+    :if ($text = "/users") do={ $tgSendMessage $chatId [$tgUsers]; :return }
+    :if ([:pick $text 0 12] = "/check_card ") do={
+        $tgSendMessage $chatId [$tgCheckCard [:pick $text 12 [:len $text]]]
+        :return
+    }
+    :if ($text = "/c200") do={
+        $tgArm "create"
+        $tgSendMessage $chatId "Card creation is armed for 5 minutes. Send /confirm_create to continue."
+        :return
+    }
+    :if ($text = "/confirm_create") do={
+        :if ([$tgPendingValid "create"] = true) do={
+            $tgSendMessage $chatId [$tgCreateCard]
+            $tgResetPending
+        } else={ $tgSendMessage $chatId "No valid card-creation confirmation is pending." }
+        :return
+    }
+    :if ($text = "/clean") do={
+        $tgArm "clean"
+        $tgSendMessage $chatId [$tgPreviewClean]
+        :return
+    }
+    :if ($text = "/confirm_clean") do={
+        :if ([$tgPendingValid "clean"] = true) do={
+            $tgSendMessage $chatId [$tgDeleteExpired]
+            $tgResetPending
+        } else={ $tgSendMessage $chatId "No valid cleanup confirmation is pending." }
+        :return
+    }
+    :if ($text = "/reboot") do={
+        $tgArm "reboot"
+        $tgSendMessage $chatId "Router reboot is armed for 5 minutes. Send /confirm_reboot to continue."
+        :return
+    }
+    :if ($text = "/confirm_reboot") do={
+        :if ([:tostr $TG_ADMIN_USER_ID] != $userId) do={
+            $tgSendMessage $chatId "Only the configured administrator can reboot the router."
+            :return
+        }
+        :if ([$tgPendingValid "reboot"] = true) do={
+            :log warning "telegram-direct: administrator confirmed router reboot"
+            $tgSendMessage $chatId "Reboot confirmed. MikroTik will restart now."
+            $tgResetPending
+            /system reboot
+        } else={ $tgSendMessage $chatId "No valid reboot confirmation is pending." }
+        :return
+    }
+    $tgSendMessage $chatId "Unknown command. Send /help."
+}
+
+:global tgPoll do={
+    :global TG_LOCK
+    :global TG_BOT_TOKEN
+    :global TG_UPDATE_OFFSET
+    :global tgProcessUpdate
+    :if ($TG_LOCK = true) do={ :return }
+    :set TG_LOCK true
+    :local url ("https://api.telegram.org/bot" . $TG_BOT_TOKEN . "/getUpdates?timeout=15&limit=10&offset=" . $TG_UPDATE_OFFSET)
+    :do {
+        :local result [/tool fetch url=$url mode=https check-certificate=yes keep-result=no output=user as-value idle-timeout=20s]
+        :if (($result->"status") = "finished") do={
+            :local data ($result->"data")
+            :local cursor 0
+            :while (true) do={
+                :local p [:find $data "\"update_id\":" $cursor]
+                :if ($p = nil) do={ :break }
+                :local next [:find $data "\"update_id\":" ($p + 12)]
+                :local end [:len $data]
+                :if ($next != nil) do={ :set end $next }
+                $tgProcessUpdate [:pick $data $p $end]
+                :set cursor ($p + 12)
+            }
+        }
+    } on-error={ :log warning "telegram-direct: getUpdates failed" }
+    :set TG_LOCK false
+}
+
+# Install/update the single polling script and Scheduler.
+/system script remove [find name="telegram-direct-poll"]
+/system scheduler remove [find name="telegram-direct-poll"]
+/system script add name="telegram-direct-poll" policy=read,write,test source={$tgPoll}
+/system scheduler add name="telegram-direct-poll" interval=30s on-event="/system script run telegram-direct-poll"
+:log warning "telegram-direct: installed; verify placeholder values and test /status"
