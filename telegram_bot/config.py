@@ -4,6 +4,39 @@ from dataclasses import dataclass
 from pathlib import Path
 from .common import TelegramBotError
 
+
+def load_env_file(path: Path | None = None) -> None:
+    """Populate os.environ from a bot.env file for direct (non-systemd) runs.
+
+    Looks up BOT_ENV_FILE, then ./bot.env, then deploy/systemd/bot.env.
+    Existing environment variables always win, so systemd EnvironmentFile
+    and explicit exports are never overridden. Lines may be KEY=VALUE with
+    optional surrounding quotes; blank lines and '#' comments are ignored.
+    """
+    candidates: list[Path] = []
+    if path is not None:
+        candidates.append(path)
+    env_override = os.getenv("BOT_ENV_FILE", "").strip()
+    if env_override:
+        candidates.append(Path(env_override))
+    candidates.append(Path.cwd() / "bot.env")
+    for candidate in candidates:
+        try:
+            if not candidate.is_file():
+                continue
+            for raw in candidate.read_text(encoding="utf-8").splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = value
+            return
+        except OSError:
+            continue
+
 @dataclass(frozen=True)
 class Settings:
     telegram_token: str
