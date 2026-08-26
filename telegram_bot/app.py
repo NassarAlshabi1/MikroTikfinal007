@@ -1,5 +1,5 @@
 from __future__ import annotations
-import logging,sys,time,threading
+import logging,os,sys,time,threading
 from .config import Settings
 from .common import TelegramBotError
 from .telegram.client import TelegramClient
@@ -9,6 +9,17 @@ from .security.audit import AuditTrail
 from .commands.router import CommandRouter
 from .monitoring.core import InternetMonitor, TrafficUsageTracker, TrafficMonitor
 LOGGER=logging.getLogger("mikrotik_telegram_bot")
+
+def _configure_logging() -> None:
+    if logging.getLogger().handlers:
+        return
+    level_name=os.getenv("LOG_LEVEL", "INFO").strip().upper()
+    level=getattr(logging, level_name, logging.INFO)
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stdout,
+    )
 
 def _load_offset(path):
     try:return int(path.read_text().strip()) if path.exists() else None
@@ -21,6 +32,7 @@ def _save_offset(path,offset):
     tmp.replace(path)
 
 def main() -> int:
+    _configure_logging()
     try:
         settings=Settings.from_env()
         telegram=TelegramClient(settings.telegram_token)
@@ -74,12 +86,19 @@ def main() -> int:
                         except Exception: pass
                     _save_offset(settings.offset_file,update_id+1); offset=update_id+1
             except KeyboardInterrupt: break
+            except TelegramBotError as error:
+                LOGGER.warning("telegram poll cycle failed: %s", error)
+                gateway.close(); time.sleep(settings.poll_seconds)
             except Exception as error:
                 LOGGER.warning("telegram poll cycle failed: %s",type(error).__name__)
                 gateway.close(); time.sleep(settings.poll_seconds)
         monitor.stop(); traffic.stop(); monitor_gateway.close(); traffic_gateway.close(); gateway.close(); return 0
+    except TelegramBotError as error:
+        # Configuration/safety errors carry an actionable, secret-free message.
+        LOGGER.error("startup failed: %s", error)
+        return 2
     except Exception as error:
-        LOGGER.error("startup failed: %s",type(error).__name__)
+        LOGGER.exception("startup failed: %s", type(error).__name__)
         return 2
 
 if __name__ == "__main__": raise SystemExit(main())
