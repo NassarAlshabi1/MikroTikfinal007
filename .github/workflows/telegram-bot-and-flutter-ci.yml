@@ -47,7 +47,11 @@ jobs:
             exit 1
           fi
           test -f deploy/routeros/telegram-direct-bot-v6.rsc.example
+          test -f deploy/routeros/telegram-direct-usermanager-v6.rsc.example
           grep -q 'REPLACE_WITH_NEW_BOT_TOKEN' deploy/routeros/telegram-direct-bot-v6.rsc.example
+          grep -q 'REPLACE_WITH_NEW_BOT_TOKEN' deploy/routeros/telegram-direct-usermanager-v6.rsc.example
+          grep -q 'REPLACE_WITH_USER_MANAGER_CUSTOMER' deploy/routeros/telegram-direct-usermanager-v6.rsc.example
+          grep -q 'REPLACE_WITH_USER_MANAGER_PROFILE' deploy/routeros/telegram-direct-usermanager-v6.rsc.example
           if grep -RInE 'api\.telegram\.org/bot[0-9]{6,}:|TG_BOT_TOKEN[[:space:]]+"[^R]' deploy/routeros --include='*.rsc' --include='*.md'; then
             echo 'A real Telegram bot token appears in RouterOS deployment files.'
             exit 1

@@ -30,11 +30,11 @@
 
 ## الوضع المباشر من MikroTik إلى Telegram
 
-بناءً على طلب صريح، يوفّر المشروع الآن قالبًا اختياريًا للمسار المباشر في `telegram-direct-bot-v6.rsc.example`. هذا الوضع يجعل MikroTik يستدعي Telegram Bot API عبر `/tool fetch` ويستقبل الأوامر باستخدام `getUpdates` من خلال Scheduler. القالب لا ينفّذ السكربت المرفق القديم كما هو؛ بل يحصر الأوامر في `/status` و`/users` و`/check_card` و`/c200` و`/clean` و`/reboot`، ويتحقق من `chat_id` و`user_id`، ويضع تأكيدًا قصير العمر قبل العمليات التغييرية.
+بناءً على طلب صريح، يوفّر المشروع الآن قوالب اختيارية للمسار المباشر: `telegram-direct-bot-v6.rsc.example` لــ Hotspot Users، و`telegram-direct-usermanager-v6.rsc.example` لــ User Manager v6. كلا الوضعين يجعل MikroTik يستدعي Telegram Bot API عبر `/tool fetch` ويستقبل الأوامر باستخدام `getUpdates` من خلال Scheduler. القوالب لا تنفّذ السكربت المرفق القديم كما هو؛ بل تحصر الأوامر في `/status` و`/users` و`/check_card` و`/c200` و`/clean` و`/reboot`، وتتحقق من `chat_id` و`user_id`، وتضع تأكيدًا قصير العمر قبل العمليات التغييرية.
 
 هذا المسار المباشر يضع Bot Token داخل RouterOS، ولذلك يجب اعتباره أقل أمانًا من تشغيل Python Bot على Linux. لا ترفع النسخة المملوءة إلى Git، ولا تستخدم الرمز الذي ظهر في المحادثة؛ أصدر رمزًا جديدًا من BotFather قبل وضعه على الراوتر. لا تشغّل الوضع المباشر وخدمة Linux Bot معًا لنفس Bot Token، لأن كلاهما سيستدعي `getUpdates` وقد يستهلك التحديثات من الطرف الآخر.
 
-للاستخدام، انسخ القالب إلى مكان خاص، واستبدل `REPLACE_WITH_*` محليًا فقط، ثم استورده في MikroTik. يجب أن يكون `api-ssl` أو `/tool fetch` قادرًا على التحقق من شهادة HTTPS الخاصة بـ Telegram، ويجب تقييد وصول الإدارة إلى الشبكة الموثوقة. اختبر أولًا الأمر `/status` ثم `/users`، ولا تفعل أوامر الإنشاء أو التنظيف أو إعادة التشغيل إلا بعد مراجعة القالب.
+للاستخدام، اختر القالب المطابق لنظامك، وانسخه إلى مكان خاص، واستبدل `REPLACE_WITH_*` محليًا فقط، ثم استورده في MikroTik. في قالب User Manager يجب ضبط `REPLACE_WITH_USER_MANAGER_CUSTOMER` و`REPLACE_WITH_USER_MANAGER_PROFILE` إلى أسماء موجودة فعليًا في `/tool user-manager`. يجب أن يكون `/tool fetch` قادرًا على التحقق من شهادة HTTPS الخاصة بـ Telegram، ويجب تقييد وصول الإدارة إلى الشبكة الموثوقة. اختبر أولًا الأمر `/status` ثم `/users`، ولا تفعل أوامر الإنشاء أو التنظيف أو إعادة التشغيل إلا بعد مراجعة القالب.
 
 إذا اخترت المسار الأكثر أمانًا، استخدم بدلًا منه خدمة Linux Bot وإعدادات API-SSL التالية في `bot.env`:
 
@@ -45,4 +45,4 @@ MONITOR_TARGET=1.1.1.1
 MONITOR_INTERVAL_SECONDS=30
 ```
 
-القالب القديم ذي parsing اليدوي الواسع لا يُستورد كما هو؛ القالب الجديد هو النسخة المقيدة المقصودة للوضع المباشر، بينما يبقى `telegram-bot-user-v6.rsc.example` مخصصًا لمسار Linux Bot عبر RouterOS API-SSL.
+القالب القديم ذي parsing اليدوي الواسع لا يُستورد كما هو؛ القالبان الجديدان هما النسختان المقيدتان المقصودتان للوضع المباشر. استخدم `telegram-direct-usermanager-v6.rsc.example` عندما تكون قاعدة البيانات هي User Manager v6. أما `telegram-bot-user-v6.rsc.example` فيبقى مخصصًا لمسار Linux Bot عبر RouterOS API-SSL.
