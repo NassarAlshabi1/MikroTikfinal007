@@ -262,12 +262,14 @@ export default {
 }
 
 // Helper function to process MikroTik commands
+// Uses RouterOS v7 REST API (/rest/... on www-ssl, default port 443).
+// NOTE: the binary API service (api/api-ssl 8728/8729) is NOT HTTP — REST lives on www-ssl.
 async function processMikroTikCommand(command, env) {
   const mikrotikAddress = await env.CONFIG.get('MIKROTIK_ADDRESS')
   const mikrotikUser = await env.CONFIG.get('MIKROTIK_USER')
   const mikrotikPassword = await env.CONFIG.get('MIKROTIK_PASSWORD')
-  const mikrotikPort = await env.CONFIG.get('MIKROTIK_PORT') || '8729'
-  const mikrotikUseSSL = (await env.CONFIG.get('MIKROTIK_USE_SSL'))?.toLowerCase() === 'true'
+  const mikrotikPort = await env.CONFIG.get('MIKROTIK_PORT') || '443'
+  const mikrotikUseSSL = (await env.CONFIG.get('MIKROTIK_USE_SSL'))?.toLowerCase() !== 'false'
 
   if (!mikrotikAddress || !mikrotikUser || !mikrotikPassword) {
     return '❌ MikroTik RouterOS not configured properly'
@@ -277,38 +279,39 @@ async function processMikroTikCommand(command, env) {
   const baseUrl = `${protocol}://${mikrotikAddress}:${mikrotikPort}`
 
   try {
-    // Map commands to RouterOS API calls
+    // Map commands to RouterOS v7 REST API endpoints (/rest prefix on www-ssl)
     const commandMap = {
-      '/status': '/system/resource/print',
-      '/resources': '/system/resource/print',
-      '/uptime': '/system/clock/print',
-      '/users': '/user/print',
-      '/active': '/ip/hotspot/active/print',
-      '/interfaces': '/interface/print',
-      '/profiles': '/ip/hotspot/user/profile/print',
-      '/reboot': '/system/reboot'
+      '/status':     { path: '/rest/system/resource',           method: 'GET'  },
+      '/resources':  { path: '/rest/system/resource',           method: 'GET'  },
+      '/uptime':     { path: '/rest/system/resource',           method: 'GET'  },
+      '/users':      { path: '/rest/ip/hotspot/user',           method: 'GET'  },
+      '/active':     { path: '/rest/ip/hotspot/active',         method: 'GET'  },
+      '/interfaces': { path: '/rest/interface',                 method: 'GET'  },
+      '/profiles':   { path: '/rest/ip/hotspot/user/profile',   method: 'GET'  },
+      '/reboot':     { path: '/rest/system/reboot',             method: 'POST' }
     }
 
-    const apiCommand = commandMap[command.toLowerCase()] || command
-    
+    const lower = command.toLowerCase()
+    const mapped = commandMap[lower] || { path: `/rest${command}`, method: 'GET' }
+
     // For reboot, we need special handling
-    if (command.toLowerCase() === '/reboot') {
-      // In a real implementation, this would be protected
+    if (lower === '/reboot') {
       return '⚠️ هل أنت متأكد من إعادة تشغيل الراوتر؟\n' +
              'إرسال /reboot-confirm للتأكيد'
     }
 
-    // Build the API URL
-    const apiUrl = `${baseUrl}${apiCommand}`
-    
+    // Build the API URL (RouterOS v7 REST)
+    const apiUrl = `${baseUrl}${mapped.path}`
+
     // Make the request to MikroTik
     const auth = btoa(`${mikrotikUser}:${mikrotikPassword}`)
     const response = await fetch(apiUrl, {
-      method: 'GET',
+      method: mapped.method,
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json'
-      }
+      },
+      ...(mapped.method === 'POST' && { body: '{}' })
     })
 
     if (!response.ok) {
@@ -316,10 +319,11 @@ async function processMikroTikCommand(command, env) {
     }
 
     const data = await response.json()
+    const items = Array.isArray(data) ? data : [data]
     
     // Format the response based on command
     if (command.toLowerCase() === '/status' || command.toLowerCase() === '/resources') {
-      const resource = data[0] || {}
+      const resource = items[0] || {}
       return `📊 *حالة الراوتر*\n\n` +
              `🖥 *الإصدار*: ${resource.version || 'غير متاح'}\n` +
              `⏱ *وقت العمل*: ${resource.uptime || 'غير متاح'}\n` +
@@ -329,7 +333,7 @@ async function processMikroTikCommand(command, env) {
     }
 
     if (command.toLowerCase() === '/users') {
-      const users = data.filter(item => item['!type'] !== '!re') || []
+      const users = items || []
       if (users.length === 0) {
         return '👥 لا يوجد مستخدمين'
       }
@@ -345,7 +349,7 @@ async function processMikroTikCommand(command, env) {
     }
 
     if (command.toLowerCase() === '/active') {
-      const active = data.filter(item => item['!type'] !== '!re') || []
+      const active = items || []
       if (active.length === 0) {
         return '📡 لا يوجد مستخدمين نشطين'
       }
@@ -356,7 +360,8 @@ async function processMikroTikCommand(command, env) {
     }
 
     // Default: return raw data (formatted)
-    return `📋 *نتائج الأمر*:\n\n\`\`\`\n${JSON.stringify(data, null, 2)}\n\`\`\``
+    const fence = '```'
+    return `📋 *نتائج الأمر*:\n\n${fence}\n${JSON.stringify(items, null, 2)}\n${fence}`
 
   } catch (error) {
     console.error('MikroTik API Error:', error)

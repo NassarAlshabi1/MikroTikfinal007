@@ -5,11 +5,11 @@ compatibility_date = "2024-01-01"
 # KV Namespaces for configuration and user data
 [[kv_namespaces]]
 binding = "CONFIG"
-id = "YOUR_KV_CONFIG_NAMESPACE_ID"
+id = "93f3a5feb19942c9bda92b91c502908b"
 
 [[kv_namespaces]]
 binding = "USER_DATA"
-id = "YOUR_KV_USER_DATA_NAMESPACE_ID"
+id = "b45ed7424cb3438180a7085f435ab83a"
 
 # Environment variables (can also be set in Cloudflare dashboard)
 [vars]
@@ -17,7 +17,6 @@ ENVIRONMENT = "production"
 
 # For local development
 [dev]
-local = true
 port = 8787
 
 # Routes (optional - configure in Cloudflare dashboard)

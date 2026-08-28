@@ -59,3 +59,12 @@ telegram_bot/**/__pycache__/
 
 # Local RouterOS files may contain Telegram tokens or router credentials
 deploy/routeros/*-local.rsc
+
+# Release signing credentials — NEVER commit to public repo
+android/app/release-keystore.jks
+android/key.properties
+*.jks
+*.keystore
+
+# Native build artifacts
+libisar.so
