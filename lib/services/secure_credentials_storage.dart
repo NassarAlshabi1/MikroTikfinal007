@@ -10,6 +10,8 @@ abstract class SecureCredentialsStorage {
   Future<void> setRemotePassword(String? password);
   Future<String?> getTelegramBotToken();
   Future<void> setTelegramBotToken(String? token);
+  Future<String?> getWorkerAdminKey();
+  Future<void> setWorkerAdminKey(String? key);
   Future<void> clearAll();
   Future<void> clearMikrotikCredentials();
   Future<bool> hasStoredCredentials();
@@ -26,6 +28,7 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
   static const _keyMikrotikPass = 'mikrotik_pass';
   static const _keyRemotePass = 'remote_pass';
   static const _keyTelegramBotToken = 'telegram_bot_token';
+  static const _keyWorkerAdminKey = 'worker_admin_key';
   static const _migrationDoneKey = 'secure_storage_migrated';
 
   @override
@@ -68,6 +71,18 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
     await _storage.write(key: _keyTelegramBotToken, value: token.trim());
   }
 
+  @override
+  Future<String?> getWorkerAdminKey() => _storage.read(key: _keyWorkerAdminKey);
+
+  @override
+  Future<void> setWorkerAdminKey(String? key) async {
+    if (key == null || key.trim().isEmpty) {
+      await _storage.delete(key: _keyWorkerAdminKey);
+      return;
+    }
+    await _storage.write(key: _keyWorkerAdminKey, value: key.trim());
+  }
+
   Future<void> _removeLegacy(String key) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(key);
@@ -78,6 +93,7 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
     await _storage.delete(key: _keyMikrotikPass);
     await _storage.delete(key: _keyRemotePass);
     await _storage.delete(key: _keyTelegramBotToken);
+    await _storage.delete(key: _keyWorkerAdminKey);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('pass');
     await prefs.remove('remote_pass');
@@ -164,6 +180,11 @@ class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
   @override
   Future<void> setTelegramBotToken(String? token) async =>
       _set('telegram_bot_token', token?.trim());
+  @override
+  Future<String?> getWorkerAdminKey() async => _store['worker_admin_key'];
+  @override
+  Future<void> setWorkerAdminKey(String? key) async =>
+      _set('worker_admin_key', key?.trim());
   Future<void> _set(String key, String? value) async {
     if (value == null || value.isEmpty) {
       _store.remove(key);

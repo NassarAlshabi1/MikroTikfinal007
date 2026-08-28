@@ -17,6 +17,11 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
   final _tokenController = TextEditingController();
   final _chatIdsController = TextEditingController();
   final _userIdsController = TextEditingController();
+  final _workerUrlController = TextEditingController();
+  final _workerKeyController = TextEditingController();
+  final _umCustomerController = TextEditingController();
+  final _umProfileController = TextEditingController();
+  final _defaultLimitController = TextEditingController();
   final _pollController = TextEditingController();
   final _targetController = TextEditingController();
   final _monitorIntervalController = TextEditingController();
@@ -27,10 +32,13 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
   final _stateFileController = TextEditingController();
 
   final _store = const TelegramBotSettingsStore();
+  TelegramDeploymentMode _mode = TelegramDeploymentMode.routerOsScript;
   bool _loading = true;
   bool _saving = false;
   bool _testing = false;
+  bool _testingWorker = false;
   bool _obscureToken = true;
+  bool _obscureWorkerKey = true;
 
   @override
   void initState() {
@@ -40,36 +48,54 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
 
   Future<void> _load() async {
     final settings = await _store.load();
+    final workerKey = await _store.loadWorkerAdminKey();
     if (!mounted) return;
-    _tokenController.text = settings.botToken;
-    _chatIdsController.text = settings.allowedChatIds;
-    _userIdsController.text = settings.allowedUserIds;
-    _pollController.text = settings.pollSeconds.toString();
-    _targetController.text = settings.monitorTarget;
-    _monitorIntervalController.text =
-        settings.monitorIntervalSeconds.toString();
-    _interfaceController.text = settings.trafficInterface;
-    _trafficIntervalController.text =
-        settings.trafficIntervalSeconds.toString();
-    _reportTimeController.text = settings.dailyReportTime;
-    _offsetFileController.text = settings.offsetFile;
-    _stateFileController.text = settings.trafficStateFile;
-    setState(() => _loading = false);
+    setState(() {
+      _mode = settings.deploymentMode;
+      _tokenController.text = settings.botToken;
+      _chatIdsController.text = settings.allowedChatIds;
+      _userIdsController.text = settings.allowedUserIds;
+      _workerUrlController.text = settings.workerUrl;
+      _workerKeyController.text = workerKey ?? '';
+      _umCustomerController.text = settings.umCustomer;
+      _umProfileController.text = settings.umProfile;
+      _defaultLimitController.text = settings.defaultCardLimit;
+      _pollController.text = settings.pollSeconds.toString();
+      _targetController.text = settings.monitorTarget;
+      _monitorIntervalController.text =
+          settings.monitorIntervalSeconds.toString();
+      _interfaceController.text = settings.trafficInterface;
+      _trafficIntervalController.text =
+          settings.trafficIntervalSeconds.toString();
+      _reportTimeController.text = settings.dailyReportTime;
+      _offsetFileController.text = settings.offsetFile;
+      _stateFileController.text = settings.trafficStateFile;
+      _loading = false;
+    });
   }
 
   @override
   void dispose() {
-    _tokenController.dispose();
-    _chatIdsController.dispose();
-    _userIdsController.dispose();
-    _pollController.dispose();
-    _targetController.dispose();
-    _monitorIntervalController.dispose();
-    _interfaceController.dispose();
-    _trafficIntervalController.dispose();
-    _reportTimeController.dispose();
-    _offsetFileController.dispose();
-    _stateFileController.dispose();
+    for (final controller in [
+      _tokenController,
+      _chatIdsController,
+      _userIdsController,
+      _workerUrlController,
+      _workerKeyController,
+      _umCustomerController,
+      _umProfileController,
+      _defaultLimitController,
+      _pollController,
+      _targetController,
+      _monitorIntervalController,
+      _interfaceController,
+      _trafficIntervalController,
+      _reportTimeController,
+      _offsetFileController,
+      _stateFileController,
+    ]) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -105,6 +131,16 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
     return valid ? null : 'استخدم User IDs رقمية مفصولة بفواصل';
   }
 
+  String? _workerUrl(String? value) {
+    final raw = value?.trim() ?? '';
+    if (raw.isEmpty) return 'أدخل رابط Cloudflare Worker';
+    final uri = Uri.tryParse(raw);
+    if (uri == null || !uri.isScheme('https') || uri.host.isEmpty) {
+      return 'يجب أن يكون رابط https صالحاً مثل https://nassar-mikrotik.example.workers.dev';
+    }
+    return null;
+  }
+
   String? _time(String? value) {
     final raw = value?.trim() ?? '';
     return RegExp(r'^(?:[01]\d|2[0-3]):[0-5]\d$').hasMatch(raw)
@@ -112,29 +148,34 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
         : 'استخدم الوقت بصيغة HH:MM مثل 23:59';
   }
 
-  Future<TelegramBotSettings?> _readForm() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return null;
-    return TelegramBotSettings(
-      botToken: _tokenController.text.trim(),
-      allowedChatIds: _chatIdsController.text.trim(),
-      allowedUserIds: _userIdsController.text.trim(),
-      pollSeconds: _number(_pollController)!,
-      monitorTarget: _targetController.text.trim(),
-      monitorIntervalSeconds: _number(_monitorIntervalController)!,
-      trafficInterface: _interfaceController.text.trim(),
-      trafficIntervalSeconds: _number(_trafficIntervalController)!,
-      dailyReportTime: _reportTimeController.text.trim(),
-      offsetFile: _offsetFileController.text.trim(),
-      trafficStateFile: _stateFileController.text.trim(),
-    );
-  }
-
   Future<void> _save() async {
-    final settings = await _readForm();
-    if (settings == null) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
     try {
-      await _store.save(settings);
+      final settings = TelegramBotSettings(
+        deploymentMode: _mode,
+        botToken: _tokenController.text.trim(),
+        allowedChatIds: _chatIdsController.text.trim(),
+        allowedUserIds: _userIdsController.text.trim(),
+        workerUrl: _workerUrlController.text.trim(),
+        umCustomer: _umCustomerController.text.trim(),
+        umProfile: _umProfileController.text.trim(),
+        defaultCardLimit: _defaultLimitController.text.trim(),
+        pollSeconds: _number(_pollController) ?? 20,
+        monitorTarget: _targetController.text.trim(),
+        monitorIntervalSeconds: _number(_monitorIntervalController) ?? 30,
+        trafficInterface: _interfaceController.text.trim(),
+        trafficIntervalSeconds: _number(_trafficIntervalController) ?? 60,
+        dailyReportTime: _reportTimeController.text.trim(),
+        offsetFile: _offsetFileController.text.trim(),
+        trafficStateFile: _stateFileController.text.trim(),
+      );
+      await _store.save(
+        settings,
+        workerAdminKey: _mode == TelegramDeploymentMode.cloudflareWorker
+            ? _workerKeyController.text.trim()
+            : null,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('تم حفظ إعدادات Telegram Bot في التخزين الآمن والمحلي'),
@@ -184,6 +225,42 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
     }
   }
 
+  Future<void> _testWorker() async {
+    final url = _workerUrlController.text.trim();
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('أدخل رابط Worker أولاً'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+    setState(() => _testingWorker = true);
+    try {
+      await Dio().getUri<Object>(
+        Uri.parse(url),
+        options: Options(
+          responseType: ResponseType.plain,
+          validateStatus: (status) => status != null && status < 500,
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Worker يستجيب. أي رمز أقل من 500 يعني أن الخدمة تعمل.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+    } on DioException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('تعذر الوصول إلى Worker. تحقق من الرابط والنشر.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+    } finally {
+      if (mounted) setState(() => _testingWorker = false);
+    }
+  }
+
   InputDecoration _decoration(String label, {String? hint, IconData? icon}) {
     return InputDecoration(
       labelText: label,
@@ -216,6 +293,17 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
     );
   }
 
+  String _modeLabel(TelegramDeploymentMode mode) {
+    switch (mode) {
+      case TelegramDeploymentMode.routerOsScript:
+        return 'سكربت داخل الراوتر (RouterOS v6) — موصى به';
+      case TelegramDeploymentMode.cloudflareWorker:
+        return 'Cloudflare Worker (webhook)';
+      case TelegramDeploymentMode.localPython:
+        return 'خدمة Python محلية (Linux)';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -229,11 +317,19 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
                 children: [
                   _buildIntroCard(context),
                   const SizedBox(height: 16),
+                  _buildModeCard(context),
+                  const SizedBox(height: 16),
                   _buildTelegramCard(context),
                   const SizedBox(height: 16),
-                  _buildMonitoringCard(context),
-                  const SizedBox(height: 16),
-                  _buildStorageCard(context),
+                  if (_mode == TelegramDeploymentMode.routerOsScript)
+                    _buildRouterScriptCard(context)
+                  else if (_mode == TelegramDeploymentMode.cloudflareWorker)
+                    _buildWorkerCard(context)
+                  else ...[
+                    _buildMonitoringCard(context),
+                    const SizedBox(height: 16),
+                    _buildStorageCard(context),
+                  ],
                   const SizedBox(height: 20),
                   FilledButton.icon(
                     onPressed: _saving ? null : _save,
@@ -260,6 +356,22 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
                         ? 'جاري اختبار API...'
                         : 'اختبار Telegram API'),
                   ),
+                  if (_mode == TelegramDeploymentMode.cloudflareWorker) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _testingWorker ? null : _testWorker,
+                      icon: _testingWorker
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.cloud_sync_outlined),
+                      label: Text(_testingWorker
+                          ? 'جاري اختبار Worker...'
+                          : 'اختبار Cloudflare Worker'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -285,8 +397,42 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'يعمل Telegram Bot كخدمة Python مستقلة على جهاز Linux المحلي. التطبيق يحفظ الإعدادات ويختبر Telegram API، بينما يبقى Bot Token مشفراً ولا يُكتب في ملفات المشروع.',
+              'اختر نمط النشر المناسب لشبكتك. النمط الموصى به يعمل عبر سكربت '
+              'داخل الراوتر يستخدم /tool fetch لاستطلاع أوامر Telegram دون فتح '
+              'أي منفذ خارجي، ويدعم إدارة كروت User Manager (إنشاء وحذف الكروت '
+              'وتقارير المبيعات). يبقى Bot Token ومفتاح Worker مشفرين في '
+              'التخزين الآمن ولا يُكتبان في ملفات المشروع.',
               style: TextStyle(height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('نمط النشر', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<TelegramDeploymentMode>(
+              initialValue: _mode,
+              decoration: _decoration('اختر نمط التشغيل',
+                  icon: Icons.hub_outlined),
+              items: TelegramDeploymentMode.values
+                  .map((mode) => DropdownMenuItem(
+                        value: mode,
+                        child: Text(_modeLabel(mode), overflow: TextOverflow.ellipsis),
+                      ))
+                  .toList(),
+              onChanged: (mode) {
+                if (mode == null || mode == _mode) return;
+                setState(() => _mode = mode);
+              },
             ),
           ],
         ),
@@ -339,6 +485,100 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
             const SizedBox(height: 8),
             Text(
               'يجب أن يطابق Chat ID وUser ID معًا حتى يقبل البوت الطلبات الحساسة مثل /reboot.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouterScriptCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('إدارة كروت User Manager',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            _field(
+              controller: _umCustomerController,
+              label: 'اسم العميل (Customer)',
+              hint: 'admin',
+              icon: Icons.badge_outlined,
+              validator: (value) => _required(value, 'اسم العميل'),
+            ),
+            const SizedBox(height: 12),
+            _field(
+              controller: _umProfileController,
+              label: 'بروفايل الكروت (Profile)',
+              hint: 'default',
+              icon: Icons.category_outlined,
+              validator: (value) => _required(value, 'البروفايل'),
+            ),
+            const SizedBox(height: 12),
+            _field(
+              controller: _defaultLimitController,
+              label: 'مدة الكرت الافتراضية',
+              hint: '1w أو 30d أو 12h',
+              icon: Icons.timelapse,
+              validator: (value) => _required(value, 'مدة الكرت'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'بعد الحفظ، طبّق القيم نفسها في سكربت deploy/routeros/'
+              'telegram-um-final-v6.rsc (استبدل قيم REPLACE_WITH_*) ثم '
+              'شغّله على الراوتر مع scheduler كل 20 ثانية. أوامر البوت '
+              'المدعومة: /cards لإنشاء كروت، /sales لتقرير المبيعات، '
+              '/status لحالة الراوتر.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkerCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Cloudflare Worker',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            _field(
+              controller: _workerUrlController,
+              label: 'Worker URL',
+              hint: 'https://nassar-mikrotik.example.workers.dev',
+              icon: Icons.cloud_outlined,
+              validator: _workerUrl,
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 12),
+            _field(
+              controller: _workerKeyController,
+              label: 'Worker Admin Key (اختياري)',
+              hint: 'يُحفظ في التخزين الآمن فقط',
+              icon: Icons.vpn_key_outlined,
+              obscureText: _obscureWorkerKey,
+              suffixIcon: IconButton(
+                onPressed: () => setState(
+                    () => _obscureWorkerKey = !_obscureWorkerKey),
+                icon: Icon(_obscureWorkerKey
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'استخدم هذا النمط إذا كان الراوتر له عنوان عام أو عبر نفق '
+              '(Tunnel). ملاحظة: واجهة REST API غير متوفرة في RouterOS v6، '
+              'لذا لا يستطيع Worker إرسال أوامر مباشرة إلى راوتر v6 خلف NAT.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
