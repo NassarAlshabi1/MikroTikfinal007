@@ -28,6 +28,9 @@ class TelegramBotSettings {
   final String umProfile;
   final String defaultCardLimit;
   final int pollSeconds;
+
+  /// فترة استطلاع أوامر Telegram في مجدول الراوتر (نمط RouterOS v6).
+  final int routerPollSeconds;
   final String monitorTarget;
   final int monitorIntervalSeconds;
   final String trafficInterface;
@@ -46,6 +49,7 @@ class TelegramBotSettings {
     required this.umProfile,
     required this.defaultCardLimit,
     required this.pollSeconds,
+    required this.routerPollSeconds,
     required this.monitorTarget,
     required this.monitorIntervalSeconds,
     required this.trafficInterface,
@@ -66,6 +70,7 @@ class TelegramBotSettings {
       umProfile: 'default',
       defaultCardLimit: '1w',
       pollSeconds: 20,
+      routerPollSeconds: 10,
       monitorTarget: '1.1.1.1',
       monitorIntervalSeconds: 30,
       trafficInterface: 'ether1',
@@ -105,6 +110,7 @@ class TelegramBotSettings {
     String? umProfile,
     String? defaultCardLimit,
     int? pollSeconds,
+    int? routerPollSeconds,
     String? monitorTarget,
     int? monitorIntervalSeconds,
     String? trafficInterface,
@@ -123,6 +129,7 @@ class TelegramBotSettings {
       umProfile: umProfile ?? this.umProfile,
       defaultCardLimit: defaultCardLimit ?? this.defaultCardLimit,
       pollSeconds: pollSeconds ?? this.pollSeconds,
+      routerPollSeconds: routerPollSeconds ?? this.routerPollSeconds,
       monitorTarget: monitorTarget ?? this.monitorTarget,
       monitorIntervalSeconds:
           monitorIntervalSeconds ?? this.monitorIntervalSeconds,
@@ -145,6 +152,7 @@ class TelegramBotSettingsStore {
   static const _umProfileKey = 'telegram_um_profile';
   static const _defaultCardLimitKey = 'telegram_default_card_limit';
   static const _pollSecondsKey = 'telegram_poll_seconds';
+  static const _routerPollSecondsKey = 'telegram_router_poll_seconds';
   static const _monitorTargetKey = 'telegram_monitor_target';
   static const _monitorIntervalKey = 'telegram_monitor_interval_seconds';
   static const _trafficInterfaceKey = 'telegram_traffic_interface';
@@ -181,6 +189,8 @@ class TelegramBotSettingsStore {
       defaultCardLimit:
           prefs.getString(_defaultCardLimitKey) ?? defaults.defaultCardLimit,
       pollSeconds: prefs.getInt(_pollSecondsKey) ?? defaults.pollSeconds,
+      routerPollSeconds:
+          prefs.getInt(_routerPollSecondsKey) ?? defaults.routerPollSeconds,
       monitorTarget:
           prefs.getString(_monitorTargetKey) ?? defaults.monitorTarget,
       monitorIntervalSeconds:
@@ -219,6 +229,8 @@ class TelegramBotSettingsStore {
     await prefs.setString(
         _defaultCardLimitKey, settings.defaultCardLimit.trim());
     await prefs.setInt(_pollSecondsKey, settings.pollSeconds);
+    await prefs.setInt(
+        _routerPollSecondsKey, settings.routerPollSeconds);
     await prefs.setString(_monitorTargetKey, settings.monitorTarget.trim());
     await prefs.setInt(_monitorIntervalKey, settings.monitorIntervalSeconds);
     await prefs.setString(

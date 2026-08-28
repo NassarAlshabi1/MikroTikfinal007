@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
+import 'services/routeros_script_generator.dart';
 import 'services/telegram_bot_settings.dart';
 import 'theme/app_theme.dart';
 
@@ -22,6 +26,7 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
   final _umCustomerController = TextEditingController();
   final _umProfileController = TextEditingController();
   final _defaultLimitController = TextEditingController();
+  final _routerPollController = TextEditingController();
   final _pollController = TextEditingController();
   final _targetController = TextEditingController();
   final _monitorIntervalController = TextEditingController();
@@ -39,6 +44,7 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
   bool _testingWorker = false;
   bool _obscureToken = true;
   bool _obscureWorkerKey = true;
+  bool _generating = false;
 
   @override
   void initState() {
@@ -60,6 +66,7 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
       _umCustomerController.text = settings.umCustomer;
       _umProfileController.text = settings.umProfile;
       _defaultLimitController.text = settings.defaultCardLimit;
+      _routerPollController.text = settings.routerPollSeconds.toString();
       _pollController.text = settings.pollSeconds.toString();
       _targetController.text = settings.monitorTarget;
       _monitorIntervalController.text =
@@ -85,6 +92,7 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
       _umCustomerController,
       _umProfileController,
       _defaultLimitController,
+      _routerPollController,
       _pollController,
       _targetController,
       _monitorIntervalController,
@@ -148,6 +156,15 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
         : 'استخدم الوقت بصيغة HH:MM مثل 23:59';
   }
 
+  String? _cardLimit(String? value) {
+    final raw = value?.trim() ?? '';
+    if (raw.isEmpty) return 'أدخل مدة الكرت';
+    if (!RegExp(r'^\d+[hdwm]$').hasMatch(raw)) {
+      return 'استخدم صيغة مثل 1w أو 30d أو 12h أو 4w2d';
+    }
+    return null;
+  }
+
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
@@ -162,6 +179,7 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
         umProfile: _umProfileController.text.trim(),
         defaultCardLimit: _defaultLimitController.text.trim(),
         pollSeconds: _number(_pollController) ?? 20,
+        routerPollSeconds: _number(_routerPollController) ?? 10,
         monitorTarget: _targetController.text.trim(),
         monitorIntervalSeconds: _number(_monitorIntervalController) ?? 30,
         trafficInterface: _interfaceController.text.trim(),
@@ -261,6 +279,41 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
     }
   }
 
+  /// يولّد سكربت RouterOS v6 جاهزاً للتطبيق من قيم النموذج ويشاركه كملف.
+  Future<void> _generateScript() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    // سكربت v6 يقارن Chat ID وUser ID مقارنة نصية مباشرة، لذا يُستخدم أول معرف.
+    final chatId = _chatIdsController.text.split(',').first.trim();
+    final userId = _userIdsController.text.split(',').first.trim();
+    setState(() => _generating = true);
+    try {
+      const generator = RouterOsScriptGenerator();
+      final script = await generator.generate(
+        botToken: _tokenController.text.trim(),
+        allowedChatId: chatId,
+        allowedUserId: userId,
+        umCustomer: _umCustomerController.text.trim(),
+        umProfile: _umProfileController.text.trim(),
+        defaultLimit: _defaultLimitController.text.trim(),
+        pollSeconds: _number(_routerPollController) ?? 10,
+      );
+      final file = await generator.writeScript(script);
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
+        text: 'سكربت Telegram Bot جاهز للتطبيق على RouterOS v6',
+        subject: 'mikrotik-telegram-um-v6.rsc',
+      ));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('تعذر توليد السكربت. تحقق من القيم وحاول مجدداً.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
+  }
+
   InputDecoration _decoration(String label, {String? hint, IconData? icon}) {
     return InputDecoration(
       labelText: label,
@@ -301,6 +354,36 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
         return 'Cloudflare Worker (webhook)';
       case TelegramDeploymentMode.localPython:
         return 'خدمة Python محلية (Linux)';
+    }
+  }
+
+  String _commandHint(String command) {
+    switch (command) {
+      case '/help':
+      case '/start':
+        return 'عرض قائمة الأوامر والتحقق من التشغيل';
+      case '/status':
+        return 'حالة الراوتر والإنترنت';
+      case '/um':
+        return 'ملخص User Manager والبروفايلات';
+      case '/active':
+        return 'المستخدمون النشطون حالياً';
+      case '/check':
+        return 'فحص حالة كرت: /check <اسم>';
+      case '/gen':
+        return 'إنشاء كروت: /gen <عدد> <مدة>';
+      case '/list':
+        return 'عرض آخر الكروت المُنشأة';
+      case '/del':
+        return 'حذف كرت: /del <اسم>';
+      case '/report':
+        return 'تقرير المبيعات';
+      case '/clean':
+        return 'حذف الكروت المنتهية';
+      case '/reboot':
+        return 'إعادة تشغيل الراوتر (طلبات حساسة)';
+      default:
+        return command;
     }
   }
 
@@ -524,15 +607,71 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
               label: 'مدة الكرت الافتراضية',
               hint: '1w أو 30d أو 12h',
               icon: Icons.timelapse,
-              validator: (value) => _required(value, 'مدة الكرت'),
+              validator: _cardLimit,
+            ),
+            const SizedBox(height: 12),
+            _field(
+              controller: _routerPollController,
+              label: 'فترة استطلاع الأوامر بالثواني',
+              hint: '10',
+              icon: Icons.update_outlined,
+              validator: (value) =>
+                  _positiveNumber(value, 'فترة الاستطلاع', minimum: 5),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            Text('أوامر البوت المدعومة داخل الراوتر:',
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: const [
+                '/help', '/start', '/status', '/um', '/active', '/check',
+                '/gen', '/list', '/del', '/report', '/clean', '/reboot',
+              ]
+                  .map((cmd) => Tooltip(
+                        message: _commandHint(cmd),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: context.theme.appColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: context.theme.appColors.primary
+                                  .withAlpha(77),
+                            ),
+                          ),
+                          child: Text(cmd,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'monospace')),
+                        ),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              onPressed: _generating ? null : _generateScript,
+              icon: _generating
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.build_circle_outlined),
+              label: Text(_generating
+                  ? 'جاري التوليد...'
+                  : 'توليد سكربت الراوتر جاهز التطبيق'),
             ),
             const SizedBox(height: 8),
             Text(
-              'بعد الحفظ، طبّق القيم نفسها في سكربت deploy/routeros/'
-              'telegram-um-final-v6.rsc (استبدل قيم REPLACE_WITH_*) ثم '
-              'شغّله على الراوتر مع scheduler كل 20 ثانية. أوامر البوت '
-              'المدعومة: /cards لإنشاء كروت، /sales لتقرير المبيعات، '
-              '/status لحالة الراوتر.',
+              'يولّد الزر ملف telegram-um-final-v6.rsc بنفس القيم المحفوظة '
+              'أعلاه (بما فيها التوكن) جاهزاً للنسخ إلى الراوتر ثم تشغيله. '
+              'يعمل السكربت عبر /tool fetch لاستطلاع الأوامر دون فتح أي منفذ. '
+              'ملاحظة: سكربت v6 يقبل Chat ID وUser ID واحداً لكل منهما، ويُستخدم '
+              'أول معرف من القائمة إذا أدكرت أكثر من واحد.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

@@ -8,6 +8,7 @@ void main() {
     expect(settings.deploymentMode, TelegramDeploymentMode.routerOsScript);
     expect(settings.botToken, isEmpty);
     expect(settings.pollSeconds, 20);
+    expect(settings.routerPollSeconds, 10);
     expect(settings.monitorTarget, '1.1.1.1');
     expect(settings.monitorIntervalSeconds, 30);
     expect(settings.trafficInterface, 'ether1');
@@ -80,5 +81,16 @@ void main() {
     for (final mode in TelegramDeploymentMode.values) {
       expect(original.copyWith(deploymentMode: mode).deploymentMode, mode);
     }
+  });
+
+  test('routerPollSeconds roundtrips through copyWith', () {
+    final settings =
+        TelegramBotSettings.defaults().copyWith(routerPollSeconds: 30);
+    expect(settings.routerPollSeconds, 30);
+    expect(
+      settings.copyWith().routerPollSeconds,
+      30,
+      reason: 'copyWith بدون قيمة يجب أن يحافظ على القيمة الحالية',
+    );
   });
 }

@@ -75,6 +75,7 @@ flutter:
   
   assets:
     - assets/images/
+    - assets/routeros/
     # ملاحظة: .env غير مُضاف كـ asset لأنه في .gitignore
     # المفاتيح تُحمّل من flutter_secure_storage بدل .env
 
