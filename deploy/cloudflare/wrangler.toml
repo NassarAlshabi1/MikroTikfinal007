@@ -1,0 +1,25 @@
+name = "mikrotik-telegram-bot"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces for configuration and user data
+[[kv_namespaces]]
+binding = "CONFIG"
+id = "YOUR_KV_CONFIG_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "USER_DATA"
+id = "YOUR_KV_USER_DATA_NAMESPACE_ID"
+
+# Environment variables (can also be set in Cloudflare dashboard)
+[vars]
+ENVIRONMENT = "production"
+
+# For local development
+[dev]
+local = true
+port = 8787
+
+# Routes (optional - configure in Cloudflare dashboard)
+# [triggers]
+# crons = ["*/5 * * * *"]
