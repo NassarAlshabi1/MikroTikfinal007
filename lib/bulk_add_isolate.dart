@@ -83,16 +83,22 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     final profile = data.selectedProfile!.trim();
 
     // ================================================================
-    //  talkMultiple mode: send ALL commands at once
+    //  talkMultiple mode: send commands in smart batches
     //  instead of 2N sequential talk() calls.
-    //  No batch size limit — all cards sent in one go.
+    //  No hard card-count limit — batches adapt to total.
     // ================================================================
-    final taggedCommands = <TaggedCommand>[];
+    const batchSize = 50; // 50 كرت لكل دفعة = 100-150 أمر
+    for (var batchStart = 0;
+        batchStart < plannedUsers.length;
+        batchStart += batchSize) {
+      final batchEnd = min(batchStart + batchSize, plannedUsers.length);
 
-    for (var i = 0; i < plannedUsers.length; i++) {
-      final user = plannedUsers[i];
-      final username = user['username']!;
-      final password = user['password']!;
+      final taggedCommands = <TaggedCommand>[];
+
+      for (var i = batchStart; i < batchEnd; i++) {
+        final user = plannedUsers[i];
+        final username = user['username']!;
+        final password = user['password']!;
 
         // Add user command
         final addCmd = MikrotikCardCommands.addUser(
@@ -123,11 +129,12 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         }
       }
 
-      // Send ALL commands at once (no batch splitting)
-      final totalTimeout = Duration(seconds: max(120, plannedUsers.length * 30));
+      // Send batch commands at once
+      final batchCount = batchEnd - batchStart;
+      final batchTimeout = Duration(seconds: max(60, batchCount * 20));
       final responses = await client
           .talkMultiple(taggedCommands)
-          .timeout(totalTimeout);
+          .timeout(batchTimeout);
 
       // Collect responses
       final addResponses = <int, List<Map<String, String>>>{};
@@ -144,8 +151,8 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         }
       }
 
-      // Process results
-      for (var i = 0; i < plannedUsers.length; i++) {
+      // Process results for this batch
+      for (var i = batchStart; i < batchEnd; i++) {
         final user = plannedUsers[i];
         final username = user['username']!;
 
@@ -169,6 +176,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
           'status': 'تم إنشاء الكرت ${i + 1} من ${plannedUsers.length}',
         });
       }
+    } // end batch loop
 
     final verifiedUsers = await gateway.verifyUsers(
       mode: data.serviceMode,
