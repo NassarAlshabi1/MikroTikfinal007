@@ -3,11 +3,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'package:provider/provider.dart' as provider;
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔧 مطلوب لـ ProviderScope
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// Riverpod providers
+import 'providers/app_theme_provider.dart';
+import 'providers/mqtt_service_provider.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,7 +29,7 @@ import 'mqtt_service.dart';
 import 'pdf_templates_screen.dart';
 import 'network_doctor_screen.dart';
 import 'extract_cards_screen.dart';
-import 'cards_statistics_screen.dart';
+import 'cards_sync_screen.dart';
 import 'stats_screen.dart';
 import 'mikrotik_connector.dart';
 import 'backup_system_screen.dart';
@@ -157,25 +161,20 @@ void showSuccessSnackBar(BuildContext context, String message) {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return provider.Consumer<AppTheme>(
-      builder: (context, themeProvider, child) => MaterialApp(
-        scaffoldMessengerKey: scaffoldMessengerKey,
-        debugShowCheckedModeBanner: false,
-        title: 'MikroTik Manager',
-        // 🎨 Professional Theme — Material 3 Expressive (Indigo + Amber)
-        // - يدعم Light + Dark تلقائياً حسب تفضيل المستخدم
-        // - يتفاعل مع themeProvider.themeMode
-        // - يستبدل AmoloodTheme الداكن الصارخ
-        theme: ProfessionalTheme.light,
-        darkTheme: ProfessionalTheme.dark,
-        themeMode: themeProvider.themeMode,
-        home: const LoginScreen(),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(appThemeProvider).themeMode;
+    return MaterialApp(
+      scaffoldMessengerKey: scaffoldMessengerKey,
+      debugShowCheckedModeBanner: false,
+      title: 'MikroTik Manager',
+      theme: ProfessionalTheme.light,
+      darkTheme: ProfessionalTheme.dark,
+      themeMode: themeMode,
+      home: const LoginScreen(),
     );
   }
 }
@@ -547,8 +546,10 @@ class _LoginScreenState extends State<LoginScreen>
             Positioned(
               top: 50,
               left: 20,
-              child: provider.Consumer<AppTheme>(
-                builder: (context, themeProvider, child) => Container(
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final themeProvider = ref.watch(appThemeProvider);
+                  return Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context)
                         .colorScheme
@@ -974,7 +975,7 @@ class _LoginScreenState extends State<LoginScreen>
           .setL2tpPassword(_l2tpPasswordController.text);
 
       // بدء VPN عبر MethodChannel (Android فقط)
-      if (Platform.isAndroid) {
+      if (defaultTargetPlatform == TargetPlatform.android) {
         try {
           final result = await _vpnChannel.invokeMethod('startVpn', {
             'server': _l2tpServerController.text.trim(),
@@ -1350,14 +1351,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
       if (!mounted) return;
-      _loadLinkStatus(); // Reload status on resume
-      context.read<MqttService>().checkAndReconnect();
+      _loadLinkStatus(); // Reload status on resume              ref.read(mqttServiceProvider).checkAndReconnect();
       final isLinked = _isNetworkLinked; // Use the state variable
       if (isLinked) {
         Future.delayed(const Duration(seconds: 1), () {
           if (!mounted) return;
-          context
-              .read<MqttService>()
+          ref
+              .read(mqttServiceProvider)
               .publish({'command': 'get_latest_network_details'});
         });
       }
@@ -1627,12 +1627,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       ServiceItem(
-        title: 'إحصائيات الكروت',
-        icon: Icons.bar_chart,
+        title: 'مزامنة الكروت',
+        icon: Icons.sync,
         color: context.theme.appColors.primary,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
-              builder: (context) => const CardsStatisticsScreen()));
+              builder: (context) => const CardsSyncScreen()));
         },
       ),
       ServiceItem(
@@ -1738,8 +1738,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           actions: [
             // مفتاح تبديل الثيم الفاتح/الغامق
-            provider.Consumer<AppTheme>(
-              builder: (context, themeProvider, child) => IconButton(
+            Consumer(
+              builder: (context, ref, child) {
+                final themeProvider = ref.watch(appThemeProvider);
+                return IconButton(
                 icon: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: Icon(
