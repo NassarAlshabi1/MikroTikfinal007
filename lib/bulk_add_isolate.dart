@@ -7,6 +7,7 @@ import 'package:router_os_client/router_os_client.dart';
 import 'mikrotik_connector.dart';
 import 'services/card_number_policy.dart';
 import 'services/mikrotik_service_mode.dart';
+import 'services/mikrotik_card_commands.dart';
 import 'services/router_os_card_gateway.dart';
 
 class BulkAddIsolateData {
@@ -81,37 +82,102 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     gateway = RouterOsCardGateway(RouterOsClientTalker(client));
     final profile = data.selectedProfile!.trim();
 
-    for (var i = 0; i < plannedUsers.length; i++) {
-      final user = plannedUsers[i];
-      final username = user['username']!;
-      final password = user['password']!;
+    // ================================================================
+    //  batch mode: use talkMultiple to send all commands at once
+    //  instead of 2N sequential talk() calls.
+    // ================================================================
+    final batchSize = 10;
+    for (var batchStart = 0;
+        batchStart < plannedUsers.length;
+        batchStart += batchSize) {
+      final batchEnd = min(batchStart + batchSize, plannedUsers.length);
+      final batchUsers =
+          plannedUsers.sublist(batchStart, batchEnd);
 
-      final createdCard = await gateway.addCard(
-        mode: data.serviceMode,
-        username: username,
-        password: password,
-        profile: profile,
-        sharedUsers: data.sharedUsers,
-        isVersion7OrNewer: false,
-        customer: data.customer,
-      );
+      // Build all commands for this batch
+      final taggedCommands = <TaggedCommand>[];
 
-      if (data.serviceMode == MikrotikServiceMode.userManager) {
-        await gateway.activateUserManagerProfile(
-          customer: data.customer,
+      for (var j = 0; j < batchUsers.length; j++) {
+        final user = batchUsers[j];
+        final username = user['username']!;
+        final password = user['password']!;
+        final index = batchStart + j;
+
+        // Add user command
+        final addCmd = MikrotikCardCommands.addUser(
+          mode: data.serviceMode,
           username: username,
+          password: password,
           profile: profile,
+          sharedUsers: data.sharedUsers,
+          isVersion7OrNewer: false,
+          customer: data.customer,
         );
+        taggedCommands.add(TaggedCommand(
+          command: addCmd,
+          tag: 'add_$index',
+        ));
+
+        // Activate profile command (User Manager only)
+        if (data.serviceMode == MikrotikServiceMode.userManager) {
+          final activateCmd = MikrotikCardCommands.userManagerActivateProfile(
+            customer: data.customer,
+            username: username,
+            profile: profile,
+          );
+          taggedCommands.add(TaggedCommand(
+            command: activateCmd,
+            tag: 'activate_$index',
+          ));
+        }
       }
 
-      final confirmedUser = createdCard.toMap();
-      newlyCreatedUsers.add(confirmedUser);
-      successCount++;
-      sendPort.send({
-        'type': 'progress',
-        'progress': (i + 1) / plannedUsers.length,
-        'status': 'تم إنشاء الكرت ${i + 1} من ${plannedUsers.length}',
-      });
+      // Send all commands at once
+      final responses = await client
+          .talkMultiple(taggedCommands)
+          .timeout(const Duration(seconds: 120));
+
+      // Collect responses
+      final addResponses = <int, List<Map<String, String>>>{};
+      final activateResponses = <int, bool>{};
+
+      await for (final response in responses) {
+        final tag = response.tag;
+        if (tag.startsWith('add_')) {
+          final idx = int.parse(tag.substring(4));
+          addResponses[idx] = response.data;
+        } else if (tag.startsWith('activate_')) {
+          final idx = int.parse(tag.substring(9));
+          activateResponses[idx] = true;
+        }
+      }
+
+      // Process results
+      for (var j = 0; j < batchUsers.length; j++) {
+        final user = batchUsers[j];
+        final username = user['username']!;
+        final index = batchStart + j;
+
+        final addResult = addResponses[index];
+        if (addResult == null || addResult.isEmpty) {
+          // Command failed or returned empty — skip this user
+          continue;
+        }
+
+        final userId = _extractUserId(addResult);
+        newlyCreatedUsers.add({
+          'username': username,
+          'password': user['password']!,
+          if (userId != null) 'mikrotikUserId': userId,
+        });
+        successCount++;
+
+        sendPort.send({
+          'type': 'progress',
+          'progress': (index + 1) / plannedUsers.length,
+          'status': 'تم إنشاء الكرت ${index + 1} من ${plannedUsers.length}',
+        });
+      }
     }
 
     final verifiedUsers = await gateway.verifyUsers(
@@ -135,13 +201,11 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
   } on RouterOSTrapError catch (e) {
     _sendError(
         sendPort, _friendlyError(e.message), successCount, newlyCreatedUsers);
-  } on TimeoutException catch (e) {
-    final detail = e.message?.isNotEmpty == true
-        ? e.message!
-        : 'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).';
+  } on TimeoutException {
     _sendError(
       sendPort,
-      '$detail\nتأكد من اتصال الشبكة بالراوتر وصحة إعدادات API (المنفذ 8728/8729).',
+      'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).\n'
+          'تأكد من اتصال الشبكة بالراوتر وصحة إعدادات API (المنفذ 8728/8729).',
       successCount,
       newlyCreatedUsers,
     );
@@ -153,6 +217,14 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     approvalPort.close();
     MikrotikConnector.release(client);
   }
+}
+
+String? _extractUserId(List<Map<String, String>> response) {
+  for (final row in response) {
+    final id = row['.id']?.trim();
+    if (id != null && id.isNotEmpty) return id;
+  }
+  return null;
 }
 
 void _validateInput(BulkAddIsolateData data) {
