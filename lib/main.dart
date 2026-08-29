@@ -780,7 +780,7 @@ class _LoginScreenState extends State<LoginScreen>
               setState(() => _rememberMe = newValue ?? false),
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
-          activeThumbColor: context.theme.appColors.primary,
+          activeColor: context.theme.appColors.primary,
         ),
         const SizedBox(height: 16),
         ElevatedButton(
@@ -1178,7 +1178,7 @@ class _LoginScreenState extends State<LoginScreen>
               _rememberMeRemote = value ?? false;
             });
           },
-          activeThumbColor: context.theme.appColors.primary,
+          activeColor: context.theme.appColors.primary,
           controlAffinity: ListTileControlAffinity.leading,
         ),
         const SizedBox(height: 8),
