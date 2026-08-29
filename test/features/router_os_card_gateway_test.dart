@@ -70,6 +70,8 @@ void main() {
     );
 
     expect(verified, hasLength(1));
+    // verifyUsers now uses a single bulk fetch (_allUsersCommand),
+    // so it retries that single call up to 3 times on transient errors.
     expect(talker.printAttempts, 3);
   });
 }
@@ -97,6 +99,18 @@ class FakeRouterOsTalker implements RouterOsTalker {
         transientFailures--;
         throw const SocketException('temporary failure');
       }
+
+      // Detect bulk fetch vs single-user query.
+      // Bulk: no '?name=' filter → return ALL existing users.
+      // Single: has '?name=' → return matching user.
+      final hasFilter = command.any((part) => part.startsWith('?name='));
+      if (!hasFilter) {
+        // Bulk fetch (_allUsersCommand) — return all existing users
+        return existingNames
+            .map((name) => <String, String>{'.id': '*1', 'name': name})
+            .toList();
+      }
+
       final username =
           command.firstWhere((part) => part.startsWith('?name=')).substring(6);
       if (existingNames.contains(username)) {
