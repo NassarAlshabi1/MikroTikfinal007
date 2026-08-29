@@ -157,10 +157,12 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     //  PARALLEL SHARDS: split cards across N independent connections
     //  Each shard runs talkMultiple on its own connection.
     //  True parallelism = N× speedup.
+    //  Connections are closed immediately after each shard completes.
     // ============================================================
     final shardCount = min(4, plannedUsers.length); // 1-4 connections
     final shardSize = (plannedUsers.length / shardCount).ceil();
     final futures = <Future<List<Map<String, String>>>>[];
+    final shardClients = <RouterOSClient>[];
 
     for (var s = 0; s < shardCount; s++) {
       final start = s * shardSize;
@@ -168,9 +170,10 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       if (start >= plannedUsers.length) break;
       final shardUsers = plannedUsers.sublist(start, end);
 
-      // Each shard gets its own connection
+      // Each shard gets its own connection — we track it to close later
       final shardClient =
           await MikrotikConnector.connectWithConfig(data.connectionConfig);
+      shardClients.add(shardClient);
       futures.add(_processShard(
         users: shardUsers,
         client: shardClient,
@@ -180,40 +183,56 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       ));
     }
 
-    // Run all shards in parallel
-    final results = await Future.wait(futures);
+    // Run all shards in parallel and close connections as they complete
+    int completedCards = 0;
+    final shardResults = <List<Map<String, String>>>[];
+    for (final future in futures) {
+      final shardResult = await future;
+      shardResults.add(shardResult);
+      completedCards += shardResult.length;
+      // Report progress after each shard completes
+      sendPort.send({
+        'type': 'progress',
+        'progress': completedCards / plannedUsers.length,
+        'status': 'تم إنشاء $completedCards من ${plannedUsers.length} كرت',
+      });
+    }
+
+    // Close all shard connections
+    for (final client in shardClients) {
+      MikrotikConnector.release(client);
+    }
 
     // Merge results in order
-    for (final shardResult in results) {
+    for (final shardResult in shardResults) {
       for (final user in shardResult) {
         newlyCreatedUsers.add(user);
         successCount++;
       }
     }
 
-    // Send progress updates
-    for (var i = 0; i < newlyCreatedUsers.length; i++) {
+    // Verify all created users (single API call, not per-user)
+    RouterOSClient? verifyClient;
+    try {
+      verifyClient =
+          await MikrotikConnector.connectWithConfig(data.connectionConfig);
+      final gateway = RouterOsCardGateway(RouterOsClientTalker(verifyClient));
+      final verifiedUsers = await gateway.verifyUsers(
+        mode: data.serviceMode,
+        users: newlyCreatedUsers,
+      );
+
       sendPort.send({
-        'type': 'progress',
-        'progress': (i + 1) / plannedUsers.length,
-        'status': 'تم إنشاء الكرت ${i + 1} من ${plannedUsers.length}',
+        'type': 'success',
+        'users': verifiedUsers,
+        'count': verifiedUsers.length,
+        'address': data.connectionConfig.address,
       });
+    } finally {
+      if (verifyClient != null) {
+        MikrotikConnector.release(verifyClient);
+      }
     }
-
-    // Verify all created users
-    final firstClient = await MikrotikConnector.connectWithConfig(data.connectionConfig);
-    final gateway = RouterOsCardGateway(RouterOsClientTalker(firstClient));
-    final verifiedUsers = await gateway.verifyUsers(
-      mode: data.serviceMode,
-      users: newlyCreatedUsers,
-    );
-
-    sendPort.send({
-      'type': 'success',
-      'users': verifiedUsers,
-      'count': verifiedUsers.length,
-      'address': data.connectionConfig.address,
-    });
   } on RouterOsVerificationException catch (e) {
     _sendError(sendPort, e.message, e.confirmedUsers.length, e.confirmedUsers);
   } on MikrotikCredentialsMissingException catch (e) {

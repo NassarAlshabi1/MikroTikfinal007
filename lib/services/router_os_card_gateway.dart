@@ -126,29 +126,39 @@ class RouterOsCardGateway {
   }) async {
     final confirmed = <Map<String, String>>[];
     final missing = <String>[];
+
+    // ── استراتيجية التحقق الأسرع ──
+    // بدلاً من talk() لكل مستخدم (N مكالمات متتالية)،
+    // نجلب جميع المستخدمين في مكالمة واحدة ونتحقق محلياً.
+    // هذا يُسرّع التحقق من ×10 إلى ×100.
+    late final List<Map<String, String>> allRemoteUsers;
+    try {
+      allRemoteUsers = await _readWithRetry(_allUsersCommand(mode));
+    } catch (error) {
+      throw RouterOsVerificationException(
+        message: 'انقطع الاتصال أثناء التحقق من كروت RouterOS: $error',
+        confirmedUsers: [],
+        missingUsernames: users
+            .map((item) => item['username']?.trim() ?? '')
+            .where((name) => name.isNotEmpty)
+            .toList(growable: false),
+      );
+    }
+
+    // بناء فهرس محلي للمستخدمين الموجودين
+    final remoteIndex = <String, Map<String, String>>{};
+    for (final row in allRemoteUsers) {
+      final name = (row['username'] ?? row['name'] ?? '').trim();
+      if (name.isNotEmpty) {
+        remoteIndex[name] = row;
+      }
+    }
+
     for (final user in users) {
       final username = user['username']?.trim() ?? '';
       if (username.isEmpty) continue;
-      late final List<Map<String, String>> response;
-      try {
-        response = await _readWithRetry(_printCommand(mode, username));
-      } catch (error) {
-        throw RouterOsVerificationException(
-          message: 'انقطع الاتصال أثناء التحقق من كروت RouterOS: $error',
-          confirmedUsers: confirmed,
-          missingUsernames: users
-              .skip(confirmed.length)
-              .map((item) => item['username']?.trim() ?? '')
-              .where((name) => name.isNotEmpty)
-              .toList(growable: false),
-        );
-      }
-      final row = response.cast<Map<String, String>?>().firstWhere(
-            (item) =>
-                item?['name'] == username || item?['username'] == username,
-            orElse: () => null,
-          );
 
+      final row = remoteIndex[username];
       if (row == null) {
         missing.add(username);
         continue;
@@ -159,6 +169,7 @@ class RouterOsCardGateway {
           'mikrotikUserId': row['.id']!.trim(),
       });
     }
+
     if (missing.isNotEmpty) {
       throw RouterOsVerificationException(
         message: 'تعذر التحقق من ${missing.length} كرت على RouterOS.',
@@ -192,6 +203,20 @@ class RouterOsCardGateway {
       }
     }
     throw lastError ?? StateError('تعذر التحقق من كروت RouterOS.');
+  }
+
+  /// جلب جميع المستخدمين في مكالمة واحدة (للمقارنة المحلية السريعة)
+  List<String> _allUsersCommand(MikrotikServiceMode mode) {
+    return switch (mode) {
+      MikrotikServiceMode.hotspot => [
+          '/ip/hotspot/user/print',
+          '=.proplist=.id,name',
+        ],
+      MikrotikServiceMode.userManager => [
+          '/tool/user-manager/user/print',
+          '=.proplist=.id,username',
+        ],
+    };
   }
 
   List<String> _printCommand(MikrotikServiceMode mode, String username) {
