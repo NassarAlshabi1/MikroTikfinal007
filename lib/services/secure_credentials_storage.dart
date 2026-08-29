@@ -12,6 +12,8 @@ abstract class SecureCredentialsStorage {
   Future<void> setTelegramBotToken(String? token);
   Future<String?> getWorkerAdminKey();
   Future<void> setWorkerAdminKey(String? key);
+  Future<String?> getL2tpPassword();
+  Future<void> setL2tpPassword(String? password);
   Future<void> clearAll();
   Future<void> clearMikrotikCredentials();
   Future<bool> hasStoredCredentials();
@@ -29,6 +31,7 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
   static const _keyRemotePass = 'remote_pass';
   static const _keyTelegramBotToken = 'telegram_bot_token';
   static const _keyWorkerAdminKey = 'worker_admin_key';
+  static const _keyL2tpPass = 'l2tp_pass';
   static const _migrationDoneKey = 'secure_storage_migrated';
 
   @override
@@ -83,6 +86,18 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
     await _storage.write(key: _keyWorkerAdminKey, value: key.trim());
   }
 
+  @override
+  Future<String?> getL2tpPassword() => _storage.read(key: _keyL2tpPass);
+
+  @override
+  Future<void> setL2tpPassword(String? password) async {
+    if (password == null || password.isEmpty) {
+      await _storage.delete(key: _keyL2tpPass);
+      return;
+    }
+    await _storage.write(key: _keyL2tpPass, value: password);
+  }
+
   Future<void> _removeLegacy(String key) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(key);
@@ -94,6 +109,7 @@ class SecureCredentialsStorageImpl implements SecureCredentialsStorage {
     await _storage.delete(key: _keyRemotePass);
     await _storage.delete(key: _keyTelegramBotToken);
     await _storage.delete(key: _keyWorkerAdminKey);
+    await _storage.delete(key: _keyL2tpPass);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('pass');
     await prefs.remove('remote_pass');
@@ -185,6 +201,11 @@ class InMemorySecureCredentialsStorage implements SecureCredentialsStorage {
   @override
   Future<void> setWorkerAdminKey(String? key) async =>
       _set('worker_admin_key', key?.trim());
+  @override
+  Future<String?> getL2tpPassword() async => _store['l2tp_pass'];
+  @override
+  Future<void> setL2tpPassword(String? password) async =>
+      _set('l2tp_pass', password);
   Future<void> _set(String key, String? value) async {
     if (value == null || value.isEmpty) {
       _store.remove(key);

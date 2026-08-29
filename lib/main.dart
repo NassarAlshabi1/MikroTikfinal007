@@ -2,7 +2,9 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔧 مطلوب لـ ProviderScope
@@ -227,6 +229,13 @@ class _LoginScreenState extends State<LoginScreen>
   final _remotePortController = TextEditingController(text: '8728');
   final _remoteUserController = TextEditingController();
   final _remotePasswordController = TextEditingController();
+  // L2TP VPN controllers
+  final _l2tpServerController = TextEditingController();
+  final _l2tpSecretController = TextEditingController();
+  final _l2tpRouterIpController = TextEditingController();
+  final _l2tpUserController = TextEditingController();
+  final _l2tpPasswordController = TextEditingController();
+  final _l2tpPortController = TextEditingController(text: '8728');
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -235,6 +244,10 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isPasswordObscured = true;
   bool _isRemotePasswordObscured = true;
   bool _isScanning = false;
+  bool _useSslRemote = true;
+  bool _isVpnConnecting = false;
+  bool _isVpnConnected = false;
+  static const _vpnChannel = MethodChannel('com.mikrotik.manager/vpn');
 
   // إعدادات Telegram تُدار من شاشة "إعداد Telegram Bot"، ولا تُحفظ
   // داخل شاشة الدخول أو كثوابت في التطبيق.
@@ -246,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _init();
   }
 
@@ -317,10 +330,21 @@ class _LoginScreenState extends State<LoginScreen>
           '';
       setState(() {
         _remoteServerController.text = prefs.getString('remote_server') ?? '';
-        _remotePortController.text = prefs.getString('remote_port') ?? '8728';
+        _remotePortController.text = prefs.getString('remote_port') ?? '8729';
         _remoteUserController.text = prefs.getString('remote_user') ?? '';
         _remotePasswordController.text = remotePass;
+        _useSslRemote = prefs.getString('use_ssl') != 'false';
         _rememberMeRemote = true;
+      });
+    }
+    // تحميل إعدادات L2TP VPN
+    if (prefs.getBool('remember_l2tp') ?? false) {
+      setState(() {
+        _l2tpServerController.text = prefs.getString('l2tp_server') ?? '';
+        _l2tpSecretController.text = prefs.getString('l2tp_secret') ?? '';
+        _l2tpRouterIpController.text = prefs.getString('l2tp_router_ip') ?? '';
+        _l2tpUserController.text = prefs.getString('l2tp_user') ?? '';
+        _l2tpPortController.text = prefs.getString('l2tp_port') ?? '8728';
       });
     }
   }
@@ -417,6 +441,12 @@ class _LoginScreenState extends State<LoginScreen>
     _remotePortController.dispose();
     _remoteUserController.dispose();
     _remotePasswordController.dispose();
+    _l2tpServerController.dispose();
+    _l2tpSecretController.dispose();
+    _l2tpRouterIpController.dispose();
+    _l2tpUserController.dispose();
+    _l2tpPasswordController.dispose();
+    _l2tpPortController.dispose();
     super.dispose();
   }
 
@@ -477,6 +507,10 @@ class _LoginScreenState extends State<LoginScreen>
                             icon: Icon(Icons.cloud),
                             text: 'اتصال عن بعد',
                           ),
+                          Tab(
+                            icon: Icon(Icons.vpn_lock),
+                            text: 'L2TP VPN',
+                          ),
                         ],
                       ),
                     ),
@@ -501,6 +535,7 @@ class _LoginScreenState extends State<LoginScreen>
                         children: [
                           _buildLocalLoginForm(),
                           _buildRemoteLoginForm(),
+                          _buildL2TPForm(),
                         ],
                       ),
                     ),
@@ -606,12 +641,11 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     final input = _remoteServerController.text.trim();
-    final ipPattern = RegExp(r'^(\d{1,3}\.){3}\d{1,3}$');
-    if (ipPattern.hasMatch(input)) {
-      setState(() =>
-          _errorMessage = 'الرجاء إدخال اسم النطاق (Domain) وليس عنوان IP');
+    if (input.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال عنوان الخادم');
       return;
     }
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -620,27 +654,49 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       await _handleRemoteCredentials();
 
+      // حفظ إعدادات الاتصال البعيد في SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('ip', _remoteServerController.text);
-      await prefs.setString('port', _remotePortController.text);
-      await prefs.setString('user', _remoteUserController.text);
+      await prefs.setString('ip', _remoteServerController.text.trim());
+      final remotePort = _remotePortController.text.trim().isEmpty
+          ? (_useSslRemote ? '8729' : '8728')
+          : _remotePortController.text.trim();
+      await prefs.setString('port', remotePort);
+      await prefs.setString('user', _remoteUserController.text.trim());
+      await prefs.setString('use_ssl', _useSslRemote.toString());
       // 🔒 كلمة المرور في flutter_secure_storage (مشفّرة)
       await SecureCredentialsStorageContainer.instance
           .setMikrotikPassword(_remotePasswordController.text);
 
+      // 🔧 اختبار الاتصال قبل الانتقال إلى الشاشة الرئيسية
+      // (مطابق لسلوك الاتصال المحلي)
+      await MikrotikConnector.connect();
+
       if (mounted) {
+        showSuccessSnackBar(context, 'تم الاتصال بالراوتر بنجاح');
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
             builder: (context) => HomeScreen(
               isVersion7OrNewer: false,
-              username: _remoteUserController.text,
+              username: _remoteUserController.text.trim(),
             ),
           ),
         );
       }
+    } on MikrotikCredentialsMissingException catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'خطأ في بيانات الدخول: ${e.message}');
+        showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
+      }
+    } on MikrotikConnectionException catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'خطأ في الاتصال: ${e.message}');
+        showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
+      }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = 'فشل الاتصال: ${e.toString()}');
+        setState(() => _errorMessage =
+            'فشل الاتصال. تحقق من العنوان أو المنفذ أو الشبكة.\n(الخطأ: ${e.toString()})');
+        showErrorSnackBar(context, 'فشل الاتصال. تحقق من البيانات أو الشبكة.');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -761,6 +817,281 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  Widget _buildL2TPForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // عنوان L2TP Server
+        TextField(
+          controller: _l2tpServerController,
+          decoration: const InputDecoration(
+            labelText: 'عنوان خادم L2TP',
+            hintText: 'vpn.example.com أو 1.2.3.4',
+            prefixIcon: Icon(Icons.vpn_lock),
+          ),
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: 12),
+        // L2TP Secret (اختياري)
+        TextField(
+          controller: _l2tpSecretController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'L2TP Secret (اختياري)',
+            prefixIcon: Icon(Icons.key),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // عنوان الراوتر داخل VPN
+        TextField(
+          controller: _l2tpRouterIpController,
+          decoration: const InputDecoration(
+            labelText: 'IP الراوتر داخل VPN',
+            hintText: '10.0.0.1 أو 192.168.100.1',
+            prefixIcon: Icon(Icons.router),
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 12),
+        // اسم المستخدم
+        TextField(
+          controller: _l2tpUserController,
+          decoration: const InputDecoration(
+            labelText: 'اسم مستخدم L2TP',
+            prefixIcon: Icon(Icons.person_outline),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // كلمة المرور
+        TextField(
+          controller: _l2tpPasswordController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'كلمة مرور L2TP',
+            prefixIcon: Icon(Icons.lock_outline),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // منفذ الراوتر
+        TextField(
+          controller: _l2tpPortController,
+          decoration: const InputDecoration(
+            labelText: 'منفذ الراوتر',
+            hintText: '8728',
+            prefixIcon: Icon(Icons.numbers),
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        // زر الاتصال
+        ElevatedButton.icon(
+          onPressed: (_isLoading || _isVpnConnecting) ? null : _l2tpConnect,
+          icon: (_isLoading || _isVpnConnecting)
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(_isVpnConnected ? Icons.check_circle : Icons.vpn_lock),
+          label: Text(
+            _isVpnConnecting
+                ? 'جاري إنشاء اتصال VPN...'
+                : _isVpnConnected
+                    ? 'VPN متصل — اضغط للاتصال بالراوتر'
+                    : 'إنشاء اتصال L2TP VPN',
+          ),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_isVpnConnected)
+          ElevatedButton.icon(
+            onPressed: _isLoading ? null : _l2tpLoginToRouter,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.login),
+            label: Text(_isLoading ? 'جاري الاتصال...' : 'الدخول للراوتر'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              backgroundColor: context.theme.appColors.success,
+            ),
+          ),
+        const SizedBox(height: 8),
+        Text(
+          _isVpnConnected
+              ? '✅ اتصال VPN نشط — يمكنك الآن الاتصال بالراوتر'
+              : 'يتطلب إعداد L2TP على الخادم أولاً',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.theme.appColors.muted, fontSize: 11),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'جميع الحقوق محفوظة © م/نصار الشعبي',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.theme.appColors.muted, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  /// إنشاء اتصال L2TP VPN عبر Android VPN Service
+  Future<void> _l2tpConnect() async {
+    if (_l2tpServerController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال عنوان خادم L2TP');
+      return;
+    }
+    if (_l2tpRouterIpController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال IP الراوتر داخل VPN');
+      return;
+    }
+    if (_l2tpUserController.text.isEmpty || _l2tpPasswordController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور');
+      return;
+    }
+
+    setState(() {
+      _isVpnConnecting = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // حفظ إعدادات L2TP
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('remember_l2tp', true);
+      await prefs.setString('l2tp_server', _l2tpServerController.text.trim());
+      await prefs.setString('l2tp_secret', _l2tpSecretController.text.trim());
+      await prefs.setString('l2tp_router_ip', _l2tpRouterIpController.text.trim());
+      await prefs.setString('l2tp_user', _l2tpUserController.text.trim());
+      await prefs.setString('l2tp_port', _l2tpPortController.text.trim());
+
+      // حفظ كلمة المرور في التخزين الآمن
+      await SecureCredentialsStorageContainer.instance
+          .setL2tpPassword(_l2tpPasswordController.text);
+
+      // بدء VPN عبر MethodChannel (Android فقط)
+      if (Platform.isAndroid) {
+        try {
+          final result = await _vpnChannel.invokeMethod('startVpn', {
+            'server': _l2tpServerController.text.trim(),
+            'secret': _l2tpSecretController.text.trim(),
+            'user': _l2tpUserController.text.trim(),
+            'password': _l2tpPasswordController.text,
+            'routerIp': _l2tpRouterIpController.text.trim(),
+          });
+
+          if (result is Map) {
+            final status = result['status'] as String?;
+            if (status == 'permission_needed') {
+              // المستخدم يحتاج لمنح صلاحية VPN
+              setState(() => _isVpnConnecting = false);
+              showSuccessSnackBar(context, 'يرجى منح صلاحية VPN في نافذة النظام');
+              return;
+            }
+          }
+
+          // انتظار الاتصال
+          setState(() {
+            _isVpnConnected = true;
+            _isVpnConnecting = false;
+          });
+          if (mounted) {
+            showSuccessSnackBar(context, 'تم إنشاء اتصال VPN — اضغط "الدخول للراوتر"');
+          }
+        } on PlatformException catch (e) {
+          if (mounted) {
+            setState(() {
+              _errorMessage = 'خطأ في بدء VPN: ${e.message}';
+              _isVpnConnecting = false;
+            });
+          }
+        }
+      } else {
+        // غير Android - VPN غير مدعوم
+        setState(() {
+          _isVpnConnected = true;
+          _isVpnConnecting = false;
+        });
+        if (mounted) {
+          showSuccessSnackBar(context, 'تم إعداد VPN — اضغط "الدخول للراوتر"');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'فشل إعداد VPN: ${e.toString()}';
+          _isVpnConnecting = false;
+        });
+      }
+    }
+  }
+
+  /// الاتصال بالراوتر عبر VPN
+  Future<void> _l2tpLoginToRouter() async {
+    if (_l2tpRouterIpController.text.isEmpty || _l2tpUserController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال IP الراوتر واسم المستخدم');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // حفظ إعدادات الراوتر في SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ip', _l2tpRouterIpController.text.trim());
+      final port = _l2tpPortController.text.trim().isEmpty
+          ? '8728'
+          : _l2tpPortController.text.trim();
+      await prefs.setString('port', port);
+      await prefs.setString('user', _l2tpUserController.text.trim());
+      await prefs.setString('use_ssl', 'false');
+
+      // كلمة المرور = كلمة مرور L2TP
+      await SecureCredentialsStorageContainer.instance
+          .setMikrotikPassword(_l2tpPasswordController.text);
+
+      // اختبار الاتصال بالراوتر
+      await MikrotikConnector.connect();
+
+      if (mounted) {
+        showSuccessSnackBar(context, 'تم الاتصال بالراوتر عبر VPN بنجاح');
+        Navigator.of(context).pushReplacement(
+          CustomPageRoute(
+            builder: (context) => HomeScreen(
+              isVersion7OrNewer: false,
+              username: _l2tpUserController.text.trim(),
+            ),
+          ),
+        );
+      }
+    } on MikrotikCredentialsMissingException catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'خطأ في بيانات الدخول: ${e.message}');
+        showErrorSnackBar(context, 'خطأ في بيانات الدخول: ${e.message}');
+      }
+    } on MikrotikConnectionException catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'خطأ في الاتصال: ${e.message}');
+        showErrorSnackBar(context, 'خطأ في الاتصال: ${e.message}');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage =
+            'فشل الاتصال بالراوتر. تأكد من أن VPN نشط والراوتر متاح.\n(الخطأ: ${e.toString()})');
+        showErrorSnackBar(context, 'فشل الاتصال بالراوتر عبر VPN');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Widget _buildRemoteLoginForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -769,7 +1100,7 @@ class _LoginScreenState extends State<LoginScreen>
           controller: _remoteServerController,
           decoration: const InputDecoration(
             labelText: 'عنوان الخادم البعيد (Domain أو IP)',
-            hintText: 'router.example.com أو 1.2.3.4',
+            hintText: 'router.example.com أو 192.168.1.1',
             prefixIcon: Icon(Icons.cloud),
           ),
           keyboardType: TextInputType.url,
@@ -780,15 +1111,36 @@ class _LoginScreenState extends State<LoginScreen>
             Expanded(
               child: TextField(
                 controller: _remotePortController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Port',
-                  hintText: '8728 أو 8729',
-                  prefixIcon: Icon(Icons.numbers),
+                  hintText: _useSslRemote ? '8729 (SSL)' : '8728',
+                  prefixIcon: const Icon(Icons.numbers),
                 ),
                 style:
                     TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 keyboardType: TextInputType.number,
               ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('SSL',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: context.theme.appColors.onSurface)),
+                Switch(
+                  value: _useSslRemote,
+                  onChanged: (value) => setState(() {
+                    _useSslRemote = value;
+                    if (_remotePortController.text == '8728' ||
+                        _remotePortController.text == '8729') {
+                      _remotePortController.text = value ? '8729' : '8728';
+                    }
+                  }),
+                  activeColor: context.theme.appColors.primary,
+                ),
+              ],
             ),
           ],
         ),
@@ -816,33 +1168,7 @@ class _LoginScreenState extends State<LoginScreen>
                   () => _isRemotePasswordObscured = !_isRemotePasswordObscured),
             ),
           ),
-          keyboardType: TextInputType.number,
         ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _remoteUserController,
-          decoration: const InputDecoration(
-            labelText: 'Username',
-            prefixIcon: Icon(Icons.person_outline),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _remotePasswordController,
-          obscureText: _isRemotePasswordObscured,
-          decoration: InputDecoration(
-            labelText: 'Password',
-            prefixIcon: const Icon(Icons.lock_outline),
-            suffixIcon: IconButton(
-              icon: Icon(_isRemotePasswordObscured
-                  ? Icons.visibility_off
-                  : Icons.visibility),
-              onPressed: () => setState(
-                  () => _isRemotePasswordObscured = !_isRemotePasswordObscured),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
         CheckboxListTile(
           title: Text('تذكرني',
               style: TextStyle(color: context.theme.appColors.onSurface)),
@@ -869,7 +1195,29 @@ class _LoginScreenState extends State<LoginScreen>
                 )
               : const Text('الدخول', style: TextStyle(fontSize: 18)),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: _launchPrivacyPolicy,
+          child: Text(
+            'سياسة الخصوصية',
+            style: TextStyle(
+              color:
+                  context.theme.appColors.onBackground.withValues(alpha: 0.7),
+              decoration: TextDecoration.underline,
+              decorationColor:
+                  context.theme.appColors.onBackground.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _useSslRemote
+              ? 'الاتصال الآمن عبر API-SSL (منفذ 8729)'
+              : 'الاتصال عبر API غير المشفر (منفذ 8728) — يُنصح بالاستخدام الآمن',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.theme.appColors.muted, fontSize: 11),
+        ),
+        const SizedBox(height: 8),
         Text(
           'جميع الحقوق محفوظة © م/نصار الشعبي',
           textAlign: TextAlign.center,

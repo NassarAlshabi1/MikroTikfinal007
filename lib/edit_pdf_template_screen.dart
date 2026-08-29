@@ -59,7 +59,30 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
         _applyNormalizedOffset();
       });
     }
+    // استخدم الفئات الممررة من الشاشة الأم مباشرة كبيانات أولية
+    _loadProfilesFromWidget();
+    // ثم حاول تحديثها من الراوتر
     unawaited(_loadProfilesFromRouter());
+  }
+
+  /// تحميل الفئات من البيانات الممررة من الشاشة الأم (المحلية)
+  void _loadProfilesFromWidget() {
+    final profiles = widget.profiles;
+    if (profiles.isEmpty) return;
+    final names = profiles
+        .map((p) => p['name']?.toString().trim() ?? '')
+        .where((name) => name.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+    if (names.isNotEmpty && mounted) {
+      setState(() {
+        _routerProfiles = names;
+        if (_selectedProfile != null && !names.contains(_selectedProfile)) {
+          _selectedProfile = null;
+        }
+      });
+    }
   }
 
   @override
@@ -80,11 +103,15 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       client = await MikrotikConnector.connect();
       final response = await client.talk([
         '/tool/user-manager/profile/print',
-        '=.proplist=name',
-      ]).timeout(const Duration(seconds: 20));
+        '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
+      ]);
 
-      final names = response
+      final profiles = response
           .whereType<Map>()
+          .map((profile) => Map<String, dynamic>.from(profile))
+          .toList(growable: false);
+
+      final names = profiles
           .map((profile) => profile['name']?.toString().trim() ?? '')
           .where((name) => name.isNotEmpty)
           .toSet()
@@ -110,8 +137,8 @@ class _EditPdfTemplateScreenState extends State<EditPdfTemplateScreen> {
       setState(() {
         _isLoadingProfiles = false;
         _profileLoadError = 'تعذر جلب فئات User Manager من MikroTik: $error';
-        _selectedProfile = null;
       });
+      // لا نحذف الفئات المحملة سابقاً إذا فشل التحديث من الراوتر
     } finally {
       MikrotikConnector.release(client);
     }

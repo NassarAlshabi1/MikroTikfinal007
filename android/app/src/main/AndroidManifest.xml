@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.BIND_VPN_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- دعم الأجهزة القديمة 32-bit -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -57,6 +61,16 @@
         <meta-data
             android:name="com.google.mlkit.vision.DELAY_MODEL_DOWNLOAD"
             android:value="true" />
+
+        <!-- L2TP VPN Service -->
+        <service
+            android:name=".L2TPVpnService"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
     </application>
 
     <queries>
