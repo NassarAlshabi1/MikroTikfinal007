@@ -219,20 +219,6 @@ class RouterOsCardGateway {
     };
   }
 
-  List<String> _printCommand(MikrotikServiceMode mode, String username) {
-    return switch (mode) {
-      MikrotikServiceMode.hotspot => [
-          '/ip/hotspot/user/print',
-          '?name=$username',
-          '=.proplist=.id,name',
-        ],
-      MikrotikServiceMode.userManager => [
-          '/tool/user-manager/user/print',
-          '?username=$username',
-          '=.proplist=.id,username',
-        ],
-    };
-  }
 
   String? _extractUserId(List<Map<String, String>> response) {
     for (final row in response) {

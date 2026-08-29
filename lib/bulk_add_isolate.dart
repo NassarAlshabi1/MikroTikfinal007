@@ -91,13 +91,14 @@ Future<List<Map<String, String>>> _processShard({
 
   // Fire all commands at once
   final timeout = Duration(seconds: max(60, users.length * 15));
-  final responses = await client.talkMultiple(taggedCommands).timeout(timeout);
+  final responses = client.talkMultiple(taggedCommands).timeout(timeout);
 
   // Collect
   final addResults = <int, List<Map<String, String>>>{};
   await for (final resp in responses) {
-    if (resp.tag.startsWith('add_')) {
-      final idx = int.parse(resp.tag.substring(4));
+    final tag = resp.tag;
+    if (tag != null && tag.startsWith('add_')) {
+      final idx = int.parse(tag.substring(4));
       addResults[idx] = resp.data;
     }
   }
