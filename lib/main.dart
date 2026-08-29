@@ -780,7 +780,7 @@ class _LoginScreenState extends State<LoginScreen>
               setState(() => _rememberMe = newValue ?? false),
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
-          activeColor: context.theme.appColors.primary,
+          activeThumbColor: context.theme.appColors.primary,
         ),
         const SizedBox(height: 16),
         ElevatedButton(
@@ -989,7 +989,7 @@ class _LoginScreenState extends State<LoginScreen>
             if (status == 'permission_needed') {
               // المستخدم يحتاج لمنح صلاحية VPN
               setState(() => _isVpnConnecting = false);
-              showSuccessSnackBar(context, 'يرجى منح صلاحية VPN في نافذة النظام');
+              if (mounted) showSuccessSnackBar(context, 'يرجى منح صلاحية VPN في نافذة النظام');
               return;
             }
           }
@@ -1138,7 +1138,7 @@ class _LoginScreenState extends State<LoginScreen>
                       _remotePortController.text = value ? '8729' : '8728';
                     }
                   }),
-                  activeColor: context.theme.appColors.primary,
+                  activeThumbColor: context.theme.appColors.primary,
                 ),
               ],
             ),
@@ -1178,7 +1178,7 @@ class _LoginScreenState extends State<LoginScreen>
               _rememberMeRemote = value ?? false;
             });
           },
-          activeColor: context.theme.appColors.primary,
+          activeThumbColor: context.theme.appColors.primary,
           controlAffinity: ListTileControlAffinity.leading,
         ),
         const SizedBox(height: 8),

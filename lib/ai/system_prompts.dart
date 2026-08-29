@@ -37,7 +37,7 @@ String promptForMode(DiagnosticMode mode) {
     case DiagnosticMode.infrastructure:
       modePrompt = SystemPrompts.infrastructure;
   }
-  return '${_baseRules}\n\n$modePrompt\n\n${_responseTemplate}';
+  return '$_baseRules\n\n$modePrompt\n\n$_responseTemplate';
 }
 
 // ============================================================
