@@ -175,7 +175,11 @@ class RouterOsCardGateway {
     Object? lastError;
     for (var attempt = 0; attempt < 3; attempt++) {
       try {
-        return await talker.talk(command);
+        return await talker.talk(command).timeout(_talkTimeout, onTimeout: () {
+          throw TimeoutException(
+            'انتهت مهلة التحقق من المستخدم على الراوتر.',
+          );
+        });
       } on SocketException catch (error) {
         lastError = error;
       } on TimeoutException catch (error) {
