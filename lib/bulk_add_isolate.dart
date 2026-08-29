@@ -83,25 +83,16 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     final profile = data.selectedProfile!.trim();
 
     // ================================================================
-    //  batch mode: use talkMultiple to send all commands at once
+    //  talkMultiple mode: send ALL commands at once
     //  instead of 2N sequential talk() calls.
+    //  No batch size limit — all cards sent in one go.
     // ================================================================
-    final batchSize = 10;
-    for (var batchStart = 0;
-        batchStart < plannedUsers.length;
-        batchStart += batchSize) {
-      final batchEnd = min(batchStart + batchSize, plannedUsers.length);
-      final batchUsers =
-          plannedUsers.sublist(batchStart, batchEnd);
+    final taggedCommands = <TaggedCommand>[];
 
-      // Build all commands for this batch
-      final taggedCommands = <TaggedCommand>[];
-
-      for (var j = 0; j < batchUsers.length; j++) {
-        final user = batchUsers[j];
-        final username = user['username']!;
-        final password = user['password']!;
-        final index = batchStart + j;
+    for (var i = 0; i < plannedUsers.length; i++) {
+      final user = plannedUsers[i];
+      final username = user['username']!;
+      final password = user['password']!;
 
         // Add user command
         final addCmd = MikrotikCardCommands.addUser(
@@ -115,7 +106,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         );
         taggedCommands.add(TaggedCommand(
           command: addCmd,
-          tag: 'add_$index',
+          tag: 'add_$i',
         ));
 
         // Activate profile command (User Manager only)
@@ -127,15 +118,16 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
           );
           taggedCommands.add(TaggedCommand(
             command: activateCmd,
-            tag: 'activate_$index',
+            tag: 'activate_$i',
           ));
         }
       }
 
-      // Send all commands at once
+      // Send ALL commands at once (no batch splitting)
+      final totalTimeout = Duration(seconds: max(120, plannedUsers.length * 30));
       final responses = await client
           .talkMultiple(taggedCommands)
-          .timeout(const Duration(seconds: 120));
+          .timeout(totalTimeout);
 
       // Collect responses
       final addResponses = <int, List<Map<String, String>>>{};
@@ -153,12 +145,11 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       }
 
       // Process results
-      for (var j = 0; j < batchUsers.length; j++) {
-        final user = batchUsers[j];
+      for (var i = 0; i < plannedUsers.length; i++) {
+        final user = plannedUsers[i];
         final username = user['username']!;
-        final index = batchStart + j;
 
-        final addResult = addResponses[index];
+        final addResult = addResponses[i];
         if (addResult == null || addResult.isEmpty) {
           // Command failed or returned empty — skip this user
           continue;
@@ -174,11 +165,10 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
 
         sendPort.send({
           'type': 'progress',
-          'progress': (index + 1) / plannedUsers.length,
-          'status': 'تم إنشاء الكرت ${index + 1} من ${plannedUsers.length}',
+          'progress': (i + 1) / plannedUsers.length,
+          'status': 'تم إنشاء الكرت ${i + 1} من ${plannedUsers.length}',
         });
       }
-    }
 
     final verifiedUsers = await gateway.verifyUsers(
       mode: data.serviceMode,
