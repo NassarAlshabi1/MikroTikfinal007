@@ -274,19 +274,19 @@ class L2TPVpnService : VpnService() {
         
         // TLVs
         // Protocol Version
-        payload.putShort(0x8008) // Type 2, M=0
+        payload.putShort(0x8008.toShort()) // Type 2, M=0
         payload.putShort(2)      // Length
         payload.putShort(0x0001) // Version 1.0
         
         // Host Name (empty for now)
-        payload.putShort(0x8007) // Type 1, M=0
+        payload.putShort(0x8007.toShort()) // Type 1, M=0
         payload.putShort(0)      // Length
         
         // Tunnel Authenticate
         if (secret.isNotEmpty()) {
             val secretBytes = secret.toByteArray()
             payload.putShort(0x800B.toShort()) // Type 3, M=0
-            payload.putShort(secretBytes.size) // Length
+            payload.putShort(secretBytes.size.toShort()) // Length
             payload.put(secretBytes)
         }
         
@@ -353,7 +353,7 @@ class L2TPVpnService : VpnService() {
         if (user.isNotEmpty()) {
             val userBytes = user.toByteArray()
             payload.putShort(0x8006.toShort()) // Type 6, M=0
-            payload.putShort(userBytes.size)
+            payload.putShort(userBytes.size.toShort())
             payload.put(userBytes)
         }
         
