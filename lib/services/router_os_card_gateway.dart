@@ -63,6 +63,10 @@ class RouterOsCreatedCard {
 class RouterOsCardGateway {
   final RouterOsTalker talker;
 
+  /// مهلة لكل أمر talk — وفيرة بما يكفي للراوترات البطيئة
+  /// لكنها تمنع التعليق الدائم.
+  static const _talkTimeout = Duration(seconds: 60);
+
   const RouterOsCardGateway(this.talker);
 
   Future<RouterOsCreatedCard> addCard({
@@ -84,7 +88,12 @@ class RouterOsCardGateway {
         isVersion7OrNewer: isVersion7OrNewer,
         customer: customer,
       ),
-    );
+    ).timeout(_talkTimeout, onTimeout: () {
+      throw TimeoutException(
+        'انتهت مهلة إنشاء الكرت "$username" على الراوتر. '
+        'تحقق من اتصال الشبكة وإعدادات User Manager.',
+      );
+    });
     final userId = _extractUserId(response);
     return RouterOsCreatedCard(
       username: username,
@@ -104,7 +113,11 @@ class RouterOsCardGateway {
         username: username,
         profile: profile,
       ),
-    );
+    ).timeout(_talkTimeout, onTimeout: () {
+      throw TimeoutException(
+        'انتهت مهلة تنشيط البروفايل "$profile" للمستخدم "$username".',
+      );
+    });
   }
 
   Future<List<Map<String, String>>> verifyUsers({

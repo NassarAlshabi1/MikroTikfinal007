@@ -135,10 +135,13 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
   } on RouterOSTrapError catch (e) {
     _sendError(
         sendPort, _friendlyError(e.message), successCount, newlyCreatedUsers);
-  } on TimeoutException {
+  } on TimeoutException catch (e) {
+    final detail = e.message?.isNotEmpty == true
+        ? e.message!
+        : 'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).';
     _sendError(
       sendPort,
-      'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).',
+      '$detail\nتأكد من اتصال الشبكة بالراوتر وصحة إعدادات API (المنفذ 8728/8729).',
       successCount,
       newlyCreatedUsers,
     );
