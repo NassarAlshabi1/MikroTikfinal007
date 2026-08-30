@@ -592,7 +592,8 @@ class _LoginScreenState extends State<LoginScreen>
                                         ? Icons.dark_mode
                                         : Icons.light_mode,
                                     size: 20,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -867,12 +868,14 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             child: Row(
               children: [
-                Icon(Icons.check_circle, size: 16, color: context.theme.appColors.success),
+                Icon(Icons.check_circle,
+                    size: 16, color: context.theme.appColors.success),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'راوتر مكتشف: $_l2tpDetectedRouterIp',
-                    style: TextStyle(fontSize: 11, color: context.theme.appColors.success),
+                    style: TextStyle(
+                        fontSize: 11, color: context.theme.appColors.success),
                   ),
                 ),
               ],
@@ -942,7 +945,8 @@ class _LoginScreenState extends State<LoginScreen>
       setState(() => _errorMessage = 'الرجاء إدخال عنوان VPN');
       return;
     }
-    if (_l2tpUserController.text.isEmpty || _l2tpPasswordController.text.isEmpty) {
+    if (_l2tpUserController.text.isEmpty ||
+        _l2tpPasswordController.text.isEmpty) {
       setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور');
       return;
     }
@@ -979,7 +983,10 @@ class _LoginScreenState extends State<LoginScreen>
             final status = result['status'] as String?;
             if (status == 'permission_needed') {
               setState(() => _isVpnConnecting = false);
-              if (mounted) showSuccessSnackBar(context, 'يرجى منح صلاحية VPN في نافذة النظام');
+              if (mounted) {
+                showSuccessSnackBar(
+                    context, 'يرجى منح صلاحية VPN في نافذة النظام');
+              }
               return;
             }
           }
@@ -1317,7 +1324,8 @@ class ServiceItem {
   });
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   List<Map<String, dynamic>> _profiles = [];
   bool _isLoadingProfiles = true;
   // فئات الكروت في شاشة الإدارة مصدرها User Manager فقط.
@@ -1653,8 +1661,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         icon: Icons.sync,
         color: context.theme.appColors.primary,
         onTap: () {
-          Navigator.of(context).push(CustomPageRoute(
-              builder: (context) => const CardsSyncScreen()));
+          Navigator.of(context).push(
+              CustomPageRoute(builder: (context) => const CardsSyncScreen()));
         },
       ),
       ServiceItem(

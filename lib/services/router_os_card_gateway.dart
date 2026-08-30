@@ -78,7 +78,8 @@ class RouterOsCardGateway {
     required bool isVersion7OrNewer,
     required String customer,
   }) async {
-    final response = await talker.talk(
+    final response = await talker
+        .talk(
       MikrotikCardCommands.addUser(
         mode: mode,
         username: username,
@@ -88,7 +89,8 @@ class RouterOsCardGateway {
         isVersion7OrNewer: isVersion7OrNewer,
         customer: customer,
       ),
-    ).timeout(_talkTimeout, onTimeout: () {
+    )
+        .timeout(_talkTimeout, onTimeout: () {
       throw TimeoutException(
         'انتهت مهلة إنشاء الكرت "$username" على الراوتر. '
         'تحقق من اتصال الشبكة وإعدادات User Manager.',
@@ -107,13 +109,15 @@ class RouterOsCardGateway {
     required String username,
     required String profile,
   }) async {
-    await talker.talk(
+    await talker
+        .talk(
       MikrotikCardCommands.userManagerActivateProfile(
         customer: customer,
         username: username,
         profile: profile,
       ),
-    ).timeout(_talkTimeout, onTimeout: () {
+    )
+        .timeout(_talkTimeout, onTimeout: () {
       throw TimeoutException(
         'انتهت مهلة تنشيط البروفايل "$profile" للمستخدم "$username".',
       );
@@ -218,7 +222,6 @@ class RouterOsCardGateway {
         ],
     };
   }
-
 
   String? _extractUserId(List<Map<String, String>> response) {
     for (final row in response) {

@@ -229,8 +229,7 @@ class TelegramBotSettingsStore {
     await prefs.setString(
         _defaultCardLimitKey, settings.defaultCardLimit.trim());
     await prefs.setInt(_pollSecondsKey, settings.pollSeconds);
-    await prefs.setInt(
-        _routerPollSecondsKey, settings.routerPollSeconds);
+    await prefs.setInt(_routerPollSecondsKey, settings.routerPollSeconds);
     await prefs.setString(_monitorTargetKey, settings.monitorTarget.trim());
     await prefs.setInt(_monitorIntervalKey, settings.monitorIntervalSeconds);
     await prefs.setString(

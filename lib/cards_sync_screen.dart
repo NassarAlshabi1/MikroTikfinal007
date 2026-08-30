@@ -50,7 +50,8 @@ class CardsSyncScreen extends StatefulWidget {
   State<CardsSyncScreen> createState() => _CardsSyncScreenState();
 }
 
-class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderStateMixin {
+class _CardsSyncScreenState extends State<CardsSyncScreen>
+    with TickerProviderStateMixin {
   // ── State ──
   bool _isLoading = true;
   String? _errorMessage;
@@ -205,8 +206,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
 
   void _toggleSelectByProfile(String? profile) {
     setState(() {
-      final targets = _filteredCards.where(
-          (c) => profile == null || c.profile == profile);
+      final targets =
+          _filteredCards.where((c) => profile == null || c.profile == profile);
       final allSelected = targets.every((c) => _selectedNames.contains(c.name));
       if (allSelected) {
         for (final c in targets) {
@@ -396,7 +397,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
             ElevatedButton.icon(
               onPressed: _syncCards,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('إعادة المحاولة', style: TextStyle(fontSize: 13)),
+              label:
+                  const Text('إعادة المحاولة', style: TextStyle(fontSize: 13)),
             ),
           ],
         ),
@@ -429,7 +431,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
                             fontSize: 13)),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     itemCount: _filteredCards.length,
                     itemBuilder: (ctx, i) =>
                         _buildCardTile(_filteredCards[i], theme),
@@ -456,11 +459,16 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _statItem('الكل', _allCards.length, cs.onSurface, theme),
-          Container(width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
-          _statItem('مفعل', _activeCount, context.theme.appColors.success, theme),
-          Container(width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
-          _statItem('منتهي', _expiredCount, context.theme.appColors.error, theme),
-          Container(width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
+          Container(
+              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
+          _statItem(
+              'مفعل', _activeCount, context.theme.appColors.success, theme),
+          Container(
+              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
+          _statItem(
+              'منتهي', _expiredCount, context.theme.appColors.error, theme),
+          Container(
+              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
           _statItem('محدد', _selectedNames.length, theme.primaryColor, theme),
         ],
       ),
@@ -498,8 +506,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
           hintText: 'بحث بالاسم أو الفئة...',
           hintStyle: TextStyle(
               fontSize: 13, color: cs.onSurface.withValues(alpha: 0.4)),
-          prefixIcon:
-              Icon(Icons.search, size: 18, color: cs.onSurface.withValues(alpha: 0.5)),
+          prefixIcon: Icon(Icons.search,
+              size: 18, color: cs.onSurface.withValues(alpha: 0.5)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear, size: 16),
@@ -535,7 +543,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
         children: [
           // All
-          _filterChip('الكل', _showExpiredOnly == false && _showActiveOnly == false,
+          _filterChip(
+              'الكل', _showExpiredOnly == false && _showActiveOnly == false,
               () {
             setState(() {
               _showExpiredOnly = false;
@@ -569,8 +578,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
     );
   }
 
-  Widget _filterChip(String label, bool selected, VoidCallback onTap,
-      ThemeData theme,
+  Widget _filterChip(
+      String label, bool selected, VoidCallback onTap, ThemeData theme,
       {Color? color}) {
     final chipColor = color ?? theme.primaryColor;
     return GestureDetector(
@@ -579,16 +588,21 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? chipColor.withValues(alpha: 0.15) : Colors.transparent,
+          color:
+              selected ? chipColor.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: selected ? chipColor : theme.colorScheme.outline.withValues(alpha: 0.3)),
+              color: selected
+                  ? chipColor
+                  : theme.colorScheme.outline.withValues(alpha: 0.3)),
         ),
         child: Text(label,
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                color: selected ? chipColor : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+                color: selected
+                    ? chipColor
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
       ),
     );
   }
@@ -636,8 +650,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
 
   Widget _buildToolbar(ThemeData theme) {
     final cs = theme.colorScheme;
-    final allVisibleSelected =
-        _filteredCards.isNotEmpty && _filteredCards.every((c) => _selectedNames.contains(c.name));
+    final allVisibleSelected = _filteredCards.isNotEmpty &&
+        _filteredCards.every((c) => _selectedNames.contains(c.name));
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 0),
@@ -677,11 +691,13 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.category, size: 14, color: cs.onSurface.withValues(alpha: 0.5)),
+                Icon(Icons.category,
+                    size: 14, color: cs.onSurface.withValues(alpha: 0.5)),
                 const SizedBox(width: 4),
                 Text('تحديد حسب الفئة',
                     style: TextStyle(
-                        fontSize: 11, color: cs.onSurface.withValues(alpha: 0.7))),
+                        fontSize: 11,
+                        color: cs.onSurface.withValues(alpha: 0.7))),
               ],
             ),
           ),
@@ -692,11 +708,13 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.copy, size: 14, color: cs.onSurface.withValues(alpha: 0.5)),
+                Icon(Icons.copy,
+                    size: 14, color: cs.onSurface.withValues(alpha: 0.5)),
                 const SizedBox(width: 4),
                 Text('نسخ الكل (${_filteredCards.length})',
                     style: TextStyle(
-                        fontSize: 11, color: cs.onSurface.withValues(alpha: 0.7))),
+                        fontSize: 11,
+                        color: cs.onSurface.withValues(alpha: 0.7))),
               ],
             ),
           ),
@@ -724,7 +742,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
                 trailing: Text('$count',
                     style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        color: theme.colorScheme.onSurface
+                            .withValues(alpha: 0.5))),
                 onTap: () {
                   Navigator.pop(ctx);
                   _toggleSelectByProfile(p);
@@ -792,7 +811,9 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Icon(
-                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  isSelected
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   size: 18,
                   color: isSelected
                       ? theme.primaryColor
@@ -823,7 +844,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: context.theme.appColors.error.withValues(alpha: 0.1),
+                              color: context.theme.appColors.error
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text('منتهي',
@@ -836,7 +858,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: context.theme.appColors.success.withValues(alpha: 0.1),
+                              color: context.theme.appColors.success
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text('مفعل',

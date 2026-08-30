@@ -37,10 +37,9 @@ void main() {
 
       expect(script.contains('REPLACE_WITH_NEW_BOT_TOKEN'), isFalse,
           reason: 'يجب ألا يبقى أي placeholder للتوكن');
-      expect(':global TG_BOT_TOKEN "123456:ABC-DEF"'.allMatches(script).length,
-          1);
       expect(
-          script.contains(':set TG_BOT_TOKEN "123456:ABC-DEF"'), isTrue,
+          ':global TG_BOT_TOKEN "123456:ABC-DEF"'.allMatches(script).length, 1);
+      expect(script.contains(':set TG_BOT_TOKEN "123456:ABC-DEF"'), isTrue,
           reason: 'إعادة الزرع بعد إعادة التشغيل يجب أن تستخدم التوكن نفسه');
     });
 

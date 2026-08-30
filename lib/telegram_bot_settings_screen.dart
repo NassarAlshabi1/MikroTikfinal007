@@ -502,12 +502,13 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
             const SizedBox(height: 12),
             DropdownButtonFormField<TelegramDeploymentMode>(
               initialValue: _mode,
-              decoration: _decoration('اختر نمط التشغيل',
-                  icon: Icons.hub_outlined),
+              decoration:
+                  _decoration('اختر نمط التشغيل', icon: Icons.hub_outlined),
               items: TelegramDeploymentMode.values
                   .map((mode) => DropdownMenuItem(
                         value: mode,
-                        child: Text(_modeLabel(mode), overflow: TextOverflow.ellipsis),
+                        child: Text(_modeLabel(mode),
+                            overflow: TextOverflow.ellipsis),
                       ))
                   .toList(),
               onChanged: (mode) {
@@ -625,8 +626,18 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
               spacing: 6,
               runSpacing: 6,
               children: const [
-                '/help', '/start', '/status', '/um', '/active', '/check',
-                '/gen', '/list', '/del', '/report', '/clean', '/reboot',
+                '/help',
+                '/start',
+                '/status',
+                '/um',
+                '/active',
+                '/check',
+                '/gen',
+                '/list',
+                '/del',
+                '/report',
+                '/clean',
+                '/reboot',
               ]
                   .map((cmd) => Tooltip(
                         message: _commandHint(cmd),
@@ -637,14 +648,13 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
                             color: context.theme.appColors.surface,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: context.theme.appColors.primary
-                                  .withAlpha(77),
+                              color:
+                                  context.theme.appColors.primary.withAlpha(77),
                             ),
                           ),
                           child: Text(cmd,
                               style: const TextStyle(
-                                  fontSize: 12,
-                                  fontFamily: 'monospace')),
+                                  fontSize: 12, fontFamily: 'monospace')),
                         ),
                       ))
                   .toList(),
@@ -704,8 +714,8 @@ class _TelegramBotSettingsScreenState extends State<TelegramBotSettingsScreen> {
               icon: Icons.vpn_key_outlined,
               obscureText: _obscureWorkerKey,
               suffixIcon: IconButton(
-                onPressed: () => setState(
-                    () => _obscureWorkerKey = !_obscureWorkerKey),
+                onPressed: () =>
+                    setState(() => _obscureWorkerKey = !_obscureWorkerKey),
                 icon: Icon(_obscureWorkerKey
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined),

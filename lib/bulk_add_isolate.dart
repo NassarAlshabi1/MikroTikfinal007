@@ -249,7 +249,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     _sendError(
       sendPort,
       'فشل الاتصال بالراوتر (انتهت مهلة الاتصال).\n'
-          'تأكد من اتصال الشبكة بالراوتر وصحة إعدادات API (المنفذ 8728/8729).',
+      'تأكد من اتصال الشبكة بالراوتر وصحة إعدادات API (المنفذ 8728/8729).',
       successCount,
       newlyCreatedUsers,
     );

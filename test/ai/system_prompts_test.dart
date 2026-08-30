@@ -15,7 +15,8 @@ void main() {
         expect(prompt, contains('بوابة RouterOS v6'));
         expect(prompt, contains('أمر تحقق قراءة فقط'));
       }
-    });    test('Prompt Hotspot يثبت مسار Hotspot المحلي ويمنع الخلط', () {
+    });
+    test('Prompt Hotspot يثبت مسار Hotspot المحلي ويمنع الخلط', () {
       final prompt = promptForMode(DiagnosticMode.hotspot);
 
       expect(prompt, contains('/ip/hotspot/user/add'));

@@ -152,11 +152,12 @@ void main() {
         mockSecureStorage.seed(mikrotikPass: 'password');
 
         // سيحاول الاتصال ويفشل (timeout أو connection refused)
+        // مهلة الاتصال الداخلية 30s لذا نمنح الاختبار مهلة إطارٍ أكب
         await expectLater(
           MikrotikConnector.connect(),
           throwsA(isA<MikrotikConnectionException>()),
         );
-      });
+      }, timeout: const Timeout(Duration(minutes: 3)));
     });
 
     // ============================================================
@@ -367,7 +368,7 @@ void main() {
           MikrotikConnector.connect(),
           throwsA(isA<MikrotikConnectionException>()),
         );
-      });
+      }, timeout: const Timeout(Duration(minutes: 3)));
 
       test('منفذ مخصص 8729 (API-SSL)', () async {
         SharedPreferences.setMockInitialValues({
@@ -382,7 +383,7 @@ void main() {
           MikrotikConnector.connect(),
           throwsA(isA<MikrotikConnectionException>()),
         );
-      });
+      }, timeout: const Timeout(Duration(minutes: 3)));
     });
 
     // ============================================================
@@ -441,7 +442,7 @@ void main() {
 
         // يجب أن يفشل خلال 35 ثوان (timeout = 30s + overhead)
         expect(stopwatch.elapsed.inSeconds, lessThan(35));
-      });
+      }, timeout: const Timeout(Duration(minutes: 3)));
 
       test('forceDisconnect سريع جداً', () {
         final stopwatch = Stopwatch()..start();
