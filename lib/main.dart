@@ -617,6 +617,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               },
             ),
+          ),
           ],
         ),
       ),
@@ -1799,8 +1800,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                     );
                   }
                 },
-              ),
-            },
+            ),
+              },
             ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
