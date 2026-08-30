@@ -69,12 +69,14 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     });
 
     RouterOSClient? client;
+    final stopwatch = Stopwatch()..start();
     try {
       client = await MikrotikConnector.connect();
 
       // كروت User Manager فقط — لا يُقرأ الهوتسبوت هنا إطلاقاً.
       const service = UmCardsSyncService();
       final cards = await service.fetchCards(RouterOsClientTalker(client));
+      stopwatch.stop();
 
       final profileSet = <String>{};
       for (final card in cards) {
@@ -91,6 +93,18 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         });
         _applyFilters();
         _animCtrl.forward(from: 0);
+
+        // تأكيد سريع للمستخدم بعدد الكروت وزمن المزامنة.
+        final seconds =
+            (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('تمت المزامنة: ${cards.length} كرت خلال $seconds ثانية'),
+            backgroundColor: context.theme.appColors.success,
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
       if (retry && MikrotikConnector.isSocketClosedError(e)) {

@@ -102,43 +102,80 @@ class UmCardsSyncException implements Exception {
 /// خدمة مزامنة كروت User Manager (RouterOS v6) عبر RouterOS API.
 ///
 /// تقرأ المستخدمين من `/tool/user-manager/user/print` فقط — لا تلمس
-/// `/ip hotspot user` إطلاقاً — وتستعين بجدول ربط المستخدم بالبروفايل
-/// كطبقة احتياطية لتحديد فئة الكرت.
+/// `/ip hotspot user` إطلاقاً.
+///
+/// أسماء الحقول في UM v6 الحقيقي (مطابقة لسكربت التلجرام المجرّب على
+/// الراوتر): اسم المستخدم `username` (وليس `name`)، والحد الزمني
+/// `uptime-limit`، مع `actual-profile` و`profile` داخل صف المستخدم نفسه.
+/// نبقي الاسماء القديمة كبدائل احتياطية لبعض إصدارات v6.
 class UmCardsSyncService {
-  /// مهلة لكل أمر talk — وفيرة للراوترات البطيئة وتمنع التعليق الدائم.
-  static const _talkTimeout = Duration(seconds: 60);
+  /// مهلة قراءة المستخدمين — وفيرة للراوترات البطيئة وتمنع التعليق
+  /// الدائم، لكنها أقصر من السابق حتى لا تعلّق المزامنة طويلاً.
+  static const _userPrintTimeout = Duration(seconds: 25);
+
+  /// مهلة أوامر جدول ربط المستخدم بالبروفايل — خطوة احتياطية نادرة
+  /// ومهلتها قصيرة لإبقاء المزامنة سريعة.
+  static const _auxTimeout = Duration(seconds: 10);
 
   const UmCardsSyncService();
 
   /// يجلب كروت User Manager مرتبة حسب البروفايل ثم الاسم.
   ///
   /// قد ترمي [UmCardsSyncException] إذا فشلت قراءة المستخدمين (مثلاً
-  /// حزمة User Manager غير مثبتة على الراوتر). فشل جدول الربط غير
-  /// قاتل ويُتجاهل بهدوء.
+  /// حزمة User Manager غير مثبتة على الراوتر).
+  ///
+  /// سريعة بالتصميم: الحالة الشائعة في v6 تنتهي بأمر واحد لأن صف
+  /// المستخدم نفسه يحمل `actual-profile`؛ جدول الربط يُستعلم فقط إذا
+  /// بقيت كروت بلا بروفايل بعد القراءة الأولى.
   Future<List<UmSyncedCard>> fetchCards(RouterOsTalker talker) async {
     final rows = await _fetchUserRows(talker);
-    final profileByUser = await _loadProfileMap(talker);
 
     final cards = <UmSyncedCard>[];
     for (final row in rows) {
-      final name = (row['name'] ?? '').trim();
+      // v6 يسمي الحقل username؛ نبقي name احتياطاً لإصدارات أخرى.
+      final name = ((row['username'] ?? row['name']) ?? '').trim();
       if (name.isEmpty) continue;
 
-      // البروفايل: actual-profile ثم profile ثم جدول الربط.
+      // البروفايل: actual-profile ثم profile (كلاهما في صف المستخدم v6).
       var profile = (row['actual-profile'] ?? '').trim();
       if (profile.isEmpty) profile = (row['profile'] ?? '').trim();
-      if (profile.isEmpty) profile = profileByUser[name] ?? '';
 
       cards.add(UmSyncedCard(
         name: name,
         password: (row['password'] ?? '').trim(),
         profile: profile,
         disabled: (row['disabled'] ?? 'false').trim(),
-        limitUptime: (row['limit-uptime'] ?? '').trim(),
+        // v6 يسمي الحد uptime-limit؛ نبقي limit-uptime احتياطاً.
+        limitUptime:
+            ((row['uptime-limit'] ?? row['limit-uptime']) ?? '').trim(),
         uptimeUsed: (row['uptime-used'] ?? '').trim(),
         comment: (row['comment'] ?? '').trim(),
         mikrotikId: (row['.id'] ?? '').trim(),
       ));
+    }
+
+    // الطبقة الاحتياطية: جدول الربط يُقرأ فقط عند وجود كروت بلا
+    // بروفايل — فتكون المزامنة الاعتيادية بأمر واحد سريعة.
+    if (cards.any((c) => c.profile.isEmpty)) {
+      final profileByUser = await _loadProfileMap(talker);
+      if (profileByUser.isNotEmpty) {
+        for (var i = 0; i < cards.length; i++) {
+          final card = cards[i];
+          if (card.profile.isNotEmpty) continue;
+          final mapped = profileByUser[card.name];
+          if (mapped == null || mapped.isEmpty) continue;
+          cards[i] = UmSyncedCard(
+            name: card.name,
+            password: card.password,
+            profile: mapped,
+            disabled: card.disabled,
+            limitUptime: card.limitUptime,
+            uptimeUsed: card.uptimeUsed,
+            comment: card.comment,
+            mikrotikId: card.mikrotikId,
+          );
+        }
+      }
     }
 
     cards.sort((a, b) {
@@ -156,8 +193,12 @@ class UmCardsSyncService {
     try {
       return await talker.talk(const [
         '/tool/user-manager/user/print',
-        '=.proplist=.id,name,password,disabled,comment,limit-uptime,uptime-used,actual-profile,profile',
-      ]).timeout(_talkTimeout);
+        // v6: username وuptime-limit هما الأسماء الحقيقية؛ name و
+        // limit-uptime بدائل احتياطية. الراوتر يتجاهل ما لا يعرفه
+        // بصمت، لذا نطلب الاثنين ونقرأ ما ورد.
+        '=.proplist=.id,username,name,password,disabled,comment,'
+            'uptime-limit,limit-uptime,uptime-used,actual-profile,profile',
+      ]).timeout(_userPrintTimeout);
     } catch (error) {
       // نضمّن نص الخطأ الأصلي في الرسالة حتى يستمر عمل منطق كشف
       // انقطاع السوكِت في الشاشة (isSocketClosedError).
@@ -167,17 +208,18 @@ class UmCardsSyncService {
     }
   }
 
-  /// جدول ربط المستخدم بالبروفايل — بصيغتي v6 (user profile و
-  /// user-profile)؛ الفشل غير قاتل لأن صف المستخدم نفسه يحمل غالباً
-  /// actual-profile أو profile.
+  /// جدول ربط المستخدم بالبروفايل — بصيغتي v6 (user-profile أولاً
+  /// لأنها القائمة الفعلية في v6، ثم user profile احتياطاً)؛ الفشل
+  /// غير قاتل لأن صف المستخدم نفسه يحمل غالباً actual-profile أو
+  /// profile، وهذا الجدول يُستعلم فقط عند الحاجة.
   Future<Map<String, String>> _loadProfileMap(RouterOsTalker talker) async {
     final map = <String, String>{};
     for (final command in const [
-      <String>['/tool/user-manager/user/profile/print'],
       <String>['/tool/user-manager/user-profile/print'],
+      <String>['/tool/user-manager/user/profile/print'],
     ]) {
       try {
-        final rows = await talker.talk(command).timeout(_talkTimeout);
+        final rows = await talker.talk(command).timeout(_auxTimeout);
         for (final row in rows) {
           final user =
               (row['user'] ?? row['username'] ?? row['name'] ?? '').trim();

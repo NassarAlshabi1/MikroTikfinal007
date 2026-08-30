@@ -220,6 +220,92 @@ void main() {
         ['alpha/c', 'zeta/a', 'zeta/b'],
       );
     });
+
+    test('يقرأ حقول UM v6 الحقيقية username و uptime-limit', () async {
+      // الشكل الفعلي لصفوف /tool/user-manager/user/print في v6 —
+      // كما في سكربت التلجرام المجرّب: username وليس name،
+      // وuptime-limit وليس limit-uptime.
+      final talker = _FakeUmTalker(userRows: [
+        {
+          '.id': '*5',
+          'username': '1234567891',
+          'password': '1234567891',
+          'disabled': 'false',
+          'actual-profile': '10d',
+          'uptime-limit': '10d',
+          'uptime-used': '1d 03:00:00',
+        },
+        {
+          '.id': '*6',
+          'username': '1234567892',
+          'disabled': 'true',
+        },
+      ]);
+
+      final cards = await const UmCardsSyncService().fetchCards(talker);
+
+      expect(cards, hasLength(2));
+      final first = cards.firstWhere((c) => c.name == '1234567891');
+      expect(first.password, '1234567891');
+      expect(first.profile, '10d');
+      expect(first.limitUptime, '10d');
+      expect(first.uptimeUsed, '1d 03:00:00');
+      expect(first.isActive, isTrue);
+      expect(cards.firstWhere((c) => c.name == '1234567892').isExpired, isTrue);
+    });
+
+    test('قائمة الخصائص تطلب username و uptime-limit', () async {
+      final talker = _FakeUmTalker(userRows: const [
+        {'.id': '*1', 'username': 'u1', 'actual-profile': 'p'},
+      ]);
+
+      await const UmCardsSyncService().fetchCards(talker);
+
+      final printCommand =
+          talker.commands.firstWhere((c) => c.first.contains('user/print'));
+      final proplist = printCommand[1];
+      expect(proplist, contains('username'));
+      expect(proplist, contains('uptime-limit'));
+      expect(proplist, contains('actual-profile'));
+      expect(proplist, isNot(contains(' ')));
+    });
+
+    test('لا يستعلم جدول الربط إذا كل الكروت لها بروفايل (مزامنة سريعة)',
+        () async {
+      final talker = _FakeUmTalker(userRows: [
+        {'.id': '*1', 'username': 'u1', 'actual-profile': 'p1'},
+        {'.id': '*2', 'username': 'u2', 'profile': 'p2'},
+      ]);
+
+      final cards = await const UmCardsSyncService().fetchCards(talker);
+
+      expect(cards, hasLength(2));
+      // أمر واحد فقط: قراءة المستخدمين — لا جداول ربط.
+      expect(talker.commands, hasLength(1));
+      expect(talker.commands.single.first, '/tool/user-manager/user/print');
+    });
+
+    test('يستعلم جدول الربط فقط عند وجود كرت بلا بروفايل', () async {
+      final talker = _FakeUmTalker(
+        userRows: [
+          {'.id': '*1', 'username': 'u1', 'actual-profile': 'p1'},
+          {'.id': '*2', 'username': 'u2'},
+        ],
+        associationRows: [
+          {'user': 'u2', 'profile': 'linked'},
+        ],
+      );
+
+      final cards = await const UmCardsSyncService().fetchCards(talker);
+
+      expect(cards.firstWhere((c) => c.name == 'u2').profile, 'linked');
+      expect(
+        talker.commands
+            .any((c) => c.first == '/tool/user-manager/user-profile/print'),
+        isTrue,
+      );
+      expect(talker.commands, hasLength(2));
+    });
   });
 }
 
