@@ -5,41 +5,9 @@ import 'package:router_os_client/router_os_client.dart';
 
 import 'mikrotik_connector.dart';
 import 'theme/app_theme.dart';
+import 'services/router_os_card_gateway.dart' show RouterOsClientTalker;
 import 'services/secure_clipboard.dart';
-
-// ── Data models ──
-
-class SyncedCard {
-  final String name;
-  final String password;
-  final String profile;
-  final String disabled;
-  final String limitUptime;
-  final String comment;
-  final String? mikrotikId;
-
-  const SyncedCard({
-    required this.name,
-    this.password = '',
-    this.profile = '',
-    this.disabled = 'false',
-    this.limitUptime = '',
-    this.comment = '',
-    this.mikrotikId,
-  });
-
-  bool get isExpired {
-    // Disabled cards are treated as expired
-    if (disabled == 'true' || disabled == 'yes') return true;
-    // No uptime limit → not expired
-    if (limitUptime.isEmpty) return false;
-    // We cannot know uptime-used from Hotspot user print,
-    // so we just flag disabled ones as expired.
-    return false;
-  }
-
-  bool get isActive => !isExpired;
-}
+import 'services/um_cards_sync_service.dart';
 
 // ── Screen ──
 
@@ -53,15 +21,20 @@ class CardsSyncScreen extends StatefulWidget {
 class _CardsSyncScreenState extends State<CardsSyncScreen>
     with TickerProviderStateMixin {
   // ── State ──
-  bool _isLoading = true;
+  // لا تحميل عند الفتح — المزامنة اختيارية عبر زر المزامنة.
+  bool _isLoading = false;
   String? _errorMessage;
-  List<SyncedCard> _allCards = [];
-  List<SyncedCard> _filteredCards = [];
+  List<UmSyncedCard> _allCards = [];
+  List<UmSyncedCard> _filteredCards = [];
   final Set<String> _selectedNames = {};
   String _searchQuery = '';
   String? _profileFilter;
   bool _showExpiredOnly = false;
   bool _showActiveOnly = false;
+
+  /// هل نفّذ المستخدم المزامنة يدوياً؟ المزامنة اختيارية ولا تجري
+  /// أي اتصال بالراوتر عند فتح الشاشة.
+  bool _hasSynced = false;
 
   // Profiles extracted from cards
   List<String> _profiles = [];
@@ -77,7 +50,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
       duration: const Duration(milliseconds: 500),
     );
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
-    _syncCards();
+    // لا مزامنة تلقائية — المزامنة اختيارية عبر زر المزامنة.
   }
 
   @override
@@ -99,47 +72,21 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     try {
       client = await MikrotikConnector.connect();
 
-      // Fetch all hotspot users in one call
-      final response = await client.talk([
-        '/ip/hotspot/user/print',
-        '=.proplist=.id,name,password,disabled,profile,limit-uptime,comment',
-      ]).timeout(const Duration(seconds: 30));
+      // كروت User Manager فقط — لا يُقرأ الهوتسبوت هنا إطلاقاً.
+      const service = UmCardsSyncService();
+      final cards = await service.fetchCards(RouterOsClientTalker(client));
 
-      final cards = <SyncedCard>[];
       final profileSet = <String>{};
-
-      for (final row in response) {
-        final m = row;
-        final name = (m['name'] ?? '').toString().trim();
-        if (name.isEmpty) continue;
-
-        final profile = (m['profile'] ?? '').toString().trim();
-        if (profile.isNotEmpty) profileSet.add(profile);
-
-        cards.add(SyncedCard(
-          name: name,
-          password: (m['password'] ?? '').toString(),
-          profile: profile,
-          disabled: (m['disabled'] ?? 'false').toString(),
-          limitUptime: (m['limit-uptime'] ?? '').toString(),
-          comment: (m['comment'] ?? '').toString(),
-          mikrotikId: (m['.id'] ?? '').toString().trim(),
-        ));
+      for (final card in cards) {
+        if (card.profile.isNotEmpty) profileSet.add(card.profile);
       }
-
-      // Sort by profile then name
-      cards.sort((a, b) {
-        final pc = a.profile.compareTo(b.profile);
-        if (pc != 0) return pc;
-        return a.name.compareTo(b.name);
-      });
-
       final sortedProfiles = profileSet.toList()..sort();
 
       if (mounted) {
         setState(() {
           _allCards = cards;
           _profiles = sortedProfiles;
+          _hasSynced = true;
           _isLoading = false;
         });
         _applyFilters();
@@ -153,7 +100,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'فشل جلب الكروت: ${e.toString()}';
+          _errorMessage = 'فشل جلب كروت اليوزرمنجر: ${e.toString()}';
         });
       }
     } finally {
@@ -162,7 +109,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
   }
 
   void _applyFilters() {
-    var list = List<SyncedCard>.from(_allCards);
+    var list = List<UmSyncedCard>.from(_allCards);
 
     // Profile filter
     if (_profileFilter != null && _profileFilter!.isNotEmpty) {
@@ -227,8 +174,9 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('حذف الكروت المحددة'),
-        content: Text('هل أنت متأكد من حذف ${_selectedNames.length} كرت؟'),
+        title: const Text('حذف كروت اليوزرمنجر المحددة'),
+        content: Text(
+            'هل أنت متأكد من حذف ${_selectedNames.length} كرت من User Manager على الراوتر؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -258,7 +206,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         if (card.mikrotikId == null || card.mikrotikId!.isEmpty) continue;
         try {
           await client.talk([
-            '/ip/hotspot/user/remove',
+            '/tool/user-manager/user/remove',
             '=.id=${card.mikrotikId}',
           ]).timeout(const Duration(seconds: 10));
           deleted++;
@@ -291,7 +239,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     }
   }
 
-  void _copyCard(SyncedCard card) {
+  void _copyCard(UmSyncedCard card) {
     final text = '${card.name}\t${card.password}';
     SecureClipboard.copy(text, sensitive: true);
     if (mounted) {
@@ -340,7 +288,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('مزامنة الكروت',
+        title: const Text('مزامنة كروت اليوزرمنجر',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -367,7 +315,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                 children: [
                   CircularProgressIndicator(color: theme.primaryColor),
                   const SizedBox(height: 16),
-                  Text('جاري جلب الكروت...',
+                  Text('جاري مزامنة كروت اليوزرمنجر...',
                       style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.6),
                           fontSize: 13)),
@@ -376,11 +324,60 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             )
           : _errorMessage != null
               ? _buildError(theme)
-              : _buildContent(theme),
+              : !_hasSynced
+                  ? _buildIdle(theme)
+                  : _buildContent(theme),
+    );
+  }
+
+  /// حالة الخمول قبل أول مزامنة — المزامنة اختيارية عبر الزر فقط.
+  Widget _buildIdle(ThemeData theme) {
+    final cs = theme.colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: theme.primaryColor.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.sync, size: 44, color: theme.primaryColor),
+            ),
+            const SizedBox(height: 20),
+            Text('المزامنة اختيارية',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface)),
+            const SizedBox(height: 8),
+            Text(
+              'لا يتم أي اتصال بالراوتر عند فتح الشاشة. اضغط زر المزامنة '
+              'لجلب كروت User Manager (الاسم، كلمة المرور، البروفايل، '
+              'والحد الزمني) متى شئت.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 12,
+                  height: 1.6,
+                  color: cs.onSurface.withValues(alpha: 0.6)),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _syncCards,
+              icon: const Icon(Icons.sync, size: 18),
+              label: const Text('مزامنة الآن', style: TextStyle(fontSize: 13)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildError(ThemeData theme) {
+    final cs = theme.colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -393,6 +390,16 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             Text(_errorMessage!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 10),
+            Text(
+              'تأكد أن حزمة User Manager مثبتة على الراوتر وأن مستخدم '
+              'API لديه صلاحية /tool user-manager',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 11,
+                  height: 1.5,
+                  color: cs.onSurface.withValues(alpha: 0.45)),
+            ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _syncCards,
@@ -425,7 +432,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
           Expanded(
             child: _filteredCards.isEmpty
                 ? Center(
-                    child: Text('لا توجد كروت',
+                    child: Text('لا توجد كروت في اليوزرمنجر',
                         style: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.5),
                             fontSize: 13)),
@@ -503,7 +510,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         },
         style: const TextStyle(fontSize: 13),
         decoration: InputDecoration(
-          hintText: 'بحث بالاسم أو الفئة...',
+          hintText: 'بحث بالاسم أو البروفايل...',
           hintStyle: TextStyle(
               fontSize: 13, color: cs.onSurface.withValues(alpha: 0.4)),
           prefixIcon: Icon(Icons.search,
@@ -621,7 +628,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _profileFilter,
-          hint: Text('الفئة',
+          hint: Text('البروفايل',
               style: TextStyle(
                   fontSize: 11, color: cs.onSurface.withValues(alpha: 0.6))),
           isDense: true,
@@ -694,7 +701,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                 Icon(Icons.category,
                     size: 14, color: cs.onSurface.withValues(alpha: 0.5)),
                 const SizedBox(width: 4),
-                Text('تحديد حسب الفئة',
+                Text('تحديد حسب البروفايل',
                     style: TextStyle(
                         fontSize: 11,
                         color: cs.onSurface.withValues(alpha: 0.7))),
@@ -727,7 +734,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تحديد حسب الفئة', style: TextStyle(fontSize: 15)),
+        title:
+            const Text('تحديد حسب البروفايل', style: TextStyle(fontSize: 15)),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -764,7 +772,15 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
 
   // ── Card tile ──
 
-  Widget _buildCardTile(SyncedCard card, ThemeData theme) {
+  /// نص الاستهلاك الزمني للكرت (خاصية User Manager).
+  String _usageText(UmSyncedCard card) {
+    if (card.uptimeUsed.isEmpty && card.limitUptime.isEmpty) return '';
+    if (card.limitUptime.isEmpty) return 'الاستخدام: ${card.uptimeUsed}';
+    if (card.uptimeUsed.isEmpty) return 'الحد الزمني: ${card.limitUptime}';
+    return 'الاستخدام: ${card.uptimeUsed} من ${card.limitUptime}';
+  }
+
+  Widget _buildCardTile(UmSyncedCard card, ThemeData theme) {
     final cs = theme.colorScheme;
     final isSelected = _selectedNames.contains(card.name);
     final expired = card.isExpired;
@@ -897,6 +913,24 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                         ],
                       ],
                     ),
+                    if (_usageText(card).isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(Icons.timer_outlined,
+                              size: 10,
+                              color: cs.onSurface.withValues(alpha: 0.4)),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(_usageText(card),
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: cs.onSurface.withValues(alpha: 0.5)),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

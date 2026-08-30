@@ -1657,7 +1657,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         },
       ),
       ServiceItem(
-        title: 'مزامنة الكروت',
+        title: 'مزامنة كروت اليوزرمنجر',
         icon: Icons.sync,
         color: context.theme.appColors.primary,
         onTap: () {
