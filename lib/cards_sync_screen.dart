@@ -50,7 +50,7 @@ class CardsSyncScreen extends StatefulWidget {
   State<CardsSyncScreen> createState() => _CardsSyncScreenState();
 }
 
-class _CardsSyncScreenState extends State<CardsSyncScreen> {
+class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderStateMixin {
   // ── State ──
   bool _isLoading = true;
   String? _errorMessage;
@@ -108,8 +108,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> {
       final profileSet = <String>{};
 
       for (final row in response) {
-        if (row is! Map) continue;
-        final m = Map<String, dynamic>.from(row);
+        final m = (row is Map<String, dynamic>) ? row : Map<String, dynamic>.from(row as Map);
         final name = (m['name'] ?? '').toString().trim();
         if (name.isEmpty) continue;
 
@@ -615,7 +614,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> {
           icon: Icon(Icons.arrow_drop_down,
               size: 16, color: cs.onSurface.withValues(alpha: 0.5)),
           items: [
-            DropdownMenuItem<String>(
+            const DropdownMenuItem<String>(
               value: null,
               child: Text('الكل', style: TextStyle(fontSize: 11)),
             ),

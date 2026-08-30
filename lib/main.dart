@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart' as provider;
 
 // Riverpod providers
 import 'providers/app_theme_provider.dart';
@@ -1266,7 +1267,7 @@ class CustomLoadingIndicator extends StatelessWidget {
 // --- HomeScreen with new UI ---
 enum MikrotikMode { userManager, hotspot }
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   final bool isVersion7OrNewer;
   final String username;
 
@@ -1277,7 +1278,7 @@ class HomeScreen extends StatefulWidget {
   });
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 // --- Data class for Service items ---
@@ -1295,7 +1296,7 @@ class ServiceItem {
   });
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>> _profiles = [];
   bool _isLoadingProfiles = true;
   // فئات الكروت في شاشة الإدارة مصدرها User Manager فقط.
