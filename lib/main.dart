@@ -545,79 +545,78 @@ class _LoginScreenState extends State<LoginScreen>
                 builder: (context, ref, _) {
                   final themeProvider = ref.watch(appThemeProvider);
                   return Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surface
-                        .withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Icon(
-                        themeProvider.isDarkMode
-                            ? Icons.light_mode_rounded
-                            : Icons.dark_mode_rounded,
-                        key: ValueKey(themeProvider.isDarkMode),
-                        color: themeProvider.isDarkMode
-                            ? Theme.of(context).appColors.warning
-                            : Theme.of(context).appColors.primary,
-                        size: 26,
-                      ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    tooltip: themeProvider.isDarkMode
-                        ? 'التبديل للثيم الفاتح'
-                        : 'التبديل للثيم الغامق',
-                    onPressed: () async {
-                      await themeProvider.toggleTheme();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  themeProvider.isDarkMode
-                                      ? Icons.dark_mode
-                                      : Icons.light_mode,
-                                  size: 20,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  themeProvider.isDarkMode
-                                      ? 'تم التبديل للثيم الغامق'
-                                      : 'تم التبديل للثيم الفاتح',
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              ],
+                    child: IconButton(
+                      icon: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Icon(
+                          themeProvider.isDarkMode
+                              ? Icons.light_mode_rounded
+                              : Icons.dark_mode_rounded,
+                          key: ValueKey(themeProvider.isDarkMode),
+                          color: themeProvider.isDarkMode
+                              ? Theme.of(context).appColors.warning
+                              : Theme.of(context).appColors.primary,
+                          size: 26,
+                        ),
+                      ),
+                      tooltip: themeProvider.isDarkMode
+                          ? 'التبديل للثيم الفاتح'
+                          : 'التبديل للثيم الغامق',
+                      onPressed: () async {
+                        await themeProvider.toggleTheme();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    themeProvider.isDarkMode
+                                        ? Icons.dark_mode
+                                        : Icons.light_mode,
+                                    size: 20,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    themeProvider.isDarkMode
+                                        ? 'تم التبديل للثيم الغامق'
+                                        : 'تم التبديل للثيم الفاتح',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            duration: const Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              },
+                          );
+                        }
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
           ],
         ),
       ),
@@ -1765,42 +1764,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
               builder: (context, ref, child) {
                 final themeProvider = ref.watch(appThemeProvider);
                 return IconButton(
-                icon: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Icon(
-                    themeProvider.isDarkMode
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                    key: ValueKey(themeProvider.isDarkMode),
-                    color: themeProvider.isDarkMode
-                        ? Theme.of(context).appColors.warning
-                        : Theme.of(context).appColors.primary,
+                  icon: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Icon(
+                      themeProvider.isDarkMode
+                          ? Icons.light_mode
+                          : Icons.dark_mode,
+                      key: ValueKey(themeProvider.isDarkMode),
+                      color: themeProvider.isDarkMode
+                          ? Theme.of(context).appColors.warning
+                          : Theme.of(context).appColors.primary,
+                    ),
                   ),
-                ),
-                tooltip: themeProvider.isDarkMode
-                    ? 'التبديل للثيم الفاتح'
-                    : 'التبديل للثيم الغامق',
-                onPressed: () async {
-                  await themeProvider.toggleTheme();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          themeProvider.isDarkMode
-                              ? 'تم التبديل للثيم الغامق'
-                              : 'تم التبديل للثيم الفاتح',
-                          style: const TextStyle(fontSize: 14),
+                  tooltip: themeProvider.isDarkMode
+                      ? 'التبديل للثيم الفاتح'
+                      : 'التبديل للثيم الغامق',
+                  onPressed: () async {
+                    await themeProvider.toggleTheme();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            themeProvider.isDarkMode
+                                ? 'تم التبديل للثيم الغامق'
+                                : 'تم التبديل للثيم الفاتح',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                        duration: const Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                  }
-                },
-            ),
+                      );
+                    }
+                  },
+                );
               },
             ),
             IconButton(
