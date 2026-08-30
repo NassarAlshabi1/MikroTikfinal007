@@ -231,11 +231,10 @@ class _LoginScreenState extends State<LoginScreen>
   final _remotePasswordController = TextEditingController();
   // L2TP VPN controllers
   final _l2tpServerController = TextEditingController();
-  final _l2tpSecretController = TextEditingController();
-  final _l2tpRouterIpController = TextEditingController();
   final _l2tpUserController = TextEditingController();
   final _l2tpPasswordController = TextEditingController();
   final _l2tpPortController = TextEditingController(text: '8728');
+  String _l2tpDetectedRouterIp = '';
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -341,8 +340,6 @@ class _LoginScreenState extends State<LoginScreen>
     if (prefs.getBool('remember_l2tp') ?? false) {
       setState(() {
         _l2tpServerController.text = prefs.getString('l2tp_server') ?? '';
-        _l2tpSecretController.text = prefs.getString('l2tp_secret') ?? '';
-        _l2tpRouterIpController.text = prefs.getString('l2tp_router_ip') ?? '';
         _l2tpUserController.text = prefs.getString('l2tp_user') ?? '';
         _l2tpPortController.text = prefs.getString('l2tp_port') ?? '8728';
       });
@@ -442,8 +439,6 @@ class _LoginScreenState extends State<LoginScreen>
     _remoteUserController.dispose();
     _remotePasswordController.dispose();
     _l2tpServerController.dispose();
-    _l2tpSecretController.dispose();
-    _l2tpRouterIpController.dispose();
     _l2tpUserController.dispose();
     _l2tpPasswordController.dispose();
     _l2tpPortController.dispose();
@@ -827,39 +822,18 @@ class _LoginScreenState extends State<LoginScreen>
         TextField(
           controller: _l2tpServerController,
           decoration: const InputDecoration(
-            labelText: 'عنوان خادم L2TP',
+            labelText: 'عنوان VPN (IP أو Domain)',
             hintText: 'vpn.example.com أو 1.2.3.4',
             prefixIcon: Icon(Icons.vpn_lock),
           ),
           keyboardType: TextInputType.url,
         ),
         const SizedBox(height: 12),
-        // L2TP Secret (اختياري)
-        TextField(
-          controller: _l2tpSecretController,
-          obscureText: true,
-          decoration: const InputDecoration(
-            labelText: 'L2TP Secret (اختياري)',
-            prefixIcon: Icon(Icons.key),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // عنوان الراوتر داخل VPN
-        TextField(
-          controller: _l2tpRouterIpController,
-          decoration: const InputDecoration(
-            labelText: 'IP الراوتر داخل VPN',
-            hintText: '10.0.0.1 أو 192.168.100.1',
-            prefixIcon: Icon(Icons.router),
-          ),
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 12),
         // اسم المستخدم
         TextField(
           controller: _l2tpUserController,
           decoration: const InputDecoration(
-            labelText: 'اسم مستخدم L2TP',
+            labelText: 'اسم المستخدم',
             prefixIcon: Icon(Icons.person_outline),
           ),
         ),
@@ -869,7 +843,7 @@ class _LoginScreenState extends State<LoginScreen>
           controller: _l2tpPasswordController,
           obscureText: true,
           decoration: const InputDecoration(
-            labelText: 'كلمة مرور L2TP',
+            labelText: 'كلمة المرور',
             prefixIcon: Icon(Icons.lock_outline),
           ),
         ),
@@ -884,6 +858,28 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           keyboardType: TextInputType.number,
         ),
+        if (_l2tpDetectedRouterIp.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: context.theme.appColors.success.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, size: 16, color: context.theme.appColors.success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'راوتر مكتشف: $_l2tpDetectedRouterIp',
+                    style: TextStyle(fontSize: 11, color: context.theme.appColors.success),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         // زر الاتصال
         ElevatedButton.icon(
@@ -927,7 +923,7 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           _isVpnConnected
               ? '✅ اتصال VPN نشط — يمكنك الآن الاتصال بالراوتر'
-              : 'يتطلب إعداد L2TP على الخادم أولاً',
+              : 'أدخل عنوان VPN + اسم المستخدم + كلمة المرور',
           textAlign: TextAlign.center,
           style: TextStyle(color: context.theme.appColors.muted, fontSize: 11),
         ),
@@ -944,11 +940,7 @@ class _LoginScreenState extends State<LoginScreen>
   /// إنشاء اتصال L2TP VPN عبر Android VPN Service
   Future<void> _l2tpConnect() async {
     if (_l2tpServerController.text.isEmpty) {
-      setState(() => _errorMessage = 'الرجاء إدخال عنوان خادم L2TP');
-      return;
-    }
-    if (_l2tpRouterIpController.text.isEmpty) {
-      setState(() => _errorMessage = 'الرجاء إدخال IP الراوتر داخل VPN');
+      setState(() => _errorMessage = 'الرجاء إدخال عنوان VPN');
       return;
     }
     if (_l2tpUserController.text.isEmpty || _l2tpPasswordController.text.isEmpty) {
@@ -966,8 +958,6 @@ class _LoginScreenState extends State<LoginScreen>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('remember_l2tp', true);
       await prefs.setString('l2tp_server', _l2tpServerController.text.trim());
-      await prefs.setString('l2tp_secret', _l2tpSecretController.text.trim());
-      await prefs.setString('l2tp_router_ip', _l2tpRouterIpController.text.trim());
       await prefs.setString('l2tp_user', _l2tpUserController.text.trim());
       await prefs.setString('l2tp_port', _l2tpPortController.text.trim());
 
@@ -980,29 +970,35 @@ class _LoginScreenState extends State<LoginScreen>
         try {
           final result = await _vpnChannel.invokeMethod('startVpn', {
             'server': _l2tpServerController.text.trim(),
-            'secret': _l2tpSecretController.text.trim(),
+            'secret': '',
             'user': _l2tpUserController.text.trim(),
             'password': _l2tpPasswordController.text,
-            'routerIp': _l2tpRouterIpController.text.trim(),
+            'routerIp': '',
           });
 
           if (result is Map) {
             final status = result['status'] as String?;
             if (status == 'permission_needed') {
-              // المستخدم يحتاج لمنح صلاحية VPN
               setState(() => _isVpnConnecting = false);
               if (mounted) showSuccessSnackBar(context, 'يرجى منح صلاحية VPN في نافذة النظام');
               return;
             }
           }
 
-          // انتظار الاتصال
+          // انتظار قليل ثم اكتشاف الراوتر تلقائياً
+          await Future.delayed(const Duration(seconds: 3));
+          final detectedIp = await _detectRouterIp();
+
           setState(() {
             _isVpnConnected = true;
             _isVpnConnecting = false;
+            _l2tpDetectedRouterIp = detectedIp;
           });
           if (mounted) {
-            showSuccessSnackBar(context, 'تم إنشاء اتصال VPN — اضغط "الدخول للراوتر"');
+            final msg = detectedIp.isNotEmpty
+                ? '✅ VPN متصل — راوتر مكتشف: $detectedIp'
+                : 'تم إنشاء اتصال VPN — اضغط "الدخول للراوتر"';
+            showSuccessSnackBar(context, msg);
           }
         } on PlatformException catch (e) {
           if (mounted) {
@@ -1032,10 +1028,22 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  /// اكتشاف عنوان الراوتر داخل VPN تلقائياً
+  Future<String> _detectRouterIp() async {
+    try {
+      final gatewayIp = await NetworkInfo().getWifiGatewayIP();
+      if (gatewayIp != null && gatewayIp.isNotEmpty) {
+        return gatewayIp;
+      }
+    } catch (_) {}
+    // محاولة IPs شائعة للراوترات
+    return '';
+  }
+
   /// الاتصال بالراوتر عبر VPN
   Future<void> _l2tpLoginToRouter() async {
-    if (_l2tpRouterIpController.text.isEmpty || _l2tpUserController.text.isEmpty) {
-      setState(() => _errorMessage = 'الرجاء إدخال IP الراوتر واسم المستخدم');
+    if (_l2tpUserController.text.isEmpty) {
+      setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم');
       return;
     }
 
@@ -1045,9 +1053,23 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
+      // اكتشاف أو استخدام عنوان الراوتر
+      String routerIp = _l2tpDetectedRouterIp;
+      if (routerIp.isEmpty) {
+        routerIp = await _detectRouterIp();
+        if (routerIp.isEmpty) {
+          setState(() {
+            _errorMessage = 'لم يتم اكتشاف الراوتر. تأكد من اتصال VPN.';
+            _isLoading = false;
+          });
+          return;
+        }
+        setState(() => _l2tpDetectedRouterIp = routerIp);
+      }
+
       // حفظ إعدادات الراوتر في SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('ip', _l2tpRouterIpController.text.trim());
+      await prefs.setString('ip', routerIp);
       final port = _l2tpPortController.text.trim().isEmpty
           ? '8728'
           : _l2tpPortController.text.trim();
