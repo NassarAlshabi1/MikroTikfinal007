@@ -118,6 +118,52 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('لا يقص آخر خانة من رقم طويل داخل منطقة نص ضيقة جداً', () async {
+    // قبل الإصلاح كان النص يُقتطع بصرياً عند تجاوز عرض منطقة النص
+    // (1234567891 تظهر مطبوعة 123456789). الآن يُصغَّر النص ليلائم.
+    final template = PdfTemplate(
+      profileName: 'default',
+      imagePath: 'assets/images/wifi_logo.png',
+      textXRatio: 0.5,
+      textYRatio: 0.5,
+      cardsPerPage: 2,
+      imageWidth: 800,
+      imageHeight: 500,
+      markerWidthRatio: 0.04,
+      markerHeightRatio: 0.08,
+    )..validate();
+
+    final bytes = await PdfGenerator.generatePdfBytes(
+      cardUsernames: const ['1234567891', '9876543210'],
+      template: template,
+    );
+
+    expect(bytes.length, greaterThan(100));
+    expect(utf8.decode(bytes.sublist(0, 4)), '%PDF');
+  });
+
+  test('رقم قصير يظل يولد PDF صالحاً مع ملء تلقائي', () async {
+    final template = PdfTemplate(
+      profileName: 'default',
+      imagePath: 'assets/images/wifi_logo.png',
+      textXRatio: 0.5,
+      textYRatio: 0.5,
+      cardsPerPage: 1,
+      imageWidth: 800,
+      imageHeight: 500,
+      markerWidthRatio: 0.5,
+      markerHeightRatio: 0.2,
+    )..validate();
+
+    final bytes = await PdfGenerator.generatePdfBytes(
+      cardUsernames: const ['12345'],
+      template: template,
+    );
+
+    expect(bytes.length, greaterThan(100));
+    expect(utf8.decode(bytes.sublist(0, 4)), '%PDF');
+  });
 }
 
 PdfTemplate _template(String imagePath, {int cardsPerPage = 6}) {

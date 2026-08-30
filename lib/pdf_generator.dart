@@ -110,11 +110,16 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
                     child: pw.SizedBox(
                       width: boxWidth,
                       height: boxHeight,
-                      child: pw.Center(
+                      // scaleDown بدلاً من clip: إذا كان الرقم أعرض من
+                      // منطقة النص يُصغَّر ليلائم الصندوق كاملاً — لا
+                      // يُقتطع آخر خانة أبداً (1234567891 لا تظهر 123456789).
+                      child: pw.FittedBox(
+                        fit: pw.BoxFit.scaleDown,
+                        alignment: pw.Alignment.center,
                         child: pw.Text(
                           username,
                           maxLines: 1,
-                          overflow: pw.TextOverflow.clip,
+                          softWrap: false,
                           textAlign: pw.TextAlign.center,
                           textDirection: pw.TextDirection.ltr,
                           style: pw.TextStyle(
