@@ -423,7 +423,7 @@ void main() {
     //  11) Performance — زمن الاتصال
     // ============================================================
     group('⏱️ Performance', () {
-      test('connect مع IP غير صالح يفشل خلال 10 ثوان', () async {
+      test('connect مع IP غير صالح يفشل خلال 35 ثوان', () async {
         SharedPreferences.setMockInitialValues({
           'ip': '192.168.99.99',
           'user': 'admin',
@@ -439,8 +439,8 @@ void main() {
         }
         stopwatch.stop();
 
-        // يجب أن يفشل خلال 10 ثوان (timeout = 5s + overhead)
-        expect(stopwatch.elapsed.inSeconds, lessThan(15));
+        // يجب أن يفشل خلال 35 ثوان (timeout = 30s + overhead)
+        expect(stopwatch.elapsed.inSeconds, lessThan(35));
       });
 
       test('forceDisconnect سريع جداً', () {

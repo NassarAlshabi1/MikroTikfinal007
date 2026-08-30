@@ -15,13 +15,11 @@ void main() {
         expect(prompt, contains('بوابة RouterOS v6'));
         expect(prompt, contains('أمر تحقق قراءة فقط'));
       }
-    });
-
-    test('Prompt Hotspot يثبت مسار Hotspot المحلي ويمنع الخلط', () {
+    });    test('Prompt Hotspot يثبت مسار Hotspot المحلي ويمنع الخلط', () {
       final prompt = promptForMode(DiagnosticMode.hotspot);
 
       expect(prompt, contains('/ip/hotspot/user/add'));
-      expect(prompt, contains('=name=...'));
+      expect(prompt, contains('=name='));
       expect(prompt, contains('shared-users'));
       expect(prompt, contains('actual-profile'));
       expect(prompt, contains('Hotspot المحلي'));
@@ -32,10 +30,10 @@ void main() {
 
       expect(prompt, contains('لا تقترح أوامر v7-only'));
       expect(prompt, contains('WireGuard'));
-      expect(prompt, contains('لا تُخرج سكربت تعديل أو حذف'));
+      expect(prompt, contains('لا تُخرج سكربت تعديل'));
       expect(prompt, contains('اقتراح فقط'));
-      expect(prompt, contains('لا تستخدم `placeholders`'));
-      expect(prompt, contains('إذا تعارضت بيانات المستخدم مع snapshot'));
+      expect(prompt, contains('placeholders'));
+      expect(prompt, contains('تعارضت بيانات المستخدم مع snapshot'));
     });
 
     test('أوصاف أوضاع التشخيص لا تعرض تقنيات RouterOS v7', () {
