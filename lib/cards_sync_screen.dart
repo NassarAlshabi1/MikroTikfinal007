@@ -108,7 +108,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen> with TickerProviderSt
       final profileSet = <String>{};
 
       for (final row in response) {
-        final m = (row is Map<String, dynamic>) ? row : Map<String, dynamic>.from(row as Map);
+        final m = row;
         final name = (m['name'] ?? '').toString().trim();
         if (name.isEmpty) continue;
 

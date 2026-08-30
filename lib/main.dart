@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -616,7 +615,7 @@ class _LoginScreenState extends State<LoginScreen>
                     },
                   ),
                 ),
-              ),
+              },
             ),
           ],
         ),
@@ -1801,6 +1800,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   }
                 },
               ),
+            },
             ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
