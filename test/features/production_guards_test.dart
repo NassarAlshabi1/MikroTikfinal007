@@ -16,6 +16,8 @@ void main() {
       'type': 'success',
       'users': [card.toMap()],
       'count': 1,
+      'failedCount': 2,
+      'warning': 'تعذر إكمال التحقق.',
       'address': '192.0.2.1',
     });
 
@@ -24,6 +26,18 @@ void main() {
     expect(event.type, 'success');
     expect(event.users.single.username, '10000001');
     expect(event.count, 1);
+    expect(event.failedCount, 2);
+    expect(event.warning, 'تعذر إكمال التحقق.');
+  });
+
+  test('GenerationEvent يقرأ قيم failedCount و warning الافتراضية', () {
+    final event = GenerationEvent.fromRaw({
+      'type': 'success',
+      'users': [],
+    });
+
+    expect(event.failedCount, 0);
+    expect(event.warning, isEmpty);
   });
 
   test('بصمة Job ثابتة رغم اختلاف ترتيب parameters', () {

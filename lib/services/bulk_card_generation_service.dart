@@ -117,6 +117,8 @@ class GenerationEvent {
   final String status;
   final String message;
   final int count;
+  final int failedCount;
+  final String warning;
   final String address;
   final bool resumable;
 
@@ -127,6 +129,8 @@ class GenerationEvent {
     this.status = '',
     this.message = '',
     this.count = 0,
+    this.failedCount = 0,
+    this.warning = '',
     this.address = '',
     this.resumable = false,
   });
@@ -158,6 +162,8 @@ class GenerationEvent {
       status: raw['status']?.toString() ?? '',
       message: raw['message']?.toString() ?? '',
       count: (raw['count'] as num?)?.toInt() ?? users.length,
+      failedCount: (raw['failedCount'] as num?)?.toInt() ?? 0,
+      warning: raw['warning']?.toString() ?? '',
       address: raw['address']?.toString() ?? '',
       resumable: raw['resumable'] == true,
     );

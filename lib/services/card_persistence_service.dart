@@ -201,10 +201,10 @@ class CardPersistenceService {
   ) async {
     if (generationJobId.trim().isEmpty) return const [];
     final isar = await IsarProvider().instance;
+    // يستخدم فهرس (generationJobId, status) المركب مباشرة بدل مسح كامل.
     final cards = await isar.cardCollections
-        .filter()
-        .generationJobIdEqualTo(generationJobId)
-        .statusEqualTo('pending')
+        .where()
+        .generationJobIdStatusEqualTo(generationJobId, 'pending')
         .findAll();
     return cards
         .map((card) => <String, String>{
@@ -215,16 +215,20 @@ class CardPersistenceService {
   }
 
   /// يحذف الحجوزات التي لم يؤكدها الراوتر بعد فشل جزئي أو إلغاء العملية.
+  ///
+  /// يمكن حقن `isar` مباشرة (مثلاً من Isolate خلفي فتح مثيله الخاص) لتجنب
+  /// تنفيذ الحذف على Isolate الواجهة.
   static Future<int> removePendingGeneratedCards(
     List<Map<String, String>> users, {
     String? generationJobId,
+    Isar? isar,
   }) async {
     final normalized = _normalizeUsers(users);
     if (normalized.isEmpty) return 0;
 
-    final isar = await IsarProvider().instance;
-    return isar.writeTxn(() async {
-      final existingCards = await isar.cardCollections
+    final db = isar ?? await IsarProvider().instance;
+    return db.writeTxn(() async {
+      final existingCards = await db.cardCollections
           .where()
           .anyOf(normalized.keys, (query, username) {
         return query.usernameEqualTo(username);
@@ -237,7 +241,7 @@ class CardPersistenceService {
           .map((card) => card.id)
           .toList(growable: false);
       if (ids.isEmpty) return 0;
-      return isar.cardCollections.deleteAll(ids);
+      return db.cardCollections.deleteAll(ids);
     });
   }
 

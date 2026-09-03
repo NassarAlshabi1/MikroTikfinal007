@@ -130,6 +130,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   Future<void> _initializeLocalBulkData() async {
     try {
       await CardPersistenceService.cleanupStalePendingCards();
+      // يُنهي العمليات العالقة من جلسات سابقة (القفل في الذاكرة فقط، فلا
+      // يصمد أمام إغلاق التطبيق) حتى لا تبقى شبحاً قابل للاستئناف في الواجهة.
+      await CardGenerationJobService.expireStaleJobs();
       await CardGenerationJobService.deleteOldTerminalJobs();
       final jobs = await CardGenerationJobService.loadResumable();
       if (mounted) setState(() => _resumableJobs = jobs);
@@ -322,7 +325,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       charType: _charType,
       cardType: _cardType,
       linkPasswordToFirstUser: _linkPasswordToFirstUser,
-      isVersion7OrNewer: false,
+      isVersion7OrNewer: widget.isVersion7OrNewer,
       connectionConfig: connectionConfig,
       customer: widget.username,
       serviceMode: widget.serviceMode,
@@ -394,6 +397,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       'status': event.status,
       'message': event.message,
       'count': event.count,
+      'failedCount': event.failedCount,
+      'warning': event.warning,
       'address': event.address,
       'resumable': event.resumable,
     };
@@ -438,13 +443,20 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     if (type == 'progress') {
       final progress = (message['progress'] as num?)?.toDouble() ?? 0;
       setState(() {
-        _generationProgress = progress;
+        // الشاردات تعمل بالتوازي وكل واحد يبلغ عن تقدمه الجزئي؛ نمنع تراجع
+        // الشريط حتى لا يتحرك للخلف بين تقارير الشاردات.
+        if (progress > _generationProgress) {
+          _generationProgress = progress;
+        }
         _generationStatusText =
             message['status']?.toString() ?? 'جاري الإنشاء...';
       });
       final jobId = _generationJobId;
       if (jobId != null) {
-        final nextIndex = (progress * _reservedGenerationUsers.length).round();
+        // نستخدم التقدم المُقيّد (غير المتراجع) حتى لا يسجل مؤشر الجوب
+        // قيماً تنقص بين تقارير الشاردات المتوازية.
+        final clamped = _generationProgress;
+        final nextIndex = (clamped * _reservedGenerationUsers.length).round();
         unawaited(CardGenerationJobService.markProgress(
           jobId,
           nextIndex: nextIndex,
@@ -460,6 +472,8 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     if (type == 'success') {
       final users = _usersFromMessage(message['users']);
       final successCount = (message['count'] as num?)?.toInt() ?? users.length;
+      final failedCount = (message['failedCount'] as num?)?.toInt() ?? 0;
+      final warning = message['warning']?.toString() ?? '';
       final address = message['address']?.toString() ?? '';
       final jobId = _generationJobId;
       String? persistenceError;
@@ -478,6 +492,27 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       } catch (e) {
         persistenceError = e.toString();
         debugPrint('[BulkAdd] Isar activation error: $e');
+      }
+
+      // تنظيف احتياطي: أي كرت محجوز محلياً لم يؤكده الراوتر (مرفوض/غير
+      // مكتمل) يُحذف من pending حتى لا يبقى شبحاً قابلاً للاستئناف. الـ
+      // Isolate ينظف عادةً بنفسه؛ هذا شبكة أمان (Web/حالات نادرة).
+      if (jobId != null) {
+        final confirmedNames =
+            users.map((user) => user['username']).whereType<String>().toSet();
+        final unconfirmed = _reservedGenerationUsers
+            .where((user) => !confirmedNames.contains(user['username']))
+            .toList(growable: false);
+        if (unconfirmed.isNotEmpty) {
+          try {
+            await CardPersistenceService.removePendingGeneratedCards(
+              unconfirmed,
+              generationJobId: jobId,
+            );
+          } catch (e) {
+            debugPrint('[BulkAdd] pending cleanup error: $e');
+          }
+        }
       }
 
       if (jobId != null) {
@@ -507,12 +542,24 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       if (persistenceError != null) {
         showErrorSnackBar(context,
             'تمت الإضافة للراوتر لكن توجد مشكلة في تثبيت الحفظ المحلي: $persistenceError');
+      } else if (warning.isNotEmpty) {
+        showErrorSnackBar(context, warning);
       }
 
-      unawaited(_sendTelegramMessage(
+      final telegramMessage = StringBuffer(
         'تم إضافة $successCount كرت جديد بنجاح!\nIP: $address\nالفئة: $_selectedProfile',
-      ));
-      if (users.isNotEmpty) await _showSuccessDialog(users);
+      );
+      if (failedCount > 0) {
+        telegramMessage.write('\nفشل $failedCount كرت.');
+      }
+      unawaited(_sendTelegramMessage(telegramMessage.toString()));
+      if (users.isNotEmpty) {
+        await _showSuccessDialog(
+          users,
+          failedCount: failedCount,
+          warning: warning,
+        );
+      }
       return;
     }
 
@@ -641,7 +688,11 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     _generationJobId = null;
   }
 
-  Future<void> _showSuccessDialog(List<Map<String, String>> users) async {
+  Future<void> _showSuccessDialog(
+    List<Map<String, String>> users, {
+    int failedCount = 0,
+    String warning = '',
+  }) async {
     final List<String> userListForFile = users.map((user) {
       if (_cardType == 'username_only') return user['username']!;
       return 'username: ${user['username']}, password: ${user['password']}';
@@ -681,6 +732,31 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
             child: ListBody(
               children: <Widget>[
                 Center(child: Text('تم إنشاء ${users.length} كرت بنجاح!')),
+                if (failedCount > 0) ...[
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'فشل $failedCount كرت (رفضها الراوتر).',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+                if (warning.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      warning,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Theme.of(context).appColors.warning,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.visibility),
