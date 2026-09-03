@@ -148,14 +148,19 @@ const CardCollectionSchema = CollectionSchema(
         )
       ],
     ),
-    r'generationJobId': IndexSchema(
-      id: -1717821557028675960,
-      name: r'generationJobId',
+    r'generationJobId_status': IndexSchema(
+      id: 5771875388090575119,
+      name: r'generationJobId_status',
       unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
           name: r'generationJobId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        ),
+        IndexPropertySchema(
+          name: r'status',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -727,20 +732,20 @@ extension CardCollectionQueryWhere
   }
 
   QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
-      generationJobIdIsNull() {
+      generationJobIdIsNullAnyStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'generationJobId',
+        indexName: r'generationJobId_status',
         value: [null],
       ));
     });
   }
 
   QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
-      generationJobIdIsNotNull() {
+      generationJobIdIsNotNullAnyStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'generationJobId',
+        indexName: r'generationJobId_status',
         lower: [null],
         includeLower: false,
         upper: [],
@@ -749,28 +754,28 @@ extension CardCollectionQueryWhere
   }
 
   QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
-      generationJobIdEqualTo(String? generationJobId) {
+      generationJobIdEqualToAnyStatus(String? generationJobId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'generationJobId',
+        indexName: r'generationJobId_status',
         value: [generationJobId],
       ));
     });
   }
 
   QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
-      generationJobIdNotEqualTo(String? generationJobId) {
+      generationJobIdNotEqualToAnyStatus(String? generationJobId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'generationJobId',
+              indexName: r'generationJobId_status',
               lower: [],
               upper: [generationJobId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'generationJobId',
+              indexName: r'generationJobId_status',
               lower: [generationJobId],
               includeLower: false,
               upper: [],
@@ -778,15 +783,61 @@ extension CardCollectionQueryWhere
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'generationJobId',
+              indexName: r'generationJobId_status',
               lower: [generationJobId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'generationJobId',
+              indexName: r'generationJobId_status',
               lower: [],
               upper: [generationJobId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
+      generationJobIdStatusEqualTo(String? generationJobId, String status) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'generationJobId_status',
+        value: [generationJobId, status],
+      ));
+    });
+  }
+
+  QueryBuilder<CardCollection, CardCollection, QAfterWhereClause>
+      generationJobIdEqualToStatusNotEqualTo(
+          String? generationJobId, String status) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId_status',
+              lower: [generationJobId],
+              upper: [generationJobId, status],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId_status',
+              lower: [generationJobId, status],
+              includeLower: false,
+              upper: [generationJobId],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId_status',
+              lower: [generationJobId, status],
+              includeLower: false,
+              upper: [generationJobId],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'generationJobId_status',
+              lower: [generationJobId],
+              upper: [generationJobId, status],
               includeUpper: false,
             ));
       }

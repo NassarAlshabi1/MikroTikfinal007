@@ -57,7 +57,10 @@ class CardCollection {
   String? mikrotikUserId;
 
   /// معرّف عملية التوليد الجماعي في Isar
-  @Index()
+  ///
+  /// مركب مع `status` لتسريع قراءة الكروت المعلقة الخاصة بعملية استئناف
+  /// (استعلام loadPendingGeneratedCards يستخدم هذا الفهرس مباشرة).
+  @Index(composite: [CompositeIndex('status')])
   String? generationJobId;
 
   // ============================================================

@@ -2,10 +2,17 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:math';
 
+import 'package:isar/isar.dart';
 import 'package:router_os_client/router_os_client.dart';
 
+import 'database/isar/ai_diagnostic_collection.dart';
+import 'database/isar/card_collection.dart';
+import 'database/isar/card_generation_job.dart';
+import 'database/isar/executed_command_collection.dart';
+import 'database/isar/profile_collection.dart';
 import 'mikrotik_connector.dart';
 import 'services/card_number_policy.dart';
+import 'services/card_persistence_service.dart';
 import 'services/mikrotik_service_mode.dart';
 import 'services/mikrotik_card_commands.dart';
 import 'services/router_os_card_gateway.dart';
@@ -26,6 +33,13 @@ class BulkAddIsolateData {
   final MikrotikServiceMode serviceMode;
   final List<Map<String, String>>? plannedUsers;
 
+  /// مجلد قاعدة بيانات Isar (يُمرَّر حتى يفتح الـ Isolate نسخته الخاصة منها
+  /// دون الاعتماد على قنوات المنصة في Isolate الخلفية).
+  final String isarDirectory;
+
+  /// معرّف Job التوليد الحالي؛ يُسجَّل على الكروت المحجوزة محلياً.
+  final String generationJobId;
+
   BulkAddIsolateData({
     required this.sendPort,
     required this.count,
@@ -39,10 +53,17 @@ class BulkAddIsolateData {
     required this.isVersion7OrNewer,
     required this.connectionConfig,
     required this.customer,
+    required this.isarDirectory,
+    required this.generationJobId,
     this.serviceMode = MikrotikServiceMode.userManager,
     this.plannedUsers,
   });
 }
+
+/// كل كم كرت يتم الإبلاغ عن تقدم جزئي من داخل الشارد نفسه، حتى لا تقفز
+/// الواجهة بين 0% و100% على دفعات كبيرة (كان التقدم يُرسل عند اكتمال كل
+/// شارد فقط: 4 قفزات كحد أقصى).
+const int _progressReportCardInterval = 25;
 
 // ================================================================
 //  SHARD WORKER — processes a chunk of cards on ONE connection
@@ -54,6 +75,9 @@ Future<List<Map<String, String>>> _processShard({
   required MikrotikServiceMode serviceMode,
   required String profile,
   required BulkAddIsolateData data,
+  required SendPort sendPort,
+  required int cardsBefore,
+  required int totalCards,
 }) async {
   final created = <Map<String, String>>[];
 
@@ -95,11 +119,22 @@ Future<List<Map<String, String>>> _processShard({
 
   // Collect
   final addResults = <int, List<Map<String, String>>>{};
+  var addResponses = 0;
   await for (final resp in responses) {
     final tag = resp.tag;
     if (tag != null && tag.startsWith('add_')) {
       final idx = int.parse(tag.substring(4));
       addResults[idx] = resp.data;
+      addResponses++;
+      // تقدم مُخفف: كل استجابة add_ = كرت أُنشئ فعلاً على الراوتر.
+      if (addResponses % _progressReportCardInterval == 0) {
+        final done = cardsBefore + addResponses;
+        sendPort.send({
+          'type': 'progress',
+          'progress': totalCards == 0 ? 1.0 : done / totalCards,
+          'status': 'تم إنشاء $done من $totalCards كرت',
+        });
+      }
     }
   }
 
@@ -123,34 +158,52 @@ Future<List<Map<String, String>>> _processShard({
 // ================================================================
 void bulkAddIsolate(BulkAddIsolateData data) async {
   final sendPort = data.sendPort;
-  final approvalPort = ReceivePort();
   int successCount = 0;
   final newlyCreatedUsers = <Map<String, String>>[];
+  Isar? localIsar;
 
   try {
     _validateInput(data);
     final plannedUsers = data.plannedUsers ?? _buildUsers(data);
 
+    // ============================================================
+    //  حجز الأسماء محلياً داخل الـ Isolate قبل لمس الراوتر.
+    //  لا يوجد Handshake مع Isolate الواجهة إطلاقاً:
+    //  - الـ Isolate لا يتوقف منتظراً موافقة.
+    //  - الواجهة لا تنفذ أي عمليات Isar أثناء التوليد (لا تجمد).
+    //  - يُفتح مثيل Isar خاص بالـ Isolate من نفس ملف القاعدة، ويسحب
+    //    تلقائياً أي تغييرات من وإلى مثيل الواجهة (Isar 3+).
+    // ============================================================
+    if (data.plannedUsers == null) {
+      localIsar = await _openLocalIsar(data.isarDirectory);
+      final preparation = await CardPersistenceService.prepareGeneratedCards(
+        isar: localIsar,
+        profileName: data.selectedProfile!.trim(),
+        users: plannedUsers,
+        sharedUsers: CardNumberPolicy.parseAsciiInteger(
+              data.sharedUsers.trim(),
+            ) ??
+            1,
+        generationJobId: data.generationJobId,
+      );
+      if (!preparation.canProceed) {
+        final conflicts = preparation.conflicts.take(5).join('، ');
+        throw FormatException(
+          conflicts.isEmpty
+              ? 'تعذر حجز الكروت في Isar.'
+              : 'الأسماء موجودة محلياً: $conflicts',
+        );
+      }
+      await localIsar.close();
+      localIsar = null;
+    }
+
+    // إعلام الواجهة فقط (للعرض/السجل) — بدون انتظار أي رد.
     sendPort.send({
       'type': 'prepared',
       'users': plannedUsers,
-      'approvalPort': approvalPort.sendPort,
       'resumable': data.plannedUsers != null,
     });
-    final approval = await approvalPort.first.timeout(
-      const Duration(minutes: 5),
-      onTimeout: () => <String, dynamic>{
-        'approved': false,
-        'reason': 'انتهت مهلة تجهيز الكروت محلياً.',
-      },
-    );
-    if (approval is! Map || approval['approved'] != true) {
-      throw FormatException(
-        approval is Map
-            ? approval['reason']?.toString() ?? 'تم إلغاء العملية.'
-            : 'تعذر اعتماد خطة إنشاء الكروت.',
-      );
-    }
 
     final profile = data.selectedProfile!.trim();
 
@@ -181,6 +234,9 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         serviceMode: data.serviceMode,
         profile: profile,
         data: data,
+        sendPort: sendPort,
+        cardsBefore: start,
+        totalCards: plannedUsers.length,
       ));
     }
 
@@ -258,8 +314,31 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
   } catch (e) {
     _sendError(sendPort, _friendlyError(e), successCount, newlyCreatedUsers);
   } finally {
-    approvalPort.close();
+    await localIsar?.close();
   }
+}
+
+/// يفتح مثيل Isar خاصاً بالـ Isolate من نفس ملف قاعدة بيانات الواجهة.
+///
+/// - يُمرَّر مسار المجلد من الواجهة لتجنب استدعاء path_provider (قنوات المنصة)
+///   من داخل الـ Isolate.
+/// - يجب تمرير نفس مخططات الواجهة بالضبط (Isar يرفض المخططات المختلفة عند
+///   إعادة فتح نفس القاعدة في Isolate آخر).
+/// - تُفتح بمعرّف افتراضي ('default') مطابقاً لـ IsarProvider حتى يُعاد استخدام
+///   نفس المثيل، وتُزامَن التغييرات تلقائياً بين الـ Isolates.
+/// - يُفتح بـ inspector معطل تجنباً لأي تعارض مع مثيل الواجهة أثناء التطوير.
+Future<Isar> _openLocalIsar(String directory) {
+  return Isar.open(
+    const [
+      CardCollectionSchema,
+      CardGenerationJobSchema,
+      ProfileCollectionSchema,
+      AiDiagnosticCollectionSchema,
+      ExecutedCommandCollectionSchema,
+    ],
+    directory: directory,
+    inspector: false,
+  );
 }
 
 // ================================================================

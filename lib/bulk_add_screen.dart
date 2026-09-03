@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -131,6 +130,9 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   Future<void> _initializeLocalBulkData() async {
     try {
       await CardPersistenceService.cleanupStalePendingCards();
+      // يُنهي العمليات العالقة من جلسات سابقة (القفل في الذاكرة فقط، فلا
+      // يصمد أمام إغلاق التطبيق) حتى لا تبقى شبحاً قابل للاستئناف في الواجهة.
+      await CardGenerationJobService.expireStaleJobs();
       await CardGenerationJobService.deleteOldTerminalJobs();
       final jobs = await CardGenerationJobService.loadResumable();
       if (mounted) setState(() => _resumableJobs = jobs);
@@ -391,7 +393,6 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     final message = <String, dynamic>{
       'type': event.type,
       'users': event.users.map((card) => card.toMap()).toList(growable: false),
-      'approvalPort': event.approvalPort,
       'progress': event.progress,
       'status': event.status,
       'message': event.message,
@@ -402,9 +403,11 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     final type = event.type;
 
     if (type == 'prepared') {
+      // الحجز وفحص التكرار تمّا داخل الـ Isolate (على نفس الملف مع مزامنة
+      // Isar التلقائية). هنا نُسجّل القائمة وحدّث حالة الجوب فقط دون أي
+      // عمل Isar ثقيل على Isolate الواجهة — لا انتظار ولا تجمد.
       final users = _usersFromMessage(message['users']);
-      final approvalPort = message['approvalPort'];
-      if (approvalPort is! SendPort || users.isEmpty) {
+      if (users.isEmpty) {
         _cleanupGenerationResources();
         if (mounted) {
           setState(() => _isGenerating = false);
@@ -413,78 +416,36 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
         return;
       }
 
+      _reservedGenerationUsers = users;
       final isResumable = message['resumable'] == true;
+      final jobId = _generationJobId;
       if (isResumable) {
-        _reservedGenerationUsers = users;
-        final jobId = _generationJobId;
         if (jobId != null) {
           await CardGenerationJobService.markRunning(jobId);
         }
-        approvalPort.send({'approved': true});
-        return;
-      }
-
-      setState(() {
-        _generationStatusText = 'جاري فحص الأسماء وحجزها في Isar...';
-        _generationProgress = 0.0;
-      });
-
-      try {
-        final jobId = _generationJobId;
-        final preparation = await CardPersistenceService.prepareGeneratedCards(
-          profileName: _selectedProfile!,
-          users: users,
-          sharedUsers: _sharedUsersValue,
-          generationJobId: jobId,
+      } else if (jobId != null) {
+        await CardGenerationJobService.markReady(
+          jobId,
+          reservedCount: users.length,
+          plannedUsers: users,
         );
-        if (!preparation.canProceed) {
-          final conflicts = preparation.conflicts.take(5).join('، ');
-          if (jobId != null) {
-            await CardGenerationJobService.markFailed(
-              jobId,
-              error: conflicts.isEmpty
-                  ? 'تعذر حجز الكروت في Isar.'
-                  : 'الأسماء موجودة محلياً: $conflicts',
-              failedCount: users.length,
-            );
-          }
-          approvalPort.send({
-            'approved': false,
-            'reason': conflicts.isEmpty
-                ? 'تعذر حجز الكروت في Isar.'
-                : 'الأسماء موجودة محلياً: $conflicts',
-          });
-          return;
-        }
-        _reservedGenerationUsers = preparation.reservedUsers;
-        if (jobId != null) {
-          await CardGenerationJobService.markReady(
-            jobId,
-            reservedCount: preparation.reservedUsers.length,
-            plannedUsers: preparation.reservedUsers,
-          );
-        }
-        approvalPort.send({'approved': true});
-      } catch (e) {
-        final jobId = _generationJobId;
-        if (jobId != null) {
-          await CardGenerationJobService.markFailed(
-            jobId,
-            error: 'تعذر الحجز المحلي في Isar: $e',
-          );
-        }
-        approvalPort.send({
-          'approved': false,
-          'reason': 'تعذر الحجز المحلي في Isar: $e',
-        });
       }
+      if (!mounted) return;
+      setState(() {
+        _generationStatusText =
+            'تم حجز الأسماء محلياً، جاري الإضافة إلى MikroTik...';
+      });
       return;
     }
 
     if (type == 'progress') {
       final progress = (message['progress'] as num?)?.toDouble() ?? 0;
       setState(() {
-        _generationProgress = progress;
+        // الشاردات تعمل بالتوازي وكل واحد يبلغ عن تقدمه الجزئي؛ نمنع تراجع
+        // الشريط حتى لا يتحرك للخلف بين تقارير الشاردات.
+        if (progress > _generationProgress) {
+          _generationProgress = progress;
+        }
         _generationStatusText =
             message['status']?.toString() ?? 'جاري الإنشاء...';
       });
@@ -939,9 +900,6 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     if (!mounted) return;
     showErrorSnackBar(context, message);
   }
-
-  int get _sharedUsersValue =>
-      int.tryParse(_sharedUsersController.text.trim()) ?? 1;
 
   String? _positiveIntegerValidator(String? value, String label) {
     final parsed = int.tryParse(value?.trim() ?? '');

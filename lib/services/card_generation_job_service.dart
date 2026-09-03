@@ -254,6 +254,41 @@ class CardGenerationJobService {
     );
   }
 
+  /// يُنهي العمليات العالقة (ready/running) التي لم تتحدث منذ مدة.
+  ///
+  /// القفل الداخلي (`_lockHeld`) في الذاكرة فقط، فإذا أُغلق التطبيق أثناء
+  /// التوليد يبقى الجوب عالقاً في الواجهة كعملية قابلة للاستئناف إلى الأبد.
+  /// عند بدء التشغيل نستبدل هذه الجوب بحالة `failed` مع سبب واضح؛ الكروت
+  /// pending القديمة تُنظف لاحقاً عبر `cleanupStalePendingCards`.
+  static Future<int> expireStaleJobs({
+    Duration olderThan = const Duration(hours: 6),
+  }) async {
+    final isar = await IsarProvider().instance;
+    final cutoff = DateTime.now().subtract(olderThan);
+    return isar.writeTxn(() async {
+      final jobs = await isar.cardGenerationJobs.where().findAll();
+      final stale = jobs.where(
+        (job) =>
+            (job.status == CardGenerationJobStatus.ready ||
+                job.status == CardGenerationJobStatus.running) &&
+            job.updatedAt.isBefore(cutoff),
+      );
+      var expired = 0;
+      for (final job in stale) {
+        job.status = CardGenerationJobStatus.failed;
+        job.lastError =
+            'انتهت مهلة العملية بعد إغلاق التطبيق. أعد إنشاء الكروت من جديد.';
+        job.failedCount = (job.requestedCount - job.confirmedCount)
+            .clamp(0, job.requestedCount);
+        job.updatedAt = DateTime.now();
+        job.completedAt = job.updatedAt;
+        await isar.cardGenerationJobs.put(job);
+        expired++;
+      }
+      return expired;
+    });
+  }
+
   static Future<int> deleteOldTerminalJobs({
     Duration olderThan = const Duration(days: 30),
   }) async {
