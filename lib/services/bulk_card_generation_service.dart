@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+
 import '../bulk_add_isolate.dart';
 import '../mikrotik_connector.dart';
 import '../database/isar/card_generation_job.dart';
@@ -110,7 +113,6 @@ class BulkGenerationRequest {
 class GenerationEvent {
   final String type;
   final List<GeneratedCard> users;
-  final SendPort? approvalPort;
   final double progress;
   final String status;
   final String message;
@@ -121,7 +123,6 @@ class GenerationEvent {
   const GenerationEvent({
     required this.type,
     this.users = const [],
-    this.approvalPort,
     this.progress = 0,
     this.status = '',
     this.message = '',
@@ -153,9 +154,6 @@ class GenerationEvent {
     return GenerationEvent(
       type: raw['type']?.toString() ?? 'error',
       users: List.unmodifiable(users),
-      approvalPort: raw['approvalPort'] is SendPort
-          ? raw['approvalPort'] as SendPort
-          : null,
       progress: (raw['progress'] as num?)?.toDouble() ?? 0,
       status: raw['status']?.toString() ?? '',
       message: raw['message']?.toString() ?? '',
@@ -312,6 +310,8 @@ class BulkCardGenerationService {
     required String jobId,
     required GenerationLockToken lock,
   }) async {
+    final isarDirectory =
+        kIsWeb ? '' : (await getApplicationDocumentsDirectory()).path;
     final port = ReceivePort();
     final session = BulkGenerationSession._(
       jobId: jobId,
@@ -335,6 +335,8 @@ class BulkCardGenerationService {
           connectionConfig: request.connectionConfig,
           customer: request.customer,
           serviceMode: request.serviceMode,
+          isarDirectory: isarDirectory,
+          generationJobId: jobId,
           plannedUsers:
               request.plannedCards?.map((card) => card.toMap()).toList(),
         ),

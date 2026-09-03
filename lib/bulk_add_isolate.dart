@@ -60,11 +60,6 @@ class BulkAddIsolateData {
   });
 }
 
-/// كل كم كرت يتم الإبلاغ عن تقدم جزئي من داخل الشارد نفسه، حتى لا تقفز
-/// الواجهة بين 0% و100% على دفعات كبيرة (كان التقدم يُرسل عند اكتمال كل
-/// شارد فقط: 4 قفزات كحد أقصى).
-const int _progressReportCardInterval = 25;
-
 // ================================================================
 //  SHARD WORKER — processes a chunk of cards on ONE connection
 //  via talkMultiple, returning created users.
@@ -75,9 +70,6 @@ Future<List<Map<String, String>>> _processShard({
   required MikrotikServiceMode serviceMode,
   required String profile,
   required BulkAddIsolateData data,
-  required SendPort sendPort,
-  required int cardsBefore,
-  required int totalCards,
 }) async {
   final created = <Map<String, String>>[];
 
@@ -119,22 +111,11 @@ Future<List<Map<String, String>>> _processShard({
 
   // Collect
   final addResults = <int, List<Map<String, String>>>{};
-  var addResponses = 0;
   await for (final resp in responses) {
     final tag = resp.tag;
     if (tag != null && tag.startsWith('add_')) {
       final idx = int.parse(tag.substring(4));
       addResults[idx] = resp.data;
-      addResponses++;
-      // تقدم مُخفف: كل استجابة add_ = كرت أُنشئ فعلاً على الراوتر.
-      if (addResponses % _progressReportCardInterval == 0) {
-        final done = cardsBefore + addResponses;
-        sendPort.send({
-          'type': 'progress',
-          'progress': totalCards == 0 ? 1.0 : done / totalCards,
-          'status': 'تم إنشاء $done من $totalCards كرت',
-        });
-      }
     }
   }
 
@@ -234,9 +215,6 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         serviceMode: data.serviceMode,
         profile: profile,
         data: data,
-        sendPort: sendPort,
-        cardsBefore: start,
-        totalCards: plannedUsers.length,
       ));
     }
 

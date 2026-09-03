@@ -201,10 +201,10 @@ class CardPersistenceService {
   ) async {
     if (generationJobId.trim().isEmpty) return const [];
     final isar = await IsarProvider().instance;
-    // يستخدم فهرس (generationJobId, status) المركب مباشرة بدل مسح كامل.
     final cards = await isar.cardCollections
-        .where()
-        .generationJobIdStatusEqualTo(generationJobId, 'pending')
+        .filter()
+        .generationJobIdEqualTo(generationJobId)
+        .statusEqualTo('pending')
         .findAll();
     return cards
         .map((card) => <String, String>{

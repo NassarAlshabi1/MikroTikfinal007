@@ -103,6 +103,8 @@ void main() {
             useSsl: false,
           ),
           customer: 'admin',
+          isarDirectory: '',
+          generationJobId: 'job-test-1',
         );
 
         expect(data.count, 10);
@@ -115,6 +117,8 @@ void main() {
         expect(data.linkPasswordToFirstUser, isFalse);
         expect(data.isVersion7OrNewer, isTrue);
         expect(data.customer, 'admin');
+        expect(data.isarDirectory, isEmpty);
+        expect(data.generationJobId, 'job-test-1');
       } finally {
         receivePort.close();
       }
@@ -142,6 +146,8 @@ void main() {
             useSsl: false,
           ),
           customer: 'admin',
+          isarDirectory: '',
+          generationJobId: 'job-test-2',
         );
 
         expect(data.prefix, isEmpty);

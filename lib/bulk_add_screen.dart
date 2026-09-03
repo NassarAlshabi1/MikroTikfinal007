@@ -130,9 +130,6 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   Future<void> _initializeLocalBulkData() async {
     try {
       await CardPersistenceService.cleanupStalePendingCards();
-      // يُنهي العمليات العالقة من جلسات سابقة (القفل في الذاكرة فقط، فلا
-      // يصمد أمام إغلاق التطبيق) حتى لا تبقى شبحاً قابل للاستئناف في الواجهة.
-      await CardGenerationJobService.expireStaleJobs();
       await CardGenerationJobService.deleteOldTerminalJobs();
       final jobs = await CardGenerationJobService.loadResumable();
       if (mounted) setState(() => _resumableJobs = jobs);
@@ -441,11 +438,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
     if (type == 'progress') {
       final progress = (message['progress'] as num?)?.toDouble() ?? 0;
       setState(() {
-        // الشاردات تعمل بالتوازي وكل واحد يبلغ عن تقدمه الجزئي؛ نمنع تراجع
-        // الشريط حتى لا يتحرك للخلف بين تقارير الشاردات.
-        if (progress > _generationProgress) {
-          _generationProgress = progress;
-        }
+        _generationProgress = progress;
         _generationStatusText =
             message['status']?.toString() ?? 'جاري الإنشاء...';
       });
