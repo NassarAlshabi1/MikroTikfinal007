@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -48,15 +49,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _isLinked
-              ? _buildProfileView()
-              : _buildNotLinkedView(),
+          ? _buildProfileView()
+          : _buildNotLinkedView(),
     );
   }
 
   Widget _buildProfileView() {
     final clientInfo = _profileData['client_info'] ?? {};
     final networkDetails = _profileData['network_details'] ?? {};
-    
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
@@ -87,7 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             subtitle: 'اسم الشبكة المرتبطة',
             icon: Icons.wifi_outlined,
           ),
-           _buildInfoCard(
+          _buildInfoCard(
             context,
             title: networkDetails['network_id'] ?? 'غير متوفر',
             subtitle: 'معرّف الشبكة (Network ID)',
@@ -98,7 +99,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, {required String title, required String subtitle, required IconData icon}) {
+  Widget _buildInfoCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -108,10 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(color: Colors.white),
-        ),
+        subtitle: Text(subtitle, style: const TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -123,7 +126,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.warning_amber_rounded, size: 80, color: Colors.amber),
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 80,
+              color: Colors.amber,
+            ),
             const SizedBox(height: 20),
             const Text(
               'لم يتم ربط الشبكة!',

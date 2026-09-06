@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:router_os_client/router_os_client.dart';
+
 import 'mikrotik_connector.dart';
 
 /// خدمة اتصال مركزية تدير اتصال MikroTik المشترك بين جميع الشاشات
@@ -24,7 +26,8 @@ class ConnectionService {
     }
 
     // تحقق من صلاحية الاتصال الحالي
-    if (_client != null && _lastUsed != null &&
+    if (_client != null &&
+        _lastUsed != null &&
         DateTime.now().difference(_lastUsed!) < _idleTimeout) {
       _lastUsed = DateTime.now();
       return _client!;
@@ -74,6 +77,8 @@ class ConnectionService {
   }
 
   /// التحقق مما إذا كان هناك اتصال نشط
-  bool get isConnected => _client != null && _lastUsed != null &&
+  bool get isConnected =>
+      _client != null &&
+      _lastUsed != null &&
       DateTime.now().difference(_lastUsed!) < _idleTimeout;
 }

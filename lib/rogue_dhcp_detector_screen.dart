@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
@@ -9,7 +10,8 @@ class RogueDhcpDetectorScreen extends StatefulWidget {
   const RogueDhcpDetectorScreen({super.key});
 
   @override
-  State<RogueDhcpDetectorScreen> createState() => _RogueDhcpDetectorScreenState();
+  State<RogueDhcpDetectorScreen> createState() =>
+      _RogueDhcpDetectorScreenState();
 }
 
 class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
@@ -68,7 +70,9 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
                 setState(() {
                   _allServers.add(serverIp); // Add any responding server
                   if (serverIp != _gatewayIp) {
-                    _rogueServers.add(serverIp); // If not the gateway, it's rogue
+                    _rogueServers.add(
+                      serverIp,
+                    ); // If not the gateway, it's rogue
                   }
                 });
               }
@@ -83,7 +87,6 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
 
       // Wait for 10 seconds to collect offers
       await Future.delayed(const Duration(seconds: 10));
-
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -96,7 +99,7 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
         setState(() {
           _isScanning = false;
           if (_allServers.isEmpty) {
-             _status = 'اكتمل الفحص. لم يتم تلقي أي ردود من أي خادم DHCP.';
+            _status = 'اكتمل الفحص. لم يتم تلقي أي ردود من أي خادم DHCP.';
           } else if (_rogueServers.isEmpty) {
             _status = 'اكتمل الفحص. تم العثور على خادم شرعي واحد فقط. شبكتك تبدو نظيفة.';
           } else {
@@ -111,32 +114,41 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
     try {
       // The DHCP options start at offset 240
       int optionOffset = 240;
-      
+
       // Basic validation: Check for magic cookie
-      if (data.length < 240 || data[236] != 99 || data[237] != 130 || data[238] != 83 || data[239] != 99) {
+      if (data.length < 240 ||
+          data[236] != 99 ||
+          data[237] != 130 ||
+          data[238] != 83 ||
+          data[239] != 99) {
         return null; // Not a valid DHCP packet
       }
 
       while (optionOffset < data.length - 1) {
         final option = data[optionOffset];
         if (option == 255) break; // End of options
-        if (option == 0) { // Padding
+        if (option == 0) {
+          // Padding
           optionOffset++;
           continue;
         }
-        
+
         // Ensure we can read the length byte
         if (optionOffset + 1 >= data.length) break;
         final len = data[optionOffset + 1];
-        
+
         // Ensure the full option is within the packet bounds
         if (optionOffset + 2 + len > data.length) break;
 
-        if (option == 54 && len == 4) { // Option 54: Server Identifier
-          final serverIpBytes = data.sublist(optionOffset + 2, optionOffset + 2 + len);
+        if (option == 54 && len == 4) {
+          // Option 54: Server Identifier
+          final serverIpBytes = data.sublist(
+            optionOffset + 2,
+            optionOffset + 2 + len,
+          );
           return InternetAddress.fromRawAddress(serverIpBytes).address;
         }
-        
+
         // Move to the next option
         optionOffset += (2 + len);
       }
@@ -213,7 +225,11 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
             ElevatedButton.icon(
               onPressed: _isScanning ? null : _startScan,
               icon: _isScanning
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.search),
               label: Text(_isScanning ? 'جاري الفحص...' : 'بدء الفحص'),
               style: ElevatedButton.styleFrom(
@@ -227,11 +243,14 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            
+
             if (_allServers.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text('الخوادم المستجيبة:', style: Theme.of(context).textTheme.titleSmall),
+                child: Text(
+                  'الخوادم المستجيبة:',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
               ),
             if (_allServers.isNotEmpty)
               Expanded(
@@ -241,11 +260,20 @@ class _RogueDhcpDetectorScreenState extends State<RogueDhcpDetectorScreen> {
                     final serverIp = _allServers.elementAt(index);
                     final isRogue = _rogueServers.contains(serverIp);
                     return Card(
-                      color: isRogue ? Colors.red.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                      color: isRogue
+                          ? Colors.red.withOpacity(0.1)
+                          : Colors.green.withOpacity(0.1),
                       child: ListTile(
-                        leading: Icon(Icons.router, color: isRogue ? Colors.redAccent : Colors.green),
+                        leading: Icon(
+                          Icons.router,
+                          color: isRogue ? Colors.redAccent : Colors.green,
+                        ),
                         title: Text(serverIp),
-                        subtitle: Text(isRogue ? 'خادم DHCP دخيل' : 'خادم DHCP شرعي (الراوتر)'),
+                        subtitle: Text(
+                          isRogue
+                              ? 'خادم DHCP دخيل'
+                              : 'خادم DHCP شرعي (الراوتر)',
+                        ),
                       ),
                     );
                   },

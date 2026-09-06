@@ -2,18 +2,21 @@
 
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
 import 'pdf_templates_screen.dart'; // تأكد من وجود هذا الملف واستيراد PdfTemplate
 
 /// دالة توليد الـ PDF في الخلفية (Isolate)
 Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   // استلام البيانات
   final cardUsernames = data['cardUsernames'] as List<String>;
-  final imageBytes = data['imageBytes'] as Uint8List; // نمرر الصورة كـ Uint8List
+  final imageBytes =
+      data['imageBytes'] as Uint8List; // نمرر الصورة كـ Uint8List
   final textXRatio = data['textXRatio'] as double;
   final textYRatio = data['textYRatio'] as double;
   final cardsPerPage = data['cardsPerPage'] as int;
@@ -21,8 +24,10 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   final imageHeight = data['imageHeight'] as double;
   final markerWidthRatio = data['markerWidthRatio'] as double;
   final markerHeightRatio = data['markerHeightRatio'] as double;
-  final printDate = data['printDate'] as String;   // تاريخ الطباعة (يظهر في البطاقة)
-  final category = data['category'] as String;     // فئة الكارت (يظهر في البطاقة واسم الملف)
+  final printDate =
+      data['printDate'] as String; // تاريخ الطباعة (يظهر في البطاقة)
+  final category =
+      data['category'] as String; // فئة الكارت (يظهر في البطاقة واسم الملف)
 
   final doc = pw.Document();
   final imageProvider = pw.MemoryImage(imageBytes);
@@ -30,7 +35,9 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
   int step = cardsPerPage;
   for (var i = 0; i < cardUsernames.length; i += step) {
     final pageCards = cardUsernames.sublist(
-        i, i + step > cardUsernames.length ? cardUsernames.length : i + step);
+      i,
+      i + step > cardUsernames.length ? cardUsernames.length : i + step,
+    );
 
     doc.addPage(
       pw.Page(
@@ -41,68 +48,70 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
 
           for (var user in pageCards) {
             gridChildren.add(
-              pw.LayoutBuilder(builder: (ctx, constraints) {
-                final cellWidth = constraints!.maxWidth;
-                final cellHeight = constraints.maxHeight;
+              pw.LayoutBuilder(
+                builder: (ctx, constraints) {
+                  final cellWidth = constraints!.maxWidth;
+                  final cellHeight = constraints.maxHeight;
 
-                // حساب موقع النص بناءً على نسب القالب
-                final boxWidth = markerWidthRatio * cellWidth;
-                final boxHeight = markerHeightRatio * cellHeight;
-                final boxLeft = (textXRatio * cellWidth) - (boxWidth / 2);
-                final boxTop = (textYRatio * cellHeight) - (boxHeight / 2);
+                  // حساب موقع النص بناءً على نسب القالب
+                  final boxWidth = markerWidthRatio * cellWidth;
+                  final boxHeight = markerHeightRatio * cellHeight;
+                  final boxLeft = (textXRatio * cellWidth) - (boxWidth / 2);
+                  final boxTop = (textYRatio * cellHeight) - (boxHeight / 2);
 
-                return pw.Container(
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.black, width: 1.5),
-                  ),
-                  child: pw.Stack(
-                    fit: pw.StackFit.expand,
-                    children: [
-                      // صورة الخلفية
-                      pw.Image(imageProvider, fit: pw.BoxFit.fill),
-                      
-                      // اسم المستخدم + الفئة + التاريخ
-                      pw.Positioned(
-                        left: boxLeft,
-                        top: boxTop,
-                        child: pw.Container(
-                          width: boxWidth,
-                          height: boxHeight,
-                          child: pw.Column(
-                            mainAxisAlignment: pw.MainAxisAlignment.center,
-                            children: [
-                              pw.Text(
-                                user,
-                                textAlign: pw.TextAlign.center,
-                                style: const pw.TextStyle(
-                                  color: PdfColors.black,
-                                  fontSize: 10,
-                                  fontWeight: pw.FontWeight.bold,
+                  return pw.Container(
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.black, width: 1.5),
+                    ),
+                    child: pw.Stack(
+                      fit: pw.StackFit.expand,
+                      children: [
+                        // صورة الخلفية
+                        pw.Image(imageProvider, fit: pw.BoxFit.fill),
+
+                        // اسم المستخدم + الفئة + التاريخ
+                        pw.Positioned(
+                          left: boxLeft,
+                          top: boxTop,
+                          child: pw.Container(
+                            width: boxWidth,
+                            height: boxHeight,
+                            child: pw.Column(
+                              mainAxisAlignment: pw.MainAxisAlignment.center,
+                              children: [
+                                pw.Text(
+                                  user,
+                                  textAlign: pw.TextAlign.center,
+                                  style: const pw.TextStyle(
+                                    color: PdfColors.black,
+                                    fontSize: 10,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              pw.SizedBox(height: 2),
-                              pw.Text(
-                                'فئة: $category',
-                                style: const pw.TextStyle(
-                                  color: PdfColors.grey,
-                                  fontSize: 8,
+                                pw.SizedBox(height: 2),
+                                pw.Text(
+                                  'فئة: $category',
+                                  style: const pw.TextStyle(
+                                    color: PdfColors.grey,
+                                    fontSize: 8,
+                                  ),
                                 ),
-                              ),
-                              pw.Text(
-                                'تاريخ: $printDate',
-                                style: const pw.TextStyle(
-                                  color: PdfColors.grey,
-                                  fontSize: 8,
+                                pw.Text(
+                                  'تاريخ: $printDate',
+                                  style: const pw.TextStyle(
+                                    color: PdfColors.grey,
+                                    fontSize: 8,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
+                      ],
+                    ),
+                  );
+                },
+              ),
             );
           }
 
@@ -130,7 +139,7 @@ Future<Uint8List> _generatePdfInBackground(Map<String, dynamic> data) async {
 /// فئة مسؤولة عن توليد ومشاركة الـ PDF
 class PdfGenerator {
   /// توليد ومشاركة ملف PDF يحتوي على بطاقات Wi-Fi
-  /// 
+  ///
   /// - [cardUsernames]: قائمة بأسماء المستخدمين
   /// - [template]: قالب البطاقة (يحتوي على مسار الصورة والنسب)
   /// - [category]: فئة الكارت (مثلاً "500" أو "300")، تظهر في اسم الملف وداخل البطاقة
@@ -188,7 +197,9 @@ class PdfGenerator {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('فشل إنشاء ملف PDF. الرجاء التأكد من وجود القالب وصلاحية الصورة.'),
+            content: Text(
+              'فشل إنشاء ملف PDF. الرجاء التأكد من وجود القالب وصلاحية الصورة.',
+            ),
             backgroundColor: Colors.red,
           ),
         );

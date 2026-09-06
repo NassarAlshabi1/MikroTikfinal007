@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
+
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'mikrotik_connector.dart';
 
 class ActiveUsersScreen extends StatefulWidget {
@@ -43,8 +45,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Future<void> _fetchActiveUsers({bool force = false}) async {
     if (!mounted) return;
-    
-    if (!force && _lastActiveFetch != null && DateTime.now().difference(_lastActiveFetch!) < _minRefreshGap) {
+
+    if (!force &&
+        _lastActiveFetch != null &&
+        DateTime.now().difference(_lastActiveFetch!) < _minRefreshGap) {
       setState(() {
         _isLoading = false;
       });
@@ -59,13 +63,15 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      
+
       try {
         final hotspotResponse = await client.talk([
           '/ip/hotspot/active/print',
           '=.proplist=user,address,uptime',
         ]);
-        _activeUsers = hotspotResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+        _activeUsers = hotspotResponse
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
         _activeCount = _activeUsers.length;
         _isHotspotMode = true;
       } catch (e) {
@@ -74,7 +80,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             '/tool/user-manager/session/print',
             '=.proplist=user,session-time-left,framed-ip-address,uptime',
           ]);
-          _activeUsers = userManagerResponse.map((e) => Map<String, dynamic>.from(e)).toList();
+          _activeUsers = userManagerResponse
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
           _activeCount = _activeUsers.length;
           _isHotspotMode = false;
         } catch (e) {
@@ -84,7 +92,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       }
 
       try {
-        if (_lastTotalUsersFetch == null || DateTime.now().difference(_lastTotalUsersFetch!) > const Duration(seconds: 90)) {
+        if (_lastTotalUsersFetch == null ||
+            DateTime.now().difference(_lastTotalUsersFetch!) >
+                const Duration(seconds: 90)) {
           final allUsers = await client.talk([
             '/tool/user-manager/user/print',
             '=.proplist=.id',
@@ -144,7 +154,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
-        title: const Text('المستخدمين النشطين', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'المستخدمين النشطين',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -169,7 +182,11 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.redAccent,
+              ),
               const SizedBox(height: 16),
               Text(
                 _errorMessage,
@@ -238,11 +255,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             value: '$_activeCount',
             color: Colors.white,
           ),
-          Container(
-            width: 1,
-            height: 60,
-            color: Colors.white.withOpacity(0.3),
-          ),
+          Container(width: 1, height: 60, color: Colors.white.withOpacity(0.3)),
           _buildStatItem(
             icon: Icons.group,
             label: 'إجمالي المستخدمين',
@@ -266,10 +279,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(
-            color: color.withOpacity(0.9),
-            fontSize: 14,
-          ),
+          style: TextStyle(color: color.withOpacity(0.9), fontSize: 14),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
@@ -334,7 +344,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -373,13 +386,14 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         OutlinedButton(
-          onPressed: _page > 0
-              ? () => setState(() => _page = _page - 1)
-              : null,
+          onPressed: _page > 0 ? () => setState(() => _page = _page - 1) : null,
           child: const Text('السابق'),
         ),
         const SizedBox(width: 12),
-        Text('صفحة ${_page + 1} من $totalPages', style: const TextStyle(color: Colors.white70)),
+        Text(
+          'صفحة ${_page + 1} من $totalPages',
+          style: const TextStyle(color: Colors.white70),
+        ),
         const SizedBox(width: 12),
         OutlinedButton(
           onPressed: (_page + 1) < totalPages
@@ -393,9 +407,10 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Widget _buildUserCard(Map<String, dynamic> user, int index) {
     final username = user['user'] ?? user['name'] ?? 'غير محدد';
-    final ipAddress = user['address'] ?? user['framed-ip-address'] ?? 'غير متاح';
+    final ipAddress =
+        user['address'] ?? user['framed-ip-address'] ?? 'غير متاح';
     final uptime = user['uptime'] ?? user['session-time-left'] ?? '';
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -493,10 +508,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  color: Colors.white.withOpacity(0.3),
-                ),
+                Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.3)),
               ],
             ),
           ),

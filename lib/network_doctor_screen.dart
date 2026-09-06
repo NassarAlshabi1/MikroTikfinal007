@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:dart_ping/dart_ping.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+
 import 'network_map_screen.dart';
 import 'rogue_dhcp_detector_screen.dart';
 
@@ -150,7 +152,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           _updateTest(test.id, DiagnosticStatus.error, 'فحص غير معروف');
       }
     } catch (e) {
-      _updateTest(test.id, DiagnosticStatus.error, 'فشل الفحص: ${e.toString()}');
+      _updateTest(
+        test.id,
+        DiagnosticStatus.error,
+        'فشل الفحص: ${e.toString()}',
+      );
     } finally {
       _generateRecommendations();
     }
@@ -167,8 +173,13 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     });
   }
 
-  void _updateTestWithSpeed(String id, DiagnosticStatus status, String message,
-      {double? downloadSpeed, double? uploadSpeed}) {
+  void _updateTestWithSpeed(
+    String id,
+    DiagnosticStatus status,
+    String message, {
+    double? downloadSpeed,
+    double? uploadSpeed,
+  }) {
     if (!mounted) return;
     setState(() {
       final index = _tests.indexWhere((test) => test.id == id);
@@ -192,9 +203,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       if (r.response != null) success += 1;
     }
     if (success >= 1) {
-      _updateTest(test.id, DiagnosticStatus.success, 'تم الوصول إلى البوابة $gw');
+      _updateTest(
+        test.id,
+        DiagnosticStatus.success,
+        'تم الوصول إلى البوابة $gw',
+      );
     } else {
-      _updateTest(test.id, DiagnosticStatus.error, 'تعذر الوصول إلى البوابة $gw');
+      _updateTest(
+        test.id,
+        DiagnosticStatus.error,
+        'تعذر الوصول إلى البوابة $gw',
+      );
     }
   }
 
@@ -202,12 +221,24 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     try {
       final r = await _dio.get('https://www.google.com/generate_204');
       if (r.statusCode == 204 || r.statusCode == 200) {
-        _updateTest(test.id, DiagnosticStatus.success, 'الاتصال بالإنترنت يعمل');
+        _updateTest(
+          test.id,
+          DiagnosticStatus.success,
+          'الاتصال بالإنترنت يعمل',
+        );
       } else {
-        _updateTest(test.id, DiagnosticStatus.warning, 'استجابة غير متوقعة من الإنترنت');
+        _updateTest(
+          test.id,
+          DiagnosticStatus.warning,
+          'استجابة غير متوقعة من الإنترنت',
+        );
       }
     } on DioException catch (e) {
-      _updateTest(test.id, DiagnosticStatus.error, 'لا يوجد اتصال بالإنترنت: ${e.message}');
+      _updateTest(
+        test.id,
+        DiagnosticStatus.error,
+        'لا يوجد اتصال بالإنترنت: ${e.message}',
+      );
     }
   }
 
@@ -217,10 +248,18 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       if (result.isNotEmpty && result.first.rawAddress.isNotEmpty) {
         _updateTest(test.id, DiagnosticStatus.success, 'خادم DNS يعمل');
       } else {
-        _updateTest(test.id, DiagnosticStatus.warning, 'لا يمكن حل أسماء النطاقات');
+        _updateTest(
+          test.id,
+          DiagnosticStatus.warning,
+          'لا يمكن حل أسماء النطاقات',
+        );
       }
     } catch (e) {
-      _updateTest(test.id, DiagnosticStatus.error, 'فشل فحص DNS: ${e.toString()}');
+      _updateTest(
+        test.id,
+        DiagnosticStatus.error,
+        'فشل فحص DNS: ${e.toString()}',
+      );
     }
   }
 
@@ -248,9 +287,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   }
 
   Future<void> _checkSpeedTest(_NetworkDiagnostic test) async {
-    const downloadTestUrl = 'https://speed.cloudflare.com/__down?bytes=10000000';
+    const downloadTestUrl =
+        'https://speed.cloudflare.com/__down?bytes=10000000';
     const uploadTestUrl = 'https://speed.cloudflare.com/__up';
-    
+
     // إنشاء Dio instance منفصل مع timeout أطول لاختبار السرعة
     final speedTestDio = Dio(
       BaseOptions(
@@ -259,7 +299,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         sendTimeout: const Duration(seconds: 60),
       ),
     );
-    
+
     try {
       final downloadStopwatch = Stopwatch()..start();
       final downloadResponse = await speedTestDio.get(
@@ -270,16 +310,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
 
       final downloadBytes = (downloadResponse.data as List<int>).length;
       final downloadTimeSeconds = downloadStopwatch.elapsedMilliseconds / 1000;
-      final downloadSpeedMbps = (downloadBytes * 8 / downloadTimeSeconds) / 1000000;
+      final downloadSpeedMbps =
+          (downloadBytes * 8 / downloadTimeSeconds) / 1000000;
 
       final uploadData = List<int>.filled(5000000, 0);
       final uploadStopwatch = Stopwatch()..start();
       await speedTestDio.post(
         uploadTestUrl,
         data: uploadData,
-        options: Options(
-          headers: {'Content-Type': 'application/octet-stream'},
-        ),
+        options: Options(headers: {'Content-Type': 'application/octet-stream'}),
       );
       uploadStopwatch.stop();
 
@@ -287,10 +326,19 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       final uploadTimeSeconds = uploadStopwatch.elapsedMilliseconds / 1000;
       final uploadSpeedMbps = (uploadBytes * 8 / uploadTimeSeconds) / 1000000;
 
-      final message = 'التحميل: ${downloadSpeedMbps.toStringAsFixed(2)} Mbps\nالرفع: ${uploadSpeedMbps.toStringAsFixed(2)} Mbps';
-      final status = downloadSpeedMbps < 1.0 ? DiagnosticStatus.warning : DiagnosticStatus.success;
+      final message =
+          'التحميل: ${downloadSpeedMbps.toStringAsFixed(2)} Mbps\nالرفع: ${uploadSpeedMbps.toStringAsFixed(2)} Mbps';
+      final status = downloadSpeedMbps < 1.0
+          ? DiagnosticStatus.warning
+          : DiagnosticStatus.success;
 
-      _updateTestWithSpeed(test.id, status, message, downloadSpeed: downloadSpeedMbps, uploadSpeed: uploadSpeedMbps);
+      _updateTestWithSpeed(
+        test.id,
+        status,
+        message,
+        downloadSpeed: downloadSpeedMbps,
+        uploadSpeed: uploadSpeedMbps,
+      );
     } catch (e) {
       throw Exception('فشل اختبار السرعة: ${e.toString()}');
     } finally {
@@ -307,70 +355,82 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     final speedTest = _tests.firstWhere((t) => t.id == 'speed_test');
 
     if (gateway.status == DiagnosticStatus.error) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'تعذر الوصول إلى الراوتر',
-        description: 'لا يمكن الاتصال بالبوابة الافتراضية${_gatewayIp != null ? ' ($_gatewayIp)' : ''}.',
-        severity: SeverityLevel.high,
-        icon: Icons.router,
-        steps: [
-          'تحقق من اتصالك بشبكة Wi‑Fi',
-          'تأكد من عنوان IP للبوابة',
-          'أعد تشغيل الراوتر',
-          'تحقق من الكابلات والتوصيلات',
-        ],
-      ));
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'تعذر الوصول إلى الراوتر',
+          description:
+              'لا يمكن الاتصال بالبوابة الافتراضية${_gatewayIp != null ? ' ($_gatewayIp)' : ''}.',
+          severity: SeverityLevel.high,
+          icon: Icons.router,
+          steps: [
+            'تحقق من اتصالك بشبكة Wi‑Fi',
+            'تأكد من عنوان IP للبوابة',
+            'أعد تشغيل الراوتر',
+            'تحقق من الكابلات والتوصيلات',
+          ],
+        ),
+      );
     }
 
     if (internet.status == DiagnosticStatus.error) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'لا يوجد اتصال بالإنترنت',
-        description: 'تعذر الوصول إلى الإنترنت من الشبكة الحالية.',
-        severity: SeverityLevel.high,
-        icon: Icons.public_off,
-        steps: [
-          'تحقق من حالة الاشتراك لدى مزود الخدمة',
-          'أعد تشغيل المودم والراوتر',
-          'تحقق من وجود انقطاع عام في المنطقة',
-        ],
-      ));
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'لا يوجد اتصال بالإنترنت',
+          description: 'تعذر الوصول إلى الإنترنت من الشبكة الحالية.',
+          severity: SeverityLevel.high,
+          icon: Icons.public_off,
+          steps: [
+            'تحقق من حالة الاشتراك لدى مزود الخدمة',
+            'أعد تشغيل المودم والراوتر',
+            'تحقق من وجود انقطاع عام في المنطقة',
+          ],
+        ),
+      );
     }
 
-    if (dns.status == DiagnosticStatus.error || dns.status == DiagnosticStatus.warning) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'مشكلة في DNS',
-        description: 'قد لا تعمل خدمة حل أسماء النطاقات بالشكل الصحيح.',
-        severity: SeverityLevel.medium,
-        icon: Icons.dns,
-        steps: [
-          'جرّب استخدام خوادم DNS عامة مثل 1.1.1.1 أو 8.8.8.8',
-          'تحقق من إعدادات DNS على الراوتر',
-        ],
-      ));
+    if (dns.status == DiagnosticStatus.error ||
+        dns.status == DiagnosticStatus.warning) {
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'مشكلة في DNS',
+          description: 'قد لا تعمل خدمة حل أسماء النطاقات بالشكل الصحيح.',
+          severity: SeverityLevel.medium,
+          icon: Icons.dns,
+          steps: [
+            'جرّب استخدام خوادم DNS عامة مثل 1.1.1.1 أو 8.8.8.8',
+            'تحقق من إعدادات DNS على الراوتر',
+          ],
+        ),
+      );
     }
 
     if (latency.latencyMs != null) {
       if (latency.latencyMs! > 200) {
-        _recommendations.add(NetworkRecommendation(
-          title: 'زمن استجابة مرتفع',
-          description: 'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية أعلى من المتوقع.',
-          severity: SeverityLevel.medium,
-          icon: Icons.punch_clock,
-          steps: [
-            'تحقق من الأجهزة التي قد تستهلك النطاق بشكل كبير',
-            'جرّب إعادة تشغيل الراوتر',
-            'اختبر الكابل أو شبكة الـ Wi‑Fi',
-          ],
-        ));
+        _recommendations.add(
+          NetworkRecommendation(
+            title: 'زمن استجابة مرتفع',
+            description:
+                'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية أعلى من المتوقع.',
+            severity: SeverityLevel.medium,
+            icon: Icons.punch_clock,
+            steps: [
+              'تحقق من الأجهزة التي قد تستهلك النطاق بشكل كبير',
+              'جرّب إعادة تشغيل الراوتر',
+              'اختبر الكابل أو شبكة الـ Wi‑Fi',
+            ],
+          ),
+        );
       } else if (latency.latencyMs! <= 50) {
-        _recommendations.add(NetworkRecommendation(
-          title: 'زمن استجابة ممتاز',
-          description: 'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية مناسب للألعاب والبث.',
-          severity: SeverityLevel.info,
-          icon: Icons.speed,
-          steps: [
-            'لا توجد إجراءات مطلوبة',
-          ],
-        ));
+        _recommendations.add(
+          NetworkRecommendation(
+            title: 'زمن استجابة ممتاز',
+            description:
+                'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية مناسب للألعاب والبث.',
+            severity: SeverityLevel.info,
+            icon: Icons.speed,
+            steps: ['لا توجد إجراءات مطلوبة'],
+          ),
+        );
       }
     }
 
@@ -379,7 +439,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         _recommendations.add(
           NetworkRecommendation(
             title: 'سرعة إنترنت بطيئة جداً',
-            description: 'سرعة التحميل ${speedTest.downloadSpeedMbps!.toStringAsFixed(2)} Mbps أقل من المتوقع بكثير.',
+            description:
+                'سرعة التحميل ${speedTest.downloadSpeedMbps!.toStringAsFixed(2)} Mbps أقل من المتوقع بكثير.',
             severity: SeverityLevel.high,
             icon: Icons.slow_motion_video,
             steps: [
@@ -395,7 +456,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         _recommendations.add(
           NetworkRecommendation(
             title: 'سرعة إنترنت ممتازة',
-            description: 'سرعة التحميل ${speedTest.downloadSpeedMbps!.toStringAsFixed(2)} Mbps جيدة للتصفح والبث.',
+            description:
+                'سرعة التحميل ${speedTest.downloadSpeedMbps!.toStringAsFixed(2)} Mbps جيدة للتصفح والبث.',
             severity: SeverityLevel.info,
             icon: Icons.speed,
             steps: [
@@ -415,19 +477,31 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('تحذير اختبار السرعة'),
-        content: const Text('سيتم استهلاك حوالي 30 ميجا من البيانات لإجراء الاختبار. هل تريد المتابعة؟'),
+        content: const Text(
+          'سيتم استهلاك حوالي 30 ميجا من البيانات لإجراء الاختبار. هل تريد المتابعة؟',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('إلغاء')),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('متابعة')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('متابعة'),
+          ),
         ],
       ),
     );
   }
 
-  int get _countSuccess => _tests.where((t) => t.status == DiagnosticStatus.success).length;
-  int get _countWarning => _tests.where((t) => t.status == DiagnosticStatus.warning).length;
-  int get _countError => _tests.where((t) => t.status == DiagnosticStatus.error).length;
-  int get _countPending => _tests.where((t) => t.status == DiagnosticStatus.pending).length;
+  int get _countSuccess =>
+      _tests.where((t) => t.status == DiagnosticStatus.success).length;
+  int get _countWarning =>
+      _tests.where((t) => t.status == DiagnosticStatus.warning).length;
+  int get _countError =>
+      _tests.where((t) => t.status == DiagnosticStatus.error).length;
+  int get _countPending =>
+      _tests.where((t) => t.status == DiagnosticStatus.pending).length;
 
   Color _statusColor(DiagnosticStatus s) {
     switch (s) {
@@ -462,11 +536,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('طبيب الشبكة', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'طبيب الشبكة',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -476,7 +553,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
             icon: const Icon(Icons.play_circle_fill),
             tooltip: 'تشغيل جميع الفحوصات',
             color: theme.primaryColor,
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -502,7 +579,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Widget _buildSummaryCard() {
     final theme = Theme.of(context);
     final primary = theme.primaryColor;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -530,7 +607,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.health_and_safety, color: Colors.white, size: 36),
+                child: const Icon(
+                  Icons.health_and_safety,
+                  color: Colors.white,
+                  size: 36,
+                ),
               ),
               const SizedBox(width: 16),
               const Expanded(
@@ -572,7 +653,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   : const Icon(Icons.play_arrow),
               label: Text(
                 _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white.withOpacity(0.2),
@@ -592,18 +676,39 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Widget _buildStatsRow() {
     return Row(
       children: [
-        Expanded(child: _buildChip('ناجحة', _countSuccess.toString(), Colors.greenAccent, Icons.check_circle)),
+        Expanded(
+          child: _buildChip(
+            'ناجحة',
+            _countSuccess.toString(),
+            Colors.greenAccent,
+            Icons.check_circle,
+          ),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: _buildChip('تحذير', _countWarning.toString(), Colors.orange, Icons.warning)),
+        Expanded(
+          child: _buildChip(
+            'تحذير',
+            _countWarning.toString(),
+            Colors.orange,
+            Icons.warning,
+          ),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: _buildChip('فشل', _countError.toString(), Colors.redAccent, Icons.error)),
+        Expanded(
+          child: _buildChip(
+            'فشل',
+            _countError.toString(),
+            Colors.redAccent,
+            Icons.error,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildChip(String title, String value, Color color, IconData icon) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -645,14 +750,22 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'الفحوصات',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        ..._tests.map((t) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildTestCard(t),
-        )).toList(),
+        ..._tests
+            .map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildTestCard(t),
+              ),
+            )
+            .toList(),
       ],
     );
   }
@@ -660,16 +773,13 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Widget _buildTestCard(_NetworkDiagnostic t) {
     final theme = Theme.of(context);
     final color = _statusColor(t.status);
-    
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -711,7 +821,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -743,7 +856,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                 ],
               ),
             ),
-          if (t.id == 'speed_test' && (t.downloadSpeedMbps != null || t.uploadSpeedMbps != null))
+          if (t.id == 'speed_test' &&
+              (t.downloadSpeedMbps != null || t.uploadSpeedMbps != null))
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
@@ -768,10 +882,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
             width: double.infinity,
             child: Text(
               t.message,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
           ),
           const SizedBox(height: 12),
@@ -846,7 +957,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'التوصيات',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -869,10 +984,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               ],
             ),
           ),
-        ..._recommendations.map((r) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildRecommendationCard(r),
-        )).toList(),
+        ..._recommendations
+            .map(
+              (r) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildRecommendationCard(r),
+              ),
+            )
+            .toList(),
       ],
     );
   }
@@ -881,7 +1000,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
     final theme = Theme.of(context);
     Color sevColor;
     String severityLabel;
-    
+
     switch (r.severity) {
       case SeverityLevel.high:
         sevColor = Colors.redAccent;
@@ -900,16 +1019,13 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
         severityLabel = 'معلومة';
         break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: sevColor.withOpacity(0.4),
-          width: 1.5,
-        ),
+        border: Border.all(color: sevColor.withOpacity(0.4), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -943,7 +1059,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: sevColor.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
@@ -1042,7 +1161,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
   Widget _buildAdvancedTools() {
     final theme = Theme.of(context);
     final primary = theme.primaryColor;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1050,7 +1169,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
           padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Text(
             'أدوات متقدمة',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -1060,7 +1183,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               child: InkWell(
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const NetworkMapScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const NetworkMapScreen(),
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(18),
@@ -1069,7 +1194,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: primary.withOpacity(0.3), width: 1.5),
+                    border: Border.all(
+                      color: primary.withOpacity(0.3),
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -1079,7 +1207,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                           color: primary.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Icon(Icons.hub_outlined, size: 32, color: primary),
+                        child: Icon(
+                          Icons.hub_outlined,
+                          size: 32,
+                          color: primary,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       const Text(
@@ -1101,7 +1233,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
               child: InkWell(
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const RogueDhcpDetectorScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const RogueDhcpDetectorScreen(),
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(18),
@@ -1110,7 +1244,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3), width: 1.5),
+                    border: Border.all(
+                      color: Colors.redAccent.withOpacity(0.3),
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -1120,7 +1257,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen> {
                           color: Colors.redAccent.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(Icons.security, size: 32, color: Colors.redAccent),
+                        child: const Icon(
+                          Icons.security,
+                          size: 32,
+                          color: Colors.redAccent,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       const Text(

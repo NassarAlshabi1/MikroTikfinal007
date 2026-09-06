@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image/image.dart' as img;
@@ -24,8 +25,9 @@ class ProcessImageScreen extends StatefulWidget {
 }
 
 class _ProcessImageScreenState extends State<ProcessImageScreen> {
-  final TextRecognizer _textRecognizer =
-      TextRecognizer(script: TextRecognitionScript.latin);
+  final TextRecognizer _textRecognizer = TextRecognizer(
+    script: TextRecognitionScript.latin,
+  );
   String _status = 'جاري معالجة الصورة...';
 
   @override
@@ -56,7 +58,7 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
         _status = 'تحويل الصورة إلى أبيض وأسود...';
       });
       final grayscaleImage = img.grayscale(originalImage);
-      
+
       // 2. Adjust contrast
       setState(() {
         _status = 'تحسين وضوح الأرقام...';
@@ -80,9 +82,13 @@ class _ProcessImageScreenState extends State<ProcessImageScreen> {
 
       for (TextBlock block in recognizedText.blocks) {
         for (TextLine line in block.lines) {
-          final String cleanedLine = line.text.replaceAll(RegExp(r'[^0-9]'), '');
-          final numbersInLine =
-              numberRegExp.allMatches(cleanedLine).map((m) => m.group(0)!);
+          final String cleanedLine = line.text.replaceAll(
+            RegExp(r'[^0-9]'),
+            '',
+          );
+          final numbersInLine = numberRegExp
+              .allMatches(cleanedLine)
+              .map((m) => m.group(0)!);
 
           for (String numberStr in numbersInLine) {
             if (numberStr.length == widget.length &&

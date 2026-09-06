@@ -29,10 +29,10 @@ class NotificationService {
     try {
       _dio ??= Dio();
       final url = 'https://api.telegram.org/bot$_telegramBotToken/sendMessage';
-      await _dio!.post(url, data: {
-        'chat_id': _telegramChatId,
-        'text': message,
-      });
+      await _dio!.post(
+        url,
+        data: {'chat_id': _telegramChatId, 'text': message},
+      );
       return true;
     } catch (e) {
       return false;

@@ -82,26 +82,28 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     allShardClients.addAll(shardClientsList);
 
     // توزيع المستخدمين على الشوارد.
-    final futures = <Future<List<Map<String, String>>>[]>[];
+    final futures = <Future<List<Map<String, String>>>>[];
     for (var s = 0; s < shardCount; s++) {
       final start = s * shardSize;
       final end = min(start + shardSize, shardUsers.length);
       if (start >= shardUsers.length) break;
       final chunk = shardUsers.sublist(start, end);
-      futures.add(_processShard(
-        users: chunk,
-        client: shardClientsList[s],
-        selectedProfile: data.selectedProfile!,
-        sharedUsers: data.sharedUsers,
-        isVersion7OrNewer: data.isVersion7OrNewer,
-        customer: data.customer,
-        charType: data.charType,
-        linkPasswordToFirstUser: data.linkPasswordToFirstUser,
-        sendPort: sendPort,
-        cardsBefore: start,
-        totalCards: shardUsers.length,
-        failedAdds: failedAdds,
-      ));
+      futures.add(
+        _processShard(
+          users: chunk,
+          client: shardClientsList[s],
+          selectedProfile: data.selectedProfile!,
+          sharedUsers: data.sharedUsers,
+          isVersion7OrNewer: data.isVersion7OrNewer,
+          customer: data.customer,
+          charType: data.charType,
+          linkPasswordToFirstUser: data.linkPasswordToFirstUser,
+          sendPort: sendPort,
+          cardsBefore: start,
+          totalCards: shardUsers.length,
+          failedAdds: failedAdds,
+        ),
+      );
     }
 
     final results = await Future.wait(futures);
@@ -109,25 +111,47 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       created.addAll(shardCreated);
     }
   } on MikrotikCredentialsMissingException catch (e) {
-    sendPort.send({'type': 'error', 'message': 'خطأ في بيانات الدخول: ${e.message}', 'count': created.length});
+    sendPort.send({
+      'type': 'error',
+      'message': 'خطأ في بيانات الدخول: ${e.message}',
+      'count': created.length,
+    });
     return;
   } on MikrotikConnectionException catch (e) {
-    sendPort.send({'type': 'error', 'message': 'خطأ في الاتصال: ${e.message}', 'count': created.length});
+    sendPort.send({
+      'type': 'error',
+      'message': 'خطأ في الاتصال: ${e.message}',
+      'count': created.length,
+    });
     return;
   } on TimeoutException {
-    sendPort.send({'type': 'error', 'message': 'انتهت مهلة الاتصال بالراوتر.', 'count': created.length});
+    sendPort.send({
+      'type': 'error',
+      'message': 'انتهت مهلة الاتصال بالراوتر.',
+      'count': created.length,
+    });
     return;
   } catch (e) {
-    sendPort.send({'type': 'error', 'message': e.toString(), 'count': created.length});
+    sendPort.send({
+      'type': 'error',
+      'message': e.toString(),
+      'count': created.length,
+    });
     return;
   } finally {
     for (final client in allShardClients) {
-      try { client.close(); } catch (_) {}
+      try {
+        client.close();
+      } catch (_) {}
     }
   }
 
   if (created.isEmpty && failedAdds.isEmpty) {
-    sendPort.send({'type': 'error', 'message': 'فشل إنشاء أي كرت على الراوتر.', 'count': 0});
+    sendPort.send({
+      'type': 'error',
+      'message': 'فشل إنشاء أي كرت على الراوتر.',
+      'count': 0,
+    });
     return;
   }
 
@@ -173,28 +197,34 @@ Future<List<Map<String, String>>> _processShard({
       final password = user['password']!;
       final globalIdx = waveStart + i;
 
-      taggedCommands.add(TaggedCommand(
-        command: _addUserCommand(
-          username: username,
-          password: password,
-          sharedUsers: sharedUsers,
-          isVersion7OrNewer: isVersion7OrNewer,
-          customer: customer,
+      taggedCommands.add(
+        TaggedCommand(
+          command: _addUserCommand(
+            username: username,
+            password: password,
+            sharedUsers: sharedUsers,
+            isVersion7OrNewer: isVersion7OrNewer,
+            customer: customer,
+          ),
+          tag: 'add_$globalIdx',
         ),
-        tag: 'add_$globalIdx',
-      ));
+      );
 
-      taggedCommands.add(TaggedCommand(
-        command: _activateCommand(
-          customer: customer,
-          username: username,
-          profile: selectedProfile,
+      taggedCommands.add(
+        TaggedCommand(
+          command: _activateCommand(
+            customer: customer,
+            username: username,
+            profile: selectedProfile,
+          ),
+          tag: 'act_$globalIdx',
         ),
-        tag: 'act_$globalIdx',
-      ));
+      );
     }
 
-    final responses = client.talkMultiple(taggedCommands).timeout(perWaveTimeout);
+    final responses = client
+        .talkMultiple(taggedCommands)
+        .timeout(perWaveTimeout);
 
     await for (final resp in responses) {
       final tag = resp.tag;
@@ -223,7 +253,8 @@ Future<List<Map<String, String>>> _processShard({
               sendPort.send({
                 'type': 'progress',
                 'progress': totalCards == 0 ? 1.0 : done / totalCards,
-                'status': 'تمت معالجة $done من $totalCards كرت (أنشئ $createdHere)',
+                'status':
+                    'تمت معالجة $done من $totalCards كرت (أنشئ $createdHere)',
               });
             }
           }
@@ -255,13 +286,12 @@ List<String> _activateCommand({
   required String customer,
   required String username,
   required String profile,
-}) =>
-    [
-      '/tool/user-manager/user/create-and-activate-profile',
-      '=customer=$customer',
-      '=numbers=$username',
-      '=profile=$profile',
-    ];
+}) => [
+  '/tool/user-manager/user/create-and-activate-profile',
+  '=customer=$customer',
+  '=numbers=$username',
+  '=profile=$profile',
+];
 
 String? _extractUserId(List<Map<String, String>> response) {
   for (final row in response) {
@@ -309,10 +339,13 @@ String _generateUniqueUsername({
 }) {
   const maxAttempts = 1000;
   for (var attempt = 0; attempt < maxAttempts; attempt++) {
-    final username = prefix + _generateRandomString(length - prefix.length, charType);
+    final username =
+        prefix + _generateRandomString(length - prefix.length, charType);
     if (existingUsernames.add(username)) return username;
   }
-  throw StateError('تعذر توليد أسماء مستخدمين فريدة. زد الطول أو قلل عدد الكروت.');
+  throw StateError(
+    'تعذر توليد أسماء مستخدمين فريدة. زد الطول أو قلل عدد الكروت.',
+  );
 }
 
 String _generatePassword({

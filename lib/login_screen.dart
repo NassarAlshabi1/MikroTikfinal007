@@ -19,7 +19,8 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final _ipController = TextEditingController();
@@ -39,7 +40,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _isScanning = false;
 
   // --- Regex للتحقق من صيغة IP ---
-  static final _ipRegex = RegExp(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$');
+  static final _ipRegex = RegExp(
+    r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$',
+  );
 
   String? _validateIpAddress(String? value) {
     if (value == null || value.trim().isEmpty) return 'الرجاء إدخال عنوان IP';
@@ -90,10 +93,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           });
         }
       } else {
-        if (mounted) setState(() => _errorMessage = 'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.');
+        if (mounted)
+          setState(
+            () => _errorMessage =
+                'لم يتم العثور على بوابة. تأكد من اتصالك بشبكة Wi-Fi.',
+          );
       }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
+      if (mounted)
+        setState(() => _errorMessage = 'حدث خطأ أثناء محاولة اكتشاف الشبكة.');
     } finally {
       if (mounted) setState(() => _isScanning = false);
     }
@@ -180,7 +188,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (mounted) {
         Navigator.of(context).pushReplacement(
           CustomPageRoute(
-            builder: (context) => HomeScreen(isVersion7OrNewer: isVersion7OrNewer, username: _userController.text),
+            builder: (context) => HomeScreen(
+              isVersion7OrNewer: isVersion7OrNewer,
+              username: _userController.text,
+            ),
           ),
         );
       }
@@ -196,7 +207,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = 'فشل الاتصال. تحقق من البيانات أو الشبكة.\n(الخطأ: ${e.toString()})');
+        setState(
+          () => _errorMessage =
+              'فشل الاتصال. تحقق من البيانات أو الشبكة.\n(الخطأ: ${e.toString()})',
+        );
         showErrorSnackBar(context, 'فشل الاتصال. تحقق من البيانات أو الشبكة.');
       }
     } finally {
@@ -233,7 +247,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             children: <Widget>[
               Image.asset('assets/images/wifi_logo.png', width: 48, height: 48),
               const SizedBox(height: 24),
-              Text('إدارة شبكتك بسهولة وأمان', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color)),
+              Text(
+                'إدارة شبكتك بسهولة وأمان',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
               const SizedBox(height: 24),
 
               Container(
@@ -258,7 +279,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               if (_errorMessage.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(_errorMessage, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent, fontSize: 14)),
+                  child: Text(
+                    _errorMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
 
               // استخدام MediaQuery لجعل الارتفاع متجاوباً بدلاً من 550 ثابت
@@ -270,10 +298,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 child: TabBarView(
                   controller: _tabController,
                   physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildLocalLoginForm(),
-                    _buildRemoteLoginForm(),
-                  ],
+                  children: [_buildLocalLoginForm(), _buildRemoteLoginForm()],
                 ),
               ),
             ],
@@ -288,7 +313,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() => _errorMessage = 'الرجاء إدخال عنوان الخادم البعيد');
       return;
     }
-    if (_remoteUserController.text.trim().isEmpty || _remotePassController.text.trim().isEmpty) {
+    if (_remoteUserController.text.trim().isEmpty ||
+        _remotePassController.text.trim().isEmpty) {
       setState(() => _errorMessage = 'الرجاء إدخال اسم المستخدم وكلمة المرور');
       return;
     }
@@ -296,7 +322,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     // التحقق من صيغة IP أو Domain
     final serverValue = _remoteServerController.text.trim();
     if (!_ipRegex.hasMatch(serverValue) && !_isValidDomain(serverValue)) {
-      setState(() => _errorMessage = 'صيغة العنوان غير صحيحة\nأدخل IP أو اسم نطاق صحيح');
+      setState(
+        () =>
+            _errorMessage = 'صيغة العنوان غير صحيحة\nأدخل IP أو اسم نطاق صحيح',
+      );
       return;
     }
 
@@ -310,7 +339,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       await prefs.setString('ip', serverValue);
       await prefs.setString('user', _remoteUserController.text.trim());
       await prefs.setString('pass', _remotePassController.text);
-      await prefs.setString('port', _remotePortController.text.trim().isEmpty ? '8728' : _remotePortController.text.trim());
+      await prefs.setString(
+        'port',
+        _remotePortController.text.trim().isEmpty
+            ? '8728'
+            : _remotePortController.text.trim(),
+      );
 
       RouterOSClient? client;
       try {
@@ -340,7 +374,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   /// تحقق بسيط من صحة اسم النطاق
   bool _isValidDomain(String value) {
-    final domainRegex = RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$');
+    final domainRegex = RegExp(
+      r'^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$',
+    );
     return domainRegex.hasMatch(value);
   }
 
@@ -356,7 +392,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 flex: 3,
                 child: TextFormField(
                   controller: _ipController,
-                  decoration: const InputDecoration(labelText: 'IP Address', prefixIcon: Icon(Icons.lan)),
+                  decoration: const InputDecoration(
+                    labelText: 'IP Address',
+                    prefixIcon: Icon(Icons.lan),
+                  ),
                   style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.phone,
                   validator: _validateIpAddress,
@@ -373,7 +412,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   keyboardType: TextInputType.number,
                   validator: (v) {
                     final port = int.tryParse(v ?? '');
-                    if (port == null || port < 1 || port > 65535) return 'منفذ غير صالح';
+                    if (port == null || port < 1 || port > 65535)
+                      return 'منفذ غير صالح';
                     return null;
                   },
                   autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -389,10 +429,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 child: _isScanning
                     ? const Padding(
                         padding: EdgeInsets.all(12.0),
-                        child: CircularProgressIndicator(color: Color(0xFF6b3fa0)),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF6b3fa0),
+                        ),
                       )
                     : IconButton(
-                        icon: const Icon(Icons.search, color: Color(0xFF6b3fa0)),
+                        icon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF6b3fa0),
+                        ),
                         onPressed: _forceDiscoverGateway,
                         tooltip: 'بحث عن البوابة',
                       ),
@@ -402,9 +447,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           const SizedBox(height: 16),
           TextFormField(
             controller: _userController,
-            decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline)),
+            decoration: const InputDecoration(
+              labelText: 'Username',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
             style: const TextStyle(color: Colors.white),
-            validator: (v) => (v == null || v.isEmpty) ? 'الرجاء إدخال اسم المستخدم' : null,
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'الرجاء إدخال اسم المستخدم' : null,
           ),
           const SizedBox(height: 16),
           TextField(
@@ -414,8 +463,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               labelText: 'Password',
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
-                icon: Icon(_isPasswordObscured ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+                icon: Icon(
+                  _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () =>
+                    setState(() => _isPasswordObscured = !_isPasswordObscured),
               ),
             ),
             style: const TextStyle(color: Colors.white),
@@ -423,7 +475,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           CheckboxListTile(
             title: const Text("تذكرني"),
             value: _rememberMe,
-            onChanged: (newValue) => setState(() => _rememberMe = newValue ?? false),
+            onChanged: (newValue) =>
+                setState(() => _rememberMe = newValue ?? false),
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
             activeColor: Theme.of(context).primaryColor,
@@ -432,7 +485,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           ElevatedButton(
             onPressed: _isLoading ? null : _login,
             child: _isLoading
-                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Text('اتصال', style: TextStyle(fontSize: 18)),
           ),
           const SizedBox(height: 8),
@@ -475,7 +535,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'الرجاء إدخال العنوان';
-              if (!_ipRegex.hasMatch(v.trim()) && !_isValidDomain(v.trim())) return 'صيغة العنوان غير صحيحة';
+              if (!_ipRegex.hasMatch(v.trim()) && !_isValidDomain(v.trim()))
+                return 'صيغة العنوان غير صحيحة';
               return null;
             },
           ),
@@ -492,7 +553,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (v) {
               final port = int.tryParse(v ?? '');
-              if (port == null || port < 1 || port > 65535) return 'منفذ غير صالح';
+              if (port == null || port < 1 || port > 65535)
+                return 'منفذ غير صالح';
               return null;
             },
           ),
@@ -513,8 +575,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               labelText: 'Password',
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
-                icon: Icon(_remoteObscured ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _remoteObscured = !_remoteObscured),
+                icon: Icon(
+                  _remoteObscured ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () =>
+                    setState(() => _remoteObscured = !_remoteObscured),
               ),
             ),
             style: const TextStyle(color: Colors.white),
@@ -524,8 +589,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             onPressed: _isLoading ? null : _remoteConnect,
             child: _isLoading
                 ? const SizedBox(
-                    height: 24, width: 24,
-                    child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text('الدخول', style: TextStyle(fontSize: 18)),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'network_map_screen.dart';
 import 'device_monitoring_screen.dart';
 
@@ -22,7 +23,11 @@ class NetworkToolsScreen extends StatelessWidget {
               icon: const Icon(Icons.map_outlined, size: 28),
               label: const Text('خريطة الشبكة'),
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const NetworkMapScreen()));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const NetworkMapScreen(),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 20),
@@ -30,7 +35,11 @@ class NetworkToolsScreen extends StatelessWidget {
               icon: const Icon(Icons.devices_other, size: 28),
               label: const Text('مراقبة الأجهزة'),
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const DeviceMonitoringScreen()));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const DeviceMonitoringScreen(),
+                  ),
+                );
               },
             ),
           ],

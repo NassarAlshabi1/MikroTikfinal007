@@ -17,13 +17,10 @@ class CustomPageRoute<T> extends MaterialPageRoute<T> {
     return FadeTransition(
       opacity: animation,
       child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0.05, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        )),
+        position: Tween<Offset>(begin: const Offset(0.05, 0), end: Offset.zero)
+            .animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
         child: child,
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:router_os_client/router_os_client.dart';
@@ -121,7 +122,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (isLinked) {
         Future.delayed(const Duration(seconds: 1), () {
           if (!mounted) return;
-          context.read<MqttService>().publish({'command': 'get_latest_network_details'});
+          context.read<MqttService>().publish({
+            'command': 'get_latest_network_details',
+          });
         });
       }
     }
@@ -138,12 +141,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final response = await client.talk([command]);
       if (mounted) {
         setState(() {
-          _profiles = response.map((p) => Map<String, dynamic>.from(p)).toList();
+          _profiles = response
+              .map((p) => Map<String, dynamic>.from(p))
+              .toList();
         });
       }
     } catch (e) {
       if (mounted) {
-        showErrorSnackBar(context, 'حدث خطأ أثناء جلب البيانات: ${e.toString()}');
+        showErrorSnackBar(
+          context,
+          'حدث خطأ أثناء جلب البيانات: ${e.toString()}',
+        );
       }
     } finally {
       client?.close();
@@ -165,44 +173,147 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final screenWith = MediaQuery.of(context).size.width;
     // --- الإصلاح: عدد الأعمدة ديناميكي حسب عرض الشاشة ---
-    final crossAxisCount = screenWith > 700 ? 4 : screenWith > 500 ? 3 : 2;
+    final crossAxisCount = screenWith > 700
+        ? 4
+        : screenWith > 500
+        ? 3
+        : 2;
 
     final List<ServiceItem> services = [
-      ServiceItem(title: 'إضافة كرت فردي', icon: Icons.person_add_alt_1, color: const Color(0xFF5C6BC0),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => AddUserScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, customer: widget.username))); },
+      ServiceItem(
+        title: 'إضافة كرت فردي',
+        icon: Icons.person_add_alt_1,
+        color: const Color(0xFF5C6BC0),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(
+              builder: (context) => AddUserScreen(
+                profiles: _profiles,
+                isVersion7OrNewer: widget.isVersion7OrNewer,
+                customer: widget.username,
+              ),
+            ),
+          );
+        },
       ),
-      ServiceItem(title: 'إضافة كروت جماعية', icon: Icons.groups, color: const Color(0xFF4CAF50),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => BulkAddScreen(profiles: _profiles, isVersion7OrNewer: widget.isVersion7OrNewer, username: widget.username))); },
+      ServiceItem(
+        title: 'إضافة كروت جماعية',
+        icon: Icons.groups,
+        color: const Color(0xFF4CAF50),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(
+              builder: (context) => BulkAddScreen(
+                profiles: _profiles,
+                isVersion7OrNewer: widget.isVersion7OrNewer,
+                username: widget.username,
+              ),
+            ),
+          );
+        },
       ),
-      ServiceItem(title: 'ربط الشبكة', icon: Icons.link, color: const Color(0xFF42A5F5),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const QahtaniLinkScreen())); },
+      ServiceItem(
+        title: 'ربط الشبكة',
+        icon: Icons.link,
+        color: const Color(0xFF42A5F5),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(builder: (context) => const QahtaniLinkScreen()),
+          );
+        },
       ),
-      ServiceItem(title: 'الإحصائيات', icon: Icons.bar_chart_rounded, color: const Color(0xFF26A69A),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const StatsScreen())); },
+      ServiceItem(
+        title: 'الإحصائيات',
+        icon: Icons.bar_chart_rounded,
+        color: const Color(0xFF26A69A),
+        onTap: () {
+          Navigator.of(context)
+              .push(CustomPageRoute(builder: (context) => const StatsScreen()));
+        },
       ),
-      ServiceItem(title: 'طبيب الشبكة', icon: Icons.local_hospital_outlined, color: const Color(0xFF42A5F5),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const NetworkDoctorScreen())); },
+      ServiceItem(
+        title: 'طبيب الشبكة',
+        icon: Icons.local_hospital_outlined,
+        color: const Color(0xFF42A5F5),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(builder: (context) => const NetworkDoctorScreen()),
+          );
+        },
       ),
-      ServiceItem(title: 'الملفات المحفوظة', icon: Icons.folder_copy, color: const Color(0xFFFFA726),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const SavedFilesScreen())); },
+      ServiceItem(
+        title: 'الملفات المحفوظة',
+        icon: Icons.folder_copy,
+        color: const Color(0xFFFFA726),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(builder: (context) => const SavedFilesScreen()),
+          );
+        },
       ),
-      ServiceItem(title: 'إدارة قوالب PDF', icon: Icons.picture_as_pdf, color: const Color(0xFF78909C),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => PdfTemplatesScreen(profiles: _profiles))); },
+      ServiceItem(
+        title: 'إدارة قوالب PDF',
+        icon: Icons.picture_as_pdf,
+        color: const Color(0xFF78909C),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(
+              builder: (context) => PdfTemplatesScreen(profiles: _profiles),
+            ),
+          );
+        },
       ),
-      ServiceItem(title: 'استخراج الكروت', icon: Icons.document_scanner_outlined, color: const Color(0xFFEF5350),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ExtractCardsScreen())); },
+      ServiceItem(
+        title: 'استخراج الكروت',
+        icon: Icons.document_scanner_outlined,
+        color: const Color(0xFFEF5350),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(builder: (context) => const ExtractCardsScreen()),
+          );
+        },
       ),
-      ServiceItem(title: 'إحصائيات الكروت', icon: Icons.bar_chart, color: const Color(0xFF9C27B0),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const CardsStatisticsScreen())); },
+      ServiceItem(
+        title: 'إحصائيات الكروت',
+        icon: Icons.bar_chart,
+        color: const Color(0xFF9C27B0),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(
+              builder: (context) => const CardsStatisticsScreen(),
+            ),
+          );
+        },
       ),
-      ServiceItem(title: 'المستخدمين النشطين', icon: Icons.people_outline, color: const Color(0xFF00ACC1),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ActiveUsersScreen())); },
+      ServiceItem(
+        title: 'المستخدمين النشطين',
+        icon: Icons.people_outline,
+        color: const Color(0xFF00ACC1),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(builder: (context) => const ActiveUsersScreen()),
+          );
+        },
       ),
-      ServiceItem(title: 'الملف الشخصي', icon: Icons.account_circle, color: const Color(0xFF29B6F6),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const ProfileScreen())); },
+      ServiceItem(
+        title: 'الملف الشخصي',
+        icon: Icons.account_circle,
+        color: const Color(0xFF29B6F6),
+        onTap: () {
+          Navigator.of(
+            context,
+          ).push(CustomPageRoute(builder: (context) => const ProfileScreen()));
+        },
       ),
-      ServiceItem(title: 'النسخ الاحتياطي', icon: Icons.backup, color: const Color(0xFF2196F3),
-        onTap: () { Navigator.of(context).push(CustomPageRoute(builder: (context) => const BackupSystemScreen())); },
+      ServiceItem(
+        title: 'النسخ الاحتياطي',
+        icon: Icons.backup,
+        color: const Color(0xFF2196F3),
+        onTap: () {
+          Navigator.of(context).push(
+            CustomPageRoute(builder: (context) => const BackupSystemScreen()),
+          );
+        },
       ),
     ];
 
@@ -214,16 +325,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('الرئيسية', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'الرئيسية',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(width: 8),
             // مؤشر حالة الاتصال
             Container(
-              width: 10, height: 10,
+              width: 10,
+              height: 10,
               decoration: BoxDecoration(
                 color: _isConnected ? Colors.greenAccent : Colors.redAccent,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: (_isConnected ? Colors.greenAccent : Colors.redAccent).withOpacity(0.5), blurRadius: 6),
+                  BoxShadow(
+                    color:
+                        (_isConnected ? Colors.greenAccent : Colors.redAccent)
+                            .withOpacity(0.5),
+                    blurRadius: 6,
+                  ),
                 ],
               ),
             ),
@@ -237,13 +357,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_none_rounded), onPressed: () {}, tooltip: 'الإشعارات'),
           IconButton(
-            icon: const Icon(Icons.logout), tooltip: 'تسجيل الخروج',
+            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: () {},
+            tooltip: 'الإشعارات',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'تسجيل الخروج',
             onPressed: () async {
               await ConnectionService.instance.disconnect();
               if (mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/', (route) => false);
               }
             },
           ),
@@ -259,8 +385,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   // --- الإصلاح: زر تبديل الوضع ---
                   _buildModeSwitcher(),
                   const Padding(
-                    padding: EdgeInsets.only(top: 16.0, right: 24.0, left: 24.0, bottom: 12.0),
-                    child: Text('الخدمات الأساسية', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    padding: EdgeInsets.only(
+                      top: 16.0,
+                      right: 24.0,
+                      left: 24.0,
+                      bottom: 12.0,
+                    ),
+                    child: Text(
+                      'الخدمات الأساسية',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   // --- الإصلاح: عدد الأعمدة ديناميكي ---
                   GridView.builder(
@@ -277,7 +415,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     itemBuilder: (context, index) {
                       final service = services[index];
                       return RepaintBoundary(
-                        child: _buildServiceGridItem(title: service.title, icon: service.icon, iconBgColor: service.color, onTap: service.onTap),
+                        child: _buildServiceGridItem(
+                          title: service.title,
+                          icon: service.icon,
+                          iconBgColor: service.color,
+                          onTap: service.onTap,
+                        ),
                       );
                     },
                   ),
@@ -292,9 +435,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0))),
+          const CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0)),
+          ),
           const SizedBox(height: 16),
-          Text('جاري التحميل...', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14)),
+          Text(
+            'جاري التحميل...',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 14,
+            ),
+          ),
         ],
       ),
     );
@@ -308,24 +460,47 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_isNetworkLinked && _clientName.isNotEmpty ? 'العميل' : 'مرحباً بك',
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16)),
+            Text(
+              _isNetworkLinked && _clientName.isNotEmpty
+                  ? 'العميل'
+                  : 'مرحباً بك',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    _isNetworkLinked && _clientName.isNotEmpty ? _clientName : 'لوحة تحكم MikroTik',
-                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                    _isNetworkLinked && _clientName.isNotEmpty
+                        ? _clientName
+                        : 'لوحة تحكم MikroTik',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.settings_ethernet, color: Colors.white70, size: 28),
+                const Icon(
+                  Icons.settings_ethernet,
+                  color: Colors.white70,
+                  size: 28,
+                ),
               ],
             ),
           ],
@@ -368,7 +543,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildModeButton({required String title, required IconData icon, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildModeButton({
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -383,9 +563,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.white54),
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected ? Colors.white : Colors.white54,
+              ),
               const SizedBox(width: 6),
-              Flexible(child: Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : Colors.white54), overflow: TextOverflow.ellipsis)),
+              Flexible(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : Colors.white54,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),
@@ -393,7 +587,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildServiceGridItem({required String title, required IconData icon, required Color iconBgColor, required VoidCallback onTap}) {
+  Widget _buildServiceGridItem({
+    required String title,
+    required IconData icon,
+    required Color iconBgColor,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -413,7 +612,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: Icon(icon, size: 28, color: iconBgColor),
             ),
             const SizedBox(height: 10),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
@@ -432,10 +642,21 @@ class CustomLoadingIndicator extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0))),
+          const CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6b3fa0)),
+          ),
           if (message != null) ...[
             const SizedBox(height: 16),
-            Text(message!, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14, height: 1.5), textAlign: TextAlign.center),
+            Text(
+              message!,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ],
       ),

@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
 import 'snackbar_helpers.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'edit_pdf_template_screen.dart';
 
 // موديل بسيط لتسهيل التعامل مع بيانات القالب
@@ -18,7 +22,6 @@ class PdfTemplate {
   final double markerWidthRatio;
   final double markerHeightRatio;
 
-
   PdfTemplate({
     required this.profileName,
     required this.imagePath,
@@ -33,30 +36,30 @@ class PdfTemplate {
   });
 
   Map<String, dynamic> toJson() => {
-        'profileName': profileName,
-        'imagePath': imagePath,
-        'textXRatio': textXRatio,
-        'textYRatio': textYRatio,
-        'cardsPerPage': cardsPerPage,
-        'imageWidth': imageWidth,
-        'imageHeight': imageHeight,
-        // --- ✨ تعديل: إضافة المتغيرات الجديدة لـ JSON ---
-        'markerWidthRatio': markerWidthRatio,
-        'markerHeightRatio': markerHeightRatio,
-      };
+    'profileName': profileName,
+    'imagePath': imagePath,
+    'textXRatio': textXRatio,
+    'textYRatio': textYRatio,
+    'cardsPerPage': cardsPerPage,
+    'imageWidth': imageWidth,
+    'imageHeight': imageHeight,
+    // --- ✨ تعديل: إضافة المتغيرات الجديدة لـ JSON ---
+    'markerWidthRatio': markerWidthRatio,
+    'markerHeightRatio': markerHeightRatio,
+  };
 
   factory PdfTemplate.fromJson(Map<String, dynamic> json) => PdfTemplate(
-        profileName: json['profileName'],
-        imagePath: json['imagePath'],
-        textXRatio: json['textXRatio']?.toDouble() ?? 0.5,
-        textYRatio: json['textYRatio']?.toDouble() ?? 0.5,
-        cardsPerPage: json['cardsPerPage'],
-        imageWidth: json['imageWidth']?.toDouble() ?? 1.0,
-        imageHeight: json['imageHeight']?.toDouble() ?? 1.0,
-        // --- ✨ تعديل: قراءة المتغيرات الجديدة من JSON مع قيم افتراضية ---
-        markerWidthRatio: json['markerWidthRatio']?.toDouble() ?? 0.3,
-        markerHeightRatio: json['markerHeightRatio']?.toDouble() ?? 0.1,
-      );
+    profileName: json['profileName'],
+    imagePath: json['imagePath'],
+    textXRatio: json['textXRatio']?.toDouble() ?? 0.5,
+    textYRatio: json['textYRatio']?.toDouble() ?? 0.5,
+    cardsPerPage: json['cardsPerPage'],
+    imageWidth: json['imageWidth']?.toDouble() ?? 1.0,
+    imageHeight: json['imageHeight']?.toDouble() ?? 1.0,
+    // --- ✨ تعديل: قراءة المتغيرات الجديدة من JSON مع قيم افتراضية ---
+    markerWidthRatio: json['markerWidthRatio']?.toDouble() ?? 0.3,
+    markerHeightRatio: json['markerHeightRatio']?.toDouble() ?? 0.1,
+  );
 }
 
 class PdfTemplatesScreen extends StatefulWidget {
@@ -97,15 +100,17 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
       builder: (context) => AlertDialog(
         title: const Text('تأكيد الحذف'),
         content: Text(
-            'هل أنت متأكد من رغبتك في حذف قالب الفئة "${templateToDelete.profileName}"؟'),
+          'هل أنت متأكد من رغبتك في حذف قالب الفئة "${templateToDelete.profileName}"؟',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('إلغاء')),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء'),
+          ),
           TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child:
-                  const Text('حذف', style: TextStyle(color: Colors.redAccent))),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
+          ),
         ],
       ),
     );
@@ -121,10 +126,13 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
       // تجاهل الخطأ
     }
 
-    _templates.removeWhere((t) => t.profileName == templateToDelete.profileName);
+    _templates.removeWhere(
+      (t) => t.profileName == templateToDelete.profileName,
+    );
     final prefs = await SharedPreferences.getInstance();
-    final updatedTemplatesJson =
-        _templates.map((t) => jsonEncode(t.toJson())).toList();
+    final updatedTemplatesJson = _templates
+        .map((t) => jsonEncode(t.toJson()))
+        .toList();
     await prefs.setStringList('pdf_templates', updatedTemplatesJson);
     if (mounted) {
       setState(() {});
@@ -148,21 +156,22 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _templates.isEmpty
-              ? _buildEmptyView()
-              : RefreshIndicator(
-                  onRefresh: _loadTemplates,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: _templates.length,
-                    itemBuilder: (context, index) {
-                      final template = _templates[index];
-                      return _buildTemplateCard(template);
-                    },
-                  ),
-                ),
+          ? _buildEmptyView()
+          : RefreshIndicator(
+              onRefresh: _loadTemplates,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _templates.length,
+                itemBuilder: (context, index) {
+                  final template = _templates[index];
+                  return _buildTemplateCard(template);
+                },
+              ),
+            ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            _navigateAndReload(EditPdfTemplateScreen(profiles: widget.profiles)),
+        onPressed: () => _navigateAndReload(
+          EditPdfTemplateScreen(profiles: widget.profiles),
+        ),
         tooltip: 'إضافة قالب جديد',
         child: const Icon(Icons.add),
       ),
@@ -192,8 +201,12 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return const Center(
-                        child: Icon(Icons.image_not_supported,
-                            color: Colors.grey, size: 40));
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey,
+                        size: 40,
+                      ),
+                    );
                   },
                 ),
               ),
@@ -217,22 +230,29 @@ class _PdfTemplatesScreenState extends State<PdfTemplatesScreen> {
               children: [
                 TextButton.icon(
                   onPressed: () => _deleteTemplate(template),
-                  icon: const Icon(Icons.delete_outline,
-                      color: Colors.redAccent, size: 20),
-                  label: const Text('حذف',
-                      style: TextStyle(color: Colors.redAccent)),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.redAccent,
+                    size: 20,
+                  ),
+                  label: const Text(
+                    'حذف',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  onPressed: () => _navigateAndReload(EditPdfTemplateScreen(
-                    profiles: widget.profiles,
-                    existingTemplate: template,
-                  )),
+                  onPressed: () => _navigateAndReload(
+                    EditPdfTemplateScreen(
+                      profiles: widget.profiles,
+                      existingTemplate: template,
+                    ),
+                  ),
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   label: const Text('تعديل'),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

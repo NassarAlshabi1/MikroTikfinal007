@@ -19,9 +19,7 @@ void showErrorSnackBar(BuildContext context, String message) {
       backgroundColor: Colors.redAccent,
       duration: const Duration(seconds: 5),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.all(16),
       action: SnackBarAction(
         label: 'إغلاق',
@@ -51,9 +49,7 @@ void showSuccessSnackBar(BuildContext context, String message) {
       backgroundColor: const Color(0xFF4CAF50),
       duration: const Duration(seconds: 3),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.all(16),
     ),
   );

@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:fl_chart/fl_chart.dart';
+
 import 'mikrotik_connector.dart';
 import 'snackbar_helpers.dart';
 
@@ -70,7 +72,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   final double _cpuThreshold = 80.0;
   final double _memoryThreshold = 90.0;
   final double _temperatureThreshold = 70.0;
-  
+
   // Track last alert times to avoid spam
   DateTime? _lastCpuAlertTime;
   DateTime? _lastMemoryAlertTime;
@@ -144,7 +146,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           _isLoading = false;
           _errorMessage = 'فشل الاتصال بالراوتر: ${e.toString()}';
         });
-        showErrorSnackBar(context, 'فشل الاتصال بالراوتر. تحقق من إعدادات الشبكة.');
+        showErrorSnackBar(
+          context,
+          'فشل الاتصال بالراوتر. تحقق من إعدادات الشبكة.',
+        );
       }
     }
   }
@@ -162,9 +167,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         _cpuFrequency = data['cpu-frequency'] ?? '';
         _cpuLoad = int.tryParse(data['cpu-load']?.toString() ?? '0') ?? 0;
         _freeMemory = int.tryParse(data['free-memory']?.toString() ?? '0') ?? 0;
-        _totalMemory = int.tryParse(data['total-memory']?.toString() ?? '0') ?? 0;
-        _freeHddSpace = int.tryParse(data['free-hdd-space']?.toString() ?? '0') ?? 0;
-        _totalHddSpace = int.tryParse(data['total-hdd-space']?.toString() ?? '0') ?? 0;
+        _totalMemory =
+            int.tryParse(data['total-memory']?.toString() ?? '0') ?? 0;
+        _freeHddSpace =
+            int.tryParse(data['free-hdd-space']?.toString() ?? '0') ?? 0;
+        _totalHddSpace =
+            int.tryParse(data['total-hdd-space']?.toString() ?? '0') ?? 0;
         _architectureName = data['architecture-name'] ?? '';
         _platform = data['platform'] ?? '';
       }
@@ -209,12 +217,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     try {
       // جلب قائمة الـ interfaces
       final interfaces = await client.talk(['/interface/print']);
-      
+
       // البحث عن Interface مناسب (ether1 أو أول interface نشط)
       String? targetInterface;
       for (var iface in interfaces) {
         final name = iface['name']?.toString() ?? '';
-        if (name.toLowerCase().contains('ether1') || name.toLowerCase().contains('wan')) {
+        if (name.toLowerCase().contains('ether1') ||
+            name.toLowerCase().contains('wan')) {
           targetInterface = name;
           break;
         }
@@ -226,16 +235,20 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       }
 
       if (targetInterface != null) {
-        final response = await client.talk([
-          '/interface/monitor-traffic',
-          '=interface=$targetInterface',
-          '=once=',
-        ]).timeout(const Duration(seconds: 3));
+        final response = await client
+            .talk([
+              '/interface/monitor-traffic',
+              '=interface=$targetInterface',
+              '=once=',
+            ])
+            .timeout(const Duration(seconds: 3));
 
         if (response.isNotEmpty) {
           final data = response.first;
-          _rxBitsPerSecond = int.tryParse(data['rx-bits-per-second']?.toString() ?? '0') ?? 0;
-          _txBitsPerSecond = int.tryParse(data['tx-bits-per-second']?.toString() ?? '0') ?? 0;
+          _rxBitsPerSecond =
+              int.tryParse(data['rx-bits-per-second']?.toString() ?? '0') ?? 0;
+          _txBitsPerSecond =
+              int.tryParse(data['tx-bits-per-second']?.toString() ?? '0') ?? 0;
         }
       }
     } catch (e) {
@@ -254,7 +267,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       } catch (e) {
         // إذا فشل Hotspot، جرب User Manager
         try {
-          final userManagerResponse = await client.talk(['/tool/user-manager/session/print']);
+          final userManagerResponse = await client.talk([
+            '/tool/user-manager/session/print',
+          ]);
           _activeUsers = userManagerResponse.length;
         } catch (e) {
           _activeUsers = 0;
@@ -364,7 +379,9 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         : 0.0;
 
     _cpuHistory.add(FlSpot(_dataPointIndex.toDouble(), cpuValue));
-    _memoryHistory.add(FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage));
+    _memoryHistory.add(
+      FlSpot(_dataPointIndex.toDouble(), memoryUsedPercentage),
+    );
 
     // Keep only last 20 data points using sublist to avoid repeated removals
     if (_cpuHistory.length > 20) {
@@ -379,11 +396,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   void _checkAlerts() {
     final now = DateTime.now();
-    
+
     // Check CPU Alert
     if (_cpuLoad >= _cpuThreshold) {
       _cpuAlert = true;
-      if (_lastCpuAlertTime == null || 
+      if (_lastCpuAlertTime == null ||
           now.difference(_lastCpuAlertTime!).inMinutes >= 5) {
         _showAlert(
           'تحذير: استخدام المعالج مرتفع!',
@@ -401,10 +418,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     final memoryUsedPercentage = _totalMemory > 0
         ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
         : 0.0;
-    
+
     if (memoryUsedPercentage >= _memoryThreshold) {
       _memoryAlert = true;
-      if (_lastMemoryAlertTime == null || 
+      if (_lastMemoryAlertTime == null ||
           now.difference(_lastMemoryAlertTime!).inMinutes >= 5) {
         _showAlert(
           'تحذير: الذاكرة ممتلئة!',
@@ -423,7 +440,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       final temp = double.tryParse(_temperature);
       if (temp != null && temp >= _temperatureThreshold) {
         _temperatureAlert = true;
-        if (_lastTempAlertTime == null || 
+        if (_lastTempAlertTime == null ||
             now.difference(_lastTempAlertTime!).inMinutes >= 5) {
           _showAlert(
             'تحذير: حرارة الجهاز مرتفعة!',
@@ -441,7 +458,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   void _showAlert(String title, String message, IconData icon, Color color) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -470,9 +487,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         backgroundColor: color,
         duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
       ),
     );
@@ -495,7 +510,11 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.redAccent,
+              ),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
@@ -541,7 +560,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 _buildAlertBanner(),
               if (_cpuAlert || _memoryAlert || _temperatureAlert)
                 const SizedBox(height: 16),
-              
+
               // بطاقة معلومات النظام الرئيسية
               _buildMainSystemCard(theme),
               const SizedBox(height: 16),
@@ -616,7 +635,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     const SizedBox(width: 12),
                     const Text(
                       'البحث عن المشاكل',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -653,17 +675,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                       );
                     },
                   ),
-                  _buildActionButton(
-                    'يوزر متجر',
-                    Icons.group,
-                    Colors.grey,
-                    () {
-                      // TODO
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً...')),
-                      );
-                    },
-                  ),
+                  _buildActionButton('يوزر متجر', Icons.group, Colors.grey, () {
+                    // TODO
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('قريباً...')));
+                  }),
                   _buildActionButton(
                     'هوتسبوت',
                     Icons.wifi,
@@ -722,10 +739,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           const SizedBox(height: 8),
           Text(
             _version,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
-            ),
+            style: const TextStyle(fontSize: 16, color: Colors.white70),
           ),
           const SizedBox(height: 24),
           Row(
@@ -761,7 +775,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildMiniInfoCard(String label, String value, IconData icon, Color color, bool isAlert) {
+  Widget _buildMiniInfoCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+    bool isAlert,
+  ) {
     return Expanded(
       child: Column(
         children: [
@@ -787,24 +807,25 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white70,
-            ),
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
           ),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isAlert ? Colors.red.withOpacity(0.9) : const Color(0xFFB39DDB),
+              color: isAlert
+                  ? Colors.red.withOpacity(0.9)
+                  : const Color(0xFFB39DDB),
               borderRadius: BorderRadius.circular(8),
-              boxShadow: isAlert ? [
-                BoxShadow(
-                  color: Colors.red.withOpacity(0.5),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ] : null,
+              boxShadow: isAlert
+                  ? [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.5),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
             ),
             child: Text(
               value,
@@ -820,15 +841,17 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
+  Widget _buildInfoCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -900,7 +923,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     );
   }
 
-  Widget _buildActionButton(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -908,10 +936,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         decoration: BoxDecoration(
           color: color.withOpacity(0.15),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -981,18 +1006,19 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                   ),
                   if (isAlert) ...[
                     const SizedBox(width: 8),
-                    Icon(
-                      Icons.warning_rounded,
-                      color: color,
-                      size: 24,
-                    ),
+                    Icon(Icons.warning_rounded, color: color, size: 24),
                   ],
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: isAlert ? color.withOpacity(0.9) : const Color(0xFFB39DDB),
+                  color: isAlert
+                      ? color.withOpacity(0.9)
+                      : const Color(0xFFB39DDB),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -1059,10 +1085,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                 ),
                 borderData: FlBorderData(
                   show: true,
-                  border: Border.all(
-                    color: color.withOpacity(0.2),
-                    width: 1,
-                  ),
+                  border: Border.all(color: color.withOpacity(0.2), width: 1),
                 ),
                 minX: data.first.x,
                 maxX: data.last.x,
@@ -1125,9 +1148,12 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             children: [
               _buildChartStat('الحد الأدنى', minY, unit, Colors.green),
               _buildChartStat('الحد الأقصى', maxY, unit, Colors.red),
-              _buildChartStat('المتوسط', 
-                data.map((e) => e.y).reduce((a, b) => a + b) / data.length, 
-                unit, Colors.orange),
+              _buildChartStat(
+                'المتوسط',
+                data.map((e) => e.y).reduce((a, b) => a + b) / data.length,
+                unit,
+                Colors.orange,
+              ),
             ],
           ),
         ],
@@ -1140,10 +1166,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white.withOpacity(0.6),
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.6)),
         ),
         const SizedBox(height: 4),
         Container(
@@ -1151,10 +1174,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
           decoration: BoxDecoration(
             color: color.withOpacity(0.2),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: color.withOpacity(0.4),
-              width: 1,
-            ),
+            border: Border.all(color: color.withOpacity(0.4), width: 1),
           ),
           child: Text(
             '${value.toStringAsFixed(1)}$unit',
@@ -1171,7 +1191,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Widget _buildAlertBanner() {
     final alerts = <Map<String, dynamic>>[];
-    
+
     if (_cpuAlert) {
       alerts.add({
         'title': 'استخدام المعالج مرتفع',
@@ -1180,7 +1200,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'color': Colors.orange,
       });
     }
-    
+
     if (_memoryAlert) {
       final memoryUsedPercentage = _totalMemory > 0
           ? ((_totalMemory - _freeMemory) / _totalMemory) * 100
@@ -1192,7 +1212,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
         'color': Colors.red,
       });
     }
-    
+
     if (_temperatureAlert) {
       alerts.add({
         'title': 'الحرارة مرتفعة',
@@ -1206,10 +1226,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.red.shade700,
-            Colors.orange.shade600,
-          ],
+          colors: [Colors.red.shade700, Colors.orange.shade600],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1255,10 +1272,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     SizedBox(height: 4),
                     Text(
                       'تم الكشف عن مشكلات في الأداء',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -1266,55 +1280,60 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
             ],
           ),
           const SizedBox(height: 16),
-          ...alerts.map((alert) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 1,
+          ...alerts.map(
+            (alert) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      alert['icon'] as IconData,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        alert['title'] as String,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        alert['value'] as String,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    alert['icon'] as IconData,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      alert['title'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      alert['value'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
-          )),
+          ),
         ],
       ),
     );

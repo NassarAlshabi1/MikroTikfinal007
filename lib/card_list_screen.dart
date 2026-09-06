@@ -3,11 +3,13 @@
 import 'dart:async';
 
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+
 import 'mqtt_service.dart';
 import 'snackbar_helpers.dart';
 
@@ -55,37 +57,42 @@ class _CardListScreenState extends State<CardListScreen> {
     _mqttSubscription?.cancel();
     _mqttSubscription = _mqttService.messages.listen((message) {
       if (!mounted) return;
-      
+
       final jobId = message['job_id'];
       if (_addCardsJobId == null || jobId != _addCardsJobId) return;
 
       final status = message['status'];
 
-      switch(status) {
+      switch (status) {
         case 'acknowledged':
           _addCardsTimer?.cancel();
           setState(() => _isJobAcknowledged = true);
           Navigator.of(context, rootNavigator: true).pop();
-          _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
+          _showWaitingDialog(
+            "تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...",
+          );
           break;
-        
+
         case 'job_status_response':
-           if (message['job_status'] == 'not_found') {
-             _addCardsTimer?.cancel();
-             Navigator.of(context, rootNavigator: true).pop(); 
-             _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
-           }
-           break;
+          if (message['job_status'] == 'not_found') {
+            _addCardsTimer?.cancel();
+            Navigator.of(context, rootNavigator: true).pop();
+            _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
+          }
+          break;
 
         case 'cards_added_success':
           _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
-          showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
+          Navigator.of(context, rootNavigator: true).pop();
+          showSuccessSnackBar(
+            context,
+            message['message'] ?? 'تمت العملية بنجاح.',
+          );
           break;
 
         case 'error':
           _addCardsTimer?.cancel();
-          Navigator.of(context, rootNavigator: true).pop(); 
+          Navigator.of(context, rootNavigator: true).pop();
           _showErrorDialog(message['message'] ?? 'حدث خطأ.');
           break;
       }
@@ -105,7 +112,8 @@ class _CardListScreenState extends State<CardListScreen> {
 
   void _showAddCardsToQahtaniDialog() {
     String? selectedUnitId;
-    final units = (widget.linkedData['network_details']?['units'] as List?) ?? [];
+    final units =
+        (widget.linkedData['network_details']?['units'] as List?) ?? [];
 
     showDialog(
       context: context,
@@ -113,20 +121,38 @@ class _CardListScreenState extends State<CardListScreen> {
         return AlertDialog(
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
             dropdownColor: Colors.white,
-            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            hint: const Text(
+              'اختر الفئة',
+              style: TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: Text(
+                  unit['name'],
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               );
             }).toList(),
             onChanged: (value) => selectedUnitId = value,
             validator: (value) => value == null ? 'الرجاء اختيار فئة' : null,
           ),
           actions: [
-            TextButton(child: const Text('إلغاء'), onPressed: () => Navigator.of(context).pop()),
+            TextButton(
+              child: const Text('إلغاء'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             ElevatedButton(
               child: const Text('تأكيد وإضافة'),
               onPressed: () {
@@ -143,43 +169,50 @@ class _CardListScreenState extends State<CardListScreen> {
   }
 
   void _sendCardsToQahtani(String selectedUnitId) {
-      _showWaitingDialog("جاري إرسال الكروت...");
+    _showWaitingDialog("جاري إرسال الكروت...");
 
-      setState(() {
-        _addCardsJobId = _mqttService.generateUniqueId();
-        _isJobAcknowledged = false;
-      });
+    setState(() {
+      _addCardsJobId = _mqttService.generateUniqueId();
+      _isJobAcknowledged = false;
+    });
 
-      _addCardsTimer?.cancel();
-      _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
-      
-      final List<String> cardUsernamesOnly = widget.cardList.map(_extractUsername).toList();
-      final String cardsAsString = cardUsernamesOnly.join('\n');
+    _addCardsTimer?.cancel();
+    _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
 
-      _mqttService.publish({
-        'command': 'add_wifi_cards',
-        'network_id': widget.linkedData['network_details']?['network_id'],
-        'unit_id': selectedUnitId,
-        'cards': cardsAsString,
-        'job_id': _addCardsJobId, // <-- هذا هو السطر الذي تم تصحيحه
-      });
+    final List<String> cardUsernamesOnly = widget.cardList
+        .map(_extractUsername)
+        .toList();
+    final String cardsAsString = cardUsernamesOnly.join('\n');
+
+    _mqttService.publish({
+      'command': 'add_wifi_cards',
+      'network_id': widget.linkedData['network_details']?['network_id'],
+      'unit_id': selectedUnitId,
+      'cards': cardsAsString,
+      'job_id': _addCardsJobId, // <-- هذا هو السطر الذي تم تصحيحه
+    });
   }
 
   void _checkAddCardsStatus() {
     if (!mounted || _isJobAcknowledged) return;
-    _mqttService.publish({'command': 'get_job_status', 'job_id': _addCardsJobId});
+    _mqttService.publish({
+      'command': 'get_job_status',
+      'job_id': _addCardsJobId,
+    });
   }
 
   void _showWaitingDialog(String message) {
-     showDialog(
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        content: Row(children: [
-          const CircularProgressIndicator(),
-          const SizedBox(width: 20),
-          Expanded(child: Text(message)),
-        ]),
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 20),
+            Expanded(child: Text(message)),
+          ],
+        ),
       ),
     );
   }
@@ -207,7 +240,9 @@ class _CardListScreenState extends State<CardListScreen> {
           },
           icon: const Icon(Icons.copy_all),
           label: const Text('نسخ الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+          ),
         ),
       ),
       const SizedBox(width: 8),
@@ -216,7 +251,9 @@ class _CardListScreenState extends State<CardListScreen> {
           onPressed: _shareCardsAsTextFile,
           icon: const Icon(Icons.share),
           label: const Text('مشاركة الكل'),
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+          ),
         ),
       ),
     ];
@@ -229,7 +266,9 @@ class _CardListScreenState extends State<CardListScreen> {
             onPressed: _showAddCardsToQahtaniDialog,
             icon: const Icon(Icons.add_to_queue),
             label: const Text('إضافة للقحطاني'),
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+            ),
           ),
         ),
       );
@@ -250,7 +289,9 @@ class _CardListScreenState extends State<CardListScreen> {
               trailing: IconButton(
                 icon: const Icon(Icons.copy),
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: widget.cardList[index]));
+                  Clipboard.setData(
+                    ClipboardData(text: widget.cardList[index]),
+                  );
                   showSuccessSnackBar(context, 'تم نسخ الكرت!');
                 },
                 tooltip: 'نسخ',

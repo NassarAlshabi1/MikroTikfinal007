@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -10,7 +11,8 @@ import 'package:uuid/uuid.dart';
 
 /// مفتاح عالمي لـ ScaffoldMessenger - يتم تعريفه هنا مرة واحدة
 /// ويُستخدم عبر جميع الشاشات
-final GlobalKey<ScaffoldMessengerState> mqttScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> mqttScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 class MqttService with ChangeNotifier {
   MqttServerClient? _client;
@@ -22,7 +24,8 @@ class MqttService with ChangeNotifier {
   final String _mainTopic = 'MyChatApp/ali/inbox';
   String? _responseTopic;
 
-  final StreamController<Map<String, dynamic>> _messageStreamController = StreamController.broadcast();
+  final StreamController<Map<String, dynamic>> _messageStreamController =
+      StreamController.broadcast();
   Stream<Map<String, dynamic>> get messages => _messageStreamController.stream;
 
   // --- الإصلاح: متغيرات Exponential Backoff ---
@@ -68,7 +71,11 @@ class MqttService with ChangeNotifier {
       return;
     }
 
-    _client = MqttServerClient.withPort(_broker, 'flutter_client_$_deviceId', _port);
+    _client = MqttServerClient.withPort(
+      _broker,
+      'flutter_client_$_deviceId',
+      _port,
+    );
     _client!.secure = true;
     _client!.securityContext = SecurityContext.defaultContext;
     _client!.keepAlivePeriod = 60;
@@ -106,7 +113,9 @@ class MqttService with ChangeNotifier {
     // حساب التأخير: 2^n ثواني، بحد أقصى 30 ثانية
     final delaySeconds = min(_maxRetryDelay, pow(2, _retryCount).toInt());
     _retryCount++;
-    debugPrint('MQTT: Scheduling reconnect in ${delaySeconds}s (attempt $_retryCount)');
+    debugPrint(
+      'MQTT: Scheduling reconnect in ${delaySeconds}s (attempt $_retryCount)',
+    );
     _retryTimer = Timer(Duration(seconds: delaySeconds), () {
       if (!_isDisposed) _connect();
     });
@@ -124,7 +133,9 @@ class MqttService with ChangeNotifier {
     _client!.subscribe(_responseTopic!, MqttQos.atLeastOnce);
     _client!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> c) {
       final MqttPublishMessage recMess = c[0].payload as MqttPublishMessage;
-      final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+      final pt = MqttPublishPayload.bytesToStringAsString(
+        recMess.payload.message,
+      );
       try {
         final messageJson = jsonDecode(pt) as Map<String, dynamic>;
         _messageStreamController.add(messageJson);
@@ -151,7 +162,9 @@ class MqttService with ChangeNotifier {
       // الإصلاح: استخدام mqttScaffoldMessengerKey بدلاً من scaffoldMessengerKey المكرر
       mqttScaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
-          content: Text('فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.'),
+          content: Text(
+            'فشل الإرسال، جارٍ إعادة الاتصال. حاول مرة أخرى بعد قليل.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );

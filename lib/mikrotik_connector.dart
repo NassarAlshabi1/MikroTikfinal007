@@ -39,7 +39,9 @@ class MikrotikConnector {
 
     // التحقق من وجود البيانات المطلوبة
     if (ip == null || ip.trim().isEmpty) {
-      throw MikrotikCredentialsMissingException('عنوان IP غير محدد. الرجاء إدخال عنوان الراوتر.');
+      throw MikrotikCredentialsMissingException(
+        'عنوان IP غير محدد. الرجاء إدخال عنوان الراوتر.',
+      );
     }
     if (user == null || user.trim().isEmpty) {
       throw MikrotikCredentialsMissingException('اسم المستخدم غير محدد.');

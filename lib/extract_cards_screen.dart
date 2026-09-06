@@ -1,14 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
 import 'snackbar_helpers.dart';
+
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+
 import 'dart:io';
+
 import 'process_image_screen.dart';
 import 'mqtt_service.dart';
 
@@ -93,13 +98,13 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
     _mqttSubscription?.cancel();
     _mqttSubscription = _mqttService.messages.listen((message) {
       if (!mounted) return;
-      
+
       final jobId = message['job_id'];
       if (_addCardsJobId == null || jobId != _addCardsJobId) return;
 
       final status = message['status'];
 
-      switch(status) {
+      switch (status) {
         case 'acknowledged':
           _addCardsTimer?.cancel();
           if (mounted) {
@@ -107,33 +112,38 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
               _isJobAcknowledged = true;
             });
             Navigator.of(context, rootNavigator: true).pop();
-            _showWaitingDialog("تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...");
+            _showWaitingDialog(
+              "تم استلام الطلب، جاري الإضافة إلى م/نصار الشعبي...",
+            );
           }
           break;
-        
+
         case 'job_status_response':
-           final jobStatus = message['job_status'];
-           if (jobStatus == 'not_found') {
-             _addCardsTimer?.cancel();
-             if (mounted) {
-               Navigator.of(context, rootNavigator: true).pop(); 
-               _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
-             }
-           }
-           break;
+          final jobStatus = message['job_status'];
+          if (jobStatus == 'not_found') {
+            _addCardsTimer?.cancel();
+            if (mounted) {
+              Navigator.of(context, rootNavigator: true).pop();
+              _showErrorDialog("فشل إرسال الطلب، الرجاء المحاولة مرة أخرى.");
+            }
+          }
+          break;
 
         case 'cards_added_success':
           _addCardsTimer?.cancel();
           if (mounted) {
-            Navigator.of(context, rootNavigator: true).pop(); 
-            showSuccessSnackBar(context, message['message'] ?? 'تمت العملية بنجاح.');
+            Navigator.of(context, rootNavigator: true).pop();
+            showSuccessSnackBar(
+              context,
+              message['message'] ?? 'تمت العملية بنجاح.',
+            );
           }
           break;
 
         case 'error':
           _addCardsTimer?.cancel();
           if (mounted) {
-            Navigator.of(context, rootNavigator: true).pop(); 
+            Navigator.of(context, rootNavigator: true).pop();
             _showErrorDialog(message['message'] ?? 'حدث خطأ.');
           }
           break;
@@ -156,13 +166,28 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
         return AlertDialog(
           title: const Text('اختر فئة م/نصار الشعبي'),
           content: DropdownButtonFormField<String>(
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
             dropdownColor: Colors.white,
-            hint: const Text('اختر الفئة', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            hint: const Text(
+              'اختر الفئة',
+              style: TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             items: units.map((unit) {
               return DropdownMenuItem<String>(
                 value: unit['id'],
-                child: Text(unit['name'], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: Text(
+                  unit['name'],
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               );
             }).toList(),
             onChanged: (value) {
@@ -191,27 +216,27 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
   }
 
   void _sendCardsToQahtani(List<String> cards, String selectedUnitId) {
-      _showWaitingDialog("جاري إرسال الكروت...");
+    _showWaitingDialog("جاري إرسال الكروت...");
 
-      if (mounted) {
-        setState(() {
-          _addCardsJobId = _mqttService.generateUniqueId();
-          _isJobAcknowledged = false;
-        });
-      }
-
-      _addCardsTimer?.cancel();
-      _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
-
-      final String cardsAsString = cards.join('\n');
-
-      _mqttService.publish({
-        'command': 'add_wifi_cards',
-        'network_id': _linkedData['network_details']?['network_id'],
-        'unit_id': selectedUnitId,
-        'cards': cardsAsString,
-        'job_id': _addCardsJobId,
+    if (mounted) {
+      setState(() {
+        _addCardsJobId = _mqttService.generateUniqueId();
+        _isJobAcknowledged = false;
       });
+    }
+
+    _addCardsTimer?.cancel();
+    _addCardsTimer = Timer(const Duration(seconds: 10), _checkAddCardsStatus);
+
+    final String cardsAsString = cards.join('\n');
+
+    _mqttService.publish({
+      'command': 'add_wifi_cards',
+      'network_id': _linkedData['network_details']?['network_id'],
+      'unit_id': selectedUnitId,
+      'cards': cardsAsString,
+      'job_id': _addCardsJobId,
+    });
   }
 
   void _checkAddCardsStatus() {
@@ -224,16 +249,18 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
   }
 
   void _showWaitingDialog(String message) {
-     if (!mounted) return;
-     showDialog(
+    if (!mounted) return;
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        content: Row(children: [
-          const CircularProgressIndicator(),
-          const SizedBox(width: 20),
-          Expanded(child: Text(message)),
-        ]),
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 20),
+            Expanded(child: Text(message)),
+          ],
+        ),
       ),
     );
   }
@@ -250,7 +277,8 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       return;
     }
     try {
-      final DocumentScanningResult result = await _documentScanner.scanDocument();
+      final DocumentScanningResult result = await _documentScanner
+          .scanDocument();
       if (result.images.isNotEmpty) {
         setState(() {
           _imagePaths.addAll(result.images);
@@ -299,8 +327,10 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       final text = PdfTextExtractor(document).extractText();
       document.dispose();
       final RegExp codeRegExp = RegExp(r'[a-zA-Z0-9]{6,}');
-      final Set<String> cardNumbers =
-          codeRegExp.allMatches(text).map((m) => m.group(0)!).toSet();
+      final Set<String> cardNumbers = codeRegExp
+          .allMatches(text)
+          .map((m) => m.group(0)!)
+          .toSet();
       setState(() {
         _extractedCardNumbers = cardNumbers.toList();
       });
@@ -321,7 +351,8 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
       ),
       body: Center(
         child: _extractedCardNumbers.isNotEmpty
-            ? Column( // --- RESULTS VIEW ---
+            ? Column(
+                // --- RESULTS VIEW ---
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -335,11 +366,11 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        childAspectRatio: 2.8,
-                        crossAxisSpacing: 6,
-                        mainAxisSpacing: 6,
-                      ),
+                            crossAxisCount: 3,
+                            childAspectRatio: 2.8,
+                            crossAxisSpacing: 6,
+                            mainAxisSpacing: 6,
+                          ),
                       itemCount: _extractedCardNumbers.length,
                       itemBuilder: (context, index) {
                         final cardNumber = _extractedCardNumbers[index];
@@ -347,7 +378,10 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                           elevation: 2,
                           margin: EdgeInsets.zero,
                           child: InkWell(
-                            onTap: () => _copyToClipboard(cardNumber, 'تم نسخ الرقم: $cardNumber'),
+                            onTap: () => _copyToClipboard(
+                              cardNumber,
+                              'تم نسخ الرقم: $cardNumber',
+                            ),
                             child: Center(
                               child: Padding(
                                 padding: const EdgeInsets.all(4.0),
@@ -380,7 +414,10 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                       children: [
                         ElevatedButton.icon(
                           icon: const Icon(Icons.refresh, size: 16),
-                          label: const Text('البدء من جديد', style: TextStyle(fontSize: 11)),
+                          label: const Text(
+                            'البدء من جديد',
+                            style: TextStyle(fontSize: 11),
+                          ),
                           onPressed: () => setState(() {
                             _extractedCardNumbers = [];
                             _prefixController.clear();
@@ -388,195 +425,252 @@ class _ExtractCardsScreenState extends State<ExtractCardsScreen> {
                             _totalController.clear();
                           }),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                           ),
                         ),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.add_to_queue, size: 16),
-                          label: const Text('إضافة للقحطاني', style: TextStyle(fontSize: 11)),
-                          onPressed: () => _showAddCardsToQahtaniDialog(_extractedCardNumbers),
-                           style: ElevatedButton.styleFrom(
+                          label: const Text(
+                            'إضافة للقحطاني',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          onPressed: () => _showAddCardsToQahtaniDialog(
+                            _extractedCardNumbers,
+                          ),
+                          style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).primaryColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                           ),
                         ),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.copy_all, size: 16),
-                          label: const Text('نسخ الكل', style: TextStyle(fontSize: 11)),
+                          label: const Text(
+                            'نسخ الكل',
+                            style: TextStyle(fontSize: 11),
+                          ),
                           onPressed: () {
                             final allCards = _extractedCardNumbers.join('\n');
-                            _copyToClipboard(allCards, 'تم نسخ جميع الكروت (${_extractedCardNumbers.length})');
+                            _copyToClipboard(
+                              allCards,
+                              'تم نسخ جميع الكروت (${_extractedCardNumbers.length})',
+                            );
                           },
-                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               )
             : _imagePaths.isNotEmpty
-                ? Column( // --- IMAGE PREVIEW VIEW ---
-                    children: [
-                      Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(8),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
+            ? Column(
+                // --- IMAGE PREVIEW VIEW ---
+                children: [
+                  Expanded(
+                    child: GridView.builder(
+                      padding: const EdgeInsets.all(8),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
                             crossAxisSpacing: 4,
                             mainAxisSpacing: 4,
                           ),
-                          itemCount: _imagePaths.length,
-                          itemBuilder: (context, index) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                File(_imagePaths[index]),
-                                fit: BoxFit.cover,
-                              ),
-                            );
-                          },
+                      itemCount: _imagePaths.length,
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(_imagePaths[index]),
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: 16.0,
+                      right: 16.0,
+                      top: 8.0,
+                      bottom: 16.0 + MediaQuery.of(context).viewPadding.bottom,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _processImages,
+                          icon: const Icon(Icons.check, size: 18),
+                          label: const Text(
+                            'استخراج',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => _scanDocument(skipValidation: true),
+                          icon: const Icon(Icons.add_a_photo, size: 18),
+                          label: const Text(
+                            'إضافة',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => setState(() => _imagePaths = []),
+                          icon: const Icon(Icons.clear, size: 18),
+                          label: const Text(
+                            'مسح',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            : SingleChildScrollView(
+                // --- INITIAL FORM VIEW ---
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Icon(
+                        Icons.camera_alt_outlined,
+                        size: 80,
+                        color: Color(0xFF6b3fa0),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'أدخل شروط المسح الضوئي للكروت',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
                         ),
                       ),
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: 16.0,
-                          right: 16.0,
-                          top: 8.0,
-                          bottom: 16.0 + MediaQuery.of(context).viewPadding.bottom,
+                      const SizedBox(height: 32),
+                      TextFormField(
+                        controller: _prefixController,
+                        decoration: const InputDecoration(
+                          labelText: 'بادئة الكرت (بماذا يبدأ الرقم)',
+                          prefixIcon: Icon(Icons.looks_one_outlined),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: _processImages,
-                              icon: const Icon(Icons.check, size: 18),
-                              label: const Text('استخراج', style: TextStyle(fontSize: 12)),
-                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () => _scanDocument(skipValidation: true),
-                              icon: const Icon(Icons.add_a_photo, size: 18),
-                              label: const Text('إضافة', style: TextStyle(fontSize: 12)),
-                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () =>
-                                  setState(() => _imagePaths = []),
-                              icon: const Icon(Icons.clear, size: 18),
-                              label: const Text('مسح', style: TextStyle(fontSize: 12)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                            ),
-                          ],
-                        ),
+                        style: const TextStyle(color: Colors.white),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'الرجاء إدخال بادئة الكرت';
+                          }
+                          return null;
+                        },
                       ),
-                    ],
-                  )
-                : SingleChildScrollView( // --- INITIAL FORM VIEW ---
-                    padding: const EdgeInsets.all(24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _lengthController,
+                        decoration: const InputDecoration(
+                          labelText: 'طول رقم الكرت (عدد الأرقام)',
+                          prefixIcon: Icon(Icons.format_list_numbered),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'الرجاء إدخال طول الرقم';
+                          }
+                          if (int.tryParse(value) == null) {
+                            return 'الرجاء إدخال رقم صحيح';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _totalController,
+                        decoration: const InputDecoration(
+                          labelText: 'العدد الإجمالي للكروت في الورقة',
+                          prefixIcon: Icon(Icons.calculate_outlined),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'الرجاء إدخال العدد الإجمالي';
+                          }
+                          if (int.tryParse(value) == null) {
+                            return 'الرجاء إدخال رقم صحيح';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          const Icon(Icons.camera_alt_outlined,
-                              size: 80, color: Color(0xFF6b3fa0)),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'أدخل شروط المسح الضوئي للكروت',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 18, color: Colors.white),
-                          ),
-                          const SizedBox(height: 32),
-                          TextFormField(
-                            controller: _prefixController,
-                            decoration: const InputDecoration(
-                              labelText: 'بادئة الكرت (بماذا يبدأ الرقم)',
-                              prefixIcon: Icon(Icons.looks_one_outlined),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.document_scanner, size: 18),
+                            label: const Text(
+                              'مسح ضوئي',
+                              style: TextStyle(fontSize: 12),
                             ),
-                            style: const TextStyle(color: Colors.white),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'الرجاء إدخال بادئة الكرت';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          TextFormField(
-                            controller: _lengthController,
-                            decoration: const InputDecoration(
-                              labelText: 'طول رقم الكرت (عدد الأرقام)',
-                              prefixIcon: Icon(Icons.format_list_numbered),
-                            ),
-                            style: const TextStyle(color: Colors.white),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'الرجاء إدخال طول الرقم';
-                              }
-                              if (int.tryParse(value) == null) {
-                                return 'الرجاء إدخال رقم صحيح';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          TextFormField(
-                            controller: _totalController,
-                            decoration: const InputDecoration(
-                              labelText: 'العدد الإجمالي للكروت في الورقة',
-                              prefixIcon: Icon(Icons.calculate_outlined),
-                            ),
-                            style: const TextStyle(color: Colors.white),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'الرجاء إدخال العدد الإجمالي';
-                              }
-                              if (int.tryParse(value) == null) {
-                                return 'الرجاء إدخال رقم صحيح';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.document_scanner, size: 18),
-                                label: const Text('مسح ضوئي', style: TextStyle(fontSize: 12)),
-                                onPressed: _scanDocument,
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
+                            onPressed: _scanDocument,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
                               ),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.picture_as_pdf, size: 18),
-                                label: const Text('PDF', style: TextStyle(fontSize: 12)),
-                                onPressed: _pickPdf,
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.picture_as_pdf, size: 18),
+                            label: const Text(
+                              'PDF',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            onPressed: _pickPdf,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
                               ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
+                ),
+              ),
       ),
     );
   }

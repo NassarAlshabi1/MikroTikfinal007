@@ -8,15 +8,13 @@ import 'snackbar_helpers.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => MqttService(),
-      child: const MyApp(),
-    ),
+    ChangeNotifierProvider(create: (_) => MqttService(), child: const MyApp()),
   );
 }
 
 // مفتاح عالمي لـ ScaffoldMessenger
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
