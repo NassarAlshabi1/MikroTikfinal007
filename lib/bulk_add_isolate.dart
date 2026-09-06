@@ -198,34 +198,35 @@ Future<List<Map<String, String>>> _processShard({
 
     await for (final resp in responses) {
       final tag = resp.tag;
-      if (tag == null || !resp.isDone) continue;
-
-      if (tag.startsWith('add_')) {
-        final idx = int.parse(tag.substring(4));
-        if (idx < 0 || idx >= users.length) continue;
-        processed++;
-        if (resp.isError) {
-          failedAdds.add({
-            'username': users[idx]['username']!,
-            'reason': resp.errorMessage ?? 'فشل إضافة الكرت على الراوتر.',
-          });
-        } else {
-          final userId = _extractUserId(resp.data);
-          createdInShard.add({
-            'username': users[idx]['username']!,
-            'password': users[idx]['password']!,
-            if (userId != null) 'id': userId,
-          });
-        }
-        // تقدم مخفض لتفادي حمل القناة.
-        if (processed % _progressReportCardInterval == 0) {
-          final done = cardsBefore + processed;
-          final createdHere = cardsBefore + createdInShard.length;
-          sendPort.send({
-            'type': 'progress',
-            'progress': totalCards == 0 ? 1.0 : done / totalCards,
-            'status': 'تمت معالجة $done من $totalCards كرت (أنشئ $createdHere)',
-          });
+      if (tag != null && resp.isDone) {
+        if (tag.startsWith('add_')) {
+          final idx = int.parse(tag.substring(4));
+          if (idx >= 0 && idx < users.length) {
+            processed++;
+            if (resp.isError) {
+              failedAdds.add({
+                'username': users[idx]['username']!,
+                'reason': resp.errorMessage ?? 'فشل إضافة الكرت على الراوبر.',
+              });
+            } else {
+              final userId = _extractUserId(resp.data);
+              createdInShard.add({
+                'username': users[idx]['username']!,
+                'password': users[idx]['password']!,
+                if (userId != null) 'id': userId,
+              });
+            }
+            // تقدم مخفض لتفادي حمل القناة.
+            if (processed % _progressReportCardInterval == 0) {
+              final done = cardsBefore + processed;
+              final createdHere = cardsBefore + createdInShard.length;
+              sendPort.send({
+                'type': 'progress',
+                'progress': totalCards == 0 ? 1.0 : done / totalCards,
+                'status': 'تمت معالجة $done من $totalCards كرت (أنشئ $createdHere)',
+              });
+            }
+          }
         }
       }
     }
@@ -286,6 +287,7 @@ List<Map<String, String>> _buildUsers(BulkAddIsolateData data) {
       linkPasswordToFirstUser: data.linkPasswordToFirstUser,
       index: i,
       username: username,
+      cardType: data.cardType,
       charType: data.charType,
       length: data.length,
       prefix: data.prefix,
@@ -317,6 +319,7 @@ String _generatePassword({
   required bool linkPasswordToFirstUser,
   required int index,
   required String username,
+  required String cardType,
   required String charType,
   required int length,
   required String prefix,
@@ -325,7 +328,12 @@ String _generatePassword({
   if (linkPasswordToFirstUser) {
     return index == 0 ? username : firstGeneratedUsername;
   }
-  return '';
+  if (cardType == 'username_and_password_equal') return username;
+  if (cardType == 'username_and_password_different') {
+    final passwordLength = max(8, length - prefix.length);
+    return _generateRandomString(passwordLength, charType);
+  }
+  return username;
 }
 
 final Random _random = Random.secure();
