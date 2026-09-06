@@ -76,7 +76,11 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     final shardClientsList = await Future.wait(
       clientFutures,
       cleanUp: (future) {
-        future.then((client) => client.close()).catchError((_) {});
+        future
+            .then((client) {
+              if (client != null) client.close();
+            })
+            .catchError((_) {});
       },
     );
     allShardClients.addAll(shardClientsList);
