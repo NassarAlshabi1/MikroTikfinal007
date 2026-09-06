@@ -44,14 +44,19 @@ class BulkAddIsolateData {
 /// مرة واحدة — الـ tags تُزيل الـ blocking على الـ socket لكن لا
 /// تُعيد التشغيل المتوازي على الراوتر. إذنّاً الموجة الواحدة تُرسل
 /// [_waveSize] أوامر مرة واحدة (pipelining الـ socket)، ثم تنتظر
-/// الاستجابات قبل الموجة التالية. 50 كرتاً = التوافق الأمثل بين
-/// السرعة (×4-6 أسرع من 1-by-1) والاستقرار على الأجهزة المدمجة.
+/// الاستجابات قبل الموجة التالية.
 const int _waveSize = 50;
 
+/// عدد الاتصالات المتوازية للراوتر. تقليل العدد يقلل الحمل على
+/// الأجهزة المدمجة ويقلل احتمالية فشل الاتصال.
+const int _maxShardCount = 2;
+
+/// عدد محاولات إعادة الاتصال عند الفشل.
+const int _maxConnectionRetries = 2;
+
 /// كل كم كرت يتم الإبلاغ عن تقدم جزئي من داخل الشارد نفسه، حتى لا تقفز
-/// الواجهة بين 0% و100% على دفعات كبيرة (كان التقدم يُرسل عند اكتمال كل
-/// شارد فقط: 4 قفزات كحد أقصى).
-const int _progressReportCardInterval = 25;
+/// الواجهة بين 0% و100% على دفعات كبيرة.
+const int _progressReportCardInterval = 10;
 
 void bulkAddIsolate(BulkAddIsolateData data) async {
   BackgroundIsolateBinaryMessenger.ensureInitialized(data.rootIsolateToken);
@@ -60,32 +65,56 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
   final created = <Map<String, String>>[];
   final failedAdds = <Map<String, String>>[];
 
-  // ── إنشاء MULTIPLE اتصالات بالتوازي ──
-  // النسخة القديمة استخدمت اتصالاً واحداً واحدة تلو الأخرى.
-  // الآن نفتح shardCount اتصالاً متوازياً لتوزيع الأحمال على الراوتر.
-  final shardCount = min(4, max(1, data.count ~/ _waveSize));
+  // ── إنشاء اتصالات بالتوازي مع إعادة المحاولة ──
+  final shardCount = min(_maxShardCount, max(1, data.count ~/ _waveSize));
   final shardUsers = _buildUsers(data);
   final shardSize = (shardUsers.length / shardCount).ceil();
   final allShardClients = <RouterOSClient>[];
 
   try {
-    // إنشاء كل الاتصالات بالتوازي مرة واحدة — يوفر (shardCount-1) × login-latency.
-    final clientFutures = <Future<RouterOSClient>>[
-      for (var s = 0; s < shardCount; s++) MikrotikConnector.connect(),
-    ];
-    final shardClientsList = await Future.wait(
-      clientFutures,
-      cleanUp: (RouterOSClient client) {
-        client.close();
-      },
-    );
-    allShardClients.addAll(shardClientsList);
-
-    // توزيع المستخدمين على الشوارد.
-    final futures = <Future<List<Map<String, String>>>>[];
+    // إنشاء الاتصالات مع إعادة المحاولة
+    final shardClientsList = <RouterOSClient>[];
     for (var s = 0; s < shardCount; s++) {
-      final start = s * shardSize;
-      final end = min(start + shardSize, shardUsers.length);
+      RouterOSClient? client;
+      for (var attempt = 0; attempt <= _maxConnectionRetries; attempt++) {
+        try {
+          client = await MikrotikConnector.connect();
+          break;
+        } catch (e) {
+          if (attempt == _maxConnectionRetries) {
+            sendPort.send({
+              'type': 'error',
+              'message': 'فشل الاتصال بالراوتر بعد $_maxConnectionRetries محاولات: ${e.toString()}',
+              'count': created.length,
+            });
+            return;
+          }
+          // انتظار قصير قبل إعادة المحاولة
+          await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
+        }
+      }
+      if (client != null) {
+        shardClientsList.add(client);
+        allShardClients.add(client);
+      }
+    }
+
+    if (shardClientsList.isEmpty) {
+      sendPort.send({
+        'type': 'error',
+        'message': 'فشل إنشاء أي اتصال بالراوتر.',
+        'count': 0,
+      });
+      return;
+    }
+
+    // توزيع المستخدمين على الشوارد المتاحة فقط.
+    final actualShardCount = shardClientsList.length;
+    final actualShardSize = (shardUsers.length / actualShardCount).ceil();
+    final futures = <Future<List<Map<String, String>>>>[];
+    for (var s = 0; s < actualShardCount; s++) {
+      final start = s * actualShardSize;
+      final end = min(start + actualShardSize, shardUsers.length);
       if (start >= shardUsers.length) break;
       final chunk = shardUsers.sublist(start, end);
       futures.add(_processShard(
@@ -131,12 +160,20 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     return;
   }
 
+  // تحديد العنوان بشكل آمن
+  String routerAddress = 'غير معروف';
+  if (allShardClients.isNotEmpty) {
+    try {
+      routerAddress = allShardClients.first.address;
+    } catch (_) {}
+  }
+
   sendPort.send({
     'type': 'success',
     'users': created,
     'count': created.length,
     'failedCount': failedAdds.length,
-    'address': allShardClients.first.address,
+    'address': routerAddress,
     'failed': failedAdds,
   });
 }
@@ -160,7 +197,7 @@ Future<List<Map<String, String>>> _processShard({
   var processed = 0;
 
   final waveSize = min(_waveSize, users.length);
-  final perWaveTimeout = Duration(seconds: min(max(30, waveSize * 4), 1800));
+  final perWaveTimeout = Duration(seconds: min(max(30, waveSize * 6), 1800));
 
   for (var waveStart = 0; waveStart < users.length; waveStart += waveSize) {
     final waveEnd = min(waveStart + waveSize, users.length);
@@ -217,8 +254,8 @@ Future<List<Map<String, String>>> _processShard({
             if (userId != null) 'id': userId,
           });
         }
-        // تقدم مخفض لتفادي حمل القناة.
-        if (processed % _progressReportCardInterval == 0) {
+        // تقدم أكثر تكراراً لتجربة مستخدم أفضل
+        if (processed % _progressReportCardInterval == 0 || processed == users.length) {
           final done = cardsBefore + processed;
           final createdHere = cardsBefore + createdInShard.length;
           sendPort.send({
