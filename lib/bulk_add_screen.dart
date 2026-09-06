@@ -205,6 +205,8 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
 
         if (newlyCreatedUsers.isNotEmpty) {
           _showSuccessDialog(newlyCreatedUsers.map((e) => {'username': e['username'] as String, 'password': e['password'] as String}).toList(), failedCount: failedCount);
+        } else if (failedCount > 0) {
+          _showErrorDialog('فشل إنشاء جميع $failedCount كروت على الراوبر.');
         }
 
         isolate.kill();
