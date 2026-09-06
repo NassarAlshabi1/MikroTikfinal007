@@ -75,14 +75,14 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     ];
     final shardClientsList = await Future.wait(
       clientFutures,
-      cleanUp: (future) {
-        future.then((client) => client.close()).catchError((_) {});
+      cleanUp: (RouterOSClient client) {
+        client.close();
       },
     );
     allShardClients.addAll(shardClientsList);
 
     // توزيع المستخدمين على الشوارد.
-    final futures = <Future<List<Map<String, String>>>[]>[];
+    final futures = <Future<List<Map<String, String>>>>[];
     for (var s = 0; s < shardCount; s++) {
       final start = s * shardSize;
       final end = min(start + shardSize, shardUsers.length);
@@ -286,7 +286,6 @@ List<Map<String, String>> _buildUsers(BulkAddIsolateData data) {
       linkPasswordToFirstUser: data.linkPasswordToFirstUser,
       index: i,
       username: username,
-      charType: data.charType,
       length: data.length,
       prefix: data.prefix,
       firstGeneratedUsername: firstGeneratedUsername,
@@ -317,7 +316,6 @@ String _generatePassword({
   required bool linkPasswordToFirstUser,
   required int index,
   required String username,
-  required String charType,
   required int length,
   required String prefix,
   required String firstGeneratedUsername,
@@ -325,7 +323,9 @@ String _generatePassword({
   if (linkPasswordToFirstUser) {
     return index == 0 ? username : firstGeneratedUsername;
   }
-  return '';
+  if (length <= 0) return username;
+  final password = _generateRandomString(length, 'mixed');
+  return password.isNotEmpty ? password : username;
 }
 
 final Random _random = Random.secure();
@@ -335,11 +335,14 @@ String _generateRandomString(int length, String type) {
   const charsMixed = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const charsLetters = 'abcdefghijklmnopqrstuvwxyz';
   const charsNumbers = '0123456789';
-  final chars = switch (type) {
-    'letters' => charsLetters,
-    'numbers' => charsNumbers,
-    _ => charsMixed,
-  };
+  String chars;
+  if (type == 'letters') {
+    chars = charsLetters;
+  } else if (type == 'numbers') {
+    chars = charsNumbers;
+  } else {
+    chars = charsMixed;
+  }
   return String.fromCharCodes(
     Iterable.generate(
       length,
