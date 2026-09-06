@@ -343,11 +343,14 @@ String _generateRandomString(int length, String type) {
   const charsMixed = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const charsLetters = 'abcdefghijklmnopqrstuvwxyz';
   const charsNumbers = '0123456789';
-  final chars = switch (type) {
-    'letters' => charsLetters,
-    'numbers' => charsNumbers,
-    _ => charsMixed,
-  };
+  String chars;
+  if (type == 'letters') {
+    chars = charsLetters;
+  } else if (type == 'numbers') {
+    chars = charsNumbers;
+  } else {
+    chars = charsMixed;
+  }
   return String.fromCharCodes(
     Iterable.generate(
       length,
