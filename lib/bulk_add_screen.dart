@@ -191,6 +191,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
       } else if (type == 'success') {
         final newlyCreatedUsers = (message['users'] as List).cast<Map<String, dynamic>>();
         final successCount = message['count'] as int;
+        final failedCount = message['failedCount'] as int? ?? 0;
         final address = message['address'] as String;
 
         // الإصلاح: استخدام NotificationService المركزي
@@ -203,7 +204,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
         setState(() { _isGenerating = false; });
 
         if (newlyCreatedUsers.isNotEmpty) {
-          _showSuccessDialog(newlyCreatedUsers.map((e) => {'username': e['username'] as String, 'password': e['password'] as String}).toList());
+          _showSuccessDialog(newlyCreatedUsers.map((e) => {'username': e['username'] as String, 'password': e['password'] as String}).toList(), failedCount: failedCount);
         }
 
         isolate.kill();
@@ -217,7 +218,7 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
     });
   }
 
-  void _showSuccessDialog(List<Map<String, String>> users) async {
+   void _showSuccessDialog(List<Map<String, String>> users, {int failedCount = 0}) async {
       final List<String> userListForFile = users.map((user) {
         if (_cardType == 'username_only') return user['username']!;
         return 'username: ${user['username']}, password: ${user['password']}';
@@ -266,7 +267,19 @@ class _BulkAddScreenState extends State<BulkAddScreen> {
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
-                  Center(child: Text('تم إنشاء ${users.length} كرت بنجاح!')) ,
+                   Center(child: Text('تم إنشاء ${users.length} كرت بنجاح!')) ,
+                   if (failedCount > 0) ...[
+                     const SizedBox(height: 8),
+                     Center(
+                       child: Text(
+                         'فشل $failedCount كرت (رفضها الراوتر).',
+                         style: TextStyle(
+                           color: Theme.of(context).colorScheme.error,
+                           fontWeight: FontWeight.bold,
+                         ),
+                       ),
+                     ),
+                   ],
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.visibility),
