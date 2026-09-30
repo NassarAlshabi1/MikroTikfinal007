@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'database/daos/executed_commands_dao.dart';
 import 'database/daos/cards_dao.dart';
 import 'database/daos/ai_diagnostics_dao.dart';
-import 'main.dart';
+import 'core/app_dependencies.dart';
 
 import 'theme/app_theme.dart';
 

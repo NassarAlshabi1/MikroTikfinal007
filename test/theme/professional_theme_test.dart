@@ -25,6 +25,18 @@ void main() {
     expect(theme.dialogTheme.backgroundColor, ProfessionalColors.darkSurface);
     expect(
         theme.bottomSheetTheme.backgroundColor, ProfessionalColors.darkSurface);
+    expect(theme.bottomSheetTheme.showDragHandle, isTrue);
+  });
+
+  test('النوافذ والقوائم في الثيم الفاتح تستخدم السطح الصحيح', () {
+    final theme = ProfessionalTheme.light;
+
+    expect(theme.popupMenuTheme.color, ProfessionalColors.lightSurface);
+    expect(theme.dialogTheme.backgroundColor, ProfessionalColors.lightSurface);
+    expect(theme.bottomSheetTheme.backgroundColor,
+        ProfessionalColors.lightSurface);
+    expect(theme.bottomSheetTheme.showDragHandle, isTrue);
+    expect(theme.progressIndicatorTheme.color, ProfessionalColors.primary);
   });
 
   test('الخط العربي Tajawal مضبوط على مستوى ThemeData', () {

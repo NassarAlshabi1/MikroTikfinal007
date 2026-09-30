@@ -304,6 +304,40 @@ class ProfessionalTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: ProfessionalColors.lightSurface,
+        surfaceTintColor: Colors.transparent,
+        textStyle: AppTypography.bodyLarge.copyWith(
+          color: ProfessionalColors.lightTextPrimary,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: ProfessionalColors.lightSurface,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: AppTypography.titleLarge.copyWith(
+          color: ProfessionalColors.lightTextPrimary,
+        ),
+        contentTextStyle: AppTypography.bodyLarge.copyWith(
+          color: ProfessionalColors.lightTextSecondary,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: ProfessionalColors.lightSurface,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: ProfessionalColors.lightSurface,
+        showDragHandle: true,
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: ProfessionalColors.primary,
+        selectionColor: Color(0x403F51B5),
+        selectionHandleColor: ProfessionalColors.primary,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: ProfessionalColors.primary,
+        linearTrackColor: ProfessionalColors.lightOutlineVariant,
+      ),
       dividerTheme: const DividerThemeData(
         color: ProfessionalColors.lightOutlineVariant,
         thickness: 1,
@@ -568,6 +602,7 @@ class ProfessionalTheme {
         backgroundColor: ProfessionalColors.darkSurface,
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor: ProfessionalColors.darkSurface,
+        showDragHandle: true,
       ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: ProfessionalColors.primaryLight,
