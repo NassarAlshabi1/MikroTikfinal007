@@ -86,7 +86,7 @@ extension LogCategoryX on LogCategory {
       case LogCategory.system:
         return 'SYS';
       case LogCategory.mcp:
-        return 'integration';
+        return 'MCP';
       case LogCategory.other:
         return 'GEN';
     }
