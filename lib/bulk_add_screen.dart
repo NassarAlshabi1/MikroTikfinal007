@@ -76,6 +76,7 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
   StreamSubscription? _mqttSubscription;
   BulkGenerationSession? _generationSession;
   StreamSubscription<GenerationEvent>? _generationSubscription;
+  Future<void> _generationMessageQueue = Future<void>.value();
   bool _isNetworkLinked = false;
   Map<String, dynamic> _linkedData = {};
   List<Map<String, dynamic>> _availableProfiles = [];
@@ -353,9 +354,25 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
       }
       _generationSession = session;
       _generationJobId = session.jobId;
-      _generationSubscription = session.events.listen(
-        (event) => unawaited(_handleGenerationMessage(event)),
-      );
+      _generationSubscription = session.events.listen((event) {
+        // رسائل Isolate تحمل حالة متسلسلة (حجز، تقدم، ثم نتيجة نهائية).
+        // نعالجها واحداً تلو الآخر حتى لا تتسابق معاملات Isar ولا يسبق
+        // النجاح عملية تسجيل prepared/progress.
+        _generationMessageQueue = _generationMessageQueue
+            .then<void>((_) => _handleGenerationMessage(event))
+            .catchError((Object error, StackTrace stackTrace) {
+          debugPrint('[BulkAdd] generation event handler error: $error');
+          debugPrintStack(stackTrace: stackTrace);
+          if (!mounted) return;
+          _cleanupGenerationResources();
+          setState(() => _isGenerating = false);
+          showErrorSnackBar(
+            context,
+            'تعذر إنهاء متابعة عملية الإنشاء: $error. '
+            'تحقق من سجل العملية قبل إعادة المحاولة.',
+          );
+        });
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() => _isGenerating = false);
@@ -457,14 +474,14 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
         // قيماً تنقص بين تقارير الشاردات المتوازية.
         final clamped = _generationProgress;
         final nextIndex = (clamped * _reservedGenerationUsers.length).round();
-        unawaited(CardGenerationJobService.markProgress(
+        await CardGenerationJobService.markProgress(
           jobId,
           nextIndex: nextIndex,
           lastUsername:
               nextIndex > 0 && nextIndex <= _reservedGenerationUsers.length
                   ? _reservedGenerationUsers[nextIndex - 1]['username']
                   : null,
-        ));
+        );
       }
       return;
     }

@@ -60,6 +60,16 @@ class RouterOsCreatedCard {
       };
 }
 
+class RouterOsCardCreationResult {
+  final RouterOsCreatedCard card;
+  final String? activationWarning;
+
+  const RouterOsCardCreationResult({
+    required this.card,
+    this.activationWarning,
+  });
+}
+
 class RouterOsCardGateway {
   final RouterOsTalker talker;
 
@@ -102,6 +112,50 @@ class RouterOsCardGateway {
       password: password,
       mikrotikUserId: userId,
     );
+  }
+
+  /// Creates the user first, then activates its profile.
+  ///
+  /// Keeping these requests sequential is important for User Manager: sending
+  /// both through `talkMultiple` can start profile activation before RouterOS
+  /// has finished creating the user. An activation failure is reported as a
+  /// warning because the user itself was already created successfully.
+  Future<RouterOsCardCreationResult> createCardAndActivateProfile({
+    required MikrotikServiceMode mode,
+    required String username,
+    required String password,
+    required String profile,
+    required String sharedUsers,
+    required bool isVersion7OrNewer,
+    required String customer,
+  }) async {
+    final card = await addCard(
+      mode: mode,
+      username: username,
+      password: password,
+      profile: profile,
+      sharedUsers: sharedUsers,
+      isVersion7OrNewer: isVersion7OrNewer,
+      customer: customer,
+    );
+    if (mode != MikrotikServiceMode.userManager) {
+      return RouterOsCardCreationResult(card: card);
+    }
+
+    try {
+      await activateUserManagerProfile(
+        customer: customer,
+        username: username,
+        profile: profile,
+      );
+      return RouterOsCardCreationResult(card: card);
+    } catch (error) {
+      return RouterOsCardCreationResult(
+        card: card,
+        activationWarning:
+            'أُنشئ المستخدم "$username" لكن تعذر تفعيل البروفايل "$profile": $error',
+      );
+    }
   }
 
   Future<void> activateUserManagerProfile({
