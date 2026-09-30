@@ -91,7 +91,10 @@ jobs:
           flutter test --coverage --reporter=expanded 2>&1 | tee test_results.txt
           test_status=${PIPESTATUS[0]}
           if [ "$test_status" -ne 0 ]; then
-            details=$(tail -n 80 test_results.txt)
+            details=$(grep -B 12 -A 20 -E 'Expected:|Actual:|TestFailure|EXCEPTION CAUGHT|Error:|Some tests failed' test_results.txt | head -n 160)
+            if [ -z "$details" ]; then
+              details=$(tail -n 120 test_results.txt)
+            fi
             details=${details//'%'/'%25'}
             details=${details//$'\r'/'%0D'}
             details=${details//$'\n'/'%0A'}
