@@ -50,12 +50,12 @@ class DashboardStatusCard extends StatelessWidget {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            const SizedBox.square(
+            SizedBox.square(
               dimension: 32,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            const SizedBox(width: 16),
-            const Expanded(
+            SizedBox(width: 16),
+            Expanded(
               child: Text(
                 'جاري تحديث حالة MikroTik...',
                 softWrap: true,
