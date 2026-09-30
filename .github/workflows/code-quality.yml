@@ -86,8 +86,18 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
+          set +e
           set -o pipefail
           flutter test --coverage --reporter=expanded 2>&1 | tee test_results.txt
+          test_status=${PIPESTATUS[0]}
+          if [ "$test_status" -ne 0 ]; then
+            details=$(tail -n 80 test_results.txt)
+            details=${details//'%'/'%25'}
+            details=${details//$'\r'/'%0D'}
+            details=${details//$'\n'/'%0A'}
+            echo "::error title=Flutter test failure::$details"
+          fi
+          exit "$test_status"
 
       - name: Check if coverage file exists
         id: coverage_check
