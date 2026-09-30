@@ -11,7 +11,7 @@ import 'database/isar/card_collection.dart';
 import 'database/isar/profile_collection.dart';
 import 'database/daos/cards_dao.dart';
 import 'database/daos/profiles_dao.dart';
-import 'main.dart';
+import 'core/app_runtime.dart' show appDatabaseProvider;
 
 import 'theme/app_theme.dart';
 

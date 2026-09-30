@@ -56,6 +56,7 @@ traffic-state.json
 bot.env
 telegram_bot/__pycache__/
 telegram_bot/**/__pycache__/
+.venv/
 
 # Local RouterOS files may contain Telegram tokens or router credentials
 deploy/routeros/*-local.rsc
