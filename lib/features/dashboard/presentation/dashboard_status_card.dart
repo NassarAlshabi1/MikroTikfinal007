@@ -177,30 +177,35 @@ class DashboardStatusCard extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _buildStatusMetric(
+                      context,
                       label: 'المعالج',
                       value: '${cpuUsage.toStringAsFixed(1)}%',
                       icon: Icons.speed,
                       color: context.theme.appColors.primary,
                     ),
                     _buildStatusMetric(
+                      context,
                       label: 'الذاكرة',
                       value: '${memoryUsage.toStringAsFixed(1)}%',
                       icon: Icons.memory,
                       color: context.theme.appColors.success,
                     ),
                     _buildStatusMetric(
+                      context,
                       label: 'التحميل',
                       value: '${downloadMb.toStringAsFixed(1)} MB',
                       icon: Icons.download_rounded,
                       color: context.theme.appColors.secondary,
                     ),
                     _buildStatusMetric(
+                      context,
                       label: 'الرفع',
                       value: '${uploadMb.toStringAsFixed(1)} MB',
                       icon: Icons.upload_rounded,
                       color: context.theme.appColors.warning,
                     ),
                     _buildStatusMetric(
+                      context,
                       label: 'المستخدمون النشطون',
                       value: '$activeUsers',
                       icon: Icons.wifi,
@@ -221,7 +226,8 @@ class DashboardStatusCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusMetric({
+  Widget _buildStatusMetric(
+    BuildContext context, {
     required String label,
     required String value,
     required IconData icon,
