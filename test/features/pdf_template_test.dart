@@ -118,6 +118,17 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('يولد PDF بنجاح باستخدام التصميم الافتراضي (Fallback Layout) عند عدم وجود قالب مخصص', () async {
+    final bytes = await PdfGenerator.generatePdfBytes(
+      cardUsernames: const ['user1', 'username: user2, password: pass2'],
+      template: null,
+      profileName: 'VIP',
+    );
+
+    expect(bytes.length, greaterThan(100));
+    expect(utf8.decode(bytes.sublist(0, 4)), '%PDF');
+  });
 }
 
 PdfTemplate _template(String imagePath, {int cardsPerPage = 6}) {

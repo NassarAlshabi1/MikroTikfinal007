@@ -157,42 +157,75 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
     }
   }
 
-  // --- ٦. دالة جديدة للمشاركة كملف PDF ---
+  // --- ٦. دالة جديدة للمشاركة كملف PDF مع دعم التصميم الافتراضي والطباعة ---
   Future<void> _shareAsPdf(SavedFile savedFile) async {
     if (!mounted) return;
     showSuccessSnackBar(context, 'جاري تحضير ملف PDF...');
 
     try {
-      // البحث عن القالب المطابق لاسم الفئة مع التحقق من الصورة.
+      // البحث عن القالب المطابق لاسم الفئة إن وجد
       final relevantTemplate =
           await PdfTemplateStorage.findForProfile(savedFile.profileName);
-      if (relevantTemplate == null) {
-        throw StateError('template_not_found');
-      }
 
-      // قراءة أسماء المستخدمين من الملف النصي
+      // قراءة أسماء وبيانات المستخدمين من الملف النصي
       final file = File(savedFile.path);
       final fileContent = await file.readAsString();
-      final cardUsernames = fileContent
+      final cardLines = fileContent
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
           .toList();
 
-      // استدعاء دالة إنشاء ومشاركة الـ PDF
+      if (cardLines.isEmpty) {
+        if (!mounted) return;
+        showErrorSnackBar(context, 'الملف فارغ ولا يحتوي على كروت.');
+        return;
+      }
+
+      // استدعاء دالة إنشاء ومشاركة الـ PDF (تدعم التصميم الافتراضي إن لم يوجد قالب)
       if (!mounted) return;
       await PdfGenerator.sharePdf(
         context,
-        cardUsernames: cardUsernames,
+        cardUsernames: cardLines,
         template: relevantTemplate,
+        profileName: savedFile.profileName,
       );
-    } on StateError {
-      // يتم إطلاقه بواسطة .firstWhere إذا لم يتم العثور على عنصر
-      if (!mounted) return;
-      showErrorSnackBar(context,
-          'لم يتم العثور على قالب PDF للفئة "${savedFile.profileName}".');
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'فشل إنشاء ملف PDF.');
+      showErrorSnackBar(context, 'فشل إنشاء ملف PDF: $e');
+    }
+  }
+
+  Future<void> _printSavedFile(SavedFile savedFile) async {
+    if (!mounted) return;
+    showSuccessSnackBar(context, 'جاري فتح شاشة الطباعة...');
+
+    try {
+      final relevantTemplate =
+          await PdfTemplateStorage.findForProfile(savedFile.profileName);
+
+      final file = File(savedFile.path);
+      final fileContent = await file.readAsString();
+      final cardLines = fileContent
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .toList();
+
+      if (cardLines.isEmpty) {
+        if (!mounted) return;
+        showErrorSnackBar(context, 'الملف فارغ ولا يحتوي على كروت.');
+        return;
+      }
+
+      if (!mounted) return;
+      await PdfGenerator.printPdf(
+        context,
+        cards: cardLines,
+        template: relevantTemplate,
+        profileName: savedFile.profileName,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'فشل فتح الطباعة: $e');
     }
   }
 
@@ -245,7 +278,13 @@ class _SavedFilesScreenState extends State<SavedFilesScreen> {
                               onPressed: () => _viewFile(file.path),
                               tooltip: 'عرض',
                             ),
-                            // --- ٧. زر المشاركة كـ PDF الجديد ---
+                            // --- ٧. زر الطباعة المباشر وزر المشاركة كـ PDF الجديد ---
+                            IconButton(
+                              icon: Icon(Icons.print_rounded,
+                                  color: Theme.of(context).appColors.primary),
+                              onPressed: () => _printSavedFile(file),
+                              tooltip: 'طباعة كروت PDF',
+                            ),
                             IconButton(
                               icon: Icon(Icons.picture_as_pdf,
                                   color: Theme.of(context).appColors.warning),

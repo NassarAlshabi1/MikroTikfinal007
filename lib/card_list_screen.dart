@@ -10,6 +10,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'mqtt_service.dart';
 import 'snackbar_helpers.dart';
+import 'pdf_generator.dart';
+import 'theme/app_theme.dart';
 
 import 'perf/perf_widgets.dart';
 import 'perf/device_capability.dart';
@@ -271,6 +273,30 @@ class _CardListScreenState extends ConsumerState<CardListScreen> {
       appBar: AppBar(
         title: const Text('الكروت المضافة حديثاً'),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.print_rounded),
+            tooltip: 'طباعة كروت PDF',
+            onPressed: () {
+              PdfGenerator.printPdf(
+                context,
+                cards: widget.cardList,
+                profileName: 'Hotspot Cards',
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            tooltip: 'مشاركة PDF',
+            onPressed: () {
+              PdfGenerator.sharePdf(
+                context,
+                cardUsernames: widget.cardList,
+                profileName: 'Hotspot Cards',
+              );
+            },
+          ),
+        ],
       ),
       body: PerfListView<String>(
         items: widget.cardList,

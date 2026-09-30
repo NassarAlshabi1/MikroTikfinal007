@@ -742,6 +742,72 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                 ),
                 const SizedBox(height: 8),
                 ElevatedButton.icon(
+                  icon: const Icon(Icons.print_rounded),
+                  label: const Text('طباعة الكروت مباشرة'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).appColors.primary),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    PdfGenerator.printPdf(
+                      context,
+                      cards: users,
+                      template: selectedPdfTemplate,
+                      profileName: _selectedProfile,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.preview_outlined),
+                  label: Text(selectedPdfTemplate != null
+                      ? 'معاينة PDF (قالب مخصص)'
+                      : 'معاينة PDF (تصميم قياسي)'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    PdfGenerator.previewPdf(
+                      context,
+                      cardUsernames: users,
+                      template: selectedPdfTemplate,
+                      profileName: _selectedProfile,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('مشاركة PDF'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    PdfGenerator.sharePdf(
+                      context,
+                      cardUsernames: users,
+                      template: selectedPdfTemplate,
+                      profileName: _selectedProfile,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.save_alt),
+                  label: const Text('حفظ PDF'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await PdfGenerator.savePdf(
+                      context,
+                      cardUsernames: users,
+                      template: selectedPdfTemplate,
+                      profileName: _selectedProfile,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
                   icon: const Icon(Icons.share),
                   label: const Text('مشاركة كملف نصي'),
                   onPressed: () async {
@@ -752,59 +818,6 @@ class _BulkAddScreenState extends ConsumerState<BulkAddScreen> {
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor),
                 ),
-                if (selectedPdfTemplate != null) ...[
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.preview_outlined),
-                    label: const Text('معاينة PDF النهائية'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      final List<String> usernamesOnly =
-                          users.map((u) => u['username']!).toList();
-                      PdfGenerator.previewPdf(
-                        context,
-                        cardUsernames: usernamesOnly,
-                        template: selectedPdfTemplate,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.picture_as_pdf),
-                    label: const Text('مشاركة PDF'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      final List<String> usernamesOnly =
-                          users.map((u) => u['username']!).toList();
-                      PdfGenerator.sharePdf(
-                        context,
-                        cardUsernames: usernamesOnly,
-                        template: selectedPdfTemplate,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.save_alt),
-                    label: const Text('حفظ PDF'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor),
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      final List<String> usernamesOnly =
-                          users.map((u) => u['username']!).toList();
-                      await PdfGenerator.savePdf(
-                        context,
-                        cardUsernames: usernamesOnly,
-                        template: selectedPdfTemplate,
-                      );
-                    },
-                  ),
-                ],
                 if (_isNetworkLinked) ...[
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
