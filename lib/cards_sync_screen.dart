@@ -761,7 +761,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             _applyFilters();
           }, theme, color: context.theme.appColors.success),
           const SizedBox(width: 6),
-          _filterChip('مستخدمة (${_usedCount})', _showUsedOnly, () {
+          _filterChip('مستخدمة ($_usedCount)', _showUsedOnly, () {
             setState(() {
               _showUsedOnly = !_showUsedOnly;
               _showActiveOnly = false;
