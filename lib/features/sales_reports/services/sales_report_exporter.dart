@@ -163,7 +163,7 @@ class SalesReportExporter {
         padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 2),
         decoration: pw.BoxDecoration(
           color: isHeader ? PdfColors.blueGrey100 : null,
-          border: pw.Border(
+          border: const pw.Border(
             bottom: pw.BorderSide(color: PdfColors.grey400, width: 0.4),
           ),
         ),
