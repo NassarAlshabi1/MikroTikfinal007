@@ -64,5 +64,6 @@ String cardUsageReportStatus(
     return card.isDisabled ? 'مستخدم ومعطّل' : 'مستخدم ومنتهي';
   }
   if (card.isDisabled) return 'معطّل';
-  return 'انتهى حد الاستخدام';
+  if (card.isDateExpired) return 'انتهى تاريخ الصلاحية';
+  return 'استهلك حد الوقت';
 }

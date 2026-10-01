@@ -28,6 +28,7 @@ class SalesReportExporter {
       'profile',
       'uptime_used',
       'uptime_limit',
+      'expires_at',
       'status',
       'last_synced_at',
     ].map(_csvCell).join(','));
@@ -39,6 +40,7 @@ class SalesReportExporter {
         card.profile,
         card.uptimeUsed,
         card.limitUptime,
+        card.expires,
         cardUsageReportStatus(card, filter),
         syncedAt,
       ].map(_csvCell).join(','));
@@ -115,7 +117,14 @@ class SalesReportExporter {
         ),
         pw.SizedBox(height: 12),
         _pdfRow(
-          const ['اسم الكرت', 'الفئة', 'الاستخدام', 'حد الوقت', 'الحالة'],
+          const [
+            'اسم الكرت',
+            'الفئة',
+            'الاستخدام',
+            'حد الوقت',
+            'الانتهاء',
+            'الحالة',
+          ],
           isHeader: true,
         ),
         for (final card in cards)
@@ -124,6 +133,7 @@ class SalesReportExporter {
             card.profile.isEmpty ? 'غير محدد' : card.profile,
             card.uptimeUsed.isEmpty ? 'غير متاح' : card.uptimeUsed,
             card.limitUptime.isEmpty ? 'غير محدد' : card.limitUptime,
+            card.expires.isEmpty ? 'غير محدد' : card.expires,
             cardUsageReportStatus(card, filter),
           ]),
       ],

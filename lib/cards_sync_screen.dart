@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:router_os_client/router_os_client.dart';
 
+import 'features/sales_reports/domain/card_usage_report.dart';
+import 'features/sales_reports/services/sales_report_exporter.dart';
 import 'mikrotik_connector.dart';
-import 'theme/app_theme.dart';
 import 'services/router_os_card_gateway.dart' show RouterOsClientTalker;
 import 'services/secure_clipboard.dart';
 import 'services/um_cards_sync_service.dart';
+import 'theme/app_theme.dart';
+
+enum _CardsSyncExportFormat { csv, pdf }
 
 // ── Screen ──
 
@@ -31,10 +35,16 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
   String? _profileFilter;
   bool _showExpiredOnly = false;
   bool _showActiveOnly = false;
+  bool _showUsedOnly = false;
 
   /// هل نفّذ المستخدم المزامنة يدوياً؟ المزامنة اختيارية ولا تجري
   /// أي اتصال بالراوتر عند فتح الشاشة.
   bool _hasSynced = false;
+  bool _isExporting = false;
+  DateTime? _lastSyncedAt;
+  CardUsageReport? _reportCache;
+
+  CardUsageReport get _report => _reportCache ??= CardUsageReport(_allCards);
 
   // Profiles extracted from cards
   List<String> _profiles = [];
@@ -88,6 +98,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         setState(() {
           _allCards = cards;
           _profiles = sortedProfiles;
+          _reportCache = CardUsageReport(cards);
+          _lastSyncedAt = DateTime.now();
           _hasSynced = true;
           _isLoading = false;
         });
@@ -135,6 +147,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
       list = list.where((c) => c.isExpired).toList();
     } else if (_showActiveOnly) {
       list = list.where((c) => c.isActive).toList();
+    } else if (_showUsedOnly) {
+      list = list.where((c) => c.isUsed).toList();
     }
 
     // Search
@@ -289,8 +303,81 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
 
   // ── Helpers ──
 
-  int get _expiredCount => _allCards.where((c) => c.isExpired).length;
-  int get _activeCount => _allCards.where((c) => c.isActive).length;
+  int get _expiredCount => _report.expiredCount;
+  int get _activeCount => _report.totalCount - _report.expiredCount;
+  int get _usedCount => _report.usedCount;
+
+  CardUsageReportFilter get _exportFilter =>
+      _showExpiredOnly
+          ? CardUsageReportFilter.expired
+          : CardUsageReportFilter.used;
+
+  bool get _canExportReport =>
+      _hasSynced &&
+      (_showExpiredOnly || _showUsedOnly) &&
+      _lastSyncedAt != null &&
+      _filteredCards.isNotEmpty &&
+      !_isLoading &&
+      !_isExporting;
+
+  Future<void> _exportCsv() async {
+    final lastSyncedAt = _lastSyncedAt;
+    if (!_canExportReport || lastSyncedAt == null) return;
+    final cards = List<UmSyncedCard>.of(_filteredCards);
+    final filter = _exportFilter;
+    await _runReportExport(
+      () => SalesReportExporter.shareCsv(
+        cards: cards,
+        filter: filter,
+        lastSyncedAt: lastSyncedAt,
+      ),
+      format: 'CSV',
+    );
+  }
+
+  Future<void> _exportPdf() async {
+    final lastSyncedAt = _lastSyncedAt;
+    if (!_canExportReport || lastSyncedAt == null) return;
+    final cards = List<UmSyncedCard>.of(_filteredCards);
+    final report = _report;
+    final filter = _exportFilter;
+    await _runReportExport(
+      () => SalesReportExporter.sharePdf(
+        cards: cards,
+        filter: filter,
+        lastSyncedAt: lastSyncedAt,
+        totalCount: report.totalCount,
+        usedCount: report.usedCount,
+        expiredCount: report.expiredCount,
+        overlappingCount: report.overlappingCount,
+      ),
+      format: 'PDF',
+    );
+  }
+
+  Future<void> _runReportExport(
+    Future<void> Function() export, {
+    required String format,
+  }) async {
+    if (_isExporting) return;
+    setState(() => _isExporting = true);
+    try {
+      await export();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('تم تجهيز تقرير $format للمشاركة.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('تعذر تصدير التقرير: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
 
   // ── Build ──
 
@@ -302,12 +389,36 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('مزامنة كروت اليوزرمنجر',
+        title: const Text('كروت User Manager',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          PopupMenuButton<_CardsSyncExportFormat>(
+            enabled: _canExportReport,
+            tooltip: _canExportReport
+                ? 'تصدير نتائج التصنيف الحالي'
+                : 'زامن ثم اختر المستخدمة أو المنتهية',
+            icon: const Icon(Icons.ios_share, size: 20),
+            onSelected: (format) {
+              if (format == _CardsSyncExportFormat.csv) {
+                _exportCsv();
+              } else {
+                _exportPdf();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: _CardsSyncExportFormat.csv,
+                child: Text('تصدير CSV'),
+              ),
+              PopupMenuItem(
+                value: _CardsSyncExportFormat.pdf,
+                child: Text('تصدير PDF'),
+              ),
+            ],
+          ),
           if (_selectedNames.isNotEmpty)
             IconButton(
               icon: Icon(Icons.delete_outline,
@@ -370,8 +481,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             const SizedBox(height: 8),
             Text(
               'لا يتم أي اتصال بالراوتر عند فتح الشاشة. اضغط زر المزامنة '
-              'لجلب كروت User Manager (الاسم، كلمة المرور، البروفايل، '
-              'والحد الزمني) متى شئت.',
+              'لجلب كروت User Manager (الاسم، كلمة المرور، والبروفايل). '
+              'الاستخدام الفعلي يُقرأ من uptime-used مع تاريخ الانتهاء. '
+              'بعدها يمكنك تصفية الكروت وتصدير تقريري المستخدمة والمنتهية '
+              'بصيغة CSV أو PDF. لا يتضمن المصدر أسعاراً أو إيرادات.',
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 12,
@@ -436,6 +549,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         children: [
           // ── Stats header ──
           _buildStatsBar(theme),
+          _buildReportNotice(theme),
           // ── Search bar ──
           _buildSearchBar(theme),
           // ── Filter chips ──
@@ -446,10 +560,15 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
           Expanded(
             child: _filteredCards.isEmpty
                 ? Center(
-                    child: Text('لا توجد كروت في اليوزرمنجر',
-                        style: TextStyle(
-                            color: cs.onSurface.withValues(alpha: 0.5),
-                            fontSize: 13)),
+                    child: Text(
+                      _allCards.isEmpty
+                          ? 'لا توجد كروت في User Manager.'
+                          : 'لا توجد كروت مطابقة للتصفية أو البحث الحالي.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.5),
+                          fontSize: 13),
+                    ),
                   )
                 : ListView.builder(
                     padding:
@@ -462,6 +581,56 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         ],
       ),
     );
+  }
+
+  Widget _buildReportNotice(ThemeData theme) {
+    final report = _report;
+    final lastSyncedAt = _lastSyncedAt;
+    final textColor = theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 14, color: textColor),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'المصدر: User Manager؛ الانتهاء يشمل تاريخ الصلاحية أو '
+                  'تعطيل الكرت أو استهلاك حد الوقت. لا يتضمن التقرير أسعاراً '
+                  'أو إيرادات.',
+                  style: TextStyle(fontSize: 10, color: textColor),
+                ),
+                if (report.unknownUsageCount > 0)
+                  Text(
+                    '${report.unknownUsageCount} كرت دون uptime-used صالح؛ '
+                    'لا يُحتسب ضمن المستخدمة.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: context.theme.appColors.error,
+                    ),
+                  ),
+                if (lastSyncedAt != null)
+                  Text(
+                    'آخر مزامنة: ${_formatSyncTime(lastSyncedAt)}',
+                    style: TextStyle(fontSize: 10, color: textColor),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatSyncTime(DateTime value) {
+    final local = value.toLocal();
+    String twoDigits(int number) => number.toString().padLeft(2, '0');
+    return '${local.year}-${twoDigits(local.month)}-${twoDigits(local.day)} '
+        '${twoDigits(local.hour)}:${twoDigits(local.minute)}';
   }
 
   // ── Stats bar ──
@@ -484,6 +653,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
               width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
           _statItem(
               'مفعل', _activeCount, context.theme.appColors.success, theme),
+          Container(
+              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
+          _statItem(
+              'مستخدمة', _usedCount, context.theme.appColors.info, theme),
           Container(
               width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
           _statItem(
@@ -565,29 +738,44 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         children: [
           // All
           _filterChip(
-              'الكل', _showExpiredOnly == false && _showActiveOnly == false,
-              () {
-            setState(() {
-              _showExpiredOnly = false;
-              _showActiveOnly = false;
-            });
-            _applyFilters();
-          }, theme),
+            'الكل',
+            !_showExpiredOnly && !_showActiveOnly && !_showUsedOnly,
+            () {
+              setState(() {
+                _showExpiredOnly = false;
+                _showActiveOnly = false;
+                _showUsedOnly = false;
+              });
+              _applyFilters();
+            },
+            theme,
+          ),
           const SizedBox(width: 6),
           // Active
           _filterChip('مفعل', _showActiveOnly, () {
             setState(() {
               _showActiveOnly = !_showActiveOnly;
               _showExpiredOnly = false;
+              _showUsedOnly = false;
             });
             _applyFilters();
           }, theme, color: context.theme.appColors.success),
           const SizedBox(width: 6),
+          _filterChip('مستخدمة (${_usedCount})', _showUsedOnly, () {
+            setState(() {
+              _showUsedOnly = !_showUsedOnly;
+              _showActiveOnly = false;
+              _showExpiredOnly = false;
+            });
+            _applyFilters();
+          }, theme, color: context.theme.appColors.info),
+          const SizedBox(width: 6),
           // Expired
-          _filterChip('منتهي', _showExpiredOnly, () {
+          _filterChip('منتهي ($_expiredCount)', _showExpiredOnly, () {
             setState(() {
               _showExpiredOnly = !_showExpiredOnly;
               _showActiveOnly = false;
+              _showUsedOnly = false;
             });
             _applyFilters();
           }, theme, color: context.theme.appColors.error),
@@ -941,6 +1129,27 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                                     fontSize: 10,
                                     color: cs.onSurface.withValues(alpha: 0.5)),
                                 overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (card.expires.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(Icons.event_outlined,
+                              size: 10,
+                              color: cs.onSurface.withValues(alpha: 0.4)),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              'تاريخ الانتهاء: ${card.expires}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),

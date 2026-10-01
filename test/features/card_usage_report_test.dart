@@ -56,6 +56,26 @@ void main() {
       );
     });
 
+    test(
+      'date-expired cards appear in expired rows with an accurate status',
+      () {
+        const dateExpired = UmSyncedCard(
+          name: 'date-expired',
+          expires: '2000-01-01 23:59:59',
+        );
+        final dateReport = CardUsageReport([dateExpired]);
+
+        expect(
+          dateReport.rows(filter: CardUsageReportFilter.expired),
+          [dateExpired],
+        );
+        expect(
+          cardUsageReportStatus(dateExpired, CardUsageReportFilter.expired),
+          'انتهى تاريخ الصلاحية',
+        );
+      },
+    );
+
     test('search matches card names and profiles', () {
       expect(
         report
@@ -83,6 +103,7 @@ void main() {
             profile: 'Gold, special',
             uptimeUsed: '1h "active"',
             limitUptime: '1d',
+            expires: '2026-10-01',
           ),
         ],
         filter: CardUsageReportFilter.used,
@@ -91,6 +112,8 @@ void main() {
 
       expect(csv, startsWith('\uFEFF'));
       expect(csv, contains('uptime_used'));
+      expect(csv, contains('expires_at'));
+      expect(csv, contains('2026-10-01'));
       expect(csv, contains("'=SUM(1,1)"));
       expect(csv, contains('"Gold, special"'));
       expect(csv, isNot(contains('do-not-export-this')));

@@ -4,10 +4,9 @@ import 'router_os_card_gateway.dart' show RouterOsTalker;
 
 /// كرت مُزامَن من User Manager على الراوتر (RouterOS v6).
 ///
-/// الحقول مطابقة لخصائص `/tool user-manager user` في v6: الاسم `name`،
-/// وكلمة المرور `password`، والحد الزمني `limit-uptime` مع الاستهلاك
-/// `uptime-used`، والبروفايل الفعلي `actual-profile` (أو `profile`
-/// بحسب الإصدار).
+/// الحقول مأخوذة من خصائص `/tool user-manager user` في v6: الاسم
+/// وكلمة المرور والبروفايل والاستخدام والحد الزمني، مع تاريخ الانتهاء
+/// إذا وفره إصدار User Manager على الراوتر.
 class UmSyncedCard {
   final String name;
   final String password;
@@ -16,6 +15,7 @@ class UmSyncedCard {
   final String limitUptime;
   final String uptimeUsed;
   final String comment;
+  final String expires;
   final String? mikrotikId;
 
   const UmSyncedCard({
@@ -26,6 +26,7 @@ class UmSyncedCard {
     this.limitUptime = '',
     this.uptimeUsed = '',
     this.comment = '',
+    this.expires = '',
     this.mikrotikId,
   });
 
@@ -42,20 +43,52 @@ class UmSyncedCard {
     return used != null && used > 0;
   }
 
-  /// منطق الانتهاء مطابق لسكربت التلجرام المجرّب على الراوتر (/clean):
-  /// الكرت المعطّل منتهي، والكرت الذي استهلك كل حدّه الزمني منتهٍ.
-  bool get isExpired {
-    if (isDisabled) return true;
-
+  /// True when the card used all of its configured uptime allowance.
+  bool get isUptimeExpired {
     final limit = parseRouterDuration(limitUptime);
     final used = parseRouterDuration(uptimeUsed);
-    if (limit != null && limit > 0 && used != null && used >= limit) {
-      return true;
-    }
-    return false;
+    return limit != null && limit > 0 && used != null && used >= limit;
   }
 
+  bool get isDateExpired => isDateExpiredAt(DateTime.now());
+
+  /// تاريخ اليوم نفسه يبقى صالحاً؛ ينتهي الكرت ابتداءً من اليوم التالي.
+  bool isDateExpiredAt(DateTime now) {
+    final expiryDate = parseRouterExpiryDate(expires);
+    if (expiryDate == null) return false;
+    final today = DateTime(now.year, now.month, now.day);
+    return expiryDate.isBefore(today);
+  }
+
+  /// Mirrors the deployed Telegram `/clean` rule: disabled users, consumed
+  /// uptime limits, and User Manager expiry dates from its supported fields.
+  bool get isExpired => isExpiredAt(DateTime.now());
+
+  bool isExpiredAt(DateTime now) =>
+      isDisabled || isUptimeExpired || isDateExpiredAt(now);
+
   bool get isActive => !isExpired;
+}
+
+final RegExp _routerExpiryDatePattern =
+    RegExp(r'^\s*(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:$|[Tt\s])');
+
+/// Extracts the calendar date from RouterOS ISO date/time fields such as
+/// `2026-10-01` or `2026-10-01 23:59:59`. Non-date values like `never` are null.
+DateTime? parseRouterExpiryDate(String? input) {
+  final raw = input?.trim() ?? '';
+  if (raw.isEmpty) return null;
+
+  final match = _routerExpiryDatePattern.firstMatch(raw);
+  if (match == null) return null;
+  final year = int.tryParse(match.group(1)!);
+  final month = int.tryParse(match.group(2)!);
+  final day = int.tryParse(match.group(3)!);
+  if (year == null || month == null || day == null) return null;
+
+  final date = DateTime(year, month, day);
+  if (date.year != year || date.month != month || date.day != day) return null;
+  return date;
 }
 
 final RegExp _routerDurationUnitPattern =
@@ -123,7 +156,8 @@ class UmCardsSyncException implements Exception {
 /// أسماء الحقول في UM v6 الحقيقي (مطابقة لسكربت التلجرام المجرّب على
 /// الراوتر): اسم المستخدم `username` (وليس `name`)، والحد الزمني
 /// `uptime-limit`، مع `actual-profile` و`profile` داخل صف المستخدم نفسه.
-/// نبقي الاسماء القديمة كبدائل احتياطية لبعض إصدارات v6.
+/// تاريخ الانتهاء يقرأ من الحقول المتاحة، مع إبقاء الأسماء القديمة
+/// كبدائل احتياطية لبعض إصدارات v6.
 class UmCardsSyncService {
   /// مهلة قراءة المستخدمين — وفيرة للراوترات البطيئة وتمنع التعليق
   /// الدائم، لكنها أقصر من السابق حتى لا تعلّق المزامنة طويلاً.
@@ -166,6 +200,10 @@ class UmCardsSyncService {
             ((row['uptime-limit'] ?? row['limit-uptime']) ?? '').trim(),
         uptimeUsed: (row['uptime-used'] ?? '').trim(),
         comment: (row['comment'] ?? '').trim(),
+        expires: _firstNonEmptyField(
+          row,
+          const ['expires', 'expiration', 'end-time', 'valid-until'],
+        ),
         mikrotikId: (row['.id'] ?? '').trim(),
       ));
     }
@@ -188,6 +226,7 @@ class UmCardsSyncService {
             limitUptime: card.limitUptime,
             uptimeUsed: card.uptimeUsed,
             comment: card.comment,
+            expires: card.expires,
             mikrotikId: card.mikrotikId,
           );
         }
@@ -203,6 +242,17 @@ class UmCardsSyncService {
     return cards;
   }
 
+  String _firstNonEmptyField(
+    Map<String, String> row,
+    List<String> fields,
+  ) {
+    for (final field in fields) {
+      final value = row[field]?.trim() ?? '';
+      if (value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
   Future<List<Map<String, String>>> _fetchUserRows(
     RouterOsTalker talker,
   ) async {
@@ -213,6 +263,7 @@ class UmCardsSyncService {
         // limit-uptime بدائل احتياطية. الراوتر يتجاهل ما لا يعرفه
         // بصمت، لذا نطلب الاثنين ونقرأ ما ورد.
         '=.proplist=.id,username,name,password,disabled,comment,'
+            'expires,expiration,end-time,valid-until,'
             'uptime-limit,limit-uptime,uptime-used,actual-profile,profile',
       ]).timeout(_userPrintTimeout);
     } catch (error) {
