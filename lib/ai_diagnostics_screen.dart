@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'ai/diagnostics_models.dart';
 import 'ai/diagnostics_provider.dart';
@@ -116,26 +117,74 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     if (mounted) showSuccessSnackBar(context, 'تم نسخ الأمر: $command');
   }
 
-  Future<void> _copyAllDiagnostics() async {
-    final state = ref.read(diagnosticsProvider);
-    if (state.messages.isEmpty) return;
+  String _buildDiagnosticsTranscript(List<DiagnosticMessage> messages) {
     final buffer = StringBuffer();
-    for (final msg in state.messages) {
-      final prefix = msg.type == MessageType.user
+    for (final message in messages) {
+      final prefix = message.type == MessageType.user
           ? '👤 أنت'
-          : msg.type == MessageType.error
+          : message.type == MessageType.error
               ? '❌ خطأ'
-              : msg.type == MessageType.system
+              : message.type == MessageType.system
                   ? 'ℹ️ نظام'
                   : '🤖 AI';
       buffer.writeln('[$prefix]');
-      buffer.writeln(msg.content);
-      buffer.writeln('');
+      buffer.writeln(message.content);
+      buffer.writeln();
     }
-    await SecureClipboard.copy(buffer.toString().trim(), sensitive: false);
+    return buffer.toString().trim();
+  }
+
+  Future<void> _copyAllDiagnostics() async {
+    final state = ref.read(diagnosticsProvider);
+    if (state.messages.isEmpty) return;
+
+    await SecureClipboard.copy(
+      _buildDiagnosticsTranscript(state.messages),
+      sensitive: false,
+    );
     if (mounted) {
       showSuccessSnackBar(
-          context, 'تم نسخ ${state.messages.length} رسالة من التشخيص');
+        context,
+        'تم نسخ ${state.messages.length} رسالة من التشخيص',
+      );
+    }
+  }
+
+  Future<void> _shareDiagnosticsReport() async {
+    final messages = ref.read(diagnosticsProvider).messages;
+    if (messages.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('مشاركة تقرير التشخيص'),
+        content: const Text(
+          'قد يحتوي التقرير على مخرجات الراوتر وعناوين IP أو تفاصيل إعدادات. '
+          'تأكد من ملاءمة محتواه للجهة التي سترسله إليها.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('متابعة المشاركة'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: _buildDiagnosticsTranscript(messages),
+          subject: 'تقرير تشخيص MikroTik',
+        ),
+      );
+    } catch (_) {
+      if (mounted) showErrorSnackBar(context, 'تعذرت مشاركة تقرير التشخيص.');
     }
   }
 
@@ -237,6 +286,21 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     }
   }
 
+  Future<void> _clearConversation() async {
+    await ref.read(diagnosticsProvider.notifier).clearChat();
+    ref.read(historyManagerProvider.notifier).refresh();
+  }
+
+  Widget _actionMenuItem(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Flexible(child: Text(label)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(diagnosticsProvider);
@@ -261,48 +325,74 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       appBar: AppBar(
         title: const Text('تشخيص بالذكاء الاصطناعي'),
         actions: [
-          // زر الإصلاح التلقائي (Auto-Fix)
-          IconButton(
-            icon: Icon(Icons.auto_fix_high,
-                color: Theme.of(context).appColors.warning),
-            tooltip: 'إصلاح تلقائي (بدون AI)',
-            onPressed:
-                state.isLoading ? null : () => _showAutoFixPanel(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'سجل التشخيصات',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const DiagnosticsHistoryScreen(),
+          PopupMenuButton<String>(
+            tooltip: 'إجراءات التشخيص',
+            icon: const Icon(Icons.more_vert),
+            onSelected: (action) {
+              switch (action) {
+                case 'auto_fix':
+                  _showAutoFixPanel(context);
+                  break;
+                case 'history':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const DiagnosticsHistoryScreen(),
+                    ),
+                  );
+                  break;
+                case 'clear':
+                  _clearConversation();
+                  break;
+                case 'copy':
+                  _copyAllDiagnostics();
+                  break;
+                case 'share':
+                  _shareDiagnosticsReport();
+                  break;
+                case 'settings':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AiSettingsScreen(),
+                    ),
+                  );
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                value: 'auto_fix',
+                enabled: !state.isLoading,
+                child: _actionMenuItem(
+                  Icons.auto_fix_high,
+                  'إصلاح تلقائي (بدون AI)',
                 ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.cleaning_services),
-            tooltip: 'مسح المحادثة',
-            onPressed: () async {
-              await ref.read(diagnosticsProvider.notifier).clearChat();
-              ref.read(historyManagerProvider.notifier).refresh();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.copy_all),
-            tooltip: 'نسخ كل التشخيص',
-            onPressed: state.messages.isEmpty ? null : _copyAllDiagnostics,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: 'إعدادات الـ AI',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const AiSettingsScreen(),
-                ),
-              );
-            },
+              ),
+              PopupMenuItem<String>(
+                value: 'history',
+                child: _actionMenuItem(Icons.history, 'سجل التشخيصات'),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'copy',
+                enabled: state.messages.isNotEmpty,
+                child: _actionMenuItem(Icons.copy_all, 'نسخ كل التشخيص'),
+              ),
+              PopupMenuItem<String>(
+                value: 'share',
+                enabled: state.messages.isNotEmpty,
+                child: _actionMenuItem(Icons.share_outlined, 'مشاركة التقرير'),
+              ),
+              PopupMenuItem<String>(
+                value: 'clear',
+                enabled: state.messages.isNotEmpty && !state.isLoading,
+                child: _actionMenuItem(Icons.cleaning_services, 'مسح المحادثة'),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'settings',
+                child: _actionMenuItem(Icons.settings, 'إعدادات الذكاء الاصطناعي'),
+              ),
+            ],
           ),
         ],
       ),

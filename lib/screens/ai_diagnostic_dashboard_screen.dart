@@ -17,10 +17,11 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🔍 AI تشخيص + QoS'),
+        title: const Text('لوحة التشخيص وQoS التجريبية'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'إعادة تشغيل بيانات العرض التجريبي',
             onPressed: () {
               ref.read(diagnosticProvider.notifier).runDiagnostic();
               ref.read(qosProvider.notifier).loadConfig();
@@ -33,6 +34,8 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildPrototypeNotice(context),
+            const SizedBox(height: 16),
             _buildAIBanner(context, ref, diagState),
             const SizedBox(height: 16),
             if (diagState.result != null)
@@ -47,6 +50,32 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
             _buildQoSSection(context, ref, qosState),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPrototypeNotice(BuildContext context) {
+    final color = Theme.of(context).appColors.warning;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.science_outlined, color: color),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'هذه لوحة تجريبية ببيانات محلية ثابتة. لا تقرأ حالة الراوتر ولا ترسل إعدادات QoS إليه؛ استخدم أدوات التشخيص الحية من مركز التشخيص.',
+              style: TextStyle(height: 1.4),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -88,7 +117,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI Diagnostic',
+                      'عرض تشخيص تجريبي',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 20,
@@ -97,7 +126,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'تحليل ذكي وشامل لحالة الشبكة',
+                      'بيانات نموذجية لتوضيح شكل النتائج',
                       style: TextStyle(
                         color: Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 14,
@@ -123,7 +152,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                   : const Icon(Icons.play_arrow),
               label: Text(state.isLoading
                   ? (state.currentStage ?? 'جاري التشخيص...')
-                  : 'بدء التشخيص'),
+                  : 'تشغيل العرض التجريبي'),
             ),
           ),
         ],
@@ -173,7 +202,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'درجة صحة الشبكة',
+                    'درجة توضيحية من بيانات تجريبية',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 4),
@@ -444,7 +473,7 @@ class AiDiagnosticDashboardScreen extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => _applyQos(context, ref),
                     icon: const Icon(Icons.check),
-                    label: const Text('تطبيق على MikroTik'),
+                    label: const Text('محاكاة توليد أوامر QoS (غير منفذة)'),
                   ),
                 ),
             ],

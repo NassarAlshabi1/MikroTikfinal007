@@ -22,6 +22,7 @@ import 'package:flutter/foundation.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/router_os_query_executor.dart';
 import '../services/secure_credentials_storage.dart';
 import 'diagnostics_models.dart';
 
@@ -1416,8 +1417,8 @@ class MikrotikDataCollector {
         createdInternally = true;
       }
 
-      // تنفيذ أوامر RouterOS API الأساسية
-      // كل أمر هو list من المسار + الـ proplist
+      // تنفيذ أوامر RouterOS API الأساسية بالتوازي مع tags فريدة عبر executor.
+      // كل أمر هو list من المسار + الـ proplist؛ يبقى ترتيب النتائج مطابقًا للمدخلات.
       final baseResults = await Future.wait([
         _talkSafely(internalClient, ['/system/resource/print']),
         _talkSafely(internalClient, [
@@ -1481,7 +1482,8 @@ class MikrotikDataCollector {
     List<String> args,
   ) async {
     try {
-      final res = await client.talk(args).timeout(const Duration(seconds: 10));
+      final res = await RouterOsQueryExecutor.talk(client, args)
+          .timeout(const Duration(seconds: 10));
       return res.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e) {
       debugPrint('[MikrotikDataCollector] talk error for $args: $e');

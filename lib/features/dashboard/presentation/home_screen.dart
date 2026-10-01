@@ -7,8 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mikrotik_manager/active_users_screen.dart';
 import 'package:mikrotik_manager/add_user_screen.dart';
-import 'package:mikrotik_manager/ai/log_analysis_screen.dart';
-import 'package:mikrotik_manager/ai_diagnostics_screen.dart';
+import 'package:mikrotik_manager/features/diagnostics/presentation/diagnostics_hub_screen.dart';
 import 'package:mikrotik_manager/backup_system_screen.dart';
 import 'package:mikrotik_manager/bulk_add_screen.dart';
 import 'package:mikrotik_manager/card_search_screen.dart';
@@ -18,12 +17,12 @@ import 'package:mikrotik_manager/core/widgets/custom_loading_indicator.dart';
 import 'package:mikrotik_manager/extract_cards_screen.dart';
 import 'package:mikrotik_manager/mikrotik_connector.dart';
 import 'package:mikrotik_manager/monthly_report_screen.dart';
-import 'package:mikrotik_manager/network_doctor_screen.dart';
 import 'package:mikrotik_manager/pdf_templates_screen.dart';
 import 'package:mikrotik_manager/providers/app_theme_provider.dart';
 import 'package:mikrotik_manager/providers/mqtt_service_provider.dart';
 import 'package:mikrotik_manager/saved_files_screen.dart';
 import 'package:mikrotik_manager/services/mikrotik_service_mode.dart';
+import 'package:mikrotik_manager/services/router_os_query_executor.dart';
 import 'package:mikrotik_manager/services/user_manager_profile_parser.dart';
 import 'package:mikrotik_manager/snackbar_helpers.dart';
 import 'package:mikrotik_manager/stats_screen.dart';
@@ -75,6 +74,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Map<String, dynamic>? _dashboardStatus;
   bool _isLoadingStatus = true;
   bool _isRefreshingStatus = false;
+  bool _dashboardRefreshInFlight = false;
+  bool _hasFreshDashboardStatus = false;
   String _statusError = '';
 
   @override
@@ -138,11 +139,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final prefs = await SharedPreferences.getInstance();
     final cached = prefs.getString('cached_dashboard_status') ??
         prefs.getString('cached_stats');
-    if (cached == null) return;
+    if (cached == null || _hasFreshDashboardStatus) return;
     try {
       final decoded = jsonDecode(cached);
       if (decoded is! Map<String, dynamic>) return;
-      if (!mounted) return;
+      if (!mounted || _hasFreshDashboardStatus) return;
       setState(() {
         _dashboardStatus = {
           'cpuUsage': (decoded['cpuUsage'] as num?)?.toDouble() ?? 0.0,
@@ -163,7 +164,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _refreshDashboardStatus({bool silent = true}) async {
-    if (!mounted) return;
+    if (!mounted || _dashboardRefreshInFlight) return;
+    _dashboardRefreshInFlight = true;
     setState(() {
       _statusError = '';
       if (silent && _dashboardStatus != null) {
@@ -177,20 +179,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     try {
       client = await MikrotikConnector.connect();
 
-      final resourceResponse = await client.talk(['/system/resource/print']);
-      Map<String, dynamic> resourceData = {};
-      if (resourceResponse.isNotEmpty) {
-        resourceData = Map<String, dynamic>.from(resourceResponse[0]);
-      }
-
-      final interfaceResponse = await client.talk([
-        '/interface/print',
-        '=.proplist=name,rx-byte,tx-byte',
-        'stats',
+      // هذه قراءات مستقلة؛ ينفّذها executor بوسوم فريدة لربط رد كل أمر
+      // بطلبه على socket المشترك. فشل أمر Hotspot يبقى اختياريًا كما سابقًا.
+      final responses = await Future.wait<List<Map<String, String>>>([
+        RouterOsQueryExecutor.talk(
+          client,
+          ['/system/resource/print'],
+        ),
+        RouterOsQueryExecutor.talk(
+          client,
+          [
+            '/interface/print',
+            '=.proplist=name,rx-byte,tx-byte',
+            'stats',
+          ],
+        ),
+        RouterOsQueryExecutor.talk(
+          client,
+          ['/ip/hotspot/active/print'],
+        ).catchError((_) => <Map<String, String>>[]),
       ]);
+      final resourceResponse = responses[0];
+      final interfaceResponse = responses[1];
+      final activeResponse = responses[2];
+
+      final resourceData = resourceResponse.isEmpty
+          ? <String, dynamic>{}
+          : Map<String, dynamic>.from(resourceResponse.first);
       double totalDownload = 0.0;
       double totalUpload = 0.0;
-      for (var iface in interfaceResponse) {
+      for (final iface in interfaceResponse) {
         final rxBytes =
             double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
         final txBytes =
@@ -198,15 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         totalDownload += rxBytes;
         totalUpload += txBytes;
       }
-
-      List<Map<String, dynamic>> activeUsers = [];
-      try {
-        final activeResponse = await client.talk(['/ip/hotspot/active/print']);
-        activeUsers =
-            activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-      } catch (_) {
-        activeUsers = [];
-      }
+      final activeUsers = activeResponse;
 
       final cpuLoad =
           double.tryParse(resourceData['cpu-load']?.toString() ?? '0') ?? 0.0;
@@ -230,10 +240,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         'version': resourceData['version']?.toString() ?? 'غير معروف',
       };
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-          'cached_dashboard_status', jsonEncode(updatedStatus));
-
+      _hasFreshDashboardStatus = true;
       if (mounted) {
         setState(() {
           _dashboardStatus = updatedStatus;
@@ -241,6 +248,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           _isRefreshingStatus = false;
           _statusError = '';
         });
+      }
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+            'cached_dashboard_status', jsonEncode(updatedStatus));
+      } catch (e) {
+        debugPrint('Could not cache dashboard status: $e');
       }
     } on MikrotikCredentialsMissingException catch (e) {
       _handleStatusError('بيانات الدخول غير متوفرة: ${e.message}');
@@ -250,6 +265,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _handleStatusError('فشل تحديث حالة MikroTik: ${e.toString()}');
     } finally {
       MikrotikConnector.release(client);
+      _dashboardRefreshInFlight = false;
     }
   }
 
@@ -272,7 +288,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     RouterOSClient? client;
     try {
       client = await MikrotikConnector.connect();
-      var response = await client.talk([
+      var response = await RouterOsQueryExecutor.talk(client, [
         _userManagerProfilesCommand,
         '=.proplist=.id,name,rate-limit,shared-users,session-timeout',
       ]);
@@ -286,7 +302,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // عند استخدام proplist؛ أعد القراءة بدون proplist قبل اعتبار النتيجة
       // فارغة، مع إبقاء المسار User Manager فقط.
       if (profiles.isEmpty) {
-        response = await client.talk([_userManagerProfilesCommand]);
+        response = await RouterOsQueryExecutor.talk(
+          client,
+          [_userManagerProfilesCommand],
+        );
         profiles = UserManagerProfileParser.parse(
           response
               .whereType<Map>()
@@ -360,13 +379,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               .push(CustomPageRoute(builder: (context) => const StatsScreen()));
         },
       ),
+      // توحيد نقاط دخول أدوات التشخيص في مركز واحد.
       ServiceItem(
-        title: 'طبيب الشبكة',
-        icon: Icons.local_hospital_outlined,
+        title: 'مركز التشخيص',
+        icon: Icons.health_and_safety_outlined,
         color: context.theme.appColors.info,
         onTap: () {
           Navigator.of(context).push(CustomPageRoute(
-              builder: (context) => const NetworkDoctorScreen()));
+              builder: (context) => const DiagnosticsHubScreen()));
         },
       ),
       ServiceItem(
@@ -423,16 +443,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               builder: (context) => const BackupSystemScreen()));
         },
       ),
-      // ===== شاشات AI + Terminal + إضافات capy/v2-riverpod =====
-      ServiceItem(
-        title: 'تشخيص بالذكاء الاصطناعي',
-        icon: Icons.smart_toy,
-        color: context.theme.appColors.secondary,
-        onTap: () {
-          Navigator.of(context).push(CustomPageRoute(
-              builder: (context) => const AiDiagnosticsScreen()));
-        },
-      ),
+      // ===== Terminal + إضافات capy/v2-riverpod =====
       ServiceItem(
         title: 'محطة RouterOS التفاعلية',
         icon: Icons.terminal,
@@ -440,15 +451,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => const TerminalScreen()));
-        },
-      ),
-      ServiceItem(
-        title: 'تحليل Logs MikroTik',
-        icon: Icons.analytics,
-        color: context.theme.appColors.success,
-        onTap: () {
-          Navigator.of(context).push(
-              CustomPageRoute(builder: (context) => const LogAnalysisScreen()));
         },
       ),
       ServiceItem(

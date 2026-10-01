@@ -145,11 +145,10 @@ class MikrotikQosNotifier extends StateNotifier<QosState> {
     state = state.copyWith(isApplying: true, error: null);
     await Future.delayed(const Duration(seconds: 2));
 
-    // ignore: unused_local_variable
     final commands = generateRouterOsCommands(state.config!);
 
     state = state.copyWith(isApplying: false);
-    return '✅ تم تطبيق ${state.config!.rules.where((r) => r.enabled).length} قاعدة QoS';
+    return 'محاكاة تجريبية: تم توليد ${commands.length} أمر QoS؛ لم تُرسل إلى الراوتر.';
   }
 
   List<String> generateRouterOsCommands(QosConfig config) {

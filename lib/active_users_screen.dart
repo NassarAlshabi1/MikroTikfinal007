@@ -3,6 +3,7 @@ import 'package:router_os_client/router_os_client.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'mikrotik_connector.dart';
+import 'services/router_os_query_executor.dart';
 import 'theme/app_theme.dart';
 
 class ActiveUsersScreen extends StatefulWidget {
@@ -12,7 +13,8 @@ class ActiveUsersScreen extends StatefulWidget {
   State<ActiveUsersScreen> createState() => _ActiveUsersScreenState();
 }
 
-class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
+class _ActiveUsersScreenState extends State<ActiveUsersScreen>
+    with WidgetsBindingObserver {
   List<Map<String, dynamic>> _activeUsers = [];
   DateTime? _lastActiveFetch;
   static const Duration _minRefreshGap = Duration(seconds: 20);
@@ -27,24 +29,61 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   Timer? _refreshTimer;
   DateTime? _lastTotalUsersFetch;
   bool _isHotspotMode = true;
+  bool _isAppInForeground = true;
+  bool _fetchInFlight = false;
+  bool _refreshAfterInFlight = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchActiveUsers();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
-      if (mounted) _fetchActiveUsers();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    _isAppInForeground =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
+    if (_isAppInForeground) {
+      _fetchActiveUsers();
+      _startRefreshTimer();
+    }
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted && _isAppInForeground) _fetchActiveUsers();
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    final wasInForeground = _isAppInForeground;
+    _isAppInForeground = state == AppLifecycleState.resumed;
+
+    if (!_isAppInForeground) {
+      _refreshTimer?.cancel();
+      _refreshTimer = null;
+      return;
+    }
+
+    _startRefreshTimer();
+    if (!wasInForeground) {
+      if (_fetchInFlight) {
+        _refreshAfterInFlight = true;
+      } else {
+        _fetchActiveUsers(force: true);
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _fetchActiveUsers({bool force = false}) async {
-    if (!mounted) return;
+    if (!mounted || !_isAppInForeground || _fetchInFlight) return;
 
     if (!force &&
         _lastActiveFetch != null &&
@@ -55,6 +94,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       return;
     }
 
+    _fetchInFlight = true;
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -65,7 +105,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       client = await MikrotikConnector.connect();
 
       try {
-        final hotspotResponse = await client.talk([
+        final hotspotResponse = await RouterOsQueryExecutor.talk(client, [
           '/ip/hotspot/active/print',
           '=.proplist=user,address,uptime',
         ]);
@@ -75,7 +115,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         _isHotspotMode = true;
       } catch (e) {
         try {
-          final userManagerResponse = await client.talk([
+          final userManagerResponse = await RouterOsQueryExecutor.talk(client, [
             '/tool/user-manager/session/print',
             '=.proplist=user,session-time-left,framed-ip-address,uptime',
           ]);
@@ -94,7 +134,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         if (_lastTotalUsersFetch == null ||
             DateTime.now().difference(_lastTotalUsersFetch!) >
                 const Duration(seconds: 90)) {
-          final allUsers = await client.talk([
+          final allUsers = await RouterOsQueryExecutor.talk(client, [
             _isHotspotMode
                 ? '/ip/hotspot/user/print'
                 : '/tool/user-manager/user/print',
@@ -134,6 +174,12 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       }
     } finally {
       MikrotikConnector.release(client);
+      _fetchInFlight = false;
+      final shouldRefreshAfterInFlight = _refreshAfterInFlight;
+      _refreshAfterInFlight = false;
+      if (shouldRefreshAfterInFlight && mounted && _isAppInForeground) {
+        scheduleMicrotask(() => _fetchActiveUsers(force: true));
+      }
     }
   }
 
