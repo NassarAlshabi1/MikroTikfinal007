@@ -29,11 +29,23 @@ class UmSyncedCard {
     this.mikrotikId,
   });
 
+  /// True when User Manager marks this user as disabled.
+  bool get isDisabled {
+    final value = disabled.trim().toLowerCase();
+    return value == 'true' || value == 'yes';
+  }
+
+  /// يقرأ الاستخدام التراكمي الفعلي من User Manager؛ لا يستنتج الاستخدام
+  /// من كون الكرت مفعّلاً أو من وقت مزامنة التطبيق.
+  bool get isUsed {
+    final used = parseRouterDuration(uptimeUsed);
+    return used != null && used > 0;
+  }
+
   /// منطق الانتهاء مطابق لسكربت التلجرام المجرّب على الراوتر (/clean):
   /// الكرت المعطّل منتهي، والكرت الذي استهلك كل حدّه الزمني منتهٍ.
   bool get isExpired {
-    final d = disabled.trim().toLowerCase();
-    if (d == 'true' || d == 'yes') return true;
+    if (isDisabled) return true;
 
     final limit = parseRouterDuration(limitUptime);
     final used = parseRouterDuration(uptimeUsed);
@@ -45,6 +57,11 @@ class UmSyncedCard {
 
   bool get isActive => !isExpired;
 }
+
+final RegExp _routerDurationUnitPattern =
+    RegExp(r'(\d+)\s*(w|d|h|m|s)(?![a-z])');
+final RegExp _routerDurationClockPattern =
+    RegExp(r'(\d{1,4}):(\d{2})(?::(\d{2}))?');
 
 /// يحوّل مدة RouterOS مثل `1w2d 03:04:05` أو `1d2h3m4s` أو `03:00:00`
 /// إلى ثوانٍ، ويعيد null إذا تعذّر التحليل.
@@ -59,8 +76,7 @@ int? parseRouterDuration(String? input) {
   var seconds = 0;
   var matched = false;
 
-  final unitPattern = RegExp(r'(\d+)\s*(w|d|h|m|s)(?![a-z])');
-  for (final m in unitPattern.allMatches(s)) {
+  for (final m in _routerDurationUnitPattern.allMatches(s)) {
     final value = int.tryParse(m.group(1)!);
     if (value == null) continue;
     matched = true;
@@ -74,7 +90,7 @@ int? parseRouterDuration(String? input) {
   }
 
   // الجزء الزمني HH:MM:SS (أو HH:MM) — قد يلي وحدات مثل "1w2d " مباشرة.
-  final timeMatch = RegExp(r'(\d{1,4}):(\d{2})(?::(\d{2}))?').firstMatch(s);
+  final timeMatch = _routerDurationClockPattern.firstMatch(s);
   if (timeMatch != null) {
     final h = int.tryParse(timeMatch.group(1)!) ?? 0;
     final m = int.tryParse(timeMatch.group(2)!) ?? 0;

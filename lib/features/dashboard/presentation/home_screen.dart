@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mikrotik_manager/active_users_screen.dart';
 import 'package:mikrotik_manager/add_user_screen.dart';
 import 'package:mikrotik_manager/features/diagnostics/presentation/diagnostics_hub_screen.dart';
+import 'package:mikrotik_manager/features/sales_reports/presentation/sales_report_screen.dart';
 import 'package:mikrotik_manager/backup_system_screen.dart';
 import 'package:mikrotik_manager/bulk_add_screen.dart';
 import 'package:mikrotik_manager/card_search_screen.dart';
@@ -423,6 +424,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onTap: () {
           Navigator.of(context).push(
               CustomPageRoute(builder: (context) => const CardsSyncScreen()));
+        },
+      ),
+      ServiceItem(
+        title: 'تقرير الكروت المستخدمة والمنتهية',
+        icon: Icons.assessment_outlined,
+        color: context.theme.appColors.info,
+        onTap: () {
+          Navigator.of(context).push(CustomPageRoute(
+            builder: (context) => const SalesReportScreen(),
+          ));
         },
       ),
       ServiceItem(

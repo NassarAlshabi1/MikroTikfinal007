@@ -59,6 +59,22 @@ void main() {
     });
   });
 
+  group('UmSyncedCard.isUsed', () {
+    test('counts positive User Manager uptime as used', () {
+      const card = UmSyncedCard(name: 'a', uptimeUsed: '1h 3m');
+      expect(card.isUsed, isTrue);
+    });
+
+    test('zero, missing, and malformed uptime are not counted as used', () {
+      expect(const UmSyncedCard(name: 'a', uptimeUsed: '0s').isUsed, isFalse);
+      expect(const UmSyncedCard(name: 'b').isUsed, isFalse);
+      expect(
+        const UmSyncedCard(name: 'c', uptimeUsed: 'unknown').isUsed,
+        isFalse,
+      );
+    });
+  });
+
   group('UmSyncedCard.isExpired', () {
     test('المعطل منتهي', () {
       const card = UmSyncedCard(name: 'a', disabled: 'yes');
