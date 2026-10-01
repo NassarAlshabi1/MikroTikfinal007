@@ -72,26 +72,29 @@ void main() {
     });
   });
 
-  test('CSV export includes usage fields, safely quotes cells, and omits secrets', () {
-    final csv = SalesReportExporter.buildCsv(
-      cards: const [
-        UmSyncedCard(
-          name: '=SUM(1,1)',
-          password: 'do-not-export-this',
-          profile: 'Gold, special',
-          uptimeUsed: '1h "active"',
-          limitUptime: '1d',
-        ),
-      ],
-      filter: CardUsageReportFilter.used,
-      lastSyncedAt: DateTime.utc(2026, 10, 2, 12, 30),
-    );
+  test(
+    'CSV export includes usage fields, safely quotes cells, and omits secrets',
+    () {
+      final csv = SalesReportExporter.buildCsv(
+        cards: const [
+          UmSyncedCard(
+            name: '=SUM(1,1)',
+            password: 'do-not-export-this',
+            profile: 'Gold, special',
+            uptimeUsed: '1h "active"',
+            limitUptime: '1d',
+          ),
+        ],
+        filter: CardUsageReportFilter.used,
+        lastSyncedAt: DateTime.utc(2026, 10, 2, 12, 30),
+      );
 
-    expect(csv, startsWith('\uFEFF'));
-    expect(csv, contains('uptime_used'));
-    expect(csv, contains("'=SUM(1,1)"));
-    expect(csv, contains('"Gold, special"'));
-    expect(csv, isNot(contains('do-not-export-this')));
-    expect(csv, isNot(contains('password')));
-  });
+      expect(csv, startsWith('\uFEFF'));
+      expect(csv, contains('uptime_used'));
+      expect(csv, contains("'=SUM(1,1)"));
+      expect(csv, contains('"Gold, special"'));
+      expect(csv, isNot(contains('do-not-export-this')));
+      expect(csv, isNot(contains('password')));
+    },
+  );
 }

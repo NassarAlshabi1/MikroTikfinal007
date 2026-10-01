@@ -450,7 +450,10 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
               spacing: 14,
               runSpacing: 6,
               children: [
-                _DetailText(icon: Icons.timer_outlined, text: 'الاستخدام: $used'),
+                _DetailText(
+                  icon: Icons.timer_outlined,
+                  text: 'الاستخدام: $used',
+                ),
                 _DetailText(
                   icon: Icons.hourglass_empty,
                   text: 'حد الوقت: $limit',

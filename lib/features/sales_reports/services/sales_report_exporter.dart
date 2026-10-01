@@ -129,10 +129,10 @@ class SalesReportExporter {
       ],
     ));
 
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(generatedAt);
     await Printing.sharePdf(
       bytes: await document.save(),
-      filename:
-          'cards_${filter.fileSuffix}_${DateFormat('yyyyMMdd_HHmmss').format(generatedAt)}.pdf',
+      filename: 'cards_${filter.fileSuffix}_$timestamp.pdf',
     );
   }
 

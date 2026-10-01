@@ -427,7 +427,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         },
       ),
       ServiceItem(
-        title: 'تقرير الكروت المستخدمة والمنتهية',
+        title: 'تقرير الكروت',
         icon: Icons.assessment_outlined,
         color: context.theme.appColors.info,
         onTap: () {
