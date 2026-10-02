@@ -98,8 +98,20 @@ abstract class BaseTemplateController extends GetxController {
       "username_location_y": y.value,
       "password_location_x": x2.value,
       "password_location_y": y2.value,
-      "image": imageBytes ?? getImageAsBytes() // ملاحظة: يفضل معالجة الـ Future هنا، سأتركها كما هي لتطابق الكود الأصلي
+      // لا نُرجع Future هنا أبدًا: إما بايتات محمّلة أو مصفوفة فارغة
+      "image": imageBytes ?? Uint8List(0)
     };
+  }
+
+  /// ضمان تحميل صورة القالب قبل الحفظ/المعاينة.
+  ///
+  /// كان `imageBytes` قد يبقى null (تحميل غير متزامن) فيُمرَّر Future داخل حقل
+  /// الصورة ⇒ قالب تالف لا يظهر في قائمة الدفعات.
+  Future<void> ensureImageLoaded() async {
+    if (imageBytes != null && imageBytes!.isNotEmpty) return;
+    try {
+      imageBytes = await getImageAsBytes();
+    } catch (_) {}
   }
 
   Future<void> preview([PrintTemplatesModel? modelFromApi]) async {

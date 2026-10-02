@@ -39,18 +39,40 @@ class MySelectedMenu extends StatefulWidget {
 
 class _MySelectedMenu extends State<MySelectedMenu> {
   String? dropdownvalue;
+
+  /// هل القيمة الحالية موجودة فعلًا ضمن العناصر؟ (يمنع خطأ DropdownButton)
+  bool _isValidValue(String? value) {
+    if (value == null) return false;
+    return widget.items.any(
+      (item) => item[widget.selectedValueName]?.toString() == value,
+    );
+  }
+
+  void _syncValueFromItems() {
+    if (widget.items.isEmpty) {
+      dropdownvalue = null;
+      return;
+    }
+    if (_isValidValue(dropdownvalue)) return;
+
+    final fromMain = widget.mainValue?.toString();
+    dropdownvalue = _isValidValue(fromMain)
+        ? fromMain
+        : widget.items[0][widget.selectedValueName]?.toString();
+  }
+
   @override
   void initState() {
-    // setState(() {
-      if (widget.items.isNotEmpty) {
-        dropdownvalue =
-            widget.mainValue ?? widget.items[0][widget.selectedValueName];
-      }
-      // else{
-      //   dropdownvalue="0";
-      // }
-    // });
+    _syncValueFromItems();
     super.initState();
+  }
+
+  /// إصلاح جوهري: القوائم تُجلب من قاعدة البيانات/الراوتر بعد بناء الواجهة،
+  /// فبدون هذه الدالة تبقى الخانة فارغة («لا يظهر القالب») رغم وصول البيانات.
+  @override
+  void didUpdateWidget(covariant MySelectedMenu oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncValueFromItems();
   }
 
   @override
@@ -82,7 +104,7 @@ class _MySelectedMenu extends State<MySelectedMenu> {
                 padding: EdgeInsets.symmetric(horizontal: widget.width/4),
                 icon: widget.icon,
                 isExpanded: true, 
-                value: dropdownvalue,
+                value: _isValidValue(dropdownvalue) ? dropdownvalue : null,
                 hint: Text(widget.hintText/* ,textAlign: TextAlign.center */,style: widget.textStyle,), // ????? ???? ?????????
                 items: widget.items.map<DropdownMenuItem<String>>((item) {
                   return DropdownMenuItem<String>(

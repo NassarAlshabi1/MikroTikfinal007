@@ -54,23 +54,42 @@ class TemplatesListController extends GetxController {
 
 
 
+  /// عدد الصفوف التي تعذّرت قراءتها (تُعرض ملاحظة ولا تُفرغ القائمة كلها).
+  int skippedTemplates = 0;
+
   Future<void> getAll()async{
     try {
       List result=await PrintTemplatesApi.getAllTemplates();
-      List<PrintTemplatesModel> temp=[];
+      final temp=<PrintTemplatesModel>[];
+      skippedTemplates = 0;
 
-      if(result.isNotEmpty){
-        for (var i in result) {
-          temp.add(
-            PrintTemplatesModel.fromDatabase(i)
-          );
+      for (final i in result) {
+        // كل صف داخل try مستقل: صف تالف واحد لا يُخفي باقي القوالب
+        try {
+          if (i is! Map || !PrintTemplatesModel.isUsableRow(i)) {
+            skippedTemplates++;
+            continue;
+          }
+          temp.add(PrintTemplatesModel.fromDatabase(i));
+        } catch (_) {
+          skippedTemplates++;
         }
       }
+
       allTemplates=temp;
       update();
     } catch (e) {
       showErrorDialog(content: e.toString());
     }
+  }
+
+  /// ضمان تحميل صورة القالب قبل الحفظ (كان `_imageBytes` قد يكون null
+  /// فيُحفظ Future داخل حقل الصورة ⇒ قالب تالف لا يظهر لاحقًا).
+  Future<void> ensureImageLoaded() async {
+    if (_imageBytes != null && _imageBytes!.isNotEmpty) return;
+    try {
+      _imageBytes = await _getImageAsBytes();
+    } catch (_) {}
   }
 
 
@@ -118,7 +137,8 @@ class TemplatesListController extends GetxController {
       "username_location_y": y.value,
       "password_location_x": x2.value,
       "password_location_y": y2.value,
-      "image": _imageBytes??_getImageAsBytes()
+      // لا نُرجع Future هنا أبدًا: إما بايتات محمّلة أو مصفوفة فارغة
+      "image": _imageBytes ?? Uint8List(0)
     };
   }
 
@@ -147,18 +167,28 @@ class TemplatesListController extends GetxController {
 
   Future<void> addOne()async{
     try {
+      await ensureImageLoaded();
+      if (profileName.text.trim().isEmpty) {
+        showErrorDialog(content: "اكتب اسم القالب أولًا");
+        return;
+      }
       Map temp = getLayoutData();
       PrintTemplatesModel model=PrintTemplatesModel.fromDataForm(temp);
-      int r= await PrintTemplatesApi.addOneTemplate(model.toDatabase());
-      getAll();
-      showErrorDialog(title: "add",content: r.toString());
+      final int r = await PrintTemplatesApi.addOneTemplate(model.toDatabase());
+      if (r <= 0) {
+        showErrorDialog(content: "لم يتم حفظ القالب — تحقق من المساحة المتاحة");
+        return;
+      }
+      await getAll();
+      showErrorDialog(title: "تم الحفظ", content: "القالب \"${profileName.text.trim()}\" جاهز للاستخدام في الدفعات");
     } catch (e) {
-      showErrorDialog(content: e.toString());
+      showErrorDialog(content: "تعذّر حفظ القالب: ${e.toString()}");
     }
   }
 
   Future<void> editOne()async{
     try {
+      await ensureImageLoaded();
       Map temp = getLayoutData();
       PrintTemplatesModel model=PrintTemplatesModel.fromDataForm(temp);
       int r= await PrintTemplatesApi.templateEdit(editId,model.toDatabase());

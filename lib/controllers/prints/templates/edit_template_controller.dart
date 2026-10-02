@@ -40,6 +40,7 @@ class EditTemplateController extends BaseTemplateController {
   @override
   Future<void> saveAction() async {
     try {
+      await ensureImageLoaded();
       Map temp = getLayoutData(editId);
       PrintTemplatesModel model = PrintTemplatesModel.fromDataForm(temp);
       await PrintTemplatesApi.templateEdit(editId, model.toDatabase());

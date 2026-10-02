@@ -110,7 +110,7 @@ class _AddBatchViewState extends State<AddBatchView> {
           
           _buildProfileDropdown(controller),
           const SizedBox(height: 12),
-          _buildTemplateDropdown(controller),
+          _buildTemplateSection(controller),
           const Divider(height: 40),
           
           _buildFieldLabel("نمط كلمة المرور",controller),
@@ -260,6 +260,51 @@ class _AddBatchViewState extends State<AddBatchView> {
     ),
   );
 
+  /// صف القوالب مع زر تحديث وملاحظة عدد القوالب المتاحة.
+  Widget _buildTemplateSection(BatchesFormController controller) {
+    final hasSkipped = controller.skippedTemplates > 0;
+    final hasError = controller.templatesLoadError.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildTemplateDropdown(controller)),
+            IconButton(
+              tooltip: "تحديث القوالب",
+              onPressed: () => controller.reloadTemplates(),
+              icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E3A8A)),
+            ),
+          ],
+        ),
+        if (controller.allTemplates.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(right: 54, bottom: 6),
+            child: Text(
+              "القوالب المتاحة: ${controller.allTemplates.length}",
+              style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+            ),
+          ),
+        if (hasSkipped)
+          Padding(
+            padding: const EdgeInsets.only(right: 54, bottom: 6),
+            child: Text(
+              "تم تجاهل ${controller.skippedTemplates} قالبًا تالفًا",
+              style: const TextStyle(fontSize: 10, color: Colors.orange),
+            ),
+          ),
+        if (hasError)
+          Padding(
+            padding: const EdgeInsets.only(right: 54, bottom: 6),
+            child: Text(
+              "تعذّر جلب القوالب — اضغط زر التحديث",
+              style: const TextStyle(fontSize: 10, color: Colors.redAccent),
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildTemplateDropdown(BatchesFormController controller) => 
   _buildDropdownRow(controller,
     screenWidth: Navigator.of(context).context.width , 
@@ -272,6 +317,9 @@ class _AddBatchViewState extends State<AddBatchView> {
         controller.update();
       },
       hintText: "اختر قالب" ,
+      emptyText: controller.templatesLoadError.isNotEmpty
+          ? "تعذّر جلب القوالب"
+          : "لا توجد قوالب — أنشئ قالبًا من قسم الطباعة",
       selectedKeyName: "id",
       bgColor: const Color(0xFFF1F5F9),
       border: Border.all(color: Colors.grey.shade300),

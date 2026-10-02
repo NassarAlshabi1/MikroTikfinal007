@@ -46,27 +46,70 @@ class BatchesFormController extends GetxController {
   RxDouble generationProgress = 0.0.obs;
   RxString generationStatus = "".obs;
 
-  Future<void> getAllTemplates() async {
+  /// عدد القوالب التي تعذّرت قراءتها (تُعرض ملاحظة للمستخدم ولا تُفرغ القائمة).
+  int skippedTemplates = 0;
+  String templatesLoadError = "";
+
+  /// جلب كل القوالب المحفوظة.
+  ///
+  /// إصلاح مهم: كان صف واحد تالف (صورة غير Base64 أو صف قديم بلا اسم) يُطلق
+  /// استثناءً فيُفرغ القائمة بالكامل ⇒ «القالب لا يظهر». الآن كل صف يُقرأ داخل
+  /// `try` مستقل، والصفوف غير المفهومة تُستبعد وتُحصى فقط.
+  Future<void> getAllTemplates({bool showError = true}) async {
     try {
       List result = await PrintTemplatesApi.getAllTemplates();
-      List<PrintTemplatesModel> temp = [];
-      if (result.isNotEmpty) {
-        for (var i in result) {
+      final temp = <PrintTemplatesModel>[];
+      skippedTemplates = 0;
+
+      for (final i in result) {
+        try {
+          if (i is! Map) {
+            skippedTemplates++;
+            continue;
+          }
+          if (!PrintTemplatesModel.isUsableRow(i)) {
+            skippedTemplates++;
+            continue;
+          }
           temp.add(PrintTemplatesModel.fromDatabase(i));
+        } catch (_) {
+          skippedTemplates++;
         }
-        allTemplates = temp;
       }
+
+      allTemplates = temp;
+      templatesLoadError = "";
+
+      // اختيار أول قالب تلقائيًا حتى يظهر القالب المطلوب مباشرة في الخانة
+      if (allTemplates.isNotEmpty &&
+          !allTemplates.any((t) => t.id == selectedTemplate.value)) {
+        selectedTemplate.value = allTemplates.first.id;
+      }
+
       update();
     } catch (e) {
-      showMsgDialog(message: e.toString(),type: MsgType.error);
+      templatesLoadError = e.toString();
+      if (showError) {
+        showMsgDialog(
+          message: "تعذّر جلب القوالب: ${e.toString()}",
+          type: MsgType.error,
+        );
+      }
+      update();
     }
   }
+
+  /// إعادة تحميل القوالب (زر التحديث في الشاشة).
+  Future<void> reloadTemplates() => getAllTemplates(showError: false);
 
 
   Future<void> getallProfiles() async {
     try {
       AppResponse<List<ProfilesModel>> result = await ProfilesApi.getProfiles();
       allProfiles = result.data ?? [];
+      if (allProfiles.isNotEmpty && selectedProfile.value.isEmpty) {
+        selectedProfile.value = allProfiles.first.id.toString();
+      }
       update();
     } catch (e) {
       showMsgDialog(message: "Get Profiles Error : ${e.toString()}",type: MsgType.error);

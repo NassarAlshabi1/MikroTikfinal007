@@ -61,7 +61,7 @@ class PrintTemplatesModel {
     return PrintTemplatesModel(
       id: data["id"], 
       name: data["name"], 
-      image: data["image"] ,
+      image: decodeImage(data["image"]),
       withPassword: (data["password"]==1), 
       numOfRows: data["rows"], 
       numOfColumns: data["columns"], 
@@ -88,36 +88,67 @@ class PrintTemplatesModel {
     
   }
 
-  static PrintTemplatesModel fromDatabase(Map data){
-    Uint8List img=base64Decode(data["image"] as String);
-    return PrintTemplatesModel(
-      id: data["id"], 
-      name: data["name"], 
-      image: img ,
-      withPassword: (data["password"]==1), 
-      numOfRows: data["rows"], 
-      numOfColumns: data["columns"], 
-      usernameFontSize: data["username_fontsize"], 
-      passwordFontSize: data["password_fontsize"], 
-      usernameLocation: LocationData(
-        x: data["username_location_x"], 
-        y: data["username_location_y"]
-      ),
-      // {
-      //   "x":data["usernamelocationx"],
-      //   "y":data["usernamelocationy"],
-      // }, 
-      passwordLocation: LocationData(
-        x: data["password_location_x"], 
-        y: data["password_location_y"]
-      ),
-      // {
-      //   "x":data["passwordlocationx"],
-      //   "y":data["passwordlocationy"],
-      // },
-    );
+  /// فك ترميز صورة القالب من قاعدة البيانات بشكل **آمن تمامًا**.
+  ///
+  /// يدعم كل الصيغ الممكنة (لا يُسقط التطبيق في أي حالة):
+  /// - نص Base64 (الصيغة الحالية عند الحفظ)
+  /// - بايتات خام `Uint8List` / `List<int>` (قوالب قديمة خُزّنت كـBLOB)
+  /// - فارغ أو تالف ⇒ صورة فارغة (يُطبع القالب بدون خلفية) بدل الانهيار
+  static Uint8List decodeImage(dynamic raw) {
+    if (raw == null) return Uint8List(0);
+    if (raw is Uint8List) return raw;
+    if (raw is List<int>) return Uint8List.fromList(raw);
 
-    
+    final text = raw.toString().trim();
+    if (text.isEmpty) return Uint8List(0);
+    // أي كائن غير نصي (مثل Future) أو نص غير Base64 ⇒ صورة فارغة
+    if (text.startsWith('Instance of') || text.startsWith('[')) return Uint8List(0);
+
+    try {
+      return base64Decode(text);
+    } catch (_) {
+      return Uint8List(0);
+    }
+  }
+
+  /// قراءة رقم بشكل آمن (يدعم int/double/String/null) مع قيمة افتراضية.
+  static double _toDouble(dynamic value, {double fallback = 0}) {
+    if (value == null) return fallback;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? fallback;
+  }
+
+  static int _toInt(dynamic value, {int fallback = 0}) {
+    if (value == null) return fallback;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? fallback;
+  }
+
+  /// هل هذا الصف يصلح كقالب قابل للاستخدام؟ (غير المفهوم يُستبعد بلا تخمين)
+  static bool isUsableRow(Map data) {
+    final name = (data["name"] ?? '').toString().trim();
+    return name.isNotEmpty;
+  }
+
+  static PrintTemplatesModel fromDatabase(Map data){
+    return PrintTemplatesModel(
+      id: _toInt(data["id"]),
+      name: (data["name"] ?? '').toString(),
+      image: decodeImage(data["image"]),
+      withPassword: _toInt(data["password"]) == 1,
+      numOfRows: _toInt(data["rows"], fallback: 18),
+      numOfColumns: _toInt(data["columns"], fallback: 4),
+      usernameFontSize: _toDouble(data["username_fontsize"], fallback: 14),
+      passwordFontSize: _toDouble(data["password_fontsize"], fallback: 14),
+      usernameLocation: LocationData(
+        x: _toDouble(data["username_location_x"], fallback: 100),
+        y: _toDouble(data["username_location_y"], fallback: 100),
+      ),
+      passwordLocation: LocationData(
+        x: _toDouble(data["password_location_x"], fallback: 101),
+        y: _toDouble(data["password_location_y"], fallback: 101),
+      ),
+    );
   }
 
 

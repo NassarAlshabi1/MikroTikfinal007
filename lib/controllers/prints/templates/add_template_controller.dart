@@ -26,17 +26,27 @@ class AddTemplateController extends BaseTemplateController {
   @override
   Future<void> saveAction() async {
     try {
+      final name = profileName.text.trim();
+      if (name.isEmpty) {
+        showMsgDialog(message: "اكتب اسم القالب أولًا", type: MsgType.error);
+        return;
+      }
+
+      // تأكيد تحميل الصورة قبل الحفظ (وإلا حُفظ قالب بلا صورة/تالف)
+      await ensureImageLoaded();
+
       Map temp = getLayoutData(49); // 49 كقيمة افتراضية كما بالكود الأصلي
       PrintTemplatesModel model = PrintTemplatesModel.fromDataForm(temp);
-      await PrintTemplatesApi.addOneTemplate(model.toDatabase());
-      
-      // تحديث قائمة القوالب المحفوظة
-     //Get.back();
-      await showMsgDialog(message: "تمت الاضافة بنجاح",type: MsgType.success);
-       Get.back(); // العودة للخلف بعد النجاح
-    } catch (e) {
-      showMsgDialog(message: e.toString(),type: MsgType.error);
+      final int r = await PrintTemplatesApi.addOneTemplate(model.toDatabase());
+      if (r <= 0) {
+        showMsgDialog(message: "لم يتم حفظ القالب — تحقق من المساحة المتاحة", type: MsgType.error);
+        return;
+      }
 
+      await showMsgDialog(message: "تمت الاضافة بنجاح",type: MsgType.success);
+      Get.back(); // العودة للخلف بعد النجاح
+    } catch (e) {
+      showMsgDialog(message: "تعذّر حفظ القالب: ${e.toString()}",type: MsgType.error);
     }
   }
 }
