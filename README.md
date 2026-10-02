@@ -195,8 +195,8 @@ flutter pub get
 # 2) تشغيل التطبيق (جهاز/محاكي متصل)
 flutter run
 
-# 3) بناء ملف APK للإصدار (الإصدار 2.0.0.0)
-flutter build apk --release
+# 3) بناء ملف APK للإصدار (الإصدار 2.0.0.0) — للأجهزة الحديثة فقط
+flutter build apk --release --target-platform android-arm64
 # أو لكل معماريات الأندرويد:
 flutter build apk --split-per-abi
 ```
@@ -204,7 +204,9 @@ flutter build apk --split-per-abi
 ### تحميل ملف APK الجاهز
 
 - **أحدث إصدار (رابط تحميل مباشر بلا تسجيل دخول):** صفحة الإصدارات
-  [Releases](https://github.com/NassarAlshabi1/MikroTikfinal007/releases) ← حمّل `MikroNet-2.0.0.0.apk`.
+  [Releases](https://github.com/NassarAlshabi1/MikroTikfinal007/releases) ← حمّل `MikroNet-2.0.0.0-arm64.apk`.
+- الملف **للأجهزة الحديثة فقط (arm64-v8a)** — لا يعمل على الأجهزة القديمة 32-بت (armeabi-v7a)
+  ولا على المحاكيات (x86_64). لبناء نسخة لكل المعماريات: `flutter build apk --split-per-abi`.
 - لإنشاء إصدار جديد تلقائيًا: ادفع وسمًا يبدأ بـ `v` (مثل `v2.0.0.0`) فيبني CI الملف
   وينشره في Releases ويُرفق APK به.
 

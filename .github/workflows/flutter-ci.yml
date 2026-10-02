@@ -135,42 +135,59 @@ jobs:
           cache: true
 
       - run: flutter pub get
-      - name: Build APK
-        run: flutter build apk --release
+      # بناء لمعمارية الأجهزة الحديثة فقط (arm64-v8a) — ملف أصغر وأسرع تثبيتًا
+      # ملاحظة: الأجهزة القديمة 32-بت (armeabi-v7a) والمحاكيات (x86_64) غير مدعومة في هذا الملف
+      - name: Build APK (arm64-v8a only)
+        run: flutter build apk --release --target-platform android-arm64
 
-      # إثبات الإصدار المدمج داخل APK عبر aapt (يُطبع في السجلات وملخص الخطوة)
-      - name: Verify APK version metadata
+      # إثبات الإصدار والمعمارية المدمجَين داخل APK، ورفض أي مكتبات 32-بت
+      - name: Verify APK metadata (version + arm64 only)
         shell: bash
         run: |
-          set +e
+          set -e
           APK=build/app/outputs/flutter-apk/app-release.apk
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
           AAPT=$(ls "$SDK"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)
           if [ -z "$AAPT" ]; then AAPT=$(ls "$SDK"/build-tools/*/aapt 2>/dev/null | sort -V | tail -1); fi
+
           {
             echo "== APK metadata =="
             if [ -n "$AAPT" ]; then
-              "$AAPT" dump badging "$APK" 2>/dev/null | grep -E "^package:|^application-label" || true
+              "$AAPT" dump badging "$APK" | grep -E "^package:|^application-label|^native-code"
             else
-              echo "(aapt not found — skipping)"
+              echo "(aapt not found — skipping metadata)"
             fi
-            ls -lh "$APK" 2>/dev/null || true
+            ls -lh "$APK"
           } | tee apk_version.txt
-          cat apk_version.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          cat apk_version.txt >> "$GITHUB_STEP_SUMMARY" || true
+
+          if [ -n "$AAPT" ]; then
+            NATIVE=$("$AAPT" dump badging "$APK" | grep "^native-code" || true)
+            echo "native-code: ${NATIVE:-غير مذكور}"
+            if echo "$NATIVE" | grep -q "arm64-v8a"; then
+              echo "✅ arm64-v8a موجود (الأجهزة الحديثة)"
+            else
+              echo "::error::native-code لا يحتوي arm64-v8a"; exit 1
+            fi
+            if echo "$NATIVE" | grep -qE "armeabi|x86"; then
+              echo "::error::APK يحتوي مكتبات 32-بت (armeabi/x86) — المطلوب arm64 فقط"; exit 1
+            fi
+            echo "✅ لا توجد مكتبات 32-بت — الملف للأجهزة الحديثة فقط"
+          fi
 
       # إعادة تسمية الملف باسم الإصدار ليكون التحميل واضحًا
       - name: Rename APK with version
         shell: bash
         run: |
           mkdir -p release_out
-          cp build/app/outputs/flutter-apk/app-release.apk release_out/MikroNet-2.0.0.0.apk
+          cp build/app/outputs/flutter-apk/app-release.apk release_out/MikroNet-2.0.0.0-arm64.apk
           ls -lh release_out/
 
       - uses: actions/upload-artifact@v4
         with:
           name: mikronet-release-apk
           path: |
-            release_out/MikroNet-2.0.0.0.apk
+            release_out/MikroNet-2.0.0.0-arm64.apk
             apk_version.txt
 
       # عند دفع وسم مثل v2.0.0.0: يُنشأ GitHub Release ويُرفَق به ملف APK
@@ -181,7 +198,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NOTES="إصدار MikroNet 2.0.0.0 (versionCode 2000)
+          NOTES="إصدار MikroNet 2.0.0.0 (versionCode 2000) — للأجهزة الحديثة (arm64-v8a)
 
           الميزات: حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · واجهة عربية RTL.
 
@@ -189,10 +206,12 @@ jobs:
           $(cat apk_version.txt 2>/dev/null)
           \`\`\`
 
+          متطلبات التثبيت: معالج ARM 64-بت (arm64-v8a) — لا يدعم الأجهزة القديمة 32-بت (armeabi-v7a) ولا المحاكيات (x86_64).
+
           ملاحظة: هذا الإصدار موقّع بمفتاح التصحيح (debug keystore) للاستخدام والتجربة المباشرة."
           gh release create "${GITHUB_REF_NAME}" \
-            "release_out/MikroNet-2.0.0.0.apk#MikroNet-2.0.0.0.apk" \
+            "release_out/MikroNet-2.0.0.0-arm64.apk#MikroNet-2.0.0.0-arm64.apk" \
             --title "MikroNet 2.0.0.0" \
             --notes "$NOTES" \
             --latest || \
-          gh release upload "${GITHUB_REF_NAME}" "release_out/MikroNet-2.0.0.0.apk#MikroNet-2.0.0.0.apk" --clobber
+          gh release upload "${GITHUB_REF_NAME}" "release_out/MikroNet-2.0.0.0-arm64.apk#MikroNet-2.0.0.0-arm64.apk" --clobber
