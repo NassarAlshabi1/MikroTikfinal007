@@ -177,36 +177,59 @@ class BulkGenerationSession {
     required ReceivePort port,
   })  : _lock = lock,
         _port = port {
-    _subscription = _port.listen((raw) {
-      if (_events.isClosed) return;
-      final event = GenerationEvent.fromRaw(raw);
-      if (_events.hasListener) {
-        _events.add(event);
-      } else {
-        _pendingEvents.add(event);
-      }
-    });
+    _subscription = _port.listen(_handleIsolateMessage);
   }
 
   final String jobId;
   final GenerationLockToken _lock;
   final ReceivePort _port;
-  final List<GenerationEvent> _pendingEvents = [];
-  late final StreamController<GenerationEvent> _events =
-      StreamController<GenerationEvent>.broadcast(
-    onListen: () {
-      for (final event in _pendingEvents) {
-        _events.add(event);
-      }
-      _pendingEvents.clear();
-    },
-  );
+  // A single-subscription stream buffers events until the screen attaches,
+  // preserving prepared/progress/terminal ordering even if the isolate starts
+  // before the widget subscribes.
+  final StreamController<GenerationEvent> _events =
+      StreamController<GenerationEvent>();
   late final StreamSubscription<dynamic> _subscription;
   Isolate? _isolate;
   bool _closed = false;
+  bool _receivedTerminalEvent = false;
 
   Stream<GenerationEvent> get events => _events.stream;
   bool get isClosed => _closed;
+
+  void _handleIsolateMessage(dynamic raw) {
+    if (_closed || _events.isClosed) return;
+
+    if (raw == null) {
+      if (!_receivedTerminalEvent) {
+        _publish(const GenerationEvent(
+          type: 'error',
+          message: 'توقفت عملية إنشاء الكروت قبل اكتمالها.',
+        ));
+      }
+      unawaited(_events.close());
+      return;
+    }
+
+    // Isolate.spawn sends uncaught errors as [error, stackTrace] when
+    // onError is connected to this port.
+    if (raw is List && raw.isNotEmpty) {
+      _publish(GenerationEvent(
+        type: 'error',
+        message: 'توقفت عملية إنشاء الكروت بسبب خطأ داخلي: ${raw.first}',
+      ));
+      return;
+    }
+
+    _publish(GenerationEvent.fromRaw(raw));
+  }
+
+  void _publish(GenerationEvent event) {
+    if (_closed || _events.isClosed || _receivedTerminalEvent) return;
+    if (event.type == 'success' || event.type == 'error') {
+      _receivedTerminalEvent = true;
+    }
+    _events.add(event);
+  }
 
   void attach(Isolate isolate) => _isolate = isolate;
 
@@ -215,10 +238,12 @@ class BulkGenerationSession {
     _closed = true;
     _subscription.cancel();
     _port.close();
-    _isolate?.kill(priority: Isolate.immediate);
+    if (!_receivedTerminalEvent) {
+      _isolate?.kill(priority: Isolate.immediate);
+    }
     _isolate = null;
     _lock.release();
-    _events.close();
+    unawaited(_events.close());
   }
 }
 
@@ -346,6 +371,9 @@ class BulkCardGenerationService {
           plannedUsers:
               request.plannedCards?.map((card) => card.toMap()).toList(),
         ),
+        onError: port.sendPort,
+        onExit: port.sendPort,
+        errorsAreFatal: true,
       );
       session.attach(isolate);
       return session;

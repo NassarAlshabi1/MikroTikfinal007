@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:router_os_client/router_os_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'services/router_os_query_executor.dart';
 import 'services/secure_credentials_storage.dart';
 
 /// استثناء: بيانات الاعتماد غير موجودة
@@ -89,7 +90,9 @@ class MikrotikConnector {
   static const _healthCheckTimeout = Duration(seconds: 3);
   // مهلة كافية للراوترات البعيدة عبر VPN/L2TP والبطيئة.
   static const _connectTimeout = Duration(seconds: 30);
-  static bool _isConnecting = false;
+  static Future<RouterOSClient>? _connectInFlight;
+  static RouterOSClient? _connectingClient;
+  static int _connectionGeneration = 0;
 
   /// معلومات الاتصال الحالي (للاستخدام في UI والتشخيص)
   static String? get currentIp => _currentIp;
@@ -177,96 +180,126 @@ class MikrotikConnector {
     }
   }
 
-  /// الحصول على اتصال MikroTik - يعيد الاتصال المخزّن إذا كان نشطاً
-  /// أو ينشئ اتصالاً جديداً عند الحاجة فقط
-  static Future<RouterOSClient> connect() async {
-    // انتظر اتصالاً جارياً قبل إغلاق أو استبدال العميل المشترك.
-    if (_isConnecting) {
-      for (var i = 0; i < 50; i++) {
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (_cachedClient != null && !_isConnecting) {
-          _lastUsed = DateTime.now();
-          return _cachedClient!;
+  /// الحصول على اتصال MikroTik.
+  ///
+  /// كل المستدعين أثناء تحميل الإعدادات وفحص الصحة والمصافحة يشتركون في
+  /// المحاولة نفسها؛ لا يوجد polling ولا يمكن إنشاء sockets متنافسة.
+  static Future<RouterOSClient> connect() {
+    final inFlight = _connectInFlight;
+    if (inFlight != null) return inFlight;
+
+    final generation = _connectionGeneration;
+    late final Future<RouterOSClient> attempt;
+    attempt = _connectOnce(generation).then((client) {
+      _ensureConnectionGeneration(generation);
+      if (!identical(client, _cachedClient)) {
+        throw const MikrotikConnectionException(
+            'Connection was closed before it could be returned.');
+      }
+      return client;
+    }).whenComplete(() {
+      if (identical(_connectInFlight, attempt)) {
+        _connectInFlight = null;
+      }
+    });
+    _connectInFlight = attempt;
+    return attempt;
+  }
+
+  static Future<RouterOSClient> _connectOnce(int generation) async {
+    // أعد استخدام العميل بعد فترة الخمول القصيرة دون فحص شبكة عند كل شاشة.
+    final cached = _cachedClient;
+    final lastUsed = _lastUsed;
+    if (cached != null && lastUsed != null) {
+      final now = DateTime.now();
+      final idleFor = now.difference(lastUsed);
+      if (idleFor < _maxIdle) {
+        final shouldCheckHealth = idleFor >= _healthCheckInterval &&
+            (_lastHealthCheck == null ||
+                now.difference(_lastHealthCheck!) >= _healthCheckInterval);
+        if (!shouldCheckHealth) {
+          _ensureConnectionGeneration(generation);
+          if (identical(cached, _cachedClient)) {
+            _lastUsed = now;
+            return cached;
+          }
+        } else {
+          final alive = await _isAlive(cached);
+          _ensureConnectionGeneration(generation);
+          if (alive && identical(cached, _cachedClient)) {
+            _lastUsed = DateTime.now();
+            return cached;
+          }
+          if (identical(cached, _cachedClient)) {
+            _invalidateCachedClient();
+          }
         }
       }
-      throw const MikrotikConnectionException(
-          'Connection already in progress.');
     }
 
-    // أعد استخدام العميل فقط إذا كان ضمن فترة الخمول وما زال حياً.
-    final cached = _cachedClient;
-    if (cached != null &&
-        _lastUsed != null &&
-        DateTime.now().difference(_lastUsed!) < _maxIdle) {
-      final shouldCheck = _lastHealthCheck == null ||
-          DateTime.now().difference(_lastHealthCheck!) >= _healthCheckInterval;
-      if (!shouldCheck || await _isAlive(cached)) {
-        _lastUsed = DateTime.now();
-        return cached;
-      }
-      _invalidateCachedClient();
-    }
-
-    // إذا كان هناك اتصال قديم، أغلقه قبل إنشاء اتصال جديد.
+    _ensureConnectionGeneration(generation);
     _invalidateCachedClient();
 
-    // قراءة بيانات الاعتماد على الـ UI isolate ثم إنشاء الاتصال من config.
+    // قراءة الإعدادات داخل المحاولة المشتركة تمنع طلبات متزامنة للتخزين.
     final config = await loadConnectionConfig();
-    final ip = config.address;
-    final user = config.user;
-    final pass = config.password;
-    final port = config.port;
-    final useSsl = config.useSsl;
+    _ensureConnectionGeneration(generation);
 
-    _isConnecting = true;
+    final client = RouterOSClient(
+      address: config.address,
+      user: config.user,
+      password: config.password,
+      port: config.port,
+      useSsl: config.useSsl,
+      verbose: false,
+      timeout: _connectTimeout,
+    );
+    _connectingClient = client;
+
     try {
-      // 🔧 استفادة من router_os_client 2.0.1:
-      // - useSsl للاتصال الآمن
-      // - timeout مدمج (بدل .timeout() اليدوي)
-      final client = RouterOSClient(
-        address: ip,
-        user: user,
-        password: pass,
-        port: port,
-        useSsl: useSsl,
-        verbose: false,
-        timeout: _connectTimeout,
-      );
-
-      final bool loggedIn = await client.login().timeout(_connectTimeout);
-      if (loggedIn) {
-        _cachedClient = client;
-        _lastUsed = DateTime.now();
-        _lastHealthCheck = DateTime.now();
-        _currentIp = ip;
-        _currentUser = user;
-        _currentPort = port;
-        _currentUseSsl = useSsl;
-        debugPrint('MikroTik: New connection established to $ip:$port'
-            '${useSsl ? " (SSL)" : ""}');
-        return client;
-      } else {
+      final loggedIn = await client.login().timeout(_connectTimeout);
+      _ensureConnectionGeneration(generation);
+      if (!loggedIn) {
         throw const MikrotikLoginException(
             'Login failed - invalid credentials.');
       }
-    } on TimeoutException {
-      throw const MikrotikConnectionException(
-          'Connection timed out. Check IP/port and network.');
+
+      _cachedClient = client;
+      _lastUsed = DateTime.now();
+      _lastHealthCheck = DateTime.now();
+      _currentIp = config.address;
+      _currentUser = config.user;
+      _currentPort = config.port;
+      _currentUseSsl = config.useSsl;
+      debugPrint('MikroTik: New connection established to ${config.address}:'
+          '${config.port}${config.useSsl ? " (SSL)" : ""}');
+      return client;
+    } on TimeoutException catch (e) {
+      _closeClient(client);
+      throw MikrotikConnectionException(
+          'Connection timed out. Check IP/port and network.', e);
     } on LoginError catch (e) {
-      // 🔧 استفادة من router_os_client: LoginError exception المخصص
+      _closeClient(client);
       throw MikrotikLoginException('Login failed: ${e.message}', e);
     } on CreateSocketError catch (e) {
-      // 🔧 استفادة من router_os_client: CreateSocketError exception المخصص
+      _closeClient(client);
       throw MikrotikConnectionException('Socket error: ${e.message}', e);
     } on MikrotikConnectionException {
-      rethrow;
-    } on MikrotikCredentialsMissingException {
+      _closeClient(client);
       rethrow;
     } catch (e) {
-      _invalidateCachedClient();
+      _closeClient(client);
       throw MikrotikConnectionException('An unexpected error occurred: $e', e);
     } finally {
-      _isConnecting = false;
+      if (identical(_connectingClient, client)) {
+        _connectingClient = null;
+      }
+    }
+  }
+
+  static void _ensureConnectionGeneration(int generation) {
+    if (generation != _connectionGeneration) {
+      throw const MikrotikConnectionException(
+          'Connection attempt was cancelled.');
     }
   }
 
@@ -299,18 +332,23 @@ class MikrotikConnector {
     await client.cancelTagged(tag);
   }
 
-  /// يتحقق من أن الاتصال لا يزال حياً
-  /// 🔧 استفادة من router_os_client 2.0.1: isAlive
+  /// يتحقق من الاتصال باستعلام RouterOS موسوم لا يتعارض مع أوامر socket أخرى.
   static Future<bool> isAlive() async {
+    RouterOSClient? client;
     try {
-      final client = await connect();
-      // isAlive يُرجع Future (talk() للتحقق من الـ socket)
-      final result = client.isAlive();
-      // تحقق من النتيجة — talk() يُرجع Future<List<Map<String, String>>>
-      // إن نجح = الاتصال حي، إن رمى استثناء = الاتصال ميت
-      await result;
+      client = await connect();
+      await RouterOsQueryExecutor.talk(
+        client,
+        ['/system/identity/print'],
+        timeout: _healthCheckTimeout,
+      );
+      _lastUsed = DateTime.now();
+      _lastHealthCheck = DateTime.now();
       return true;
     } catch (_) {
+      if (client != null && identical(client, _cachedClient)) {
+        _invalidateCachedClient();
+      }
       return false;
     }
   }
@@ -342,38 +380,62 @@ class MikrotikConnector {
 
   static Future<bool> _isAlive(RouterOSClient client) async {
     try {
+      await RouterOsQueryExecutor.talk(
+        client,
+        ['/system/identity/print'],
+        timeout: _healthCheckTimeout,
+      );
       _lastHealthCheck = DateTime.now();
-      await client.isAlive().timeout(_healthCheckTimeout);
       return true;
     } catch (_) {
       return false;
     }
   }
 
-  static void _invalidateCachedClient() {
+  static void _closeClient(RouterOSClient? client) {
     try {
-      _cachedClient?.close();
+      client?.close();
     } catch (_) {}
-    _cachedClient = null;
-    _lastUsed = null;
-    _lastHealthCheck = null;
   }
 
-  /// إغلاق الاتصال المخزّن بشكل صريح
-  static void forceDisconnect() {
-    try {
-      _cachedClient?.close();
-    } catch (_) {}
+  static void _resetConnectionMetadata() {
+    _currentIp = null;
+    _currentUser = null;
+    _currentPort = 8728;
+    _currentUseSsl = false;
+  }
+
+  static void _invalidateCachedClient() {
+    _closeClient(_cachedClient);
     _cachedClient = null;
     _lastUsed = null;
     _lastHealthCheck = null;
-    _isConnecting = false;
+    _resetConnectionMetadata();
+  }
+
+  /// إغلاق الاتصال المخزّن بشكل صريح وإبطال أي مصافحة جارية.
+  static void forceDisconnect() {
+    _connectionGeneration++;
+    _connectInFlight = null;
+
+    final cached = _cachedClient;
+    final connecting = _connectingClient;
+    _cachedClient = null;
+    _connectingClient = null;
+    _closeClient(cached);
+    if (!identical(connecting, cached)) {
+      _closeClient(connecting);
+    }
+
+    _lastUsed = null;
+    _lastHealthCheck = null;
+    _resetConnectionMetadata();
     debugPrint('MikroTik: Connection forced closed.');
   }
 
   /// التحقق مما إذا كان هناك اتصال نشط
   static bool get hasActiveConnection =>
-      _cachedClient != null && !_isConnecting;
+      _cachedClient != null && _connectInFlight == null;
 
   /// معلومات الاتصال كنص (للعرض في UI)
   static String get connectionInfo {

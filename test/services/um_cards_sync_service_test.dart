@@ -59,6 +59,43 @@ void main() {
     });
   });
 
+  group('parseRouterExpiryDate', () {
+    test('parses RouterOS ISO date and date-time values', () {
+      expect(parseRouterExpiryDate('2026-10-01'), DateTime(2026, 10, 1));
+      expect(
+        parseRouterExpiryDate('2026-10-01 23:59:59'),
+        DateTime(2026, 10, 1),
+      );
+      expect(
+        parseRouterExpiryDate('2026/10/01 00:00:00'),
+        DateTime(2026, 10, 1),
+      );
+    });
+
+    test('rejects absent and invalid calendar dates', () {
+      expect(parseRouterExpiryDate(null), isNull);
+      expect(parseRouterExpiryDate('never'), isNull);
+      expect(parseRouterExpiryDate('2026-02-30'), isNull);
+      expect(parseRouterExpiryDate('not-a-date'), isNull);
+    });
+  });
+
+  group('UmSyncedCard.isUsed', () {
+    test('counts positive User Manager uptime as used', () {
+      const card = UmSyncedCard(name: 'a', uptimeUsed: '1h 3m');
+      expect(card.isUsed, isTrue);
+    });
+
+    test('zero, missing, and malformed uptime are not counted as used', () {
+      expect(const UmSyncedCard(name: 'a', uptimeUsed: '0s').isUsed, isFalse);
+      expect(const UmSyncedCard(name: 'b').isUsed, isFalse);
+      expect(
+        const UmSyncedCard(name: 'c', uptimeUsed: 'unknown').isUsed,
+        isFalse,
+      );
+    });
+  });
+
   group('UmSyncedCard.isExpired', () {
     test('المعطل منتهي', () {
       const card = UmSyncedCard(name: 'a', disabled: 'yes');
@@ -97,6 +134,19 @@ void main() {
         uptimeUsed: '0s',
       );
       expect(card.isExpired, isFalse);
+    });
+
+    test('انتهاء تاريخ User Manager يقارن اليوم فقط', () {
+      const yesterday = UmSyncedCard(
+        name: 'yesterday',
+        expires: '2026-10-01 23:59:59',
+      );
+      const today = UmSyncedCard(name: 'today', expires: '2026-10-02');
+      const noExpiry = UmSyncedCard(name: 'never', expires: 'never');
+
+      expect(yesterday.isExpiredAt(DateTime(2026, 10, 2)), isTrue);
+      expect(today.isExpiredAt(DateTime(2026, 10, 2, 23, 59)), isFalse);
+      expect(noExpiry.isExpiredAt(DateTime(2026, 10, 2)), isFalse);
     });
   });
 
@@ -163,7 +213,11 @@ void main() {
             'profile': 'bronze',
           },
           {'.id': '*2', 'name': 'u_field'},
-          {'.id': '*3', 'name': 'u_map'},
+          {
+            '.id': '*3',
+            'name': 'u_map',
+            'expires': '2026-08-01',
+          },
         ],
         associationRows: [
           {'user': 'u_map', 'profile': 'silver'},
@@ -177,6 +231,7 @@ void main() {
       expect(byName['u_actual']!.profile, 'gold');
       expect(byName['u_field']!.profile, '');
       expect(byName['u_map']!.profile, 'silver');
+      expect(byName['u_map']!.expires, '2026-08-01');
     });
 
     test('فشل جدول الربط غير قاتل', () async {
@@ -254,6 +309,48 @@ void main() {
       expect(cards.firstWhere((c) => c.name == '1234567892').isExpired, isTrue);
     });
 
+    test(
+      'يرحّل حقول تاريخ الانتهاء المدعومة مع أولوية الحقول',
+      () async {
+        final talker = _FakeUmTalker(userRows: [
+          {
+            '.id': '*1',
+            'username': 'primary',
+            'actual-profile': 'p',
+            'expires': '2026-10-01',
+            'expiration': '2026-09-01',
+          },
+          {
+            '.id': '*2',
+            'username': 'fallback',
+            'actual-profile': 'p',
+            'expires': '',
+            'expiration': '2026-09-01',
+          },
+          {
+            '.id': '*3',
+            'username': 'end-time',
+            'actual-profile': 'p',
+            'end-time': '2026-08-01',
+          },
+          {
+            '.id': '*4',
+            'username': 'valid-until',
+            'actual-profile': 'p',
+            'valid-until': '2026-07-01',
+          },
+        ]);
+
+        final cards = await const UmCardsSyncService().fetchCards(talker);
+        final byName = {for (final card in cards) card.name: card};
+
+        expect(byName['primary']!.expires, '2026-10-01');
+        expect(byName['fallback']!.expires, '2026-09-01');
+        expect(byName['end-time']!.expires, '2026-08-01');
+        expect(byName['valid-until']!.expires, '2026-07-01');
+      },
+    );
+
     test('قائمة الخصائص تطلب username و uptime-limit', () async {
       final talker = _FakeUmTalker(userRows: const [
         {'.id': '*1', 'username': 'u1', 'actual-profile': 'p'},
@@ -267,6 +364,10 @@ void main() {
       expect(proplist, contains('username'));
       expect(proplist, contains('uptime-limit'));
       expect(proplist, contains('actual-profile'));
+      expect(proplist, contains('expires'));
+      expect(proplist, contains('expiration'));
+      expect(proplist, contains('end-time'));
+      expect(proplist, contains('valid-until'));
       expect(proplist, isNot(contains(' ')));
     });
 

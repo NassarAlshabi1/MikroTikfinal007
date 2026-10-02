@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
@@ -14,7 +15,6 @@ import 'mikrotik_connector.dart';
 import 'services/card_number_policy.dart';
 import 'services/card_persistence_service.dart';
 import 'services/mikrotik_service_mode.dart';
-import 'services/mikrotik_card_commands.dart';
 import 'services/router_os_card_gateway.dart';
 
 class BulkAddIsolateData {
@@ -60,22 +60,16 @@ class BulkAddIsolateData {
   });
 }
 
-/// كل كم كرت يتم الإبلاغ عن تقدم جزئي من داخل الشارد نفسه، حتى لا تقفز
-/// الواجهة بين 0% و100% على دفعات كبيرة (كان التقدم يُرسل عند اكتمال كل
-/// شارد فقط: 4 قفزات كحد أقصى).
+/// الحد الأقصى لعدد الكروت بين تحديثات التقدم في الدفعات الكبيرة؛ أما
+/// الدفعات الصغيرة فتُحدّث الواجهة بعد كل كرت حتى لا يبدو الإنشاء متوقفاً.
 const int _progressReportCardInterval = 25;
 
-/// سقف أقصى لمهلة الشارد مهما كبرت الدفعة، حتى لا يبقى التطبيق معلقاً
-/// بانتظار راوتر متوقف عن الاستجابة لساعات.
-const Duration _maxShardTimeout = Duration(minutes: 30);
-
 // ================================================================
-//  SHARD WORKER — processes a chunk of cards on ONE connection
-//  via talkMultiple, returning created users + per-card failures.
+//  SHARD WORKER — processes a chunk of cards on ONE connection, awaiting
+//  each RouterOS command before moving to the next card.
 //
-//  لا يرمي استثناءً أبداً: أي خطأ في الشارد (مهلة/انقطاع اتصال) يُحفظ
-//  داخل النتيجة مع كل ما أُنجز قبله، فيُحفظ النجاح الجزئي ولا تتسرب
-//  اتصالات ولا تُفقد كروت أُنشئت فعلاً على الراوتر.
+//  تُحفظ أخطاء البطاقات والاتصال مع كل ما أُنجز قبله، فيبقى النجاح الجزئي
+//  محفوظاً ولا تتسرب اتصالات أو تضيع نتائج مؤكدة.
 // ================================================================
 class _ShardOutcome {
   /// الكروت التي أكد الراوتر إضافتها (تحمل .id إن وُجد).
@@ -113,119 +107,70 @@ Future<_ShardOutcome> _processShard({
   final created = <Map<String, String>>[];
   final failedAdds = <Map<String, String>>[];
   final activationWarnings = <String>[];
+  final gateway = RouterOsCardGateway(RouterOsClientTalker(client));
+  final progressInterval = _progressInterval(totalCards);
+  var processedCards = 0;
 
-  // Build all tagged commands for this shard at once
-  final taggedCommands = <TaggedCommand>[];
-  for (var i = 0; i < users.length; i++) {
-    final user = users[i];
+  void reportProgress({bool force = false}) {
+    if (!force && processedCards % progressInterval != 0) return;
+    final completed = min(cardsBefore + processedCards, totalCards);
+    sendPort.send({
+      'type': 'progress',
+      // لا نعرض 100% إلا بعد انتهاء جميع الشاردات والتحقق النهائي.
+      'progress': totalCards == 0 ? 0.0 : min(completed / totalCards, 0.99),
+      'status': 'تمت معالجة $completed من $totalCards كرت',
+    });
+  }
+
+  for (var index = 0; index < users.length; index++) {
+    final user = users[index];
     final username = user['username']!;
-    final password = user['password']!;
+    Object? connectionError;
 
-    taggedCommands.add(TaggedCommand(
-      command: MikrotikCardCommands.addUser(
+    try {
+      // ننتظر اكتمال إضافة المستخدم قبل طلب تفعيل بروفايله. إرسال الأمرين
+      // معاً عبر talkMultiple كان يسبب سباقاً في User Manager: قد يصل التفعيل
+      // قبل أن ينتهي RouterOS من إنشاء المستخدم.
+      final result = await gateway.createCardAndActivateProfile(
         mode: serviceMode,
         username: username,
-        password: password,
+        password: user['password']!,
         profile: profile,
         sharedUsers: data.sharedUsers,
         isVersion7OrNewer: data.isVersion7OrNewer,
         customer: data.customer,
-      ),
-      tag: 'add_$i',
-    ));
-
-    if (serviceMode == MikrotikServiceMode.userManager) {
-      taggedCommands.add(TaggedCommand(
-        command: MikrotikCardCommands.userManagerActivateProfile(
-          customer: data.customer,
-          username: username,
-          profile: profile,
-        ),
-        tag: 'act_$i',
-      ));
+      );
+      created.add(result.card.toMap());
+      final warning = result.activationWarning;
+      if (warning != null) activationWarnings.add(warning);
+    } on RouterOSTrapError catch (error) {
+      failedAdds.add({'username': username, 'reason': _friendlyError(error)});
+    } catch (error) {
+      failedAdds.add({'username': username, 'reason': _friendlyError(error)});
+      if (_isConnectionFailure(error)) connectionError = error;
     }
-  }
 
-  final timeout = Duration(
-    seconds: min(max(60, users.length * 15), _maxShardTimeout.inSeconds),
-  );
-  var addResponses = 0;
+    processedCards++;
+    reportProgress(
+      force: connectionError != null || processedCards == users.length,
+    );
 
-  try {
-    // Fire all commands at once
-    final responses = client.talkMultiple(taggedCommands).timeout(timeout);
-
-    // Collect — نعتمد الحالة النهائية لكل أمر (!done) فقط، ونفرّق بين
-    // الرفض (trap) والنجاح، فلا يُحتسب كرت مرفوض ضمن الناجحين أبداً.
-    await for (final resp in responses) {
-      final tag = resp.tag;
-      if (tag == null || !resp.isDone) continue;
-
-      if (tag.startsWith('add_')) {
-        final idx = int.parse(tag.substring(4));
-        if (idx < 0 || idx >= users.length) continue;
-        if (resp.isError) {
-          failedAdds.add({
-            'username': users[idx]['username']!,
-            'reason': resp.errorMessage ?? 'فشل إضافة الكرت على الراوتر.',
-          });
-        } else {
-          final userId = _extractUserId(resp.data);
-          created.add({
-            'username': users[idx]['username']!,
-            'password': users[idx]['password']!,
-            if (userId != null) 'mikrotikUserId': userId,
-          });
-        }
-        addResponses++;
-        // تقدم مُخفف: كل استجابة add_ مكتملة = كرت حُسم (نجاح أو رفض)،
-        // لكن النص يعكس النجاحات الفعلية فقط.
-        if (addResponses % _progressReportCardInterval == 0) {
-          final done = cardsBefore + addResponses;
-          final createdHere = cardsBefore + created.length;
-          sendPort.send({
-            'type': 'progress',
-            'progress': totalCards == 0 ? 1.0 : done / totalCards,
-            'status': 'تمت معالجة $done من $totalCards كرت'
-                ' (تم إنشاء $createdHere)',
-          });
-        }
-      } else if (tag.startsWith('act_')) {
-        final idx = int.parse(tag.substring(4));
-        if (idx < 0 || idx >= users.length) continue;
-        if (resp.isError) {
-          activationWarnings.add(
-            '${users[idx]['username']}: '
-            '${resp.errorMessage ?? 'فشل تفعيل البروفايل'}',
-          );
-        }
+    if (connectionError != null) {
+      // لا نكرر محاولات طويلة على socket أُغلق بالفعل؛ علّم بقية هذه الشاردة
+      // غير مكتملة حتى تظهر للمستخدم كجزء فاشل من العملية.
+      for (var remaining = index + 1; remaining < users.length; remaining++) {
+        failedAdds.add({
+          'username': users[remaining]['username']!,
+          'reason': 'توقف الاتصال قبل محاولة إضافة هذا الكرت.',
+        });
       }
+      return _ShardOutcome(
+        created: created,
+        failedAdds: failedAdds,
+        activationWarnings: activationWarnings,
+        error: connectionError,
+      );
     }
-  } on TimeoutException {
-    return _ShardOutcome(
-      created: created,
-      failedAdds: failedAdds,
-      activationWarnings: activationWarnings,
-      error: TimeoutException(
-        'انتهت مهلة استجابة الراوتر لهذه الدفعة (تم إنشاء '
-        '${created.length} من ${users.length} كرت قبل الانقطاع).',
-      ),
-    );
-  } on MikrotikConnectionException catch (error) {
-    return _ShardOutcome(
-      created: created,
-      failedAdds: failedAdds,
-      activationWarnings: activationWarnings,
-      error: error,
-    );
-  } catch (error) {
-    // أي خطأ آخر (انقطاع Socket، إغلاق اتصال...) — نحتفظ بالنجاح الجزئي.
-    return _ShardOutcome(
-      created: created,
-      failedAdds: failedAdds,
-      activationWarnings: activationWarnings,
-      error: error,
-    );
   }
 
   return _ShardOutcome(
@@ -233,6 +178,18 @@ Future<_ShardOutcome> _processShard({
     failedAdds: failedAdds,
     activationWarnings: activationWarnings,
   );
+}
+
+int _progressInterval(int totalCards) {
+  if (totalCards <= 100) return 1;
+  return min(_progressReportCardInterval, (totalCards / 100).ceil());
+}
+
+bool _isConnectionFailure(Object error) {
+  return error is TimeoutException ||
+      error is MikrotikConnectionException ||
+      error is SocketException ||
+      MikrotikConnector.isSocketClosedError(error);
 }
 
 // ================================================================
@@ -265,10 +222,8 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         isar: localIsar,
         profileName: data.selectedProfile!.trim(),
         users: plannedUsers,
-        sharedUsers: CardNumberPolicy.parseAsciiInteger(
-              data.sharedUsers.trim(),
-            ) ??
-            1,
+        sharedUsers:
+            CardNumberPolicy.parseAsciiInteger(data.sharedUsers.trim()) ?? 1,
         generationJobId: data.generationJobId,
       );
       if (!preparation.canProceed) {
@@ -291,12 +246,13 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
     final profile = data.selectedProfile!.trim();
 
     // ============================================================
-    //  PARALLEL SHARDS: split cards across N independent connections
-    //  Each shard runs talkMultiple on its own connection.
-    //  الشاردات لا ترمي استثناءً أبداً، فالمعطوب منها يُسجَّل داخل
-    //  نتيجته بينما يكمل الباقي، وتُغلق كل الاتصالات في finally.
+    //  SHARDS: Hotspot uses a small number of independent connections;
+    //  User Manager uses one connection to avoid concurrent add/activate
+    //  operations against its database. Every shard is closed in finally.
     // ============================================================
-    final shardCount = min(4, plannedUsers.length); // 1-4 connections
+    final shardCount = data.serviceMode == MikrotikServiceMode.userManager
+        ? 1
+        : min(4, plannedUsers.length);
     final shardSize = (plannedUsers.length / shardCount).ceil();
     final futures = <Future<_ShardOutcome>>[];
 
@@ -307,19 +263,22 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         if (start >= plannedUsers.length) break;
         final shardUsers = plannedUsers.sublist(start, end);
 
-        final shardClient =
-            await MikrotikConnector.connectWithConfig(data.connectionConfig);
+        final shardClient = await MikrotikConnector.connectWithConfig(
+          data.connectionConfig,
+        );
         shardClients.add(shardClient);
-        futures.add(_processShard(
-          users: shardUsers,
-          client: shardClient,
-          serviceMode: data.serviceMode,
-          profile: profile,
-          data: data,
-          sendPort: sendPort,
-          cardsBefore: start,
-          totalCards: plannedUsers.length,
-        ));
+        futures.add(
+          _processShard(
+            users: shardUsers,
+            client: shardClient,
+            serviceMode: data.serviceMode,
+            profile: profile,
+            data: data,
+            sendPort: sendPort,
+            cardsBefore: start,
+            totalCards: plannedUsers.length,
+          ),
+        );
       }
 
       final shardOutcomes = await Future.wait(futures);
@@ -374,58 +333,38 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       throw FormatException(reason);
     }
 
-    // ============================================================
-    //  التحقق من الكروت المضافة (مكالمة واحدة لا مكالمة لكل كرت).
-    //  إن فشل التحقق نفسه (اتصال/مهلة) لا نتخلص من الكروت المؤكدة
-    //  من ردود الإضافة — نعتبرها ناجحة ونحذر المستخدم فقط.
-    // ============================================================
-    RouterOSClient? verifyClient;
-    try {
-      verifyClient =
-          await MikrotikConnector.connectWithConfig(data.connectionConfig);
-      final gateway = RouterOsCardGateway(RouterOsClientTalker(verifyClient));
-      final verifiedUsers = await gateway.verifyUsers(
-        mode: data.serviceMode,
-        users: newlyCreatedUsers,
-      );
-
-      sendPort.send({
-        'type': 'success',
-        'users': verifiedUsers,
-        'count': verifiedUsers.length,
-        'address': data.connectionConfig.address,
-        'failedCount': failedAdds.length,
-        'warning': _composeWarning(warnings),
-      });
-    } on RouterOsVerificationException catch (e) {
-      _sendError(
-          sendPort, e.message, e.confirmedUsers.length, e.confirmedUsers);
-    } catch (error) {
-      sendPort.send({
-        'type': 'success',
-        'users': newlyCreatedUsers,
-        'count': newlyCreatedUsers.length,
-        'address': data.connectionConfig.address,
-        'failedCount': failedAdds.length,
-        'warning': 'تمت إضافة الكروت للراوتر، لكن تعذر إكمال التحقق: '
-            '${_friendlyError(error)}\n${_composeWarning(warnings)}',
-      });
-    } finally {
-      if (verifyClient != null) {
-        MikrotikConnector.release(verifyClient);
-      }
-    }
-  } on RouterOsVerificationException catch (e) {
-    _sendError(sendPort, e.message, e.confirmedUsers.length, e.confirmedUsers);
+    // نجاح RouterOSClient.talk (استجابة !done دون !trap) هو تأكيد الإضافة.
+    // نتجنب طباعة جدول User Manager كاملاً للتحقق؛ فقد يضم آلاف الكروت ويجعل
+    // العملية بطيئة أو تبدو وكأنها لا تنتهي. ويُحفظ .id عند توفره من الإضافة.
+    sendPort.send({
+      'type': 'success',
+      'users': newlyCreatedUsers,
+      'count': newlyCreatedUsers.length,
+      'address': data.connectionConfig.address,
+      'failedCount': failedAdds.length,
+      'warning': _composeWarning(warnings),
+    });
   } on MikrotikCredentialsMissingException catch (e) {
-    _sendError(sendPort, 'خطأ في بيانات الدخول: ${e.message}',
-        newlyCreatedUsers.length, newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      'خطأ في بيانات الدخول: ${e.message}',
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } on MikrotikConnectionException catch (e) {
-    _sendError(sendPort, 'خطأ في الاتصال: ${e.message}',
-        newlyCreatedUsers.length, newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      'خطأ في الاتصال: ${e.message}',
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } on RouterOSTrapError catch (e) {
-    _sendError(sendPort, _friendlyError(e.message), newlyCreatedUsers.length,
-        newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      _friendlyError(e.message),
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } on TimeoutException {
     _sendError(
       sendPort,
@@ -435,11 +374,19 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       newlyCreatedUsers,
     );
   } on FormatException catch (e) {
-    _sendError(sendPort, e.message.toString(), newlyCreatedUsers.length,
-        newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      e.message.toString(),
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } catch (e) {
-    _sendError(sendPort, _friendlyError(e), newlyCreatedUsers.length,
-        newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      _friendlyError(e),
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } finally {
     await localIsar?.close();
   }
@@ -482,14 +429,6 @@ Future<Isar> _openLocalIsar(String directory) {
 //  HELPERS
 // ================================================================
 
-String? _extractUserId(List<Map<String, String>> response) {
-  for (final row in response) {
-    final id = row['.id']?.trim();
-    if (id != null && id.isNotEmpty) return id;
-  }
-  return null;
-}
-
 void _validateInput(BulkAddIsolateData data) {
   if (data.count < 1 || data.count > 10000) {
     throw const FormatException('عدد الكروت يجب أن يكون بين 1 و10000.');
@@ -500,14 +439,16 @@ void _validateInput(BulkAddIsolateData data) {
     }
     if (data.prefix.length >= data.length) {
       throw const FormatException(
-          'طول البادئة يجب أن يكون أقل من الطول الإجمالي للمستخدم.');
+        'طول البادئة يجب أن يكون أقل من الطول الإجمالي للمستخدم.',
+      );
     }
   }
   if (data.selectedProfile == null || data.selectedProfile!.trim().isEmpty) {
     throw const FormatException('يجب اختيار فئة User Manager.');
   }
-  final sharedUsers =
-      CardNumberPolicy.parseAsciiInteger(data.sharedUsers.trim());
+  final sharedUsers = CardNumberPolicy.parseAsciiInteger(
+    data.sharedUsers.trim(),
+  );
   if (sharedUsers == null || sharedUsers < 1 || sharedUsers > 1000) {
     throw const FormatException('Shared Users يجب أن يكون رقماً بين 1 و1000.');
   }
@@ -528,7 +469,8 @@ void _validateInput(BulkAddIsolateData data) {
     final combinations = _combinationCount(randomPartLength, data.charType);
     if (data.count > combinations) {
       throw const FormatException(
-          'عدد الكروت أكبر من عدد الأسماء الممكنة؛ زد طول المستخدم أو غيّر نوع الأحرف.');
+        'عدد الكروت أكبر من عدد الأسماء الممكنة؛ زد طول المستخدم أو غيّر نوع الأحرف.',
+      );
     }
   } else {
     if (data.plannedUsers!.isEmpty || data.plannedUsers!.length != data.count) {
@@ -580,7 +522,8 @@ String _generateUniqueUsername({
     if (existingUsernames.add(username)) return username;
   }
   throw StateError(
-      'تعذر توليد أسماء مستخدمين فريدة. زد الطول أو قلل عدد الكروت.');
+    'تعذر توليد أسماء مستخدمين فريدة. زد الطول أو قلل عدد الكروت.',
+  );
 }
 
 String _generatePassword({

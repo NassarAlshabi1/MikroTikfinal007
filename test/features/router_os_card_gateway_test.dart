@@ -33,6 +33,53 @@ void main() {
         isTrue);
   });
 
+  test('ينشئ مستخدم User Manager قبل تفعيل البروفايل', () async {
+    final talker = FakeRouterOsTalker(existingNames: {});
+    final gateway = RouterOsCardGateway(talker);
+
+    final result = await gateway.createCardAndActivateProfile(
+      mode: MikrotikServiceMode.userManager,
+      username: 'user-1',
+      password: 'pass-1',
+      profile: 'profile-1',
+      sharedUsers: '1',
+      isVersion7OrNewer: false,
+      customer: 'admin',
+    );
+
+    expect(
+      talker.commands.map((command) => command.first),
+      [
+        '/tool/user-manager/user/add',
+        '/tool/user-manager/user/create-and-activate-profile',
+      ],
+    );
+    expect(result.card.username, 'user-1');
+    expect(result.activationWarning, isNull);
+  });
+
+  test('يحفظ المستخدم إذا تعذر تفعيل البروفايل بعد إضافته', () async {
+    final talker = FakeRouterOsTalker(
+      existingNames: {},
+      throwOnCommand: '/tool/user-manager/user/create-and-activate-profile',
+    );
+    final gateway = RouterOsCardGateway(talker);
+
+    final result = await gateway.createCardAndActivateProfile(
+      mode: MikrotikServiceMode.userManager,
+      username: 'user-2',
+      password: 'pass-2',
+      profile: 'profile-1',
+      sharedUsers: '1',
+      isVersion7OrNewer: false,
+      customer: 'admin',
+    );
+
+    expect(result.card.username, 'user-2');
+    expect(result.activationWarning, contains('تعذر تفعيل البروفايل'));
+    expect(talker.commands, hasLength(2));
+  });
+
   test('يعيد confirmedUsers ويبلغ عن المفقود في الفشل الجزئي', () async {
     final talker = FakeRouterOsTalker(existingNames: {'10000001'});
     final gateway = RouterOsCardGateway(talker);
@@ -80,9 +127,11 @@ class FakeRouterOsTalker implements RouterOsTalker {
   FakeRouterOsTalker({
     required this.existingNames,
     this.transientFailures = 0,
+    this.throwOnCommand,
   });
 
   final Set<String> existingNames;
+  final String? throwOnCommand;
   int transientFailures;
   int printAttempts = 0;
   final List<List<String>> commands = [];
@@ -93,6 +142,9 @@ class FakeRouterOsTalker implements RouterOsTalker {
   @override
   Future<List<Map<String, String>>> talk(List<String> command) async {
     commands.add(command);
+    if (command.first == throwOnCommand) {
+      throw StateError('simulated RouterOS failure');
+    }
     if (command.first.endsWith('/print')) {
       printAttempts++;
       if (transientFailures > 0) {

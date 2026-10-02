@@ -7,7 +7,7 @@
 //  3) Validation (IP, user, password, port)
 //  4) SharedPreferences persistence
 //  5) Connection state management
-//  6) Edge cases (empty, invalid, network errors)
+//  6) Edge cases (missing or malformed stored settings)
 // ============================================================
 
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +24,7 @@ void main() {
   late InMemorySecureCredentialsStorage mockSecureStorage;
 
   setUp(() {
+    MikrotikConnector.forceDisconnect();
     SharedPreferences.setMockInitialValues({});
     mockSecureStorage = InMemorySecureCredentialsStorage();
     SecureCredentialsStorageContainer.instance = mockSecureStorage;
@@ -82,8 +83,7 @@ void main() {
         // قبل أي اتصال
         // نتحقق من أن forceDisconnect يعيد الحالة لنقطة الصفر
         MikrotikConnector.forceDisconnect();
-        // بعد forceDisconnect، يجب أن تكون الحالة فارغة
-        // (نستخدم hasActiveConnection كـ proxy)
+        expect(MikrotikConnector.currentIp, isNull);
         expect(MikrotikConnector.hasActiveConnection, isFalse);
       });
 
@@ -142,22 +142,21 @@ void main() {
         );
       });
 
-      test('يرمي MikrotikConnectionException عند IP غير صالح', () async {
+      test('يحمّل إعدادات الراوتر من دون اتصال شبكي حي', () async {
         SharedPreferences.setMockInitialValues({
-          'ip': '192.168.99.99', // IP غير متاح
+          'ip': '192.168.99.99',
           'user': 'admin',
           'port': '8728',
         });
-        // 🔒 seed كلمة المرور في mock secure storage
         mockSecureStorage.seed(mikrotikPass: 'password');
 
-        // سيحاول الاتصال ويفشل (timeout أو connection refused)
-        // مهلة الاتصال الداخلية 30s لذا نمنح الاختبار مهلة إطارٍ أكب
-        await expectLater(
-          MikrotikConnector.connect(),
-          throwsA(isA<MikrotikConnectionException>()),
-        );
-      }, timeout: const Timeout(Duration(minutes: 3)));
+        final config = await MikrotikConnector.loadConnectionConfig();
+
+        expect(config.address, '192.168.99.99');
+        expect(config.user, 'admin');
+        expect(config.port, 8728);
+        expect(config.password, 'password');
+      });
     });
 
     // ============================================================
@@ -355,22 +354,19 @@ void main() {
         );
       });
 
-      test('port غير رقمي يُستبدل بـ 8728', () async {
+      test('port غير رقمي يُستبدل بالقيمة الافتراضية', () async {
         SharedPreferences.setMockInitialValues({
-          'ip': '192.168.99.99', // IP غير صالح لتفادي اتصال ناجح
+          'ip': '192.168.99.99',
           'user': 'admin',
-          'port': 'abc', // غير رقمي
+          'port': 'abc',
         });
         mockSecureStorage.seed(mikrotikPass: 'secret');
 
-        // يجب أن يحاول الاتصال بالمنفذ 8728 ويفشل
-        await expectLater(
-          MikrotikConnector.connect(),
-          throwsA(isA<MikrotikConnectionException>()),
-        );
-      }, timeout: const Timeout(Duration(minutes: 3)));
+        final config = await MikrotikConnector.loadConnectionConfig();
+        expect(config.port, 8728);
+      });
 
-      test('منفذ مخصص 8729 (API-SSL)', () async {
+      test('يحافظ على المنفذ المخصص 8729', () async {
         SharedPreferences.setMockInitialValues({
           'ip': '192.168.99.99',
           'user': 'admin',
@@ -378,12 +374,9 @@ void main() {
         });
         mockSecureStorage.seed(mikrotikPass: 'secret');
 
-        // سيفشل الاتصال لكن نتحقق من أنه يقرأ المنفذ الصحيح
-        await expectLater(
-          MikrotikConnector.connect(),
-          throwsA(isA<MikrotikConnectionException>()),
-        );
-      }, timeout: const Timeout(Duration(minutes: 3)));
+        final config = await MikrotikConnector.loadConnectionConfig();
+        expect(config.port, 8729);
+      });
     });
 
     // ============================================================
@@ -421,28 +414,27 @@ void main() {
     });
 
     // ============================================================
-    //  11) Performance — زمن الاتصال
+    //  11) Performance — مشاركة محاولة الاتصال
     // ============================================================
     group('⏱️ Performance', () {
-      test('connect مع IP غير صالح يفشل خلال 35 ثوان', () async {
-        SharedPreferences.setMockInitialValues({
-          'ip': '192.168.99.99',
-          'user': 'admin',
-          'port': '8728',
-        });
-        mockSecureStorage.seed(mikrotikPass: 'secret');
+      test('الطلبات المتزامنة تشترك في محاولة اتصال واحدة', () async {
+        SharedPreferences.setMockInitialValues({});
 
-        final stopwatch = Stopwatch()..start();
-        try {
-          await MikrotikConnector.connect();
-        } on MikrotikConnectionException {
-          // متوقع
-        }
-        stopwatch.stop();
+        final firstRequest = MikrotikConnector.connect();
+        final secondRequest = MikrotikConnector.connect();
 
-        // يجب أن يفشل خلال 35 ثوان (timeout = 30s + overhead)
-        expect(stopwatch.elapsed.inSeconds, lessThan(35));
-      }, timeout: const Timeout(Duration(minutes: 3)));
+        expect(identical(firstRequest, secondRequest), isTrue);
+        await expectLater(
+          firstRequest,
+          throwsA(isA<MikrotikCredentialsMissingException>()),
+        );
+
+        // بعد فشل المحاولة، يمكن استدعاء connect مجددًا بدل تعليق القفل.
+        await expectLater(
+          MikrotikConnector.connect(),
+          throwsA(isA<MikrotikCredentialsMissingException>()),
+        );
+      });
 
       test('forceDisconnect سريع جداً', () {
         final stopwatch = Stopwatch()..start();

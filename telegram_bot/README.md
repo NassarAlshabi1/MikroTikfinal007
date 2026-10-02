@@ -7,6 +7,15 @@ Health path: Bot -> RouterOS API -> router/WAN checks -> Telegram notifications.
 
 Production defaults require RouterOS API-SSL (8729). Exposing plain 8728 is rejected unless `ALLOW_INSECURE_ROUTEROS_API=true` is explicitly set.
 
+## بنية التشغيل
+
+- `app.py`: واجهة CLI وتحميل الإعدادات وفحص الذات.
+- `runtime.py`: تركيب الخدمات وإدارة عمال المراقبة وإغلاق جلسات RouterOS.
+- `polling.py`: التحقق من هوية التحديثات وتنفيذ الأوامر وحفظ offset ذريًا.
+- `commands/`, `security/`, `routeros/`, `monitoring/`, `reporting/`, `telegram/`: مسؤوليات الأوامر والسياسات والاتصال والتقارير.
+
+يُحفظ offset **بعد** معالجة التحديث. لذلك يضمن التخزين الذري سلامة الملف، لكنه لا يجعل العمليات exactly-once: قد يُعاد تسليم أمر إذا نجح التنفيذ وفشل حفظ offset. العمليات عالية الخطورة تظل محمية بتأكيدات قصيرة العمر ومربوطة بالمستخدم/المحادثة، ولا ينبغي إزالة هذا الحاجز عند تطوير runtime.
+
 ## التشغيل والفحص السريع
 
 يقرأ البوت الإعدادات من متغيّرات البيئة. للتشغيل المباشر (بدون systemd) ضع القيم في ملف `bot.env` بجانب مكان التشغيل، أو حدّد مساره عبر `BOT_ENV_FILE`، ثم:
@@ -24,7 +33,7 @@ BOT_ENV_FILE=./bot.env python3 -m telegram_bot
 
 عند الإقلاع يرسل البوت إشعار «🟢 Telegram Bot يعمل الآن» لكل Chat مسموح، فتعرف فورًا أنه حيّ. أي فشل إعداد أو اتصال يظهر الآن كرسالة واضحة في السجل (stdout / `journalctl`) بدل الخروج الصامت. اضبط مستوى التسجيل عبر `LOG_LEVEL` (مثل `DEBUG`).
 
-إذا لم تصلك الإشعارات، شغّل `--selftest` أولًا: يميّز بين توكن خاطئ (خطأ 401 من Telegram)، وChat ID غير صحيح، وفشل الوصول إلى RouterOS (العنوان/المنفذ/TLS).
+إذا لم تصلك الإشعارات، شغّل `--selftest` أولًا: يميّز بين توكن خاطئ (خطأ 401 من Telegram)، وChat ID غير صحيح، وفشل الوصول إلى RouterOS (العنوان/المنفذ/TLS). يعرض السجل رمز HTTP الآمن عند توفره، لا جسم الاستجابة أو أي سر.
 
 ## الوظائف
 

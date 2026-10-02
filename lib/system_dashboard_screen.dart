@@ -4,9 +4,10 @@ import 'package:router_os_client/router_os_client.dart';
 import 'theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'mikrotik_connector.dart';
+import 'services/router_os_query_executor.dart';
 import 'snackbar_helpers.dart';
 import 'active_users_screen.dart';
-import 'network_doctor_screen.dart';
+import 'features/diagnostics/presentation/diagnostics_hub_screen.dart';
 
 class SystemDashboardScreen extends StatefulWidget {
   const SystemDashboardScreen({super.key});
@@ -16,10 +17,12 @@ class SystemDashboardScreen extends StatefulWidget {
 }
 
 class _SystemDashboardScreenState extends State<SystemDashboardScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   Timer? _refreshTimer;
   bool _isLoading = false;
   bool _refreshInFlight = false;
+  bool _isAppInForeground = true;
+  bool _refreshAfterInFlight = false;
   String? _errorMessage;
   String? _lastShownError;
   DateTime? _lastErrorSnackAt;
@@ -88,24 +91,56 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    _isAppInForeground =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
+    if (_isAppInForeground) {
+      _fetchData();
+      _startRefreshTimer();
+    }
+  }
 
-    // تحديث تلقائي كل 10 ثواني
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted) {
+  void _startRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted && _isAppInForeground) {
         _fetchData();
       }
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    final wasInForeground = _isAppInForeground;
+    _isAppInForeground = state == AppLifecycleState.resumed;
+
+    if (!_isAppInForeground) {
+      _refreshTimer?.cancel();
+      _refreshTimer = null;
+      return;
+    }
+
+    _startRefreshTimer();
+    if (!wasInForeground) {
+      if (_refreshInFlight) {
+        _refreshAfterInFlight = true;
+      } else {
+        _fetchData();
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _fetchData() async {
-    if (!mounted || _refreshInFlight) return;
+    if (!mounted || !_isAppInForeground || _refreshInFlight) return;
     _refreshInFlight = true;
 
     setState(() {
@@ -117,23 +152,16 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     try {
       client = await MikrotikConnector.connect();
 
-      // جلب معلومات النظام والأداء
-      await _fetchSystemResource(client);
-
-      // جلب معلومات الفولتية والحرارة
-      await _fetchSystemHealth(client);
-
-      // جلب معلومات RouterBoard
-      await _fetchRouterBoard(client);
-
-      // جلب سرعة الإنترنت
-      await _fetchInterfaceStats(client);
-
-      // جلب عدد المستخدمين النشطين
-      await _fetchActiveUsers(client);
-
-      // جلب وقت الشبكة
-      await _fetchSystemClock(client);
+      // هذه أوامر قراءة مستقلة؛ العميل يميّز الاستجابات بالـ tags، لذلك
+      // نجمعها بالتوازي بدل انتظار دورة شبكة كاملة لكل قسم.
+      await Future.wait<void>([
+        _fetchSystemResource(client),
+        _fetchSystemHealth(client),
+        _fetchRouterBoard(client),
+        _fetchInterfaceStats(client),
+        _fetchActiveUsers(client),
+        _fetchSystemClock(client),
+      ]);
 
       // Update history for charts
       _updateChartHistory();
@@ -186,12 +214,20 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
     } finally {
       MikrotikConnector.release(client);
       _refreshInFlight = false;
+      final shouldRefreshAfterInFlight = _refreshAfterInFlight;
+      _refreshAfterInFlight = false;
+      if (shouldRefreshAfterInFlight && mounted && _isAppInForeground) {
+        scheduleMicrotask(() => _fetchData());
+      }
     }
   }
 
   Future<void> _fetchSystemResource(RouterOSClient client) async {
     try {
-      final response = await client.talk(['/system/resource/print']);
+      final response = await RouterOsQueryExecutor.talk(
+        client,
+        ['/system/resource/print'],
+      );
       if (response.isNotEmpty) {
         final data = response.first;
         _uptime = data['uptime'] ?? '';
@@ -218,7 +254,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Future<void> _fetchSystemHealth(RouterOSClient client) async {
     try {
-      final response = await client.talk(['/system/health/print']);
+      final response = await RouterOsQueryExecutor.talk(
+        client,
+        ['/system/health/print'],
+      );
       if (response.isNotEmpty) {
         final data = response.first;
         _voltage = data['voltage'] ?? 'غير متاح';
@@ -233,7 +272,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Future<void> _fetchRouterBoard(RouterOSClient client) async {
     try {
-      final response = await client.talk(['/system/routerboard/print']);
+      final response = await RouterOsQueryExecutor.talk(
+        client,
+        ['/system/routerboard/print'],
+      );
       if (response.isNotEmpty) {
         final data = response.first;
         _model = data['model'] ?? '';
@@ -251,7 +293,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
   Future<void> _fetchInterfaceStats(RouterOSClient client) async {
     try {
       // جلب قائمة الـ interfaces
-      final interfaces = await client.talk(['/interface/print']);
+      final interfaces = await RouterOsQueryExecutor.talk(
+        client,
+        ['/interface/print'],
+      );
 
       // البحث عن Interface مناسب (ether1 أو أول interface نشط)
       String? targetInterface;
@@ -270,11 +315,15 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       }
 
       if (targetInterface != null) {
-        final response = await client.talk([
-          '/interface/monitor-traffic',
-          '=interface=$targetInterface',
-          '=once=',
-        ]).timeout(const Duration(seconds: 3));
+        final response = await RouterOsQueryExecutor.talk(
+          client,
+          [
+            '/interface/monitor-traffic',
+            '=interface=$targetInterface',
+            '=once=',
+          ],
+          timeout: const Duration(seconds: 3),
+        );
 
         if (response.isNotEmpty) {
           final data = response.first;
@@ -296,13 +345,18 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       // Hotspot المحلي هو المصدر الأساسي للتطبيق، مع fallback صريح فقط.
       var hotspotAvailable = false;
       try {
-        final hotspotResponse = await client.talk(['/ip/hotspot/active/print']);
+        final hotspotResponse = await RouterOsQueryExecutor.talk(
+          client,
+          ['/ip/hotspot/active/print'],
+        );
         _activeUsers = hotspotResponse.length;
         hotspotAvailable = true;
       } catch (e) {
         try {
-          final userManagerResponse =
-              await client.talk(['/tool/user-manager/session/print']);
+          final userManagerResponse = await RouterOsQueryExecutor.talk(
+            client,
+            ['/tool/user-manager/session/print'],
+          );
           _activeUsers = userManagerResponse.length;
         } catch (e) {
           _activeUsers = 0;
@@ -310,7 +364,7 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
       }
 
       try {
-        final allUsers = await client.talk([
+        final allUsers = await RouterOsQueryExecutor.talk(client, [
           hotspotAvailable
               ? '/ip/hotspot/user/print'
               : '/tool/user-manager/user/print',
@@ -328,7 +382,10 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
 
   Future<void> _fetchSystemClock(RouterOSClient client) async {
     try {
-      final response = await client.talk(['/system/clock/print']);
+      final response = await RouterOsQueryExecutor.talk(
+        client,
+        ['/system/clock/print'],
+      );
       if (response.isNotEmpty) {
         final data = response.first;
         _time = data['time'] ?? '';
@@ -703,13 +760,13 @@ class _SystemDashboardScreenState extends State<SystemDashboardScreen>
                     },
                   ),
                   _buildActionButton(
-                    'فحص الشبكة',
-                    Icons.network_check,
+                    'مركز التشخيص',
+                    Icons.health_and_safety_outlined,
                     Theme.of(context).appColors.info,
                     () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const NetworkDoctorScreen(),
+                          builder: (_) => const DiagnosticsHubScreen(),
                         ),
                       );
                     },

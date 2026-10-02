@@ -32,7 +32,7 @@ jobs:
         run: python -m compileall -q telegram_bot
 
       - name: Run bot tests
-        run: python -m unittest telegram_bot.test_telegram_bot telegram_bot.test_telegram_bot_extended -v
+        run: python -m unittest discover -s . -p 'test_*.py' -v
 
       - name: Validate installer and workflow syntax markers
         run: bash -n scripts/setup_telegram_bot_local.sh
@@ -75,7 +75,42 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze
+        shell: bash
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee /tmp/flutter-analyze.log
+          analyze_status=${PIPESTATUS[0]}
+          set -e
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          ansi_escape = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+          diagnostic = re.compile(
+              r"^\s*(error|warning|info)\s+•\s+(.*?)\s+•\s+(.+?):(\d+):(\d+)\s+•\s+(\S+)\s*$"
+          )
+
+          def escape_property(value):
+              return (value.replace("%", "%25").replace("\r", "%0D")
+                      .replace("\n", "%0A").replace(":", "%3A").replace(",", "%2C"))
+
+          def escape_data(value):
+              return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+          for raw_line in Path("/tmp/flutter-analyze.log").read_text().splitlines():
+              line = ansi_escape.sub("", raw_line)
+              match = diagnostic.match(line)
+              if not match:
+                  continue
+              severity, message, path, line_number, column, code = match.groups()
+              level = {"error": "error", "warning": "warning", "info": "notice"}[severity]
+              message = escape_data(f"{message} ({code})")
+              print(
+                  f"::{level} file={escape_property(path)},line={line_number},"
+                  f"col={column},title=Dart analyzer::{message}"
+              )
+          PY
+          exit "$analyze_status"
 
       - name: Test
         run: flutter test

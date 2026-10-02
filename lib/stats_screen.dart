@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'mikrotik_connector.dart';
+import 'services/router_os_query_executor.dart';
 
 import 'theme/app_theme.dart';
 
@@ -104,21 +105,34 @@ class _StatsScreenState extends State<StatsScreen> {
       client = await MikrotikConnector.connect();
 
       final prefs = await SharedPreferences.getInstance();
-      final resourceResponse = await client.talk(['/system/resource/print']);
-      Map<String, dynamic> resourceData = {};
-      if (resourceResponse.isNotEmpty) {
-        resourceData = Map<String, dynamic>.from(resourceResponse[0]);
-      }
-
-      final interfaceResponse = await client.talk([
-        '/interface/print',
-        '=.proplist=name,rx-byte,tx-byte',
-        'stats',
+      final responses = await Future.wait<List<Map<String, String>>>([
+        RouterOsQueryExecutor.talk(
+          client,
+          ['/system/resource/print'],
+        ),
+        RouterOsQueryExecutor.talk(
+          client,
+          [
+            '/interface/print',
+            '=.proplist=name,rx-byte,tx-byte',
+            'stats',
+          ],
+        ),
+        RouterOsQueryExecutor.talk(
+          client,
+          ['/ip/hotspot/active/print'],
+        ).catchError((_) => <Map<String, String>>[]),
       ]);
+      final resourceResponse = responses[0];
+      final interfaceResponse = responses[1];
+      final activeResponse = responses[2];
+      final resourceData = resourceResponse.isEmpty
+          ? <String, dynamic>{}
+          : Map<String, dynamic>.from(resourceResponse.first);
+
       double totalDownload = 0.0;
       double totalUpload = 0.0;
-
-      for (var iface in interfaceResponse) {
+      for (final iface in interfaceResponse) {
         final rxBytes =
             double.tryParse(iface['rx-byte']?.toString() ?? '0') ?? 0.0;
         final txBytes =
@@ -126,15 +140,9 @@ class _StatsScreenState extends State<StatsScreen> {
         totalDownload += rxBytes;
         totalUpload += txBytes;
       }
-
-      List<Map<String, dynamic>> activeUsers = [];
-      try {
-        final activeResponse = await client.talk(['/ip/hotspot/active/print']);
-        activeUsers =
-            activeResponse.map((e) => Map<String, dynamic>.from(e)).toList();
-      } catch (e) {
-        activeUsers = [];
-      }
+      final activeUsers = activeResponse
+          .map((user) => Map<String, dynamic>.from(user))
+          .toList();
 
       // التطبيق يدير Hotspot المحلي؛ الجلسة الفعلية في v6 هي Hotspot active.
       // لا نربط مصدر البيانات برقم RouterOS لأن v6 يدعم Hotspot المحلي بالكامل.
