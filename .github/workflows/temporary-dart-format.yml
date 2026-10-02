@@ -1,0 +1,55 @@
+name: Temporary Dart Format Runner
+
+on:
+  push:
+    branches:
+      - arena/01a0f473-mikrotikfinal007
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout formatter branch
+        uses: actions/checkout@v5
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.44.0'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Format files still reported by Code Analysis
+        run: |
+          dart format \
+            lib/network_doctor_screen.dart \
+            lib/features/sales_reports/services/sales_report_exporter.dart \
+            lib/features/diagnostics/domain/latency_metrics.dart \
+            lib/cards_sync_screen.dart \
+            lib/bulk_add_isolate.dart \
+            lib/ai_diagnostics_screen.dart
+
+      - name: Commit formatting changes
+        run: |
+          set -euo pipefail
+          git add -- \
+            lib/network_doctor_screen.dart \
+            lib/features/sales_reports/services/sales_report_exporter.dart \
+            lib/features/diagnostics/domain/latency_metrics.dart \
+            lib/cards_sync_screen.dart \
+            lib/bulk_add_isolate.dart \
+            lib/ai_diagnostics_screen.dart
+          if git diff --cached --quiet; then
+            echo 'The reported Dart files are already formatted.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'style: finish Dart formatting reported by CI'
+          git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
