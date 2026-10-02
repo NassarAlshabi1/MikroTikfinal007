@@ -75,20 +75,27 @@ import '/controllers/sites/blocked_sites_controller.dart';
 import '../views/prints/prints_unit.dart';
 import '../views/reports/reports_unit.dart';
 
-// ======== الاستيرادات الجديدة: النسخ الاحتياطي، Telegram، الموزعون، المراقبة ========
+// ======== النسخ الاحتياطي، الموزعون، المراقبة، وأدوات الصيانة ========
 import '../controllers/more/router_backup_controller.dart';
-import '../controllers/more/telegram_controller.dart';
 import '../controllers/distributors/distributors_list_controller.dart';
 import '../controllers/distributors/distributor_form_controller.dart';
 import '../controllers/distributors/distributor_statement_controller.dart';
 import '../controllers/reports/monitor_controller.dart';
 import '../models/distributor_model.dart';
 import '../views/more/router_backup_page.dart';
-import '../views/more/telegram_page.dart';
 import '../views/distributors/distributors_list_page.dart';
 import '../views/distributors/distributor_form_page.dart';
 import '../views/distributors/distributor_statement_page.dart';
 import '../views/reports/monitor_page.dart';
+
+// ======== أدوات الصيانة ========
+import '../controllers/maintenance/maintenance_hub_controller.dart';
+import '../controllers/maintenance/tool_list_controller.dart';
+import '../controllers/maintenance/diagnostics_controller.dart';
+import '../models/maintenance_tools.dart';
+import '../views/maintenance/maintenance_hub_page.dart';
+import '../views/maintenance/tool_list_page.dart';
+import '../views/maintenance/diagnostics_page.dart';
 
 /*
 import '/view/backups/backup_view.dart';
@@ -139,7 +146,6 @@ class AppRoutes {
   static const String more = '/more';
   static const String backup = '/more/backup';
   static const String routerBackup = '/more/router_backup';
-  static const String telegram = '/more/telegram';
 
   // الموزعون والمحاسبة
   static const String distributors = '/distributors';
@@ -148,6 +154,11 @@ class AppRoutes {
 
   // مراقبة الشبكة
   static const String monitor = '/reports/monitor';
+
+  // أدوات الصيانة
+  static const String maintenance = '/maintenance';
+  static const String maintenanceTool = '/maintenance/tool';
+  static const String maintenanceDiagnostics = '/maintenance/diagnostics';
   // مسارات إدارة المواقع
 }
 
@@ -308,12 +319,6 @@ class AppPages {
       page: () => const RouterBackupPage(),
       binding: BindingsBuilder(() => Get.lazyPut(() => RouterBackupController())),
     ),
-    // ======== تكامل Telegram ========
-    GetPage(
-      name: AppRoutes.telegram,
-      page: () => const TelegramPage(),
-      binding: BindingsBuilder(() => Get.lazyPut(() => TelegramController())),
-    ),
     // ======== الموزعون والمحاسبة ========
     GetPage(
       name: AppRoutes.distributors,
@@ -334,6 +339,28 @@ class AppPages {
       page: () => const DistributorStatementPage(),
       binding: BindingsBuilder(() => Get.lazyPut(
         () => DistributorStatementController(Get.arguments as DistributorModel),
+      )),
+    ),
+    // ======== أدوات الصيانة ========
+    GetPage(
+      name: AppRoutes.maintenance,
+      page: () => const MaintenanceHubPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => MaintenanceHubController())),
+    ),
+    GetPage(
+      name: AppRoutes.maintenanceTool,
+      page: () => const ToolListPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(
+        () => ToolListController(Get.arguments as MaintenanceTool),
+      )),
+    ),
+    GetPage(
+      name: AppRoutes.maintenanceDiagnostics,
+      page: () => const DiagnosticsPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(
+        () => DiagnosticsController(
+          Get.arguments is DiagnosticTool ? Get.arguments as DiagnosticTool : null,
+        ),
       )),
     ),
     // ======== مراقبة الشبكة المتقدمة ========

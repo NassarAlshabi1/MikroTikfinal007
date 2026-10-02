@@ -70,13 +70,13 @@ class MoreUnitPage extends GetView<MoreUnitController> {
 
                   const SizedBox(height: 15),
 
-                  // تكامل Telegram
+                  // أدوات الصيانة
                   MainActionCard(
-                    title: "تكامل Telegram",
-                    subtitle: "تقارير المبيعات وحالة الشبكة إلى Telegram",
-                    icon: Icons.send_rounded,
+                    title: "أدوات الصيانة",
+                    subtitle: "التشخيص، إعدادات IP، جدار الحماية، وإدارة النطاق الترددي",
+                    icon: Icons.build_circle_rounded,
                     color: const Color(0xFF0EA5E9),
-                    onTap: controller.goToTelegram,
+                    onTap: controller.goToMaintenance,
                   ),
 
                   const SizedBox(height: 15),

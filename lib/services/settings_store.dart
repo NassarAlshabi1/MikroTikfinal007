@@ -2,8 +2,8 @@ import '../api/database_api.dart';
 
 /// مخزن إعدادات بسيط (مفتاح/قيمة) فوق قاعدة بيانات SQLite المحلية.
 ///
-/// استُخدم بدل SharedPreferences لتقليل الاعتماديات، ويُخزَّن فيه أيضًا
-/// مفتاح التشفير الخاص بـ [SecureStore] وإعدادات Telegram.
+/// استُخدم بدل SharedPreferences لتقليل الاعتماديات، ويُخزَّن فيه
+/// مفتاح التشفير الخاص بـ SecureStore وبقية إعدادات التطبيق.
 class SettingsStore {
   static const String _table = "app_settings";
 

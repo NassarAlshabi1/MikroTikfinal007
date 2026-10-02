@@ -15,9 +15,9 @@ class MoreUnitController extends GetxController {
     Get.toNamed(AppRoutes.routerBackup);
   }
 
-  // تكامل Telegram
-  void goToTelegram() {
-    Get.toNamed(AppRoutes.telegram);
+  // أدوات الصيانة (التشخيص، IP، جدار الحماية، Queue...)
+  void goToMaintenance() {
+    Get.toNamed(AppRoutes.maintenance);
   }
 
   // الموزعون والمحاسبة

@@ -63,6 +63,15 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
                     color: const Color(0xFF7C3AED),
                     onTap: controller.goToMonitor,
                   ),
+
+                  // أدوات الصيانة والتشخيص
+                  MainActionCard(
+                    title: "أدوات الصيانة",
+                    subtitle: "التشخيص، إعدادات IP، جدار الحماية، وإدارة النطاق الترددي",
+                    icon: Icons.build_circle_rounded,
+                    color: const Color(0xFF0EA5E9),
+                    onTap: controller.goToMaintenance,
+                  ),
                 ],
               ),
             ),

@@ -103,7 +103,7 @@ class SqlDb {
     );
   """;
 
-  /// جدول الإعدادات (مفتاح/قيمة) — يُستخدم للتشفير وإعدادات Telegram.
+  /// جدول الإعدادات (مفتاح/قيمة) — يُستخدم لحفظ مفتاح التشفير وإعدادات التطبيق.
   String appSettings="""
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY,

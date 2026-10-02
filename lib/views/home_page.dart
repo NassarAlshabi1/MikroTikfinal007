@@ -144,6 +144,11 @@ class HomePage extends GetView<HomeController> {
         "onTap": controller.goToReports
       },
       {
+        "title": "أدوات الصيانة",
+        "icon": Icons.build_circle_rounded,
+        "onTap": controller.goToMaintenance
+      },
+      {
         "title": "المزيد من الاعدادات",
         "icon": Icons.tune_rounded,
         "onTap": controller.goToMoreSettings

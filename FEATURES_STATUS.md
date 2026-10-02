@@ -22,8 +22,8 @@
 | 7 | **حساب كل موزع دائن/مدين** | `DistributorSummary.balance/balanceLabel` (موجب = مدين) | محسوب محليًا |
 | 8 | **الأرباح وإجماليات المبيعات** | `DistributorSummary.profit` (المبيعات − التكلفة) + بطاقة الإجماليات | محسوب محليًا |
 | 9 | **كشف حساب لكل موزع PDF** | `lib/services/distributor_pdf.dart` (A4 عربي + جدول الحركات) | — |
-| 10 | **تكامل Telegram** | `lib/services/telegram_client.dart` (Bot API) + `telegram_report_service.dart` + صفحة إعدادات | SendMessage / getMe |
-| 11 | **تقارير المبيعات وحالة الشبكة عبر Telegram** | `TelegramReportService.buildReport` (مبيعات اليوم + CPU/ذاكرة/إصدار + عدد المتصلين) | — |
+| 10 | **أدوات الصيانة والتشخيص (لوحة تحكم الميكروتيك)** | `lib/api/maintenance_api.dart` + `lib/models/maintenance_tools.dart` + `lib/views/maintenance/*` | Ping · Traceroute · Torch · Fetch · Sniffer · Log |
+| 11 | **إعدادات الشبكة وجدار الحماية وقوائم Queue** | عارض عام لأي قائمة RouterOS (`tool_list_page.dart`) مع عدّادات مباشرة | `/ip/*` · `/ip/firewall/*` · `/queue/*` · `/tool/graphing` · `/ip/neighbor/print` |
 | 12 | **درجة حرارة الراوتر والحساسات** | `lib/api/router_monitor_api.dart` → `getHealth()` + تبويب الموارد | `/system/health/print` |
 | 13 | **متابعة المنافذ Ports/Interfaces** | `RouterMonitorApi.getInterfaces()` | `/interface/print` |
 | 14 | **مراقبة حركة البيانات لكل منفذ** | `getInterfaceTraffic()` + تحديث كل 6 ثوانٍ | `/interface/monitor-traffic` |
@@ -45,9 +45,9 @@
 
 | الميزة | الحالة | ملاحظات/العمل المطلوب |
 | --- | --- | --- |
-| **صفحات Hotspot (رفع + قوالب دخول)** | ❌ | يحتاج `/file/add` أو FTP لرفع حزمة HTML + `/ip/hotspot/set` لتغيير اسم الشبكة |
+| **صفحات Hotspot (رفع + قوالب دخول)** | ❌ | يحتاج رفع حزمة HTML + `/ip/hotspot/set` لتغيير اسم الشبكة |
 | **PPPoE / Broadband** | ❌ | يحتاج `/ppp/secret/print\|add\|set\|remove` + شاشة اشتراكات |
-| **إشعارات Telegram مع إغلاق التطبيق** | 🟡 | الإرسال الدوري يعمل الآن **أثناء تشغيل التطبيق** فقط (Timer)؛ الإرسال الدائم يحتاج خدمة خلفية (Foreground Service / WorkManager) أو سكربت على الراوتر |
+| **إشعارات وتقارير تلقائية (Telegram/غيره)** | ❌ | **أُزيل تكامل Telegram بطلب المستخدم**؛ يمكن إعادته لاحقًا كخدمة خلفية عند الحاجة |
 | **مستخدم Hotspot التقليدي** | 🟡 | النظام يدير مستخدمي User Manager؛ لا إدارة لمستخدمي `/ip/hotspot/user` |
 | **تقارير زمنية بيانية للاستهلاك** | 🟡 | توجد قراءات لحظية (حرارة/منافذ/حركة) بلا رسوم بيانية تاريخية |
 | **أجهزة غير متصلة (DHCP/ARP)** | 🟡 | تُعرض الأجهزة المتصلة حاليًا فقط |

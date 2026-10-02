@@ -6,4 +6,6 @@ class ReportsUnitController extends GetxController{
   void gotToSalesReport()=>Get.toNamed(AppRoutes.salesReport);
 
   void goToMonitor()=>Get.toNamed(AppRoutes.monitor);
+
+  void goToMaintenance()=>Get.toNamed(AppRoutes.maintenance);
 }
