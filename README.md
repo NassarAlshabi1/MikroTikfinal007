@@ -1,6 +1,6 @@
-# 
+# mikronet
 
-A new  project.
+A new Flutter project.
 
 ## Getting Started
 

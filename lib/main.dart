@@ -1,34 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import 'mqtt_service.dart';
-import 'app_theme.dart';
-import 'login_screen.dart';
-import 'snackbar_helpers.dart';
+import 'package:get/get.dart';
+import 'core/app_pages.dart';
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => MqttService(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
-
-// مفتاح عالمي لـ ScaffoldMessenger
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      scaffoldMessengerKey: scaffoldMessengerKey,
+    return GetMaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+        fontFamily: 'myfont'
+      ),
+      initialRoute: AppRoutes.login, 
+      getPages: AppPages.routes, 
       debugShowCheckedModeBanner: false,
-      title: 'MikroTik Manager',
-      theme: AppTheme.darkTheme,
-      home: const LoginScreen(),
     );
   }
 }
