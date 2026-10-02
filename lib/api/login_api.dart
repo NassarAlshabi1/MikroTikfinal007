@@ -108,8 +108,9 @@ class LoginApi {
       return AppResponse(status: false, message: e.toString());
     }
   }
-  static Future<AppResponse> loginToMikrotik(LoginModel router) async{
-    // المنفذ 8729 = api-ssl ⇒ اتصال مشفّر، وما عداه اتصال عادي (8728)
+  /// [useSsl] = null ⇒ تلقائي (8729 ⇒ مشفّر، أي منفذ آخر ⇒ عادي).
+  /// تمرير قيمة صريحة يسمح باستخدام **أي منفذ** مع TLS (مثلًا 1300 مع api-ssl).
+  static Future<AppResponse> loginToMikrotik(LoginModel router, {bool? useSsl}) async{
     final port = ConnectionErrors.parsePort(router.port.toString());
     if (port == null) {
       return AppResponse(
@@ -118,12 +119,14 @@ class LoginApi {
       );
     }
 
+    final secure = useSsl ?? ConnectionErrors.isSecurePort(port);
+
     MikrotikClient.init(
       address: router.hostAddress,
       user: router.username,
       password: router.password,
       port: port,
-      useSsl: ConnectionErrors.isSecurePort(port),
+      useSsl: secure,
     );
     // راوتر جديد = إصدار قد يختلف (v6/v7) ← نُصفّر المسارات المخزّنة
     ExpiredUsersApi.resetPaths();
@@ -133,7 +136,10 @@ class LoginApi {
       return AppResponse(status: result, message: "");
     } catch (e) {
       // رسالة عربية واضحة بدل نص الخطأ التقني
-      return AppResponse(status: false, message: ConnectionErrors.describe(e));
+      return AppResponse(
+        status: false,
+        message: ConnectionErrors.describe(e, port: port),
+      );
     }
   }
 }

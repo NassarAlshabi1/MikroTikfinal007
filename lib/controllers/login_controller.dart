@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../core/app_pages.dart';
 import '/models/login_model.dart';
 import '/services/connection_errors.dart';
+import '/services/settings_store.dart';
 import '/models/response.dart';
 import '/api/login_api.dart';
 import 'dialog_helper.dart';
@@ -15,17 +16,81 @@ class LoginController extends GetxController {
   final TextEditingController nameController = TextEditingController();
 
   RxBool hidePassword = true.obs;
+
+  /// اتصال مشفّر (api-ssl) — يعمل مع **أي منفذ** وليس 8729 فقط.
+  RxBool useSsl = false.obs;
+
+  /// هل اختار المستخدم وضع SSL يدويًا؟ (لعدم تجاوز اختياره عند تغيير المنفذ)
+  bool _sslManuallySet = false;
+  static const String _sslPrefKey = 'login_use_ssl';
+
+  @override
+
   RxList<LoginModel> savedRouters = <LoginModel>[].obs;
   bool _isOperationCancelled = false;
 
   @override
   void onInit() {
     super.onInit();
-    // منفذ API الافتراضي في RouterOS (يمكن تغييره إلى 8729 للاتصال المشفّر)
+    // منفذ API الافتراضي في RouterOS — ويمكن كتابة أي منفذ آخر (مثل 1300)
     if (portController.text.trim().isEmpty) {
       portController.text = ConnectionErrors.defaultPort.toString();
     }
+
+    // تفضيل SSL المحفوظ من آخر استخدام
+    SettingsStore.get(_sslPrefKey).then((value) {
+      if (value == null) return;
+      // احترام اختيار المستخدم المحفوظ (تشغيلًا أو إيقافًا)
+      useSsl.value = value == '1';
+      _sslManuallySet = true;
+    });
+
+    // المنفذ 8729 ⇒ نقترح التشفير تلقائيًا (ما لم يختر المستخدم بنفسه)
+    portController.addListener(() {
+      if (_sslManuallySet) return;
+      useSsl.value = ConnectionErrors.isSecurePort(
+        ConnectionErrors.parsePort(portController.text) ?? 0,
+      );
+    });
+
     _initSavedData();
+  }
+
+  /// تبديل وضع SSL يدويًا (يُحفظ للاستخدام القادم).
+  void toggleSsl(bool value) {
+    useSsl.value = value;
+    _sslManuallySet = true;
+    SettingsStore.set(_sslPrefKey, value ? '1' : '0');
+  }
+
+  /// استخراج المضيف والمنفذ من خانة العنوان (تدعم `192.168.88.1:1300`).
+  ///
+  /// إن كُتب المنفذ داخل خانة العنوان نُسخ إلى خانة المنفذ تلقائيًا.
+  _ResolvedTarget? _resolveTarget() {
+    final entry = ConnectionErrors.splitHostPort(hostController.text);
+    final host = entry.host.trim();
+
+    if (host.isEmpty) {
+      _showSnackbar("تنبيه", "اكتب عنوان IP أو اسم المضيف للراوتر", isError: true);
+      return null;
+    }
+
+    int? port = entry.port;
+    if (port != null) {
+      // المستخدم كتب IP:PORT ⇒ نعكسه في خانة المنفذ ونعتمد منفذه
+      portController.text = port.toString();
+    } else {
+      port = ConnectionErrors.parsePort(portController.text);
+    }
+
+    if (port == null) {
+      _showSnackbar("تنبيه",
+          "المنفذ غير صالح — اكتب رقمًا بين 1 و 65535 (الافتراضي 8728، ويمكن استخدام أي منفذ)",
+          isError: true);
+      return null;
+    }
+
+    return _ResolvedTarget(host: host, port: port);
   }
 
   Future<void> _initSavedData() async {
@@ -52,24 +117,21 @@ class LoginController extends GetxController {
   Future<void> connectToRouter() async {
     if (!_validateInputs()) return;
 
-    // 2. تجهيز المودل (معالجة آمنة للمنفذ تدعم الأرقام العربية)
-    final port = ConnectionErrors.parsePort(portController.text);
-    if (port == null) {
-      _showSnackbar("تنبيه", "المنفذ غير صالح — اكتب رقمًا بين 1 و 65535 (الافتراضي 8728)", isError: true);
-      return;
-    }
+    // 2. تجهيز المودل (منفذ حر 1..65535 + دعم صيغة IP:PORT + الأرقام العربية)
+    final target = _resolveTarget();
+    if (target == null) return;
 
     final router = LoginModel(
       id: 1,
-      hostAddress: hostController.text.trim(),
+      hostAddress: target.host,
       username: userController.text.trim(),
       password: passwordController.text.trim(),
-      port: port,
+      port: target.port,
       networkName: nameController.text.trim(),
     );
 
     _showLoadingDialog("جاري الاتصال بالراوتر...");
-    var response =  await LoginApi.loginToMikrotik(router);
+    var response = await LoginApi.loginToMikrotik(router, useSsl: useSsl.value);
     
     if (_isOperationCancelled) {
       _showSnackbar("تم الإلغاء", "تمت مقاطعة عملية تسجيل الدخول بناءً على طلبك.", isError: true);
@@ -79,6 +141,8 @@ class LoginController extends GetxController {
     if (Get.isOverlaysOpen) Get.back();
 
     if (response.status) {
+      // حفظ تفضيل SSL لهذا الراوتر (مفيد للمنافذ المخصّصة مثل 1300)
+      SettingsStore.set(_sslPrefKey, useSsl.value ? '1' : '0');
       Get.toNamed(AppRoutes.home);
     } else {
       _showSnackbar("خطأ", response.message, isError: true);
@@ -89,18 +153,15 @@ class LoginController extends GetxController {
   Future<void> addRouterData() async {
     if (!_validateInputs()) return;
     
-    final port = ConnectionErrors.parsePort(portController.text);
-    if (port == null) {
-      _showSnackbar("تنبيه", "المنفذ غير صالح — اكتب رقمًا بين 1 و 65535 (الافتراضي 8728)", isError: true);
-      return;
-    }
+    final target = _resolveTarget();
+    if (target == null) return;
 
     final router = LoginModel(
       id: 1,
-      hostAddress: hostController.text.trim(),
+      hostAddress: target.host,
       username: userController.text.trim(),
       password: passwordController.text.trim(),
-      port: port,
+      port: target.port,
       networkName: nameController.text.trim(),
     );
 
@@ -173,10 +234,10 @@ class LoginController extends GetxController {
                   hostController.text = item.hostAddress;
                   userController.text = item.username;
                   passwordController.text = item.password;
+                  // نحترم المنفذ المحفوظ كما هو (أي منفذ مخصّص مثل 1300)
                   portController.text = item.port.toString();
-                  if (ConnectionErrors.parsePort(portController.text) == null) {
-                    portController.text = ConnectionErrors.defaultPort.toString();
-                  }
+                  useSsl.value = ConnectionErrors.isSecurePort(item.port);
+                  _sslManuallySet = false;
                   nameController.text = item.networkName ;
                   if (Get.isSnackbarOpen) {
                     Get.closeAllSnackbars();
@@ -234,3 +295,9 @@ class LoginController extends GetxController {
   
 }
 
+/// هدف الاتصال بعد تحليل خانة العنوان والمنفذ.
+class _ResolvedTarget {
+  final String host;
+  final int port;
+  const _ResolvedTarget({required this.host, required this.port});
+}

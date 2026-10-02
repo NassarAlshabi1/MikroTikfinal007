@@ -38,11 +38,59 @@ class ConnectionErrors {
     return value;
   }
 
-  /// هل المنفذ منفذ api-ssl؟ (8729 ⇒ اتصال TLS)
+  /// هل المنفذ هو المنفذ القياسي لـ api-ssl؟ (8729 ⇒ TLS افتراضيًا)
+  ///
+  /// ملاحظة: التطبيق يدعم **أي منفذ** (1300 مثلًا) عبر خيار SSL يدوي،
+  /// فهذه الدالة تُستخدم فقط لاقتراح الوضع الافتراضي.
   static bool isSecurePort(int port) => port == securePort;
 
+  /// يحلّل ما يكتبه المستخدم في خانة العنوان، ويدعم صيغة `IP:PORT` معًا.
+  ///
+  /// - `192.168.88.1`        ⇒ host=192.168.88.1 , port=null
+  /// - `192.168.88.1:1300`   ⇒ host=192.168.88.1 , port=1300
+  /// - `[fe80::1]:1300`      ⇒ host=fe80::1      , port=1300 (IPv6 بين قوسين)
+  /// - `fe80::1`             ⇒ host=fe80::1      , port=null (IPv6 بلا قوسين)
+  /// - أي جزء بعد `:` غير رقمي ⇒ يُعامَل كله كعنوان (بلا تخمين)
+  static HostPort splitHostPort(String? raw) {
+    final text = (raw ?? '').trim();
+    if (text.isEmpty) return const HostPort(host: '', port: null);
+
+    // IPv6 بين قوسين مربعين: [::1] أو [::1]:1300
+    if (text.startsWith('[')) {
+      final close = text.indexOf(']');
+      if (close > 0) {
+        final host = text.substring(1, close);
+        final rest = text.substring(close + 1);
+        if (rest.startsWith(':')) {
+          final port = parsePort(rest.substring(1));
+          if (port != null) return HostPort(host: host, port: port);
+        } else if (rest.isEmpty) {
+          return HostPort(host: host, port: null);
+        }
+        return HostPort(host: text, port: null);
+      }
+      return HostPort(host: text, port: null);
+    }
+
+    // IPv6 بدون قوسين (أكثر من نقطتين) ⇒ بلا منفذ
+    if (':'.allMatches(text).length > 1) {
+      return HostPort(host: text, port: null);
+    }
+
+    final splitIndex = text.indexOf(':');
+    if (splitIndex > 0) {
+      final maybePort = parsePort(text.substring(splitIndex + 1));
+      if (maybePort != null) {
+        return HostPort(host: text.substring(0, splitIndex).trim(), port: maybePort);
+      }
+    }
+    return HostPort(host: text, port: null);
+  }
+
   /// رسالة عربية مفهومة لأي خطأ يظهر أثناء الدخول/الاتصال.
-  static String describe(Object? error) {
+  ///
+  /// [port] يُذكر في الرسالة ليسهل تشخيص المنافذ المخصّصة (مثل 1300).
+  static String describe(Object? error, {int? port}) {
     final raw = (error ?? '').toString().trim();
     final text = raw.toLowerCase();
 
@@ -79,8 +127,12 @@ class ConnectionErrors {
 
     // 4) رفض الاتصال (الخدمة مقفلة أو المنفذ خاطئ)
     if (text.contains('connection refused') || text.contains('errno = 111')) {
-      return 'الراوتر رفض الاتصال. تأكد من تفعيل خدمة API في الراوتر '
-          '(/ip service enable api) ومن صحة المنفذ (الافتراضي 8728).';
+      final at = port == null ? '' : ' على المنفذ $port';
+      final hint = port == null
+          ? '/ip service enable api'
+          : '/ip service set api port=$port disabled=no';
+      return 'الراوتر رفض الاتصال$at. تأكد من أن خدمة API مفعّلة على هذا المنفذ '
+          'في الراوتر ($hint) ومن صحة المنفذ في التطبيق.';
     }
 
     // 5) لا يمكن الوصول للشبكة/الراوتر
@@ -96,8 +148,9 @@ class ConnectionErrors {
 
     // 6) انتهاء المهلة
     if (text.contains('timed out') || text.contains('timeout')) {
-      return 'انتهت مهلة الاتصال. تحقق من عنوان IP والمنفذ، وأن الراوتر متصل بالكهرباء '
-          'ومن أن خدمة API مفعّلة.';
+      final at = port == null ? 'المنفذ' : 'المنفذ $port';
+      return 'انتهت مهلة الاتصال. تحقق من عنوان IP و$at، وأن الراوتر متصل بالكهرباء '
+          'ومن أن خدمة API مفعّلة عليه.';
     }
 
     // 7) مشاكل TLS/الشهادة
@@ -120,4 +173,15 @@ class ConnectionErrors {
     // 9) غير معروف ⇒ نُظهر النص الأصلي لتسهيل التشخيص
     return 'تعذّر الاتصال بالراوتر: $raw';
   }
+}
+
+/// نتيجة تحليل خانة العنوان إلى مضيف ومنفذ اختياري.
+class HostPort {
+  final String host;
+  final int? port;
+
+  const HostPort({required this.host, this.port});
+
+  @override
+  String toString() => port == null ? host : '$host:$port';
 }

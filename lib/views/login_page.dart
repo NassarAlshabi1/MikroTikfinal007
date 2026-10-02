@@ -60,6 +60,7 @@ class LoginPage extends GetView<LoginController> {
                                 label: "عنوان IP السيرفر",
                                 icon: Icons.lan_outlined,
                                 ctrl: controller.hostController,
+                                hint: "192.168.88.1:1300",
                               ),
                             ),
                             const SizedBox(width: 10), // مسافة بين الحقلين
@@ -69,11 +70,61 @@ class LoginPage extends GetView<LoginController> {
                                 label: "المنفذ",
                                 icon: Icons.numbers_rounded,
                                 ctrl: controller.portController,
+                                hint: "8728",
                               ),
                             ),
                           ],
                         ),
-                        
+
+                        // مفتاح الاتصال المشفّر — يعمل مع أي منفذ (وليس 8729 فقط)
+                        Obx(() => Container(
+                              margin: const EdgeInsets.only(top: 4, bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    controller.useSsl.value
+                                        ? Icons.lock_rounded
+                                        : Icons.lock_open_rounded,
+                                    color: controller.useSsl.value
+                                        ? const Color(0xFF16A34A)
+                                        : const Color(0xFF94A3B8),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "اتصال مشفّر (api-ssl)",
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        Text(
+                                          "فعّله إذا كان الراوتر يستخدم TLS على منفذك المخصّص",
+                                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: controller.useSsl.value,
+                                    activeColor: const Color(0xFF16A34A),
+                                    onChanged: controller.toggleSsl,
+                                  ),
+                                ],
+                              ),
+                            )),
+
                         // الحقل الثاني: اسم المستخدم
                         _buildInputField(
                           label: "اسم المستخدم",
@@ -148,6 +199,7 @@ class LoginPage extends GetView<LoginController> {
     required String label,
     required IconData icon,
     required TextEditingController ctrl,
+    String? hint,
     bool isPassword = false,
     bool isLast = false,
   }) {
@@ -160,6 +212,9 @@ class LoginPage extends GetView<LoginController> {
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), letterSpacing: 1.2),
         decoration: InputDecoration(
           labelText: label,
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, letterSpacing: 0),
+          hintMaxLines: 1,
           floatingLabelAlignment: FloatingLabelAlignment.center,
           labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13, letterSpacing: 0),
           prefixIcon: Icon(icon, color: const Color(0xFF475569), size: 22), 

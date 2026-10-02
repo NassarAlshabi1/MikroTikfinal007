@@ -40,6 +40,62 @@ void main() {
       expect(ConnectionErrors.parsePort('65536'), isNull);
       expect(ConnectionErrors.parsePort('999999999'), isNull);
     });
+
+    test('منافذ مخصّصة شائعة تُقبل (أي منفذ يعمل)', () {
+      for (final p in [1300, 2020, 5000, 8080, 9000, 12345, 50000, 65534]) {
+        expect(ConnectionErrors.parsePort('$p'), p, reason: 'المنفذ $p يجب أن يكون مقبولًا');
+      }
+    });
+  });
+
+  group('فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT', () {
+    test('عنوان بلا منفذ', () {
+      final r = ConnectionErrors.splitHostPort('192.168.88.1');
+      expect(r.host, '192.168.88.1');
+      expect(r.port, isNull);
+    });
+
+    test('عنوان مع منفذ مخصّص 1300', () {
+      final r = ConnectionErrors.splitHostPort('192.168.88.1:1300');
+      expect(r.host, '192.168.88.1');
+      expect(r.port, 1300);
+    });
+
+    test('مسافات زائدة حول القيمة', () {
+      final r = ConnectionErrors.splitHostPort('  10.0.0.1:8728  ');
+      expect(r.host, '10.0.0.1');
+      expect(r.port, 8728);
+    });
+
+    test('اسم مضيف (DNS) مع منفذ', () {
+      final r = ConnectionErrors.splitHostPort('router.local:5000');
+      expect(r.host, 'router.local');
+      expect(r.port, 5000);
+    });
+
+    test('IPv6 بين قوسين مع منفذ', () {
+      final r = ConnectionErrors.splitHostPort('[fe80::1]:1300');
+      expect(r.host, 'fe80::1');
+      expect(r.port, 1300);
+    });
+
+    test('IPv6 بلا قوسين لا يُقسَم خطأً', () {
+      final r = ConnectionErrors.splitHostPort('fe80::1');
+      expect(r.host, 'fe80::1');
+      expect(r.port, isNull);
+    });
+
+    test('منفذ غير صالح بعد النقطتين ⇒ يُعامَل كله كعنوان (بلا تخمين)', () {
+      final r = ConnectionErrors.splitHostPort('192.168.88.1:abc');
+      expect(r.host, '192.168.88.1:abc');
+      expect(r.port, isNull);
+    });
+
+    test('قيمة فارغة', () {
+      final r = ConnectionErrors.splitHostPort('   ');
+      expect(r.host, isEmpty);
+      expect(r.port, isNull);
+    });
   });
 
   group('منفذ TLS', () {
@@ -109,6 +165,20 @@ void main() {
     test('خطأ غير معروف ← يُعرض النص الأصلي للتشخيص', () {
       final msg = ConnectionErrors.describe('WALALAA something odd');
       expect(msg, contains('WALALAA something odd'));
+    });
+
+    test('رسالة رفض الاتصال تذكر المنفذ المخصّص وخطوة الحل', () {
+      final msg = ConnectionErrors.describe(
+        'Failed to connect: Connection refused',
+        port: 1300,
+      );
+      expect(msg, contains('1300'));
+      expect(msg, contains('port=1300'));
+    });
+
+    test('رسالة انتهاء المهلة تذكر المنفذ', () {
+      final msg = ConnectionErrors.describe('TimeoutException', port: 8080);
+      expect(msg, contains('8080'));
     });
 
     test('خطأ فارغ ← رسالة عامة واضحة', () {
