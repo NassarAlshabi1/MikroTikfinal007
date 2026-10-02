@@ -1,6 +1,5 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../services/secure_store.dart';
+import '../services/settings_store.dart';
 
 /// إعدادات تكامل Telegram.
 ///
@@ -70,31 +69,33 @@ class TelegramSettingsStore {
   static const String _kUsers = 'telegram_send_users';
 
   static Future<TelegramSettings> load() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final rawToken = prefs.getString(_kToken) ?? '';
+    final rawToken = await SettingsStore.get(_kToken) ?? '';
     final token = await SecureStore.decryptText(rawToken);
 
     return TelegramSettings(
-      enabled: prefs.getBool(_kEnabled) ?? false,
+      enabled: await _getBool(_kEnabled, false),
       botToken: token,
-      chatId: prefs.getString(_kChat) ?? '',
-      intervalMinutes: prefs.getInt(_kInterval) ?? 60,
-      sendSalesReport: prefs.getBool(_kSales) ?? true,
-      sendRouterStatus: prefs.getBool(_kRouter) ?? true,
-      sendActiveUsers: prefs.getBool(_kUsers) ?? true,
+      chatId: await SettingsStore.get(_kChat) ?? '',
+      intervalMinutes: int.tryParse(await SettingsStore.get(_kInterval) ?? '') ?? 60,
+      sendSalesReport: await _getBool(_kSales, true),
+      sendRouterStatus: await _getBool(_kRouter, true),
+      sendActiveUsers: await _getBool(_kUsers, true),
     );
   }
 
   static Future<void> save(TelegramSettings settings) async {
-    final prefs = await SharedPreferences.getInstance();
+    await SettingsStore.set(_kEnabled, settings.enabled ? '1' : '0');
+    await SettingsStore.set(_kToken, await SecureStore.encryptText(settings.botToken.trim()));
+    await SettingsStore.set(_kChat, settings.chatId.trim());
+    await SettingsStore.set(_kInterval, settings.intervalMinutes.toString());
+    await SettingsStore.set(_kSales, settings.sendSalesReport ? '1' : '0');
+    await SettingsStore.set(_kRouter, settings.sendRouterStatus ? '1' : '0');
+    await SettingsStore.set(_kUsers, settings.sendActiveUsers ? '1' : '0');
+  }
 
-    await prefs.setBool(_kEnabled, settings.enabled);
-    await prefs.setString(_kToken, await SecureStore.encryptText(settings.botToken.trim()));
-    await prefs.setString(_kChat, settings.chatId.trim());
-    await prefs.setInt(_kInterval, settings.intervalMinutes);
-    await prefs.setBool(_kSales, settings.sendSalesReport);
-    await prefs.setBool(_kRouter, settings.sendRouterStatus);
-    await prefs.setBool(_kUsers, settings.sendActiveUsers);
+  static Future<bool> _getBool(String key, bool fallback) async {
+    final value = await SettingsStore.get(key);
+    if (value == null) return fallback;
+    return value == '1' || value.toLowerCase() == 'true';
   }
 }

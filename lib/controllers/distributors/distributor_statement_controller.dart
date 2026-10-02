@@ -5,6 +5,7 @@ import '../../api/distributors_api.dart';
 import '../../controllers/dialog_helper.dart';
 import '../../models/distributor_model.dart';
 import '../../services/distributor_pdf.dart';
+import '../helpers/confirm_dialog.dart';
 
 class DistributorStatementController extends GetxController {
   DistributorStatementController(this.distributor);
@@ -116,8 +117,8 @@ class DistributorStatementController extends GetxController {
   }
 
   Future<void> deleteTransaction(DistributorTransactionModel transaction) async {
-    final confirmed = await showConfirmDialog(
-      message: "حذف هذه الحركة (${transaction.type.arabicLabel} - ${transaction.amount})؟",
+    final confirmed = await confirmAction(
+      "حذف هذه الحركة (${transaction.type.arabicLabel} - ${transaction.amount})؟",
     );
     if (!confirmed) return;
 

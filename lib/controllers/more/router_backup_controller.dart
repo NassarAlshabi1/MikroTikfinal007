@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '/api/router_backup_api.dart';
 import '/controllers/dialog_helper.dart';
+import '../helpers/confirm_dialog.dart';
 
 /// متحكم النسخ الاحتياطي الحقيقي للراوتر.
 class RouterBackupController extends GetxController {
@@ -120,8 +121,8 @@ class RouterBackupController extends GetxController {
   }
 
   Future<void> restoreFile(RouterFileModel file) async {
-    final confirmed = await showConfirmDialog(
-      message: file.isBackup
+    final confirmed = await confirmAction(
+      file.isBackup
           ? "سيتم استعادة الإعدادات من:\n${file.name}\n\nقد يعيد الراوتر التشغيل تلقائيًا. متابعة؟"
           : "سيتم استيراد الإعدادات من:\n${file.name}\n\nمتابعة؟",
     );
@@ -144,8 +145,8 @@ class RouterBackupController extends GetxController {
   }
 
   Future<void> deleteFile(RouterFileModel file) async {
-    final confirmed = await showConfirmDialog(
-      message: "حذف الملف من ذاكرة الراوتر؟\n${file.name}",
+    final confirmed = await confirmAction(
+      "حذف الملف من ذاكرة الراوتر؟\n${file.name}",
     );
     if (!confirmed) return;
 

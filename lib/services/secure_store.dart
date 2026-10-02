@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:encrypt/encrypt.dart' as enc;
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'settings_store.dart';
 
 /// مخزن تشفير بسيط لبيانات الدخول (AES-256-CBC).
 ///
@@ -24,12 +25,11 @@ class SecureStore {
   static Future<enc.Encrypter> _getEncrypter() async {
     if (_encrypter != null) return _encrypter!;
 
-    final prefs = await SharedPreferences.getInstance();
-    var storedKey = prefs.getString(_keyPrefName);
+    var storedKey = await SettingsStore.get(_keyPrefName);
 
     if (storedKey == null || storedKey.isEmpty) {
       storedKey = enc.Key.fromSecureRandom(32).base64;
-      await prefs.setString(_keyPrefName, storedKey);
+      await SettingsStore.set(_keyPrefName, storedKey);
     }
 
     _encrypter = enc.Encrypter(
@@ -70,8 +70,7 @@ class SecureStore {
 
   /// إعادة توليد مفتاح جديد (يفقد إمكانية قراءة البيانات المشفّرة القديمة).
   static Future<void> resetKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyPrefName);
+    await SettingsStore.remove(_keyPrefName);
     _encrypter = null;
   }
 }

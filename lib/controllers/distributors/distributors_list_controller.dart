@@ -4,6 +4,7 @@ import '../../api/distributors_api.dart';
 import '../../core/app_pages.dart';
 import '../../controllers/dialog_helper.dart';
 import '../../models/distributor_model.dart';
+import '../helpers/confirm_dialog.dart';
 
 class DistributorsListController extends GetxController {
   final RxList<DistributorSummary> summaries = <DistributorSummary>[].obs;
@@ -41,8 +42,8 @@ class DistributorsListController extends GetxController {
       Get.toNamed(AppRoutes.distributorStatement, arguments: distributor);
 
   Future<void> deleteDistributor(DistributorModel distributor) async {
-    final confirmed = await showConfirmDialog(
-      message: "حذف الموزع «${distributor.name}» وكل حركاته المالية؟",
+    final confirmed = await confirmAction(
+      "حذف الموزع «${distributor.name}» وكل حركاته المالية؟",
     );
     if (!confirmed) return;
 

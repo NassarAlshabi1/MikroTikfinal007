@@ -103,8 +103,17 @@ class SqlDb {
     );
   """;
 
+  /// جدول الإعدادات (مفتاح/قيمة) — يُستخدم للتشفير وإعدادات Telegram.
+  String appSettings="""
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+  """;
+
   /// جداول إصدار 2 (تُنشأ عند ترقية قاعدة بيانات قديمة).
-  List<String> get versionTwoTables => [distributors, distributorTransactions];
+  List<String> get versionTwoTables =>
+      [distributors, distributorTransactions, appSettings];
 
   
 
@@ -149,6 +158,7 @@ class SqlDb {
     mybatch.execute(savedLogins);
     mybatch.execute(distributors);
     mybatch.execute(distributorTransactions);
+    mybatch.execute(appSettings);
     // mybatch.execute(inss);
 
     await mybatch.commit();
