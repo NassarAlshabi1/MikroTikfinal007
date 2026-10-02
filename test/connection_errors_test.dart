@@ -119,7 +119,12 @@ void main() {
     test('رفض الاتصال ← توجيه لتفعيل خدمة API', () {
       final msg = ConnectionErrors.describe('Failed to connect: Connection refused');
       expect(msg, contains('API'));
-      expect(msg, contains('8728'));
+      // بلا تمرير منفذ: رسالة عامة صحيحة (لا تفرض 8728 على المنافذ المخصّصة)
+      expect(msg, contains('المنفذ'));
+      expect(
+        ConnectionErrors.describe('Connection refused', port: 8728),
+        contains('8728'),
+      );
     });
 
     test('انتهاء المهلة', () {
