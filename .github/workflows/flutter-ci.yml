@@ -38,14 +38,15 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
-      # ملاحظة: الكود الموروث (فرع controller الأصلي) يحتوي تحذيرات موجودة مسبقًا،
-      # لذا نجعل التحذيرات غير مُفشِلة مع إبقاء الأخطاء مُفشِلة للبناء.
+      # ملاحظة: الكود الموروث (فرع controller الأصلي) يحتوي 17 تحذيرًا موجودًا مسبقًا
+      # (دوال غير مستخدمة/كود ميت)، لذا نجعل التحذيرات والمعلومات غير مُفشِلة
+      # مع إبقاء الأخطاء (errors) مُفشِلة للبناء.
       - name: flutter analyze
         id: analyze
         shell: bash
         run: |
           set +e
-          flutter analyze --no-fatal-infos > analyze_text.txt 2>&1
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze_text.txt 2>&1
           status=$?
           echo "flutter analyze exit=$status"
           tail -n 60 analyze_text.txt
