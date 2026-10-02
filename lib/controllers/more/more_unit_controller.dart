@@ -20,6 +20,11 @@ class MoreUnitController extends GetxController {
     Get.toNamed(AppRoutes.maintenance);
   }
 
+  // إدارة Hotspot
+  void goToHotspot() {
+    Get.toNamed(AppRoutes.hotspot);
+  }
+
   // الموزعون والمحاسبة
   void goToDistributors() {
     Get.toNamed(AppRoutes.distributors);

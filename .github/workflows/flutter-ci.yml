@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart > test_output.txt 2>&1
+          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart test/hotspot_logic_test.dart > test_output.txt 2>&1
           status=$?
           echo "unit_tests exit=$status"
           tail -n 40 test_output.txt
@@ -215,7 +215,7 @@ jobs:
 
           NOTES="إصدار MikroNet 2.0.0.0 (versionCode 2000) — للأجهزة الحديثة (arm64-v8a)
 
-          الميزات: حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · فحص الكيبل وأزواج الإيثرنت · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · واجهة عربية RTL.
+          الميزات: إدارة Hotspot كاملة (قسائم + جلسات + باقات + رفع صفحة الدخول) · حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · فحص الكيبل وأزواج الإيثرنت · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · واجهة عربية RTL.
 
           \`\`\`
           $(cat apk_version.txt 2>/dev/null)

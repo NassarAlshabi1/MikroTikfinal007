@@ -32,8 +32,9 @@
 | 17 | **حذف المستخدمين المنتهين بفحص ذكي (متوافق مع v6 و v7)** | `lib/services/mikrotik_duration.dart` (محلّل مدد) + `lib/services/expired_users_classifier.dart` (منطق نقي) + `lib/api/expired_users_api.dart` + صفحة `views/cards/expired_users_page.dart` | v6: `/tool/user-manager/user/print|remove` + `profile/limitation` · v7: `/user-manager/*` + `user-profile.state=used` |
 | 18 | **التحقق الآلي من الكود (CI)** | `.github/workflows/flutter-ci.yml` → `flutter analyze` + بناء APK اختياري | GitHub Actions |
 
-**حالة التحقق الآلي:** ✅ 17 اختبارًا لمحلّل المدد (`test/mikrotik_duration_test.dart`) + 22 اختبارًا لتصنيف المنتهين
-بحمولات v6 الحقيقية (`test/expired_users_classifier_test.dart`) — يُشغَّلان معًا في CI.
+**حالة التحقق الآلي:** ✅ 17 اختبارًا لمحلّل المدد (`test/mikrotik_duration_test.dart`) + 22 لتصنيف المنتهين
+بحمولات v6 الحقيقية (`test/expired_users_classifier_test.dart`) + 22 لفحص الكيبل (`test/cable_diagnostics_test.dart`)
++ 25 لمنطق Hotspot (`test/hotspot_logic_test.dart`) — تُشغَّل جميعًا في CI.
 
 **التوافق مع RouterOS v6:** موثّق بالتفصيل في [`V6_COMPATIBILITY.md`](V6_COMPATIBILITY.md) — حقول v6
 (`username`/`actual-profile`/`uptime-used`/`customer` ولا يوجد `name`)، إشارة الانتهاء الأصلية `!actual-profile`
@@ -52,10 +53,10 @@
 
 | الميزة | الحالة | ملاحظات/العمل المطلوب |
 | --- | --- | --- |
-| **صفحات Hotspot (رفع + قوالب دخول)** | ❌ | يحتاج رفع حزمة HTML + `/ip/hotspot/set` لتغيير اسم الشبكة |
+| **صفحات Hotspot (رفع + قوالب دخول)** | ✅ | صفحة «صفحة الدخول» ترفع ملفات HTML/CSS/صور عبر FTP إلى مجلد الراوتر + `/ip/hotspot/set html-directory=` + فحص وسوم الصفحة قبل الرفع |
 | **PPPoE / Broadband** | ❌ | يحتاج `/ppp/secret/print\|add\|set\|remove` + شاشة اشتراكات |
 | **إشعارات وتقارير تلقائية (Telegram/غيره)** | ❌ | **أُزيل تكامل Telegram بطلب المستخدم**؛ يمكن إعادته لاحقًا كخدمة خلفية عند الحاجة |
-| **مستخدم Hotspot التقليدي** | 🟡 | النظام يدير مستخدمي User Manager؛ لا إدارة لمستخدمي `/ip/hotspot/user` |
+| **مستخدم Hotspot التقليدي** | ✅ | وحدة Hotspot كاملة: مستخدمون (إضافة/تعديل/حذف/تفعيل) · توليد قسائم بضغطة · الجلسات النشطة وقطعها · الباقات · الخوادم |
 | **تقارير زمنية بيانية للاستهلاك** | 🟡 | توجد قراءات لحظية (حرارة/منافذ/حركة) بلا رسوم بيانية تاريخية |
 | **أجهزة غير متصلة (DHCP/ARP)** | 🟡 | تُعرض الأجهزة المتصلة حاليًا فقط |
 | **المنافذ: تحديث فوري** | 🟡 | تحديث كل 6 ثوانٍ (polling) وليس بثًّا حقيقيًا |

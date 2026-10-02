@@ -97,11 +97,13 @@ import '../controllers/maintenance/maintenance_hub_controller.dart';
 import '../controllers/maintenance/tool_list_controller.dart';
 import '../controllers/maintenance/diagnostics_controller.dart';
 import '../controllers/maintenance/cable_test_controller.dart';
+import '../controllers/hotspot/hotspot_controller.dart';
 import '../models/maintenance_tools.dart';
 import '../views/maintenance/maintenance_hub_page.dart';
 import '../views/maintenance/tool_list_page.dart';
 import '../views/maintenance/diagnostics_page.dart';
 import '../views/maintenance/cable_test_page.dart';
+import '../views/hotspot/hotspot_page.dart';
 
 /*
 import '/view/backups/backup_view.dart';
@@ -167,6 +169,9 @@ class AppRoutes {
   static const String maintenanceTool = '/maintenance/tool';
   static const String maintenanceDiagnostics = '/maintenance/diagnostics';
   static const String maintenanceCableTest = '/maintenance/cable_test';
+
+  // Hotspot
+  static const String hotspot = '/hotspot';
   // مسارات إدارة المواقع
 }
 
@@ -375,6 +380,11 @@ class AppPages {
           Get.arguments is DiagnosticTool ? Get.arguments as DiagnosticTool : null,
         ),
       )),
+    ),
+    GetPage(
+      name: AppRoutes.hotspot,
+      page: () => const HotspotPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => HotspotController())),
     ),
     GetPage(
       name: AppRoutes.maintenanceCableTest,

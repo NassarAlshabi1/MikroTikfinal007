@@ -21,4 +21,9 @@ class CardsUnitController extends GetxController {
   void goToExpiredUsers() {
     Get.toNamed(AppRoutes.expiredUsers);
   }
+
+  // إدارة Hotspot (قسائم الإنترنت)
+  void goToHotspot() {
+    Get.toNamed(AppRoutes.hotspot);
+  }
 }

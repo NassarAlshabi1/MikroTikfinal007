@@ -70,6 +70,17 @@ class MoreUnitPage extends GetView<MoreUnitController> {
 
                   const SizedBox(height: 15),
 
+                  // إدارة Hotspot
+                  MainActionCard(
+                    title: "Hotspot",
+                    subtitle: "قسائم الإنترنت • الجلسات النشطة • رفع صفحة الدخول",
+                    icon: Icons.wifi_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: controller.goToHotspot,
+                  ),
+
+                  const SizedBox(height: 15),
+
                   // أدوات الصيانة
                   MainActionCard(
                     title: "أدوات الصيانة",

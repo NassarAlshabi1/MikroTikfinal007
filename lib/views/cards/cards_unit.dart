@@ -66,6 +66,17 @@ class CardsUnitPage extends GetView<CardsUnitController> {
 
                   const SizedBox(height: 15),
 
+                  // إدارة Hotspot (قسائم الإنترنت)
+                  MainActionCard(
+                    title: "Hotspot",
+                    subtitle: "قسائم الإنترنت • الجلسات • صفحة الدخول",
+                    icon: Icons.wifi_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: controller.goToHotspot,
+                  ),
+
+                  const SizedBox(height: 15),
+
                   const SectionTitle(title: "الاشتراكات والأسعار"),
 
                   // كرت الباقات والسرعات
