@@ -19,15 +19,15 @@ class HomeCarousel extends StatelessWidget {
     return Column(
       children: [
         Container(
-          height: 200,
-          margin: const EdgeInsets.only(top: 15),
+          height: 162,
+          margin: const EdgeInsets.only(top: 10),
           child: PageView(
             controller: controller,
             onPageChanged: onPageChanged,
             children: items,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
@@ -35,8 +35,8 @@ class HomeCarousel extends StatelessWidget {
             (index) => AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: currentPage == index ? 18 : 8,
-              height: 8,
+              width: currentPage == index ? 16 : 7,
+              height: 7,
               decoration: BoxDecoration(
                 color: currentPage == index
                     ? const Color(0xFF1E3A8A)
@@ -76,53 +76,61 @@ class ActionCarouselItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10),
-        padding: const EdgeInsets.all(22),
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
           gradient: LinearGradient(
               colors: [color.withOpacity(0.85), color],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight),
-          borderRadius: BorderRadius.circular(35),
+          borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8))
+                color: color.withOpacity(0.28),
+                blurRadius: 10,
+                offset: const Offset(0, 5))
           ],
         ),
         child: Stack(
           children: [
             Positioned(
-                left: -20,
-                top: -20,
+                left: -14,
+                top: -16,
                 child: Icon(icon,
-                    size: 130, color: Colors.white.withOpacity(0.12))),
+                    size: 96, color: Colors.white.withOpacity(0.12))),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildBadge(category),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 Text(title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.bold)),
                 Text(subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style:
-                        const TextStyle(color: Colors.white70, fontSize: 11)),
+                        const TextStyle(color: Colors.white70, fontSize: 10)),
                 const Spacer(),
                 if (value != null)
                   Text(value!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 19,
                           fontWeight: FontWeight.w900)),
                 const Spacer(),
                 Text(actionText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.bold,
                         decoration: TextDecoration.underline)),
               ],
@@ -135,12 +143,12 @@ class ActionCarouselItem extends StatelessWidget {
 
   Widget _buildBadge(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-          color: Colors.white12, borderRadius: BorderRadius.circular(8)),
+          color: Colors.white12, borderRadius: BorderRadius.circular(7)),
       child: Text(text,
           style: const TextStyle(
-              color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600)),
+              color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -162,16 +170,18 @@ class ResourceCarouselItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double val = double.parse(percent.replaceAll('%', '')) / 100;
+    // قراءة آمنة للنسبة (لا انهيار لو وصلت قيمة غير رقمية) + حصرها بين 0 و 1
+    final parsed = double.tryParse(percent.replaceAll('%', '').trim());
+    double val = (parsed == null || parsed.isNaN ? 0 : parsed / 100).clamp(0.0, 1.0);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      padding: const EdgeInsets.all(22),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(35),
+        borderRadius: BorderRadius.circular(26),
         boxShadow: const [
           BoxShadow(
-              color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))
+              color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))
         ],
       ),
       child: Column(
@@ -179,25 +189,30 @@ class ResourceCarouselItem extends StatelessWidget {
         children: [
           _buildBadge(category),
           const Spacer(),
-          Center(child: Icon(icon, color: color, size: 45)),
+          Center(child: Icon(icon, color: color, size: 34)),
           const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              ),
               Text(percent,
-                  style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      color: color, fontSize: 13, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
                 value: val,
                 backgroundColor: Colors.white10,
                 color: color,
-                minHeight: 8),
+                minHeight: 6),
           ),
         ],
       ),

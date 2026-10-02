@@ -156,13 +156,14 @@ class HomePage extends GetView<HomeController> {
     ];
 
     return GridView.builder(
-      padding: const EdgeInsets.only(top: 10, bottom: 30),
+      padding: const EdgeInsets.only(top: 6, bottom: 18),
       itemCount: menuData.length,
+      // بطاقات أصغر (أعرض من ارتفاعها) لعرض أكبر عدد ممكن في الشاشة
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 15,
-        crossAxisSpacing: 15,
-        childAspectRatio: 1.1,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.5,
       ),
       itemBuilder: (context, index) => MenuItemCard(
         title: menuData[index]['title'],
@@ -174,13 +175,13 @@ class HomePage extends GetView<HomeController> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(25, 25, 25, 10),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
       child: Align(
         alignment: Alignment.centerRight,
         child: Text(
           title,
           style: const TextStyle(
-              fontSize: 17,
+              fontSize: 15,
               fontWeight: FontWeight.w900,
               color: Color(0xFF1E293B)),
         ),
