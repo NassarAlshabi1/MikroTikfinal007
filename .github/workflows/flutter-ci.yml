@@ -98,7 +98,8 @@ jobs:
 
   build-apk:
     name: Build release APK
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk }}
+    # يعمل عند الطلب اليدوي، أو عند وجود وسم [build apk] في رسالة الالتزام
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || contains(github.event.head_commit.message, '[build apk]') }}
     needs: analyze
     runs-on: ubuntu-latest
     steps:
