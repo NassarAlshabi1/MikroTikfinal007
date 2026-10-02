@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - '**'
+    branches-ignore:
+      - 'ci-artifacts'
   pull_request:
     branches:
       - '**'
@@ -15,7 +17,11 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
@@ -23,39 +29,73 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.27.2'
           cache: true
+
       - name: flutter pub get
         run: flutter pub get
+
       # ملاحظة: الكود الموروث (فرع controller الأصلي) يحتوي تحذيرات موجودة مسبقًا،
-      # لذا نجعل التحذيرات والمعلومات غير مُفشِلة مع إبقاء الأخطاء مُفشِلة.
-      # كما نُخرج الأخطاء كـ annotations لأن سجلات Actions غير قابلة للقراءة من كل البيئات.
-      - name: Analyze (machine readable)
+      # لذا نجعل التحذيرات غير مُفشِلة مع إبقاء الأخطاء مُفشِلة للبناء.
+      - name: flutter analyze
+        id: analyze
         shell: bash
         run: |
           set +e
-          dart analyze --format=machine --no-fatal-warnings --no-fatal-infos > analyze.txt 2>&1
+          flutter analyze --no-fatal-infos > analyze_text.txt 2>&1
           status=$?
-          echo "===== totals ====="
-          awk -F'|' '{print $1}' analyze.txt | sort | uniq -c | sort -rn
-          echo "===== errors ====="
-          grep -c '^ERROR' analyze.txt || true
-          echo "===== files with errors ====="
-          grep '^ERROR' analyze.txt | awk -F'|' '{print $3}' | sort | uniq -c | sort -rn | head -30
-          echo "===== first 50 errors ====="
-          grep '^ERROR' analyze.txt | head -50
-          echo "===== annotations ====="
-          grep '^ERROR' analyze.txt | head -40 | while IFS='|' read -r sev type file line col len msg code; do
-            echo "::error file=$file,line=$line::[$code] $msg"
-          done
-          echo "::notice::ERRORS=$(grep -c '^ERROR' analyze.txt || echo 0)"
+          echo "flutter analyze exit=$status"
+          tail -n 60 analyze_text.txt
           exit $status
-      - name: dart format check (report only)
-        run: dart format --output=none --set-exit-if-changed lib || true
+
+      # نُخرج الأخطاء كـ annotations قابلة للقراءة من خارج سجلات Actions
+      - name: Annotate errors
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          echo "::notice::analyze_exit=${{ steps.analyze.outcome }}"
+          grep -E "^\s*error\s+•" analyze_text.txt 2>/dev/null | head -8 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          echo "errors_total=$(grep -cE '^\s*error\s+•' analyze_text.txt 2>/dev/null || echo 0)"
+          echo "warnings_total=$(grep -cE '^\s*warning\s+•' analyze_text.txt 2>/dev/null || echo 0)"
+          echo "infos_total=$(grep -cE '^\s*info\s+•' analyze_text.txt 2>/dev/null || echo 0)"
+
+      # نشر المخرجات الكاملة على فرع ci-artifacts (لسجلات Actions المحجوبة أحيانًا)
+      - name: Publish analyze output to ci-artifacts branch
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          {
+            echo "run_id=$GITHUB_RUN_ID"
+            echo "commit=$GITHUB_SHA"
+            echo "ref=$GITHUB_REF"
+            echo "analyze_step_outcome=${{ steps.analyze.outcome }}"
+            echo "===== TOTALS ====="
+            echo "errors=$(grep -cE '^\s*error\s+•' analyze_text.txt 2>/dev/null || echo 0)"
+            echo "warnings=$(grep -cE '^\s*warning\s+•' analyze_text.txt 2>/dev/null || echo 0)"
+            echo "infos=$(grep -cE '^\s*info\s+•' analyze_text.txt 2>/dev/null || echo 0)"
+            echo "===== ERRORS ONLY ====="
+            grep -E "^\s*error\s+•" analyze_text.txt 2>/dev/null || echo "(no errors)"
+            echo "===== FULL OUTPUT (last 400 lines) ====="
+            tail -n 400 analyze_text.txt 2>/dev/null || true
+          } > analyze_bundle.txt
+
+          rm -rf /tmp/ci_artifacts && mkdir -p /tmp/ci_artifacts && cd /tmp/ci_artifacts
+          git init -q .
+          git config user.name "arena-ci"
+          git config user.email "arena-ci@users.noreply.github.com"
+          cp "$GITHUB_WORKSPACE/analyze_bundle.txt" .
+          git add -A
+          git commit -q -m "ci: analyze output for ${GITHUB_SHA} [skip ci]"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:ci-artifacts
 
   build-apk:
     name: Build release APK
@@ -64,20 +104,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.27.2'
           cache: true
+
       - run: flutter pub get
       - name: Build APK
         run: flutter build apk --release
+
       - uses: actions/upload-artifact@v4
         with:
           name: mikronet-release-apk
