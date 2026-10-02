@@ -2,7 +2,8 @@
 
 # 🚀 ميكرونت — MikroNet
 
-> **الإصدار الحالي: `2.0.0.0`** (versionCode `2000`) — معرّف التطبيق: `com.miknet.marina`
+> **عائلة الإصدار: `2.0.0.x`** — يرفع CI الرقم تلقائيًا مع كل بناء
+> (`versionName = 2.0.0.<N>` و`versionCode = 2000 + <N>`) — معرّف التطبيق: `com.miknet.marina`
 > سجل التغييرات في [`CHANGELOG.md`](CHANGELOG.md)
 
 **النظام الأذكى لإدارة شبكات MikroTik والتحكم بالروتر من هاتفك**
@@ -195,21 +196,28 @@ flutter pub get
 # 2) تشغيل التطبيق (جهاز/محاكي متصل)
 flutter run
 
-# 3) بناء ملف APK للإصدار (الإصدار 2.0.0.0) — للأجهزة الحديثة فقط
-flutter build apk --release --target-platform android-arm64
+# 3) بناء ملف APK للإصدار — للأجهزة الحديثة فقط (يرفع رقم الإصدار تلقائيًا)
+./tools/build_apk.sh
+# ما يعادل: flutter build apk --release --target-platform android-arm64 \
+#             --build-name=2.0.0.46 --build-number=2046
+# لفرض رقم معيّن: ./tools/build_apk.sh 2.0.0.60
 # أو لكل معماريات الأندرويد:
 flutter build apk --split-per-abi
 ```
 
 ### تحميل ملف APK الجاهز
 
-- **أحدث إصدار (تحميل مباشر بلا تسجيل دخول):**
+- **أحدث إصدار (تحميل مباشر بلا تسجيل دخول) — رابط ثابت:**
   [`MikroNet-2.0.0.0-arm64.apk`](https://github.com/NassarAlshabi1/MikroTikfinal007/releases/latest/download/MikroNet-2.0.0.0-arm64.apk)
-  (~9 MB) — رابط ثابت يشير دائمًا إلى **أحدث إصدار**: [صفحة الإصدارات](https://github.com/NassarAlshabi1/MikroTikfinal007/releases/latest).
+  (~10 MB) — يشير دائمًا إلى **أحدث إصدار**: [صفحة الإصدارات](https://github.com/NassarAlshabi1/MikroTikfinal007/releases/latest).
+  كل إصدار يُرفق أيضًا باسم يحمل رقمه، مثال: `MikroNet-2.0.0.46-arm64.apk`.
 - الملف **للأجهزة الحديثة فقط (arm64-v8a)** — لا يعمل على الأجهزة القديمة 32-بت (armeabi-v7a)
   ولا على المحاكيات (x86_64). لبناء نسخة لكل المعماريات: `flutter build apk --split-per-abi`.
-- لإنشاء إصدار جديد تلقائيًا: ادفع وسمًا يبدأ بـ `v` (مثل `v2.0.0.0`) فيبني CI الملف
-  وينشره في Releases ويُرفق APK به.
+- **الإصدار ورقم البناء يرتفعان تلقائيًا مع كل بناء**: كل APK جديد يأخذ
+  `versionName = 2.0.0.<N>` و`versionCode = 2000 + <N>` (N = أعلى رقم بناء منشور + 1)،
+  والوسم يكون `v2.0.0.0-b<N>`، وبوابة CI ترفض البناء لو لم يطابق الرقم داخل الـAPK.
+- لبضع نسخة جديدة: ادفع التزامًا يحمل `[build apk] [publish release]` فيبني CI وينشر.
+- لدفع وسم إصدار صريح: ادفع وسمًا يبدأ بـ `v` (مثل `v2.0.0.7`) فيُستخدم رقمه كما هو.
 
 ### البناء عبر Docker (بدون تثبيت Flutter محليًا)
 

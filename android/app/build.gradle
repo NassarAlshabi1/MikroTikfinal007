@@ -26,10 +26,12 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        // رقم البناء (versionCode) من pubspec.yaml = 2000
+        // رقم البناء (versionCode) من pubspec.yaml، ويُرفع تلقائيًا مع كل إصدار
+        // (البناء المحلي: flutter build apk --build-name=... --build-number=...)
         versionCode = flutter.versionCode
-        // الاسم الظاهر للإصدار = 2.0.0.0 (أربعة أجزاء كما هو مطلوب)
-        versionName = "2.0.0.0"
+        // الاسم الظاهر للإصدار من pubspec.yaml — ويُتجاوَز بـ--build-name عند البناء
+        // (CI يرفعه تلقائيًا: 2.0.0.<رقم البناء> مع versionCode = 2000 + الرقم)
+        versionName = flutter.versionName
     }
 
     buildTypes {

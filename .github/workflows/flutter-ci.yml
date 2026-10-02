@@ -135,10 +135,72 @@ jobs:
           cache: true
 
       - run: flutter pub get
+
+      # ⬆️ رفع رقم الإصدار تلقائيًا مع كل بناء:
+      #    versionName = 2.0.0.<N>   ·   versionCode = 2000 + <N>   ·   الملف = MikroNet-2.0.0.<N>-arm64.apk
+      #    N = (أعلى رقم بناء منشور) + 1 ⇒ يزداد دائمًا ولا يتكرر.
+      #    عند دفع وسم مثل v2.0.0.7 يُستخدم رقم الوسم نفسه.
+      - name: Compute version (auto-bump)
+        id: version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # ملاحظة: قشرة Actions تعمل بـ -e افتراضيًا فنُطفئها هنا لالتقاط الأخطاء
+          set +e
+          REPO="${{ github.repository }}"
+          BASE_CODE=2000
+          VERSION=""
+          PREV=""
+          N=0
+
+          # 1) دفع وسم إصدار صريح ⇒ نأخذ الرقم من الوسم كما هو
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAGNAME="${GITHUB_REF_NAME#v}"
+            if [[ "$TAGNAME" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+              VERSION="$TAGNAME"
+              N="${TAGNAME##*.}"
+            fi
+          fi
+
+          # 2) غير ذلك ⇒ أعلى رقم بناء منشور + 1
+          if [ -z "$VERSION" ]; then
+            PREV=$(gh api "repos/$REPO/releases?per_page=100" -q '.[].tag_name' 2>/dev/null \
+                   | grep -oE '\-b[0-9]+$' | tr -d 'b-' | sort -n | tail -1)
+            N=$(( ${PREV:-0} + 1 ))
+            # احتياط: لو تعذّر الوصول إلى GitHub نستخدم رقم الدورة (يتزايد أيضًا)
+            if [ "$N" -le 0 ]; then N="$GITHUB_RUN_NUMBER"; fi
+            VERSION="2.0.0.$N"
+          fi
+
+          CODE=$(( BASE_CODE + N ))
+          ASSET="MikroNet-${VERSION}-arm64.apk"
+
+          {
+            echo "version_name=$VERSION"
+            echo "version_code=$CODE"
+            echo "asset_name=$ASSET"
+            echo "build_number=$N"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## إصدار هذا البناء"
+            echo "- versionName: **$VERSION**"
+            echo "- versionCode: **$CODE**"
+            echo "- الملف: \`$ASSET\`"
+            echo "- رقم البناء: $N (السابق: ${PREV:-لا شيء})"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "versionName=$VERSION versionCode=$CODE asset=$ASSET previous=${PREV:-none}"
+          exit 0
+
       # بناء لمعمارية الأجهزة الحديثة فقط (arm64-v8a) — ملف أصغر وأسرع تثبيتًا
       # ملاحظة: الأجهزة القديمة 32-بت (armeabi-v7a) والمحاكيات (x86_64) غير مدعومة في هذا الملف
       - name: Build APK (arm64-v8a only)
-        run: flutter build apk --release --target-platform android-arm64
+        run: |
+          flutter build apk --release --target-platform android-arm64 \
+            --build-name=${{ steps.version.outputs.version_name }} \
+            --build-number=${{ steps.version.outputs.version_code }}
 
       # إثبات الإصدار والمعمارية المدمجَين داخل APK، ورفض أي مكتبات 32-بت
       - name: Verify APK metadata (version + arm64 only)
@@ -185,6 +247,23 @@ jobs:
               exit 1
             fi
 
+            # تأكيد أن الإصدار المدمج هو الإصدار المحسوب (لا رجوع للرقم القديم)
+            EXPECTED_NAME="${{ steps.version.outputs.version_name }}"
+            EXPECTED_CODE="${{ steps.version.outputs.version_code }}"
+            BADGING=$("$AAPT" dump badging "$APK")
+            if echo "$BADGING" | grep -q "versionName='$EXPECTED_NAME'"; then
+              echo "✅ versionName = $EXPECTED_NAME"
+            else
+              echo "::error::versionName داخل APK غير مطابق (المتوقع $EXPECTED_NAME)"
+              exit 1
+            fi
+            if echo "$BADGING" | grep -q "versionCode='$EXPECTED_CODE'"; then
+              echo "✅ versionCode = $EXPECTED_CODE"
+            else
+              echo "::error::versionCode داخل APK غير مطابق (المتوقع $EXPECTED_CODE)"
+              exit 1
+            fi
+
             # خط Cairo يجب أن يكون مضمّنًا في الحزمة (وإلا ترجع الواجهة للخط الافتراضي)
             if unzip -l "$APK" | grep -q "fonts/cairo/Cairo_400Regular.ttf"; then
               echo "✅ خط Cairo مضمّن في APK:"
@@ -200,13 +279,18 @@ jobs:
         shell: bash
         run: |
           mkdir -p release_out
-          cp build/app/outputs/flutter-apk/app-release.apk release_out/MikroNet-2.0.0.0-arm64.apk
+          ASSET="${{ steps.version.outputs.asset_name }}"
+          cp build/app/outputs/flutter-apk/app-release.apk "release_out/$ASSET"
+          # نسخة باسم ثابت يبقى رابط releases/latest/download/... صالحًا مع كل إصدار
+          cp build/app/outputs/flutter-apk/app-release.apk "release_out/MikroNet-2.0.0.0-arm64.apk"
           ls -lh release_out/
+          echo "ASSET_NAME=$ASSET" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4
         with:
           name: mikronet-release-apk
           path: |
+            release_out/${{ steps.version.outputs.asset_name }}
             release_out/MikroNet-2.0.0.0-arm64.apk
             apk_version.txt
 
@@ -226,16 +310,24 @@ jobs:
           set -o pipefail
 
           REPO="${{ github.repository }}"
-          ASSET="release_out/MikroNet-2.0.0.0-arm64.apk"
-          NAME="MikroNet-2.0.0.0-arm64.apk"
+          VERSION="${{ steps.version.outputs.version_name }}"
+          BUILD_NUMBER="${{ steps.version.outputs.build_number }}"
+          VERSION_CODE="${{ steps.version.outputs.version_code }}"
+
+          ASSET="release_out/${{ steps.version.outputs.asset_name }}"
+          NAME="${{ steps.version.outputs.asset_name }}"
+          # اسم ثابت يُرفع كنسخة إضافية ليبقى رابط releases/latest/download صالحًا دائمًا
+          ALIAS="MikroNet-2.0.0.0-arm64.apk"
+          ALIAS_PATH="release_out/$ALIAS"
+
           LOCAL_SIZE=$(stat -c%s "$ASSET" 2>/dev/null)
-          echo "local apk size: ${LOCAL_SIZE:-missing}"
+          echo "version=$VERSION code=$VERSION_CODE asset=$NAME size=${LOCAL_SIZE:-missing}"
 
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG="${GITHUB_REF_NAME}"; else TAG="v2.0.0.0-arm64"; fi
 
-          NOTES="إصدار MikroNet 2.0.0.0 (versionCode 2000) — للأجهزة الحديثة (arm64-v8a)
+          NOTES="إصدار **MikroNet ${VERSION}** (versionCode ${VERSION_CODE}) — للأجهزة الحديثة (arm64-v8a)
 
-          الميزات: إدارة Hotspot كاملة (قسائم + جلسات + باقات + رفع صفحة الدخول) · حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · فحص الكيبل وأزواج الإيثرنت · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · واجهة عربية RTL.
+          الميزات: إدارة Hotspot كاملة (قسائم + جلسات + باقات + رفع صفحة الدخول) · حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · فحص الكيبل · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · خط Cairo · واجهة عربية RTL.
 
           \`\`\`
           $(cat apk_version.txt 2>/dev/null)
@@ -246,7 +338,7 @@ jobs:
           ملاحظة: هذا الإصدار موقّع بمفتاح التصحيح (debug keystore) للاستخدام والتجربة المباشرة."
 
           remote_size() {
-            gh api "repos/$REPO/releases/tags/$1" -q ".assets[] | select(.name==\"$NAME\") | .size" 2>/dev/null | head -1
+            gh api "repos/$REPO/releases/tags/$1" -q ".assets[] | select(.name==\"$2\") | .size" 2>/dev/null | head -1
           }
 
           published_tag=""
@@ -255,10 +347,10 @@ jobs:
             upload_status=$?
             echo "upload exit=$upload_status"
             echo "upload output: $upload_log"
-            gh release edit "$TAG" --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest >/dev/null 2>&1
+            gh release edit "$TAG" --title "MikroNet $VERSION (build $BUILD_NUMBER)" --notes "$NOTES" --latest >/dev/null 2>&1
             echo "edit exit=$?"
 
-            if [ -n "$LOCAL_SIZE" ] && [ "$(remote_size "$TAG")" = "$LOCAL_SIZE" ]; then
+            if [ -n "$LOCAL_SIZE" ] && [ "$(remote_size "$TAG" "$NAME")" = "$LOCAL_SIZE" ]; then
               published_tag="$TAG"
               echo "OK: updated asset in $TAG"
             else
@@ -268,26 +360,33 @@ jobs:
             echo "release $TAG not found"
           fi
 
-          # خطة بديلة مضمونة: إنشاء إصدار جديد بوسم جديد (المسار المُثبت عمله)
+          # خطة بديلة مضمونة: إنشاء إصدار جديد بوسم جديد يحمل رقم البناء (المسار المُثبت عمله)
           if [ -z "$published_tag" ]; then
-            NEW_TAG="v2.0.0.0-b${GITHUB_RUN_NUMBER}"
-            create_log=$(gh release create "$NEW_TAG" "$ASSET#$NAME" --title "MikroNet 2.0.0.0 (build ${GITHUB_RUN_NUMBER})" --notes "$NOTES" --latest 2>&1)
+            NEW_TAG="v2.0.0.0-b${BUILD_NUMBER}"
+            create_log=$(gh release create "$NEW_TAG" "$ASSET#$NAME" --title "MikroNet $VERSION (build $BUILD_NUMBER)" --notes "$NOTES" --latest 2>&1)
             create_status=$?
             echo "create exit=$create_status output: $create_log"
-            if [ "$(remote_size "$NEW_TAG")" = "$LOCAL_SIZE" ]; then
+            if [ "$(remote_size "$NEW_TAG" "$NAME")" = "$LOCAL_SIZE" ]; then
               published_tag="$NEW_TAG"
-              echo "::notice::published new release $NEW_TAG"
+              echo "::notice::published new release $NEW_TAG (MikroNet $VERSION)"
             else
               echo "::error::release publish failed (create exit=$create_status): $create_log"
             fi
           fi
 
+          # نسخة بالاسم الثابت (رابط latest/download الثابت في README)
+          if [ -n "$published_tag" ] && [ -f "$ALIAS_PATH" ]; then
+            echo "alias uploaded: $(gh release upload "$published_tag" "$ALIAS_PATH#$ALIAS" 2>&1 | tail -1)"
+          fi
+
           {
             echo "### Publish summary"
+            echo "- version: **$VERSION** (versionCode $VERSION_CODE)"
             echo "- local asset size: ${LOCAL_SIZE:-missing}"
             echo "- published tag: ${published_tag:-none}"
             if [ -n "$published_tag" ]; then
-              echo "- remote asset size: $(remote_size "$published_tag")"
+              echo "- remote asset size: $(remote_size "$published_tag" "$NAME")"
+              echo "- assets: $NAME + $ALIAS"
             fi
           } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null
 
