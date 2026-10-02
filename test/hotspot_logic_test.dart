@@ -361,13 +361,24 @@ void main() {
     });
 
     test('تهريب الفواصل وعلامات الاقتباس', () {
+      // نبني التوقّع من نفس القيم لتفادي أي اختلاف في المحارف غير المرئية
+      const name = 'a,b';
+      const pass = 'x"y';
+      const note = 'ملاحظة, مع فاصلة';
+
       final csv = VoucherExporter.toCsv(const [
-        VoucherPrintItem(username: 'a,b', password: 'x"y', note: 'ملاحظة، مع فاصلة'),
+        VoucherPrintItem(username: name, password: pass, note: note),
       ]);
 
-      expect(csv, contains('"a,b"'));
+      expect(csv, contains('"$name"'));
       expect(csv, contains('"x""y"'));
-      expect(csv, contains('"ملاحظة، مع فاصلة"'));
+      expect(csv, contains('"$note"'));
+
+      // القيمة بلا فاصلة تبقى بلا علامات اقتباس
+      final plain = VoucherExporter.toCsv(const [
+        VoucherPrintItem(username: '1001', password: '9182'),
+      ]);
+      expect(plain, contains('1001,9182'));
     });
 
     test('أوامر RouterOS جاهزة للاستخدام اليدوي', () {
