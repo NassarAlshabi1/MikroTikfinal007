@@ -29,9 +29,11 @@
 | 14 | **مراقبة حركة البيانات لكل منفذ** | `getInterfaceTraffic()` + تحديث كل 6 ثوانٍ | `/interface/monitor-traffic` |
 | 15 | **تشفير بيانات دخول الراوترات** | `lib/services/secure_store.dart` (AES-256-CBC بمفتاح على الجهاز) + ترقية تلقائية للبيانات القديمة | — |
 | 16 | **إصلاح ثغرة SQL** | `lib/api/database_api.dart` → تهريب علامة الاقتباس في `quoteValue` | — |
-| 17 | **التحقق الآلي من الكود (CI)** | `.github/workflows/flutter-ci.yml` → `flutter analyze` + بناء APK اختياري | GitHub Actions |
+| 17 | **حذف المستخدمين المنتهين بفحص ذكي** | `lib/services/mikrotik_duration.dart` (محلّل مدد) + `lib/api/expired_users_api.dart` + صفحة `views/cards/expired_users_page.dart` | `/tool/user-manager/user/remove` · `/user-manager/user/remove` |
+| 18 | **التحقق الآلي من الكود (CI)** | `.github/workflows/flutter-ci.yml` → `flutter analyze` + بناء APK اختياري | GitHub Actions |
 
-**حالة التحقق الآلي:** ✅ `flutter analyze` = **صفر أخطاء** (17 تحذيرًا متبقية كلها في الكود المستورد القديم: دوال غير مستخدمة/كود ميت، وهي غير مُفشِلة).
+**حالة التحقق الآلي:** ✅ اختبارات وحدة لمحلّل المدد تنجح (`flutter test test/mikrotik_duration_test.dart`)
+و ✅ `flutter analyze` = **صفر أخطاء** (17 تحذيرًا متبقية كلها في الكود المستورد القديم: دوال غير مستخدمة/كود ميت، وهي غير مُفشِلة).
 
 ---
 

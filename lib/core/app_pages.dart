@@ -88,6 +88,10 @@ import '../views/distributors/distributor_form_page.dart';
 import '../views/distributors/distributor_statement_page.dart';
 import '../views/reports/monitor_page.dart';
 
+// ======== المستخدمون المنتهون ========
+import '../controllers/cards/expired_users_controller.dart';
+import '../views/cards/expired_users_page.dart';
+
 // ======== أدوات الصيانة ========
 import '../controllers/maintenance/maintenance_hub_controller.dart';
 import '../controllers/maintenance/tool_list_controller.dart';
@@ -118,6 +122,7 @@ class AppRoutes {
   static const String cardDetails = '/cards/card_details';
   static const String cardSessions = '/cards/card_sessions';
   static const String packages = '/cards/packages';
+  static const String expiredUsers = '/cards/expired_users';
   static const String addProfile = '/cards/profiles/add_profile';
   static const String editProfile = '/cards/profiles/edit_profile';
 
@@ -191,6 +196,11 @@ class AppPages {
       name: AppRoutes.addSingleCard, 
       page: () => const AddSingleCardPage(),
       binding: BindingsBuilder(() => Get.lazyPut(() => AddSingleCardController())),
+    ),
+    GetPage(
+      name: AppRoutes.expiredUsers,
+      page: () => const ExpiredUsersPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => ExpiredUsersController())),
     ),
     GetPage(
       name: AppRoutes.packages, 
@@ -341,7 +351,11 @@ class AppPages {
         () => DistributorStatementController(Get.arguments as DistributorModel),
       )),
     ),
-    // ======== أدوات الصيانة ========
+    // ======== المستخدمون المنتهون ========
+import '../controllers/cards/expired_users_controller.dart';
+import '../views/cards/expired_users_page.dart';
+
+// ======== أدوات الصيانة ========
     GetPage(
       name: AppRoutes.maintenance,
       page: () => const MaintenanceHubPage(),

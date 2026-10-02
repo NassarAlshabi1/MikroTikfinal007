@@ -260,7 +260,7 @@ class DiagnosticsController extends GetxController with GetSingleTickerProviderS
 
   Future<void> stopSniffer() async {
     isSnifferBusy.value = true;
-    final response = await MaintenanceApi.stopSniffer();
+    final response = await MaintenanceApi.snifferStop();
     isSnifferBusy.value = false;
 
     await showMsgDialog(

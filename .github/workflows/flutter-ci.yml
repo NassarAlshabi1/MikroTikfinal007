@@ -41,6 +41,9 @@ jobs:
       # ملاحظة: الكود الموروث (فرع controller الأصلي) يحتوي 17 تحذيرًا موجودًا مسبقًا
       # (دوال غير مستخدمة/كود ميت)، لذا نجعل التحذيرات والمعلومات غير مُفشِلة
       # مع إبقاء الأخطاء (errors) مُفشِلة للبناء.
+      - name: Unit tests (محلل مدد RouterOS والحذف الذكي)
+        run: flutter test test/mikrotik_duration_test.dart
+
       - name: flutter analyze
         id: analyze
         shell: bash

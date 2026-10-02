@@ -16,4 +16,9 @@ class CardsUnitController extends GetxController {
   void goToPackages() {
     Get.toNamed(AppRoutes.packages);
   }
+
+  // المستخدمون المنتهون (حذف ذكي)
+  void goToExpiredUsers() {
+    Get.toNamed(AppRoutes.expiredUsers);
+  }
 }

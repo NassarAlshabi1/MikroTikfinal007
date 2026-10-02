@@ -55,6 +55,17 @@ class CardsUnitPage extends GetView<CardsUnitController> {
 
                   const SizedBox(height: 15),
 
+                  // حذف المستخدمين المنتهين (فحص ذكي للمدة)
+                  MainActionCard(
+                    title: "المستخدمون المنتهون",
+                    subtitle: "فحص ذكي: من استهلك مدته كاملة فقط",
+                    icon: Icons.auto_delete_rounded,
+                    color: const Color(0xFFEF4444),
+                    onTap: controller.goToExpiredUsers,
+                  ),
+
+                  const SizedBox(height: 15),
+
                   const SectionTitle(title: "الاشتراكات والأسعار"),
 
                   // كرت الباقات والسرعات
