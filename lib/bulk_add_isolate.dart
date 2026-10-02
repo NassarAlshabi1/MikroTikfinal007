@@ -329,7 +329,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       final reason = failedAdds.isEmpty
           ? 'لم يتم إنشاء أي كرت على الراوتر.'
           : 'فشل إنشاء ${failedAdds.length} كرت: '
-                '${failedAdds.first['reason']}';
+              '${failedAdds.first['reason']}';
       throw FormatException(reason);
     }
 
@@ -517,8 +517,7 @@ String _generateUniqueUsername({
   final normalizedPrefix = CardNumberPolicy.toAsciiDigits(data.prefix);
   final randomPartLength = data.length - normalizedPrefix.length;
   for (var attempt = 0; attempt < maxAttemptsPerCard; attempt++) {
-    final username =
-        normalizedPrefix +
+    final username = normalizedPrefix +
         _generateRandomString(randomPartLength, data.charType);
     if (existingUsernames.add(username)) return username;
   }

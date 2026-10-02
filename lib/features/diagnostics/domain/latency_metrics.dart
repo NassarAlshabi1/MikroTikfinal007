@@ -42,9 +42,8 @@ class LatencyMetrics {
         .take(packetsSent)
         .toList(growable: false);
     final received = validSamples.length;
-    final loss = packetsSent == 0
-        ? null
-        : (packetsSent - received) * 100 / packetsSent;
+    final loss =
+        packetsSent == 0 ? null : (packetsSent - received) * 100 / packetsSent;
 
     if (validSamples.isEmpty) {
       return LatencyMetrics(
@@ -68,11 +67,10 @@ class LatencyMetrics {
     final jitter = validSamples.length < 2
         ? null
         : List<double>.generate(
-                validSamples.length - 1,
-                (index) =>
-                    (validSamples[index + 1] - validSamples[index]).abs(),
-              ).reduce((left, right) => left + right) /
-              (validSamples.length - 1);
+              validSamples.length - 1,
+              (index) => (validSamples[index + 1] - validSamples[index]).abs(),
+            ).reduce((left, right) => left + right) /
+            (validSamples.length - 1);
 
     return LatencyMetrics(
       packetsSent: packetsSent,

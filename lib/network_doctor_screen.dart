@@ -199,9 +199,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       final test = _tests[index];
       test.status = status;
       test.message = message;
-      test.checkedAt = status == DiagnosticStatus.running
-          ? null
-          : DateTime.now();
+      test.checkedAt =
+          status == DiagnosticStatus.running ? null : DateTime.now();
       if (status == DiagnosticStatus.running && id == 'latency') {
         test.latencyMs = null;
         test.latencyMetrics = null;
@@ -490,9 +489,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
           title: 'فقد حزم في الاتصال',
           description:
               'فُقد ${packetLoss.toStringAsFixed(0)}% من حزم اختبار الاتصال؛ قد يسبب ذلك تقطعاً أو تأخراً.',
-          severity: packetLoss >= 50
-              ? SeverityLevel.high
-              : SeverityLevel.medium,
+          severity:
+              packetLoss >= 50 ? SeverityLevel.high : SeverityLevel.medium,
           icon: Icons.network_check,
           steps: [
             'أعد الاختبار قرب الراوتر ثم عبر اتصال سلكي إن أمكن.',
@@ -713,10 +711,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
         !_hasCompletedTest
             ? 'لا توجد نتائج مكتملة بعد؛ شغّل الفحوصات قبل استخلاص نتيجة.'
             : hasIncompleteTests
-            ? 'لا توجد توصيات نهائية بعد؛ ما زالت فحوصات غير مكتملة.'
-            : hasAlerts
-            ? 'لم تُنشأ توصيات تلقائية؛ راجع حالات التحذير أو الفشل.'
-            : 'اكتملت الفحوصات دون توصيات.',
+                ? 'لا توجد توصيات نهائية بعد؛ ما زالت فحوصات غير مكتملة.'
+                : hasAlerts
+                    ? 'لم تُنشأ توصيات تلقائية؛ راجع حالات التحذير أو الفشل.'
+                    : 'اكتملت الفحوصات دون توصيات.',
       );
     } else {
       for (final recommendation in _recommendations) {
@@ -810,11 +808,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       _tests.any((test) => test.status == DiagnosticStatus.running);
 
   bool get _hasCompletedTest => _tests.any(
-    (test) =>
-        test.status == DiagnosticStatus.success ||
-        test.status == DiagnosticStatus.warning ||
-        test.status == DiagnosticStatus.error,
-  );
+        (test) =>
+            test.status == DiagnosticStatus.success ||
+            test.status == DiagnosticStatus.warning ||
+            test.status == DiagnosticStatus.error,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -1097,9 +1095,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
   Widget _buildProgressCard() {
     final theme = Theme.of(context);
     final progress = _tests.isEmpty ? 0.0 : _countCompleted / _tests.length;
-    final runningCount = _tests
-        .where((test) => test.status == DiagnosticStatus.running)
-        .length;
+    final runningCount =
+        _tests.where((test) => test.status == DiagnosticStatus.running).length;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1166,8 +1163,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
           Text(
             title,
             style: TextStyle(
-              color:
-                  Theme.of(context).textTheme.bodySmall?.color ??
+              color: Theme.of(context).textTheme.bodySmall?.color ??
                   Theme.of(context).textTheme.bodySmall?.color,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -1189,8 +1185,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color:
-                  Theme.of(context).textTheme.titleLarge?.color ??
+              color: Theme.of(context).textTheme.titleLarge?.color ??
                   Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -1239,8 +1234,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     Text(
                       t.title,
                       style: TextStyle(
-                        color:
-                            Theme.of(context).textTheme.titleMedium?.color ??
+                        color: Theme.of(context).textTheme.titleMedium?.color ??
                             Theme.of(context).colorScheme.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1250,8 +1244,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     Text(
                       t.description,
                       style: TextStyle(
-                        color:
-                            Theme.of(context).textTheme.bodySmall?.color ??
+                        color: Theme.of(context).textTheme.bodySmall?.color ??
                             Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 13,
                       ),
@@ -1293,8 +1286,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                 children: [
                   Icon(
                     Icons.timer,
-                    color:
-                        Theme.of(
+                    color: Theme.of(
                           context,
                         ).iconTheme.color?.withValues(alpha: 0.7) ??
                         Theme.of(context).textTheme.bodySmall?.color,
@@ -1305,8 +1297,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     child: Text(
                       _formatLatencyMetrics(t.latencyMetrics!),
                       style: TextStyle(
-                        color:
-                            Theme.of(context).textTheme.bodyMedium?.color ??
+                        color: Theme.of(context).textTheme.bodyMedium?.color ??
                             Theme.of(context).colorScheme.onSurface,
                         fontSize: 13,
                         height: 1.4,
@@ -1324,8 +1315,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                 children: [
                   Icon(
                     Icons.speed,
-                    color:
-                        Theme.of(
+                    color: Theme.of(
                           context,
                         ).iconTheme.color?.withValues(alpha: 0.7) ??
                         Theme.of(context).textTheme.bodySmall?.color,
@@ -1336,8 +1326,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     child: Text(
                       'التحميل: ${t.downloadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps • الرفع: ${t.uploadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps',
                       style: TextStyle(
-                        color:
-                            Theme.of(context).textTheme.bodyMedium?.color ??
+                        color: Theme.of(context).textTheme.bodyMedium?.color ??
                             Theme.of(context).colorScheme.onSurface,
                         fontSize: 14,
                       ),
@@ -1358,8 +1347,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             child: Text(
               t.message,
               style: TextStyle(
-                color:
-                    Theme.of(context).textTheme.bodySmall?.color ??
+                color: Theme.of(context).textTheme.bodySmall?.color ??
                     Theme.of(context).textTheme.bodySmall?.color,
                 fontSize: 13,
               ),
@@ -1453,18 +1441,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
 
   Widget _buildRecommendationsSection() {
     final hasIncompleteTests = _countPending > 0 || _isAnyTestRunning;
-    final allClear =
-        _hasCompletedTest &&
+    final allClear = _hasCompletedTest &&
         !hasIncompleteTests &&
         _countWarning == 0 &&
         _countError == 0;
     final emptyMessage = !_hasCompletedTest
         ? 'شغّل الفحوصات أولاً لعرض توصيات مبنية على النتائج.'
         : hasIncompleteTests
-        ? 'لا توجد توصيات نهائية بعد؛ أكمل الفحوصات المتبقية للحصول على صورة أوضح.'
-        : allClear
-        ? 'اكتملت الفحوصات دون ظهور مؤشرات تتطلب توصية.'
-        : 'لا توجد توصيات تلقائية، لكن راجع حالات التحذير أو الفشل في تبويب الفحوصات.';
+            ? 'لا توجد توصيات نهائية بعد؛ أكمل الفحوصات المتبقية للحصول على صورة أوضح.'
+            : allClear
+                ? 'اكتملت الفحوصات دون ظهور مؤشرات تتطلب توصية.'
+                : 'لا توجد توصيات تلقائية، لكن راجع حالات التحذير أو الفشل في تبويب الفحوصات.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1476,8 +1463,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color:
-                  Theme.of(context).textTheme.titleLarge?.color ??
+              color: Theme.of(context).textTheme.titleLarge?.color ??
                   Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -1506,8 +1492,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                   child: Text(
                     emptyMessage,
                     style: TextStyle(
-                      color:
-                          Theme.of(context).textTheme.bodyMedium?.color ??
+                      color: Theme.of(context).textTheme.bodyMedium?.color ??
                           Theme.of(context).colorScheme.onSurface,
                       fontSize: 15,
                     ),
@@ -1582,8 +1567,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                           child: Text(
                             r.title,
                             style: TextStyle(
-                              color:
-                                  Theme.of(
+                              color: Theme.of(
                                     context,
                                   ).textTheme.titleMedium?.color ??
                                   Theme.of(context).colorScheme.onSurface,
@@ -1616,8 +1600,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     Text(
                       r.description,
                       style: TextStyle(
-                        color:
-                            Theme.of(context).textTheme.bodySmall?.color ??
+                        color: Theme.of(context).textTheme.bodySmall?.color ??
                             Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 13,
                       ),
@@ -1631,8 +1614,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                 },
                 icon: Icon(
                   r.expanded ? Icons.expand_less : Icons.expand_more,
-                  color:
-                      Theme.of(
+                  color: Theme.of(
                         context,
                       ).iconTheme.color?.withValues(alpha: 0.6) ??
                       Theme.of(context).textTheme.bodySmall?.color,
@@ -1649,8 +1631,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             Text(
               'خطوات الحل:',
               style: TextStyle(
-                color:
-                    Theme.of(context).textTheme.titleSmall?.color ??
+                color: Theme.of(context).textTheme.titleSmall?.color ??
                     Theme.of(context).colorScheme.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -1689,7 +1670,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                         style: TextStyle(
                           color:
                               Theme.of(context).textTheme.bodyMedium?.color ??
-                              Theme.of(context).colorScheme.onSurface,
+                                  Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                         ),
                       ),
@@ -1718,8 +1699,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color:
-                  Theme.of(context).textTheme.titleLarge?.color ??
+              color: Theme.of(context).textTheme.titleLarge?.color ??
                   Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -1767,7 +1747,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                         style: TextStyle(
                           color:
                               Theme.of(context).textTheme.titleSmall?.color ??
-                              Theme.of(context).colorScheme.onSurface,
+                                  Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -1823,7 +1803,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                         style: TextStyle(
                           color:
                               Theme.of(context).textTheme.titleSmall?.color ??
-                              Theme.of(context).colorScheme.onSurface,
+                                  Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),

@@ -202,9 +202,8 @@ class SalesReportExporter {
 
   static String _csvCell(String value) {
     // Avoid spreadsheet formula execution for router-supplied values.
-    final safeValue = RegExp(r'^[\t\r\n ]*[=+\-@]').hasMatch(value)
-        ? "'$value"
-        : value;
+    final safeValue =
+        RegExp(r'^[\t\r\n ]*[=+\-@]').hasMatch(value) ? "'$value" : value;
     final escapedValue = safeValue.replaceAll('"', '""');
     return '"$escapedValue"';
   }

@@ -123,10 +123,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       final prefix = message.type == MessageType.user
           ? '👤 أنت'
           : message.type == MessageType.error
-          ? '❌ خطأ'
-          : message.type == MessageType.system
-          ? 'ℹ️ نظام'
-          : '🤖 AI';
+              ? '❌ خطأ'
+              : message.type == MessageType.system
+                  ? 'ℹ️ نظام'
+                  : '🤖 AI';
       buffer.writeln('[$prefix]');
       buffer.writeln(message.content);
       buffer.writeln();
@@ -269,9 +269,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     // نفّذ الأمر
     setState(() => _inputEnabled = false);
     try {
-      final result = await ref
-          .read(diagnosticsProvider.notifier)
-          .executeCommand(command);
+      final result =
+          await ref.read(diagnosticsProvider.notifier).executeCommand(command);
       // حدّث السجل
       ref.read(historyManagerProvider.notifier).refresh();
       if (mounted) {
@@ -492,8 +491,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               color: script.isDangerous
                   ? Theme.of(context).appColors.error
                   : (script.hasModerate
-                        ? Theme.of(context).appColors.warning
-                        : Theme.of(context).appColors.success),
+                      ? Theme.of(context).appColors.warning
+                      : Theme.of(context).appColors.success),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -632,9 +631,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     // تنفيذ السكربت عبر الـ provider
     setState(() => _inputEnabled = false);
     try {
-      final result = await ref
-          .read(diagnosticsProvider.notifier)
-          .executeScript(script);
+      final result =
+          await ref.read(diagnosticsProvider.notifier).executeScript(script);
       if (mounted) {
         if (result.overallSuccess) {
           showSuccessSnackBar(
@@ -823,8 +821,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     final riskColor = fix.risk == CommandRiskLevel.dangerous
         ? Theme.of(context).appColors.error
         : fix.risk == CommandRiskLevel.moderate
-        ? Theme.of(context).appColors.warning
-        : Theme.of(context).appColors.success;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.success;
 
     return ExpansionTile(
       leading: CircleAvatar(
@@ -1016,9 +1014,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
     for (final fix in safeFixes) {
       try {
-        final result = await ref
-            .read(diagnosticsProvider.notifier)
-            .applyAutoFix(fix);
+        final result =
+            await ref.read(diagnosticsProvider.notifier).applyAutoFix(fix);
         if (result.overallSuccess) {
           successCount++;
         } else {
@@ -1110,12 +1107,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   }
 
   Widget _buildStatusBar(DiagnosticsState state) {
-    final isGeminiFlash25 =
-        state.settings.provider == AiProvider.gemini &&
+    final isGeminiFlash25 = state.settings.provider == AiProvider.gemini &&
         state.settings.model == 'gemini-2.5-flash';
     final isOpenRouterFlash =
         state.settings.provider == AiProvider.openRouter &&
-        state.settings.model == 'google/gemini-2.5-flash';
+            state.settings.model == 'google/gemini-2.5-flash';
 
     return Container(
       width: double.infinity,
@@ -1127,8 +1123,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             state.settings.provider == AiProvider.openAI
                 ? Icons.smart_toy
                 : state.settings.provider == AiProvider.openRouter
-                ? Icons.swap_horiz
-                : Icons.auto_awesome,
+                    ? Icons.swap_horiz
+                    : Icons.auto_awesome,
             size: 16,
             color: state.settings.provider == AiProvider.openRouter
                 ? Theme.of(context).appColors.primary
@@ -1147,8 +1143,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         context,
                       ).appColors.primary.withValues(alpha: 0.25)
                     : isGeminiFlash25
-                    ? Theme.of(context).appColors.info.withValues(alpha: 0.25)
-                    : Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                        ? Theme.of(context)
+                            .appColors
+                            .info
+                            .withValues(alpha: 0.25)
+                        : Theme.of(context)
+                            .primaryColor
+                            .withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: isOpenRouterFlash
                     ? Border.all(
@@ -1157,12 +1158,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         ).appColors.primary.withValues(alpha: 0.5),
                       )
                     : isGeminiFlash25
-                    ? Border.all(
-                        color: Theme.of(
-                          context,
-                        ).appColors.info.withValues(alpha: 0.5),
-                      )
-                    : null,
+                        ? Border.all(
+                            color: Theme.of(
+                              context,
+                            ).appColors.info.withValues(alpha: 0.5),
+                          )
+                        : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1171,14 +1172,14 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     isOpenRouterFlash
                         ? Icons.swap_horiz
                         : isGeminiFlash25
-                        ? Icons.bolt
-                        : Icons.memory,
+                            ? Icons.bolt
+                            : Icons.memory,
                     size: 12,
                     color: isOpenRouterFlash
                         ? Theme.of(context).appColors.primary
                         : isGeminiFlash25
-                        ? Theme.of(context).appColors.info
-                        : Theme.of(context).textTheme.bodySmall?.color,
+                            ? Theme.of(context).appColors.info
+                            : Theme.of(context).textTheme.bodySmall?.color,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
@@ -1189,8 +1190,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         color: isOpenRouterFlash
                             ? Theme.of(context).appColors.primary
                             : isGeminiFlash25
-                            ? Theme.of(context).appColors.info
-                            : Theme.of(context).colorScheme.onSurface,
+                                ? Theme.of(context).appColors.info
+                                : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isOpenRouterFlash || isGeminiFlash25
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -1325,8 +1326,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ctx: ctx,
                 provider: AiProvider.openRouter,
                 model: model,
-                isSelected:
-                    settings.provider == AiProvider.openRouter &&
+                isSelected: settings.provider == AiProvider.openRouter &&
                     settings.model == model,
                 isRecommended: model == 'google/gemini-2.5-flash',
                 description: _openRouterModelDescription(model),
@@ -1364,8 +1364,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ctx: ctx,
                 provider: AiProvider.gemini,
                 model: model,
-                isSelected:
-                    settings.provider == AiProvider.gemini &&
+                isSelected: settings.provider == AiProvider.gemini &&
                     settings.model == model,
                 isRecommended: model == recommendedGemini,
                 description: _geminiModelDescription(model),
@@ -1403,8 +1402,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ctx: ctx,
                 provider: AiProvider.openAI,
                 model: model,
-                isSelected:
-                    settings.provider == AiProvider.openAI &&
+                isSelected: settings.provider == AiProvider.openAI &&
                     settings.model == model,
                 isRecommended: false,
                 description: _openAiModelDescription(model),
@@ -1482,8 +1480,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         color: isSelected
             ? Theme.of(context).appColors.info
             : (isRecommended
-                  ? Theme.of(context).appColors.warning
-                  : Theme.of(context).disabledColor),
+                ? Theme.of(context).appColors.warning
+                : Theme.of(context).disabledColor),
         size: 22,
       ),
       title: Row(
@@ -1500,8 +1498,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 color: isSelected
                     ? Theme.of(context).appColors.info
                     : (isRecommended
-                          ? Theme.of(context).appColors.warning
-                          : Theme.of(context).colorScheme.onSurface),
+                        ? Theme.of(context).appColors.warning
+                        : Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ),
@@ -1553,10 +1551,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             .read(aiSettingsNotifierProvider.notifier)
             .setProviderAndModel(provider, model);
         // حدّث الـ diagnostics notifier بالإعدادات الجديدة
-        final newSettings =
-            (ref.read(aiSettingsNotifierProvider).valueOrNull ??
-                    AiSettings.default_)
-                .copyWith(provider: provider, model: model);
+        final newSettings = (ref.read(aiSettingsNotifierProvider).valueOrNull ??
+                AiSettings.default_)
+            .copyWith(provider: provider, model: model);
         ref.read(diagnosticsProvider.notifier).updateSettings(newSettings);
         if (ctx.mounted) Navigator.of(ctx).pop();
       },
@@ -1704,9 +1701,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: state.isLoading
-                          ? null
-                          : _handleAgenticDiagnose,
+                      onPressed:
+                          state.isLoading ? null : _handleAgenticDiagnose,
                       icon: const Icon(Icons.psychology_outlined),
                       label: const Text('تشخيص عميق'),
                     ),
@@ -1911,9 +1907,8 @@ class _MessageBubble extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) _buildAvatar(context),
@@ -1931,8 +1926,8 @@ class _MessageBubble extends StatelessWidget {
                             context,
                           ).appColors.error.withValues(alpha: 0.1)
                         : isUser
-                        ? Theme.of(context).primaryColor
-                        : Theme.of(context).colorScheme.surface,
+                            ? Theme.of(context).primaryColor
+                            : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
@@ -2159,8 +2154,8 @@ class _MessageBubble extends StatelessWidget {
         isUser
             ? Icons.person
             : message.type == MessageType.error
-            ? Icons.error_outline
-            : Icons.smart_toy,
+                ? Icons.error_outline
+                : Icons.smart_toy,
         size: 18,
         color: Theme.of(context).colorScheme.onSurface,
       ),
@@ -2223,8 +2218,8 @@ class _CommandChip extends StatelessWidget {
     final riskEmoji = _riskLevel == CommandRiskLevel.dangerous
         ? '🚨'
         : _riskLevel == CommandRiskLevel.moderate
-        ? '⚠️'
-        : '✅';
+            ? '⚠️'
+            : '✅';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -2319,14 +2314,14 @@ class _ScriptCard extends StatelessWidget {
     final riskColor = script.isDangerous
         ? Theme.of(context).appColors.error
         : script.hasModerate
-        ? Theme.of(context).appColors.warning
-        : Theme.of(context).appColors.success;
+            ? Theme.of(context).appColors.warning
+            : Theme.of(context).appColors.success;
 
     final riskIcon = script.isDangerous
         ? Icons.dangerous
         : script.hasModerate
-        ? Icons.warning
-        : Icons.check_circle;
+            ? Icons.warning
+            : Icons.check_circle;
 
     return Container(
       padding: const EdgeInsets.all(10),

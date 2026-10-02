@@ -239,12 +239,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         if (!_selectedNames.contains(card.name)) continue;
         if (card.mikrotikId == null || card.mikrotikId!.isEmpty) continue;
         try {
-          await client
-              .talk([
-                '/tool/user-manager/user/remove',
-                '=.id=${card.mikrotikId}',
-              ])
-              .timeout(const Duration(seconds: 10));
+          await client.talk([
+            '/tool/user-manager/user/remove',
+            '=.id=${card.mikrotikId}',
+          ]).timeout(const Duration(seconds: 10));
           deleted++;
         } catch (_) {}
       }
@@ -462,10 +460,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
               ),
             )
           : _errorMessage != null
-          ? _buildError(theme)
-          : !_hasSynced
-          ? _buildIdle(theme)
-          : _buildContent(theme),
+              ? _buildError(theme)
+              : !_hasSynced
+                  ? _buildIdle(theme)
+                  : _buildContent(theme),
     );
   }
 
@@ -884,9 +882,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected
-              ? chipColor.withValues(alpha: 0.15)
-              : Colors.transparent,
+          color:
+              selected ? chipColor.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
@@ -961,8 +958,7 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
 
   Widget _buildToolbar(ThemeData theme) {
     final cs = theme.colorScheme;
-    final allVisibleSelected =
-        _filteredCards.isNotEmpty &&
+    final allVisibleSelected = _filteredCards.isNotEmpty &&
         _filteredCards.every((c) => _selectedNames.contains(c.name));
 
     return Container(
@@ -1129,8 +1125,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             color: isSelected
                 ? theme.primaryColor
                 : expired
-                ? context.theme.appColors.error.withValues(alpha: 0.3)
-                : cs.outline.withValues(alpha: 0.15),
+                    ? context.theme.appColors.error.withValues(alpha: 0.3)
+                    : cs.outline.withValues(alpha: 0.15),
             width: isSelected ? 1.5 : 0.5,
           ),
         ),
