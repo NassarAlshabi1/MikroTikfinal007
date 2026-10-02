@@ -314,11 +314,12 @@ jobs:
           BUILD_NUMBER="${{ steps.version.outputs.build_number }}"
           VERSION_CODE="${{ steps.version.outputs.version_code }}"
 
-          ASSET="release_out/${{ steps.version.outputs.asset_name }}"
-          NAME="${{ steps.version.outputs.asset_name }}"
-          # اسم ثابت يُرفع كنسخة إضافية ليبقى رابط releases/latest/download صالحًا دائمًا
-          ALIAS="MikroNet-2.0.0.0-arm64.apk"
-          ALIAS_PATH="release_out/$ALIAS"
+          # الاسم الثابت هو المرفق الأساسي (يضمن بقاء رابط releases/latest/download صالحًا دائمًا)
+          NAME="MikroNet-2.0.0.0-arm64.apk"
+          ASSET="release_out/$NAME"
+          # نسخة إضافية باسم يحمل الإصدار — إضافة اختيارية لا تُفشل النشر إن تعذّرت
+          VERSIONED="${{ steps.version.outputs.asset_name }}"
+          VERSIONED_PATH="release_out/$VERSIONED"
 
           LOCAL_SIZE=$(stat -c%s "$ASSET" 2>/dev/null)
           echo "version=$VERSION code=$VERSION_CODE asset=$NAME size=${LOCAL_SIZE:-missing}"
@@ -326,6 +327,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG="${GITHUB_REF_NAME}"; else TAG="v2.0.0.0-arm64"; fi
 
           NOTES="إصدار **MikroNet ${VERSION}** (versionCode ${VERSION_CODE}) — للأجهزة الحديثة (arm64-v8a)
+          ملف التحميل باسم ثابت \`MikroNet-2.0.0.0-arm64.apk\`، ورقم الإصدار يظهر في معلومات التطبيق بعد التثبيت وفي عنوان هذا الإصدار.
 
           الميزات: إدارة Hotspot كاملة (قسائم + جلسات + باقات + رفع صفحة الدخول) · حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · فحص الكيبل · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · خط Cairo · واجهة عربية RTL.
 
@@ -374,9 +376,15 @@ jobs:
             fi
           fi
 
-          # نسخة بالاسم الثابت (رابط latest/download الثابت في README)
-          if [ -n "$published_tag" ] && [ -f "$ALIAS_PATH" ]; then
-            echo "alias uploaded: $(gh release upload "$published_tag" "$ALIAS_PATH#$ALIAS" 2>&1 | tail -1)"
+          # نسخة إضافية باسم يحمل الإصدار (اختيارية: الفشل هنا لا يؤثر على النشر)
+          if [ -n "$published_tag" ] && [ -f "$VERSIONED_PATH" ]; then
+            alias_log=$(gh release upload "$published_tag" "$VERSIONED_PATH#$VERSIONED" 2>&1)
+            alias_status=$?
+            if [ "$alias_status" = "0" ]; then
+              echo "::notice::alias asset uploaded: $VERSIONED"
+            else
+              echo "::warning::alias asset skipped (exit=$alias_status): $(echo "$alias_log" | tail -1)"
+            fi
           fi
 
           {
@@ -386,7 +394,7 @@ jobs:
             echo "- published tag: ${published_tag:-none}"
             if [ -n "$published_tag" ]; then
               echo "- remote asset size: $(remote_size "$published_tag" "$NAME")"
-              echo "- assets: $NAME + $ALIAS"
+              echo "- primary asset: $NAME (ثابت) + $VERSIONED (اختياري)"
             fi
           } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null
 

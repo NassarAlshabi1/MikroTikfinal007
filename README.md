@@ -210,7 +210,8 @@ flutter build apk --split-per-abi
 - **أحدث إصدار (تحميل مباشر بلا تسجيل دخول) — رابط ثابت:**
   [`MikroNet-2.0.0.0-arm64.apk`](https://github.com/NassarAlshabi1/MikroTikfinal007/releases/latest/download/MikroNet-2.0.0.0-arm64.apk)
   (~10 MB) — يشير دائمًا إلى **أحدث إصدار**: [صفحة الإصدارات](https://github.com/NassarAlshabi1/MikroTikfinal007/releases/latest).
-  كل إصدار يُرفق أيضًا باسم يحمل رقمه، مثال: `MikroNet-2.0.0.46-arm64.apk`.
+  اسم الملف ثابت ليبقى الرابط صالحًا، و**رقم الإصدار** يظهر في عنوان صفحة الإصدار
+  (مثل `MikroNet 2.0.0.46`) وداخل التطبيق في «معلومات التطبيق» بعد التثبيت.
 - الملف **للأجهزة الحديثة فقط (arm64-v8a)** — لا يعمل على الأجهزة القديمة 32-بت (armeabi-v7a)
   ولا على المحاكيات (x86_64). لبناء نسخة لكل المعماريات: `flutter build apk --split-per-abi`.
 - **الإصدار ورقم البناء يرتفعان تلقائيًا مع كل بناء**: كل APK جديد يأخذ
