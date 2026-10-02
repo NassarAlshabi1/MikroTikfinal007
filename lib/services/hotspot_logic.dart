@@ -708,10 +708,10 @@ class HotspotLoginPageValidator {
         ));
       }
       if (!lower.contains('name="viewport"')) {
-        issues.add(const LoginIssueIssuePlaceholder.viewportWarning);
+        issues.add(LoginPageIssues.viewportWarning);
       }
       if (!lower.contains('charset')) {
-        issues.add(const LoginIssueIssuePlaceholder.charsetInfo);
+        issues.add(LoginPageIssues.charsetInfo);
       }
     }
 
@@ -761,7 +761,7 @@ class HotspotLoginPageValidator {
 }
 
 /// رسائل جاهزة (const) لتفادي تكرار الإنشاء.
-class LoginIssueIssuePlaceholder {
+class LoginPageIssues {
   static const viewportWarning = LoginPageIssue(
     LoginIssueSeverity.warning,
     'الوسم <meta name="viewport"> غير موجود — الصفحة قد تظهر بحجم غير مناسب على الهاتف',
