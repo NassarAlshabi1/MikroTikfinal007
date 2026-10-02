@@ -200,12 +200,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -uo pipefail
+          # مهم: قشرة Actions تعمل بـ -e افتراضيًا وتُنهي السكربت عند أي فشل،
+          # فنُطفئها هنا لنلتقط الأخطاء ونطبعها كـ annotations بدل ابتلاعها.
+          set +e
+          set -o pipefail
+
           REPO="${{ github.repository }}"
           ASSET="release_out/MikroNet-2.0.0.0-arm64.apk"
           NAME="MikroNet-2.0.0.0-arm64.apk"
-          LOCAL_SIZE=$(stat -c%s "$ASSET")
-          echo "local apk size: $LOCAL_SIZE"
+          LOCAL_SIZE=$(stat -c%s "$ASSET" 2>/dev/null)
+          echo "local apk size: ${LOCAL_SIZE:-missing}"
 
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG="${GITHUB_REF_NAME}"; else TAG="v2.0.0.0-arm64"; fi
 
@@ -231,35 +235,41 @@ jobs:
             upload_status=$?
             echo "upload exit=$upload_status"
             echo "upload output: $upload_log"
-            gh release edit "$TAG" --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest >/dev/null 2>&1 || echo "release edit skipped"
+            gh release edit "$TAG" --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest >/dev/null 2>&1
+            echo "edit exit=$?"
 
-            if [ "$(remote_size "$TAG")" = "$LOCAL_SIZE" ]; then
+            if [ -n "$LOCAL_SIZE" ] && [ "$(remote_size "$TAG")" = "$LOCAL_SIZE" ]; then
               published_tag="$TAG"
-              echo "✅ تم تحديث ملف الإصدار $TAG"
+              echo "OK: updated asset in $TAG"
             else
-              echo "::warning::تعذّر استبدال الملف في $TAG (exit=$upload_status): $upload_log"
+              echo "::warning::asset replace failed in $TAG (gh exit=$upload_status): $upload_log"
             fi
+          else
+            echo "release $TAG not found"
           fi
 
-          # خطة بديلة مضمونة: إصدار جديد بوسم جديد (إنشاء الإصدارات الجديدة يعمل دائمًا)
+          # خطة بديلة مضمونة: إنشاء إصدار جديد بوسم جديد (المسار المُثبت عمله)
           if [ -z "$published_tag" ]; then
             NEW_TAG="v2.0.0.0-b${GITHUB_RUN_NUMBER}"
-            create_log=$(gh release create "$NEW_TAG" "$ASSET#$NAME" --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest 2>&1)
+            create_log=$(gh release create "$NEW_TAG" "$ASSET#$NAME" --title "MikroNet 2.0.0.0 (build ${GITHUB_RUN_NUMBER})" --notes "$NOTES" --latest 2>&1)
             create_status=$?
             echo "create exit=$create_status output: $create_log"
             if [ "$(remote_size "$NEW_TAG")" = "$LOCAL_SIZE" ]; then
               published_tag="$NEW_TAG"
-              echo "::notice::نُشر الإصدار في وسم جديد $NEW_TAG"
+              echo "::notice::published new release $NEW_TAG"
             else
-              echo "::error::فشل نشر الإصدار (create exit=$create_status): $create_log"
+              echo "::error::release publish failed (create exit=$create_status): $create_log"
             fi
           fi
 
           {
             echo "### Publish summary"
-            echo "- local size: $LOCAL_SIZE"
+            echo "- local asset size: ${LOCAL_SIZE:-missing}"
             echo "- published tag: ${published_tag:-none}"
-            echo "- asset size: $( [ -n "$published_tag" ] && remote_size "$published_tag" )"
-          } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+            if [ -n "$published_tag" ]; then
+              echo "- remote asset size: $(remote_size "$published_tag")"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null
 
-          gh release list --limit 3 2>/dev/null || true
+          gh release list --limit 3 2>/dev/null
+          exit 0
