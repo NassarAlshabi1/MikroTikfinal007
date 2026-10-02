@@ -8,7 +8,7 @@ void main() {
       expect(result, isNotNull);
       expect(
         result,
-        const Duration(weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5),
+        const Duration(days: 9, hours: 3, minutes: 4, seconds: 5),
       );
     });
 
@@ -23,7 +23,7 @@ void main() {
     test('ترتيب مقلوب وفراغات', () {
       expect(
         MikrotikDuration.parse('5s4m3h2d1w'),
-        const Duration(weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5),
+        const Duration(days: 9, hours: 3, minutes: 4, seconds: 5),
       );
       expect(
         MikrotikDuration.parse('1d 2h 3m'),
@@ -50,7 +50,7 @@ void main() {
     test('مع بادئة أسابيع/أيام', () {
       expect(
         MikrotikDuration.parse('1w2d03:04:05'),
-        const Duration(weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5),
+        const Duration(days: 9, hours: 3, minutes: 4, seconds: 5),
       );
       expect(
         MikrotikDuration.parse('2d12:00:00'),
@@ -89,7 +89,7 @@ void main() {
       expect(MikrotikDuration.format(const Duration(seconds: 45)), '45s');
       expect(MikrotikDuration.format(const Duration(minutes: 30)), '30m');
       expect(
-        MikrotikDuration.format(const Duration(weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5)),
+        MikrotikDuration.format(const Duration(days: 9, hours: 3, minutes: 4, seconds: 5)),
         '1w2d3h4m5s',
       );
       expect(MikrotikDuration.format(const Duration(days: 1, hours: 2)), '1d2h');
