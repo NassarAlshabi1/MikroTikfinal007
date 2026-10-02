@@ -61,7 +61,14 @@ class RouterOSClient {
       _buffer.clear();
 
       if (useSsl) {
-        _secureSocket = await SecureSocket.connect(address, port, context: context, timeout: timeout);
+        _secureSocket = await SecureSocket.connect(
+          address,
+          port,
+          context: context,
+          timeout: timeout,
+          // شهادات RouterOS ذاتية التوقيع (self-signed) ⇒ نقبلها داخل الشبكة المحلية
+          onBadCertificate: (_) => true,
+        );
         _socket = _secureSocket;
       } else {
         _socket = await Socket.connect(address, port, timeout: timeout);

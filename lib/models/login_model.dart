@@ -16,14 +16,15 @@ class LoginModel {
   });
 
   static LoginModel fromDatabase(Map data){
+    // متين ضد القيم الفارغة/التالفة في قاعدة البيانات (لا يُسقط التطبيق)
     return LoginModel(
-      id: data["id"], 
-      hostAddress: data["host"], 
-      username: data["username"], 
-      password: data["password"], 
-      port: int.parse(data["port"]), 
-      networkName: data["name"]
-    ); 
+      id: (data["id"] is int) ? data["id"] : int.tryParse('${data["id"]}') ?? 0,
+      hostAddress: '${data["host"] ?? ''}',
+      username: '${data["username"] ?? ''}',
+      password: '${data["password"] ?? ''}',
+      port: int.tryParse('${data["port"]}') ?? 8728,
+      networkName: '${data["name"] ?? ''}',
+    );
   }
 
   Map<String, dynamic> toDatabase(){

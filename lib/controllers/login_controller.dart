@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../core/app_pages.dart';
 import '/models/login_model.dart';
+import '/services/connection_errors.dart';
 import '/models/response.dart';
 import '/api/login_api.dart';
 import 'dialog_helper.dart';
@@ -20,6 +21,10 @@ class LoginController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // منفذ API الافتراضي في RouterOS (يمكن تغييره إلى 8729 للاتصال المشفّر)
+    if (portController.text.trim().isEmpty) {
+      portController.text = ConnectionErrors.defaultPort.toString();
+    }
     _initSavedData();
   }
 
@@ -47,14 +52,20 @@ class LoginController extends GetxController {
   Future<void> connectToRouter() async {
     if (!_validateInputs()) return;
 
-    // 2. تجهيز المودل
+    // 2. تجهيز المودل (معالجة آمنة للمنفذ تدعم الأرقام العربية)
+    final port = ConnectionErrors.parsePort(portController.text);
+    if (port == null) {
+      _showSnackbar("تنبيه", "المنفذ غير صالح — اكتب رقمًا بين 1 و 65535 (الافتراضي 8728)", isError: true);
+      return;
+    }
+
     final router = LoginModel(
       id: 1,
       hostAddress: hostController.text.trim(),
       username: userController.text.trim(),
       password: passwordController.text.trim(),
-      port: int.parse(portController.text.trim()),
-      networkName: (nameController.text.trim().isEmpty ? null : nameController.text.trim()).toString(),
+      port: port,
+      networkName: nameController.text.trim(),
     );
 
     _showLoadingDialog("جاري الاتصال بالراوتر...");
@@ -78,13 +89,19 @@ class LoginController extends GetxController {
   Future<void> addRouterData() async {
     if (!_validateInputs()) return;
     
+    final port = ConnectionErrors.parsePort(portController.text);
+    if (port == null) {
+      _showSnackbar("تنبيه", "المنفذ غير صالح — اكتب رقمًا بين 1 و 65535 (الافتراضي 8728)", isError: true);
+      return;
+    }
+
     final router = LoginModel(
       id: 1,
       hostAddress: hostController.text.trim(),
       username: userController.text.trim(),
       password: passwordController.text.trim(),
-      port: int.parse(portController.text.trim()),
-      networkName: (nameController.text.trim().isEmpty ? null : nameController.text.trim()).toString(),
+      port: port,
+      networkName: nameController.text.trim(),
     );
 
     _showLoadingDialog("جاري حفظ الإعدادات...");
@@ -138,7 +155,10 @@ class LoginController extends GetxController {
               final item = savedRouters[index];
               return ListTile(
                 leading: const Icon(Icons.router, color: Color(0xFF38BDF8)),
-                title: Text(item.networkName , style: const TextStyle(color: Colors.white)),
+                title: Text(
+                  item.networkName.trim().isEmpty ? 'بدون اسم' : item.networkName,
+                  style: const TextStyle(color: Colors.white),
+                ),
                 subtitle: Text("User: ${item.username}", style: const TextStyle(color: Colors.white70)),
                 trailing: IconButton(onPressed: (){
                   showConfirmDialog(message: "confirm", onConfirm: ()async{
@@ -154,6 +174,9 @@ class LoginController extends GetxController {
                   userController.text = item.username;
                   passwordController.text = item.password;
                   portController.text = item.port.toString();
+                  if (ConnectionErrors.parsePort(portController.text) == null) {
+                    portController.text = ConnectionErrors.defaultPort.toString();
+                  }
                   nameController.text = item.networkName ;
                   if (Get.isSnackbarOpen) {
                     Get.closeAllSnackbars();

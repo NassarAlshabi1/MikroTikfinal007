@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart test/hotspot_logic_test.dart > test_output.txt 2>&1
+          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart test/hotspot_logic_test.dart test/connection_errors_test.dart > test_output.txt 2>&1
           status=$?
           echo "unit_tests exit=$status"
           tail -n 40 test_output.txt
@@ -173,6 +173,17 @@ jobs:
               echo "::error::APK يحتوي مكتبات 32-بت (armeabi/x86) — المطلوب arm64 فقط"; exit 1
             fi
             echo "✅ لا توجد مكتبات 32-بت — الملف للأجهزة الحديثة فقط"
+
+            # ⚠️ بوابة حاسمة: بدون صلاحية INTERNET لا يعمل أي اتصال بالراوتر في نسخة الإصدار
+            PERMS=$("$AAPT" dump permissions "$APK" 2>/dev/null || true)
+            echo "== صلاحيات APK =="
+            echo "$PERMS"
+            if echo "$PERMS" | grep -q "android.permission.INTERNET"; then
+              echo "✅ صلاحية INTERNET موجودة في نسخة الإصدار"
+            else
+              echo "::error::صلاحية INTERNET غير موجودة في APK — سيفشل تسجيل الدخول على الأجهزة"
+              exit 1
+            fi
           fi
 
       # إعادة تسمية الملف باسم الإصدار ليكون التحميل واضحًا

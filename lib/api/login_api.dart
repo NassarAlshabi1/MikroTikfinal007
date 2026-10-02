@@ -1,5 +1,6 @@
 import '/models/response.dart';
 import '/models/login_model.dart';
+import '/services/connection_errors.dart';
 import '/services/mikrotik_client.dart';
 import '/services/secure_store.dart';
 import 'database_api.dart';
@@ -108,16 +109,31 @@ class LoginApi {
     }
   }
   static Future<AppResponse> loginToMikrotik(LoginModel router) async{
-    MikrotikClient.init(address: router.hostAddress, user: router.username, password: router.password, port: router.port,useSsl: false);
-    //MikrotikClient.init(address: "127.0.0.1", user: "admin", password: "admin", port: 8727,useSsl: false);
+    // المنفذ 8729 = api-ssl ⇒ اتصال مشفّر، وما عداه اتصال عادي (8728)
+    final port = ConnectionErrors.parsePort(router.port.toString());
+    if (port == null) {
+      return AppResponse(
+        status: false,
+        message: 'المنفذ غير صالح — اكتب رقمًا بين 1 و 65535 (الافتراضي 8728).',
+      );
+    }
+
+    MikrotikClient.init(
+      address: router.hostAddress,
+      user: router.username,
+      password: router.password,
+      port: port,
+      useSsl: ConnectionErrors.isSecurePort(port),
+    );
     // راوتر جديد = إصدار قد يختلف (v6/v7) ← نُصفّر المسارات المخزّنة
     ExpiredUsersApi.resetPaths();
 
-    try {  
-      var result= await MikrotikClient.login();
+    try {
+      var result = await MikrotikClient.login();
       return AppResponse(status: result, message: "");
     } catch (e) {
-      return AppResponse(status: false, message: e.toString());
+      // رسالة عربية واضحة بدل نص الخطأ التقني
+      return AppResponse(status: false, message: ConnectionErrors.describe(e));
     }
   }
 }

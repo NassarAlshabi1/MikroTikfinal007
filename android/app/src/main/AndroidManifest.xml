@@ -1,4 +1,16 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ⚠️ حرج: بدونه لا يستطيع تطبيق الإصدار (release) تنفيذ أي اتصال شبكة
+         ⇒ يفشل تسجيل الدخول إلى الميكروتك. (كان موجودًا في الـdebug/profile فقط) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- حفظ ملفات PDF/CSV في الذاكرة المشتركة (/sdcard/PrintNet) -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage"/>
+
     <application
         android:label="MikroNet"
         android:name="${applicationName}"
