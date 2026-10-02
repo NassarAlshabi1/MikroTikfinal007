@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
-        fontFamily: 'myfont'
+        fontFamily: 'Cairo'
       ),
       initialRoute: AppRoutes.login, 
       getPages: AppPages.routes, 

@@ -400,7 +400,7 @@ Widget buildFieldPosition(
           child: Text(
               text,
               style: TextStyle(
-                  fontFamily: "arial",
+                  fontFamily: "Cairo",
                   fontSize: fontSize,
                   fontWeight:FontWeight.bold
               )

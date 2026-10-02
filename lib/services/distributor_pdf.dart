@@ -8,12 +8,18 @@ import '../models/distributor_model.dart';
 /// تصدير كشف حساب الموزع كملف PDF ومشاركته/طباعته.
 class DistributorPdf {
   static pw.Font? _cachedFont;
+  static pw.Font? _boldFont;
 
+  /// خط **Cairo** (نفس خط الواجهة) — العادي للقراءة والعريض للعناوين.
   static Future<pw.Font?> _loadArabicFont() async {
     if (_cachedFont != null) return _cachedFont;
     try {
-      final data = await rootBundle.load('fonts/myfont.otf');
-      _cachedFont = pw.Font.ttf(data);
+      final regular = await rootBundle.load('fonts/cairo/Cairo_400Regular.ttf');
+      _cachedFont = pw.Font.ttf(regular);
+      try {
+        final bold = await rootBundle.load('fonts/cairo/Cairo_700Bold.ttf');
+        _boldFont = pw.Font.ttf(bold);
+      } catch (_) {}
       return _cachedFont;
     } catch (_) {
       return null;
@@ -31,7 +37,7 @@ class DistributorPdf {
 
     pw.TextStyle style({double size = 10, bool bold = false, PdfColor? color}) {
       return pw.TextStyle(
-        font: font,
+        font: bold ? (_boldFont ?? font) : font,
         fontSize: size,
         fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
         color: color ?? PdfColors.black,

@@ -143,7 +143,7 @@
 | **pdf + printing** | توليد وطباعة كروت الشبكة وتقارير PDF |
 | **encrypt + crypto** | حماية بيانات الاتصال والحسابات |
 | **file_picker + image_picker + permission_handler** | اختيار ملفات الصور والصلاحيات |
-| **charset** + RTL (`Directionality`) | واجهة عربية بالكامل وخط مخصص (`myfont`) |
+| **Cairo** (Google Fonts) + RTL | واجهة عربية بالكامل بخط Cairo بستة أوزان (400→900)، رخصة SIL OFL 1.1 |
 
 ## 📂 بنية المشروع
 
@@ -172,7 +172,7 @@
 │   ├── models/                   # النماذج (login, cards, users, sites, print, selles)
 │   ├── services/                 # MikroTik client / RouterOS client / SQLite
 │   └── views/                    # الواجهات (Views) وبنية مشتركة للـ widgets
-├── images/ , fonts/              # صور وقوالب الخطوط (myfont)
+├── images/ , fonts/cairo/        # صور + خط Cairo (6 أوزان TTF + رخصة OFL)
 ├── android/ ios/ web/ linux/ macos/ windows/
 ├── Dockerfile                    # بيئة بناء APK جاهزة (Flutter + Android SDK)
 └── pubspec.yaml
@@ -242,6 +242,15 @@ docker run --rm -v "$PWD/build:/app/build" mikronet
 | تشفير بيانات دخول الراوترات (AES-256) | ✅ مُنفّذة |
 | رفع صفحات Hotspot وتخصيص اسم الشبكة | ✅ مُنفّذة |
 | 🔜 إدارة اشتراكات PPPoE / Broadband | قيد التنفيذ |
+
+## 🔤 الخطوط
+
+التطبيق يستخدم خط **[Cairo](https://fonts.google.com/specimen/Cairo)** من Google Fonts في كل الواجهة
+(بستة أوزان: 400/500/600/700/800/900) وفي ملفات PDF المُصدَّرة (كشوف الموزعين وقسائم Hotspot).
+
+- الرخصة: **SIL Open Font License 1.1** — نصّها في `fonts/cairo/OFL.txt`، والاستخدام التجاري مسموح.
+- لاستبداله بخط آخر: ضع ملفات TTF في `fonts/` وحدّث قسم `fonts:` في `pubspec.yaml` ثم غيّر
+  `fontFamily` في `lib/main.dart` (وخط PDF في `lib/services/*_pdf.dart`).
 
 ## 🩺 إذا فشل تسجيل الدخول إلى الميكروتك
 

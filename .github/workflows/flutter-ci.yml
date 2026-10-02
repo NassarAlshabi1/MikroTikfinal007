@@ -184,6 +184,15 @@ jobs:
               echo "::error::صلاحية INTERNET غير موجودة في APK — سيفشل تسجيل الدخول على الأجهزة"
               exit 1
             fi
+
+            # خط Cairo يجب أن يكون مضمّنًا في الحزمة (وإلا ترجع الواجهة للخط الافتراضي)
+            if unzip -l "$APK" | grep -q "fonts/cairo/Cairo_400Regular.ttf"; then
+              echo "✅ خط Cairo مضمّن في APK:"
+              unzip -l "$APK" | grep "fonts/cairo" | awk '{print "   " $4}'
+            else
+              echo "::error::خط Cairo غير مضمّن في APK"
+              exit 1
+            fi
           fi
 
       # إعادة تسمية الملف باسم الإصدار ليكون التحميل واضحًا

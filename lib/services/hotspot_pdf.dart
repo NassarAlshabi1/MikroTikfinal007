@@ -7,15 +7,21 @@ import 'hotspot_logic.dart';
 
 /// طباعة **قسائم Hotspot** كملف PDF جاهز للقص (شبكة 3 أعمدة في صفحة A4).
 ///
-/// يُستخدم نفس خط الواجهة العربية (`fonts/myfont.otf`) لضمان ظهور النصوص صحيحة.
+/// يُستخدم خط **Cairo** نفسه المستخدم في الواجهة (Google Fonts) لضمان ظهور النصوص صحيحة.
 class HotspotVoucherPdf {
   static pw.Font? _cachedFont;
+  static pw.Font? _boldFont;
 
+  /// تحميل Cairo العادي + العريض (العريض اختياري: لو فشل نرجع للعادي).
   static Future<pw.Font?> _loadArabicFont() async {
     if (_cachedFont != null) return _cachedFont;
     try {
-      final data = await rootBundle.load('fonts/myfont.otf');
-      _cachedFont = pw.Font.ttf(data);
+      final regular = await rootBundle.load('fonts/cairo/Cairo_400Regular.ttf');
+      _cachedFont = pw.Font.ttf(regular);
+      try {
+        final bold = await rootBundle.load('fonts/cairo/Cairo_700Bold.ttf');
+        _boldFont = pw.Font.ttf(bold);
+      } catch (_) {}
       return _cachedFont;
     } catch (_) {
       return null;
@@ -174,7 +180,7 @@ class HotspotVoucherPdf {
     PdfColor color = PdfColors.black,
   }) {
     return pw.TextStyle(
-      font: font,
+      font: bold ? (_boldFont ?? font) : font,
       fontSize: size,
       fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
       color: color,
