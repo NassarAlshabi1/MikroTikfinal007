@@ -1,4 +1,4 @@
-package com.ztech.mikronet
+package com.miknet.marina
 
 import io.flutter.embedding.android.FlutterActivity
 

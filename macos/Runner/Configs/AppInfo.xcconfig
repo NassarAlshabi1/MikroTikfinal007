@@ -8,7 +8,7 @@
 PRODUCT_NAME = mikronet
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.ztech.mikronet
+PRODUCT_BUNDLE_IDENTIFIER = com.miknet.marina
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.ztech. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.miknet.marina. All rights reserved.

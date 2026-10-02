@@ -2,7 +2,8 @@
 
 # 🚀 ميكرونت — MikroNet
 
-> **الإصدار الحالي: `2.0.0.0`** (versionCode `2000`) — سجل التغييرات في [`CHANGELOG.md`](CHANGELOG.md)
+> **الإصدار الحالي: `2.0.0.0`** (versionCode `2000`) — معرّف التطبيق: `com.miknet.marina`
+> سجل التغييرات في [`CHANGELOG.md`](CHANGELOG.md)
 
 **النظام الأذكى لإدارة شبكات MikroTik والتحكم بالروتر من هاتفك**
 
