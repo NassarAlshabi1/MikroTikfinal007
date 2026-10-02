@@ -631,3 +631,19 @@ class CableDiagnostics {
     );
   }
 }
+
+/// تسمية عربية لدرجة الخطورة (تظهر في شارات الواجهة).
+extension CableSeverityLabel on CableSeverity {
+  String get severityLabel {
+    switch (this) {
+      case CableSeverity.ok:
+        return "سليم";
+      case CableSeverity.warning:
+        return "تحذير";
+      case CableSeverity.fault:
+        return "عطل";
+      case CableSeverity.unknown:
+        return "غير محدد";
+    }
+  }
+}

@@ -242,7 +242,7 @@ class CableTestPage extends GetView<CableTestController> {
                       style: const TextStyle(fontWeight: FontWeight.bold, color: _navy, fontSize: 14),
                     ),
                   ),
-                  _chip(result.supported ? result.severityLabel : "غير مدعوم", color),
+                  _chip(result.supported ? result.severity.severityLabel : "غير مدعوم", color),
                 ],
               ),
               const SizedBox(height: 10),
@@ -446,7 +446,7 @@ class CableTestPage extends GetView<CableTestController> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      diagnosis.severityLabel,
+                      diagnosis.severity.severityLabel,
                       style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -585,22 +585,6 @@ class CableTestPage extends GetView<CableTestController> {
         return _amber;
       case CablePairStatus.unknown:
         return _slate;
-    }
-  }
-}
-
-/// تسمية عربية لدرجة الخطورة (تُستخدم في الشارة).
-extension CableSeverityLabel on CableSeverity {
-  String get severityLabel {
-    switch (this) {
-      case CableSeverity.ok:
-        return "سليم";
-      case CableSeverity.warning:
-        return "تحذير";
-      case CableSeverity.fault:
-        return "عطل";
-      case CableSeverity.unknown:
-        return "غير محدد";
     }
   }
 }
