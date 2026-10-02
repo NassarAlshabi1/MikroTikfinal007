@@ -217,14 +217,15 @@ jobs:
 
           ملاحظة: هذا الإصدار موقّع بمفتاح التصحيح (debug keystore) للاستخدام والتجربة المباشرة."
           ASSET="release_out/MikroNet-2.0.0.0-arm64.apk"
+          # لا نُفشل المهمة إن تعذّر النشر — الـAPK يبقى مرفقًا مع الـartifact على أي حال
           if gh release view "$TAG" >/dev/null 2>&1; then
-            # إصدار قائم: استبدل/أضف الملف وحدّث الملاحظات
-            gh release upload "$TAG" "$ASSET#MikroNet-2.0.0.0-arm64.apk" --clobber
-            gh release edit "$TAG" --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest
-            # إزالة الملف القديم غير المخصّص للأجهزة الحديثة إن وُجد
-            gh release delete-asset "$TAG" "MikroNet-2.0.0.0.apk" --yes || true
+            gh release upload "$TAG" "$ASSET#MikroNet-2.0.0.0-arm64.apk" --clobber \
+              && echo "✅ حُدّث ملف الإصدار" || echo "⚠️ تعذّر تحديث ملف الإصدار"
+            gh release edit "$TAG" --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest \
+              && echo "✅ حُدّثت ملاحظات الإصدار" || echo "⚠️ تعذّر تحديث ملاحظات الإصدار"
           else
             gh release create "$TAG" "$ASSET#MikroNet-2.0.0.0-arm64.apk" \
-              --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest
+              --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest \
+              && echo "✅ أُنشئ الإصدار" || echo "⚠️ تعذّر إنشاء الإصدار"
           fi
-          gh release view "$TAG" --json name,assets -q '"اسم الإصدار: \(.name)", (.assets[] | "  ملف: \(.name) — \(.size) بايت")'
+          gh release view "$TAG" --json name,assets 2>/dev/null || true
