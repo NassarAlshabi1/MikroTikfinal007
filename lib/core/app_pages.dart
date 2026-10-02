@@ -351,11 +351,7 @@ class AppPages {
         () => DistributorStatementController(Get.arguments as DistributorModel),
       )),
     ),
-    // ======== المستخدمون المنتهون ========
-import '../controllers/cards/expired_users_controller.dart';
-import '../views/cards/expired_users_page.dart';
-
-// ======== أدوات الصيانة ========
+    // ======== أدوات الصيانة ========
     GetPage(
       name: AppRoutes.maintenance,
       page: () => const MaintenanceHubPage(),
