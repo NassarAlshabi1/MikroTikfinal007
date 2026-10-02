@@ -72,7 +72,7 @@ class LatencyMetrics {
                 (index) =>
                     (validSamples[index + 1] - validSamples[index]).abs(),
               ).reduce((left, right) => left + right) /
-            (validSamples.length - 1);
+              (validSamples.length - 1);
 
     return LatencyMetrics(
       packetsSent: packetsSent,

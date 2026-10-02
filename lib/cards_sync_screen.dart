@@ -107,12 +107,14 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         _animCtrl.forward(from: 0);
 
         // تأكيد سريع للمستخدم بعدد الكروت وزمن المزامنة.
-        final seconds =
-            (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
+        final seconds = (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(
+          1,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('تمت المزامنة: ${cards.length} كرت خلال $seconds ثانية'),
+            content: Text(
+              'تمت المزامنة: ${cards.length} كرت خلال $seconds ثانية',
+            ),
             backgroundColor: context.theme.appColors.success,
             duration: const Duration(seconds: 2),
           ),
@@ -155,10 +157,12 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       list = list
-          .where((c) =>
-              c.name.toLowerCase().contains(q) ||
-              c.profile.toLowerCase().contains(q) ||
-              c.comment.toLowerCase().contains(q))
+          .where(
+            (c) =>
+                c.name.toLowerCase().contains(q) ||
+                c.profile.toLowerCase().contains(q) ||
+                c.comment.toLowerCase().contains(q),
+          )
           .toList();
     }
 
@@ -181,8 +185,9 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
 
   void _toggleSelectByProfile(String? profile) {
     setState(() {
-      final targets =
-          _filteredCards.where((c) => profile == null || c.profile == profile);
+      final targets = _filteredCards.where(
+        (c) => profile == null || c.profile == profile,
+      );
       final allSelected = targets.every((c) => _selectedNames.contains(c.name));
       if (allSelected) {
         for (final c in targets) {
@@ -204,7 +209,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
       builder: (ctx) => AlertDialog(
         title: const Text('حذف كروت اليوزرمنجر المحددة'),
         content: Text(
-            'هل أنت متأكد من حذف ${_selectedNames.length} كرت من User Manager على الراوتر؟'),
+          'هل أنت متأكد من حذف ${_selectedNames.length} كرت من User Manager على الراوتر؟',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -233,10 +239,12 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         if (!_selectedNames.contains(card.name)) continue;
         if (card.mikrotikId == null || card.mikrotikId!.isEmpty) continue;
         try {
-          await client.talk([
-            '/tool/user-manager/user/remove',
-            '=.id=${card.mikrotikId}',
-          ]).timeout(const Duration(seconds: 10));
+          await client
+              .talk([
+                '/tool/user-manager/user/remove',
+                '=.id=${card.mikrotikId}',
+              ])
+              .timeout(const Duration(seconds: 10));
           deleted++;
         } catch (_) {}
       }
@@ -307,10 +315,9 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
   int get _activeCount => _report.totalCount - _report.expiredCount;
   int get _usedCount => _report.usedCount;
 
-  CardUsageReportFilter get _exportFilter =>
-      _showExpiredOnly
-          ? CardUsageReportFilter.expired
-          : CardUsageReportFilter.used;
+  CardUsageReportFilter get _exportFilter => _showExpiredOnly
+      ? CardUsageReportFilter.expired
+      : CardUsageReportFilter.used;
 
   bool get _canExportReport =>
       _hasSynced &&
@@ -370,9 +377,9 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تعذر تصدير التقرير: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('تعذر تصدير التقرير: $error')));
       }
     } finally {
       if (mounted) setState(() => _isExporting = false);
@@ -389,8 +396,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('كروت User Manager',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: const Text(
+          'كروت User Manager',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -421,8 +430,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
           ),
           if (_selectedNames.isNotEmpty)
             IconButton(
-              icon: Icon(Icons.delete_outline,
-                  color: context.theme.appColors.error),
+              icon: Icon(
+                Icons.delete_outline,
+                color: context.theme.appColors.error,
+              ),
               onPressed: _deleteSelected,
               tooltip: 'حذف المحدد (${_selectedNames.length})',
             ),
@@ -440,18 +451,21 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                 children: [
                   CircularProgressIndicator(color: theme.primaryColor),
                   const SizedBox(height: 16),
-                  Text('جاري مزامنة كروت اليوزرمنجر...',
-                      style: TextStyle(
-                          color: cs.onSurface.withValues(alpha: 0.6),
-                          fontSize: 13)),
+                  Text(
+                    'جاري مزامنة كروت اليوزرمنجر...',
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.6),
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
             )
           : _errorMessage != null
-              ? _buildError(theme)
-              : !_hasSynced
-                  ? _buildIdle(theme)
-                  : _buildContent(theme),
+          ? _buildError(theme)
+          : !_hasSynced
+          ? _buildIdle(theme)
+          : _buildContent(theme),
     );
   }
 
@@ -473,11 +487,14 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
               child: Icon(Icons.sync, size: 44, color: theme.primaryColor),
             ),
             const SizedBox(height: 20),
-            Text('المزامنة اختيارية',
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: cs.onSurface)),
+            Text(
+              'المزامنة اختيارية',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               'لا يتم أي اتصال بالراوتر عند فتح الشاشة. اضغط زر المزامنة '
@@ -487,9 +504,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
               'بصيغة CSV أو PDF. لا يتضمن المصدر أسعاراً أو إيرادات.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 12,
-                  height: 1.6,
-                  color: cs.onSurface.withValues(alpha: 0.6)),
+                fontSize: 12,
+                height: 1.6,
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -511,28 +529,36 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline,
-                size: 64, color: context.theme.appColors.error),
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: context.theme.appColors.error,
+            ),
             const SizedBox(height: 20),
-            Text(_errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14)),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+            ),
             const SizedBox(height: 10),
             Text(
               'تأكد أن حزمة User Manager مثبتة على الراوتر وأن مستخدم '
               'API لديه صلاحية /tool user-manager',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 11,
-                  height: 1.5,
-                  color: cs.onSurface.withValues(alpha: 0.45)),
+                fontSize: 11,
+                height: 1.5,
+                color: cs.onSurface.withValues(alpha: 0.45),
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _syncCards,
               icon: const Icon(Icons.refresh, size: 18),
-              label:
-                  const Text('إعادة المحاولة', style: TextStyle(fontSize: 13)),
+              label: const Text(
+                'إعادة المحاولة',
+                style: TextStyle(fontSize: 13),
+              ),
             ),
           ],
         ),
@@ -566,13 +592,16 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                           : 'لا توجد كروت مطابقة للتصفية أو البحث الحالي.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          color: cs.onSurface.withValues(alpha: 0.5),
-                          fontSize: 13),
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 : ListView.builder(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     itemCount: _filteredCards.length,
                     itemBuilder: (ctx, i) =>
                         _buildCardTile(_filteredCards[i], theme),
@@ -650,19 +679,38 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         children: [
           _statItem('الكل', _allCards.length, cs.onSurface, theme),
           Container(
-              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
+            width: 1,
+            height: 28,
+            color: cs.outline.withValues(alpha: 0.3),
+          ),
           _statItem(
-              'مفعل', _activeCount, context.theme.appColors.success, theme),
+            'مفعل',
+            _activeCount,
+            context.theme.appColors.success,
+            theme,
+          ),
           Container(
-              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
+            width: 1,
+            height: 28,
+            color: cs.outline.withValues(alpha: 0.3),
+          ),
+          _statItem('مستخدمة', _usedCount, context.theme.appColors.info, theme),
+          Container(
+            width: 1,
+            height: 28,
+            color: cs.outline.withValues(alpha: 0.3),
+          ),
           _statItem(
-              'مستخدمة', _usedCount, context.theme.appColors.info, theme),
+            'منتهي',
+            _expiredCount,
+            context.theme.appColors.error,
+            theme,
+          ),
           Container(
-              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
-          _statItem(
-              'منتهي', _expiredCount, context.theme.appColors.error, theme),
-          Container(
-              width: 1, height: 28, color: cs.outline.withValues(alpha: 0.3)),
+            width: 1,
+            height: 28,
+            color: cs.outline.withValues(alpha: 0.3),
+          ),
           _statItem('محدد', _selectedNames.length, theme.primaryColor, theme),
         ],
       ),
@@ -673,13 +721,21 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('$value',
-            style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+        Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
       ],
     );
   }
@@ -699,9 +755,14 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         decoration: InputDecoration(
           hintText: 'بحث بالاسم أو البروفايل...',
           hintStyle: TextStyle(
-              fontSize: 13, color: cs.onSurface.withValues(alpha: 0.4)),
-          prefixIcon: Icon(Icons.search,
-              size: 18, color: cs.onSurface.withValues(alpha: 0.5)),
+            fontSize: 13,
+            color: cs.onSurface.withValues(alpha: 0.4),
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            size: 18,
+            color: cs.onSurface.withValues(alpha: 0.5),
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear, size: 16),
@@ -712,14 +773,18 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                 )
               : null,
           isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 10,
+          ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3))),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
+          ),
           enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3))),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
+          ),
           filled: true,
           fillColor: cs.surface,
         ),
@@ -752,33 +817,51 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
           ),
           const SizedBox(width: 6),
           // Active
-          _filterChip('مفعل', _showActiveOnly, () {
-            setState(() {
-              _showActiveOnly = !_showActiveOnly;
-              _showExpiredOnly = false;
-              _showUsedOnly = false;
-            });
-            _applyFilters();
-          }, theme, color: context.theme.appColors.success),
+          _filterChip(
+            'مفعل',
+            _showActiveOnly,
+            () {
+              setState(() {
+                _showActiveOnly = !_showActiveOnly;
+                _showExpiredOnly = false;
+                _showUsedOnly = false;
+              });
+              _applyFilters();
+            },
+            theme,
+            color: context.theme.appColors.success,
+          ),
           const SizedBox(width: 6),
-          _filterChip('مستخدمة ($_usedCount)', _showUsedOnly, () {
-            setState(() {
-              _showUsedOnly = !_showUsedOnly;
-              _showActiveOnly = false;
-              _showExpiredOnly = false;
-            });
-            _applyFilters();
-          }, theme, color: context.theme.appColors.info),
+          _filterChip(
+            'مستخدمة ($_usedCount)',
+            _showUsedOnly,
+            () {
+              setState(() {
+                _showUsedOnly = !_showUsedOnly;
+                _showActiveOnly = false;
+                _showExpiredOnly = false;
+              });
+              _applyFilters();
+            },
+            theme,
+            color: context.theme.appColors.info,
+          ),
           const SizedBox(width: 6),
           // Expired
-          _filterChip('منتهي ($_expiredCount)', _showExpiredOnly, () {
-            setState(() {
-              _showExpiredOnly = !_showExpiredOnly;
-              _showActiveOnly = false;
-              _showUsedOnly = false;
-            });
-            _applyFilters();
-          }, theme, color: context.theme.appColors.error),
+          _filterChip(
+            'منتهي ($_expiredCount)',
+            _showExpiredOnly,
+            () {
+              setState(() {
+                _showExpiredOnly = !_showExpiredOnly;
+                _showActiveOnly = false;
+                _showUsedOnly = false;
+              });
+              _applyFilters();
+            },
+            theme,
+            color: context.theme.appColors.error,
+          ),
           const SizedBox(width: 6),
           // Profile dropdown
           _buildProfileDropdown(theme),
@@ -788,8 +871,12 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
   }
 
   Widget _filterChip(
-      String label, bool selected, VoidCallback onTap, ThemeData theme,
-      {Color? color}) {
+    String label,
+    bool selected,
+    VoidCallback onTap,
+    ThemeData theme, {
+    Color? color,
+  }) {
     final chipColor = color ?? theme.primaryColor;
     return GestureDetector(
       onTap: onTap,
@@ -797,21 +884,26 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color:
-              selected ? chipColor.withValues(alpha: 0.15) : Colors.transparent,
+          color: selected
+              ? chipColor.withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: selected
-                  ? chipColor
-                  : theme.colorScheme.outline.withValues(alpha: 0.3)),
+            color: selected
+                ? chipColor
+                : theme.colorScheme.outline.withValues(alpha: 0.3),
+          ),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                color: selected
-                    ? chipColor
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            color: selected
+                ? chipColor
+                : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ),
+        ),
       ),
     );
   }
@@ -823,28 +915,38 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: _profileFilter != null
-                ? theme.primaryColor
-                : cs.outline.withValues(alpha: 0.3)),
+          color: _profileFilter != null
+              ? theme.primaryColor
+              : cs.outline.withValues(alpha: 0.3),
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _profileFilter,
-          hint: Text('البروفايل',
-              style: TextStyle(
-                  fontSize: 11, color: cs.onSurface.withValues(alpha: 0.6))),
+          hint: Text(
+            'البروفايل',
+            style: TextStyle(
+              fontSize: 11,
+              color: cs.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
           isDense: true,
-          icon: Icon(Icons.arrow_drop_down,
-              size: 16, color: cs.onSurface.withValues(alpha: 0.5)),
+          icon: Icon(
+            Icons.arrow_drop_down,
+            size: 16,
+            color: cs.onSurface.withValues(alpha: 0.5),
+          ),
           items: [
             const DropdownMenuItem<String>(
               value: null,
               child: Text('الكل', style: TextStyle(fontSize: 11)),
             ),
-            ..._profiles.map((p) => DropdownMenuItem(
-                  value: p,
-                  child: Text(p, style: const TextStyle(fontSize: 11)),
-                )),
+            ..._profiles.map(
+              (p) => DropdownMenuItem(
+                value: p,
+                child: Text(p, style: const TextStyle(fontSize: 11)),
+              ),
+            ),
           ],
           onChanged: (v) {
             setState(() => _profileFilter = v);
@@ -859,7 +961,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
 
   Widget _buildToolbar(ThemeData theme) {
     final cs = theme.colorScheme;
-    final allVisibleSelected = _filteredCards.isNotEmpty &&
+    final allVisibleSelected =
+        _filteredCards.isNotEmpty &&
         _filteredCards.every((c) => _selectedNames.contains(c.name));
 
     return Container(
@@ -888,7 +991,9 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                 Text(
                   allVisibleSelected ? 'إلغاء التحديد' : 'تحديد الكل',
                   style: TextStyle(
-                      fontSize: 11, color: cs.onSurface.withValues(alpha: 0.7)),
+                    fontSize: 11,
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
               ],
             ),
@@ -900,13 +1005,19 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.category,
-                    size: 14, color: cs.onSurface.withValues(alpha: 0.5)),
+                Icon(
+                  Icons.category,
+                  size: 14,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
                 const SizedBox(width: 4),
-                Text('تحديد حسب البروفايل',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurface.withValues(alpha: 0.7))),
+                Text(
+                  'تحديد حسب البروفايل',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
               ],
             ),
           ),
@@ -917,13 +1028,19 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.copy,
-                    size: 14, color: cs.onSurface.withValues(alpha: 0.5)),
+                Icon(
+                  Icons.copy,
+                  size: 14,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
                 const SizedBox(width: 4),
-                Text('نسخ الكل (${_filteredCards.length})',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurface.withValues(alpha: 0.7))),
+                Text(
+                  'نسخ الكل (${_filteredCards.length})',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
               ],
             ),
           ),
@@ -936,8 +1053,10 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title:
-            const Text('تحديد حسب البروفايل', style: TextStyle(fontSize: 15)),
+        title: const Text(
+          'تحديد حسب البروفايل',
+          style: TextStyle(fontSize: 15),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -949,11 +1068,13 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
               return ListTile(
                 dense: true,
                 title: Text(p, style: const TextStyle(fontSize: 13)),
-                trailing: Text('$count',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.5))),
+                trailing: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   _toggleSelectByProfile(p);
@@ -1008,8 +1129,8 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
             color: isSelected
                 ? theme.primaryColor
                 : expired
-                    ? context.theme.appColors.error.withValues(alpha: 0.3)
-                    : cs.outline.withValues(alpha: 0.15),
+                ? context.theme.appColors.error.withValues(alpha: 0.3)
+                : cs.outline.withValues(alpha: 0.15),
             width: isSelected ? 1.5 : 0.5,
           ),
         ),
@@ -1050,40 +1171,55 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                     Row(
                       children: [
                         Expanded(
-                          child: Text(card.name,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: cs.onSurface),
-                              overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            card.name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         if (expired)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 1),
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
-                              color: context.theme.appColors.error
-                                  .withValues(alpha: 0.1),
+                              color: context.theme.appColors.error.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Text('منتهي',
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    color: context.theme.appColors.error)),
+                            child: Text(
+                              'منتهي',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: context.theme.appColors.error,
+                              ),
+                            ),
                           ),
                         if (!expired)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 1),
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
-                              color: context.theme.appColors.success
-                                  .withValues(alpha: 0.1),
+                              color: context.theme.appColors.success.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Text('مفعل',
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    color: context.theme.appColors.success)),
+                            child: Text(
+                              'مفعل',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: context.theme.appColors.success,
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -1091,27 +1227,37 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                     // Password + Profile
                     Row(
                       children: [
-                        Icon(Icons.lock_outline,
-                            size: 10,
-                            color: cs.onSurface.withValues(alpha: 0.4)),
+                        Icon(
+                          Icons.lock_outline,
+                          size: 10,
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                        ),
                         const SizedBox(width: 3),
                         Expanded(
-                          child: Text(card.password,
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: cs.onSurface.withValues(alpha: 0.6),
-                                  fontFamily: 'monospace'),
-                              overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            card.password,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: cs.onSurface.withValues(alpha: 0.6),
+                              fontFamily: 'monospace',
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         if (card.profile.isNotEmpty) ...[
-                          Icon(Icons.category,
-                              size: 10,
-                              color: cs.onSurface.withValues(alpha: 0.4)),
+                          Icon(
+                            Icons.category,
+                            size: 10,
+                            color: cs.onSurface.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(width: 3),
-                          Text(card.profile,
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: cs.onSurface.withValues(alpha: 0.5))),
+                          Text(
+                            card.profile,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: cs.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -1119,16 +1265,21 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          Icon(Icons.timer_outlined,
-                              size: 10,
-                              color: cs.onSurface.withValues(alpha: 0.4)),
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 10,
+                            color: cs.onSurface.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(width: 3),
                           Expanded(
-                            child: Text(_usageText(card),
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    color: cs.onSurface.withValues(alpha: 0.5)),
-                                overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              _usageText(card),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -1137,9 +1288,11 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          Icon(Icons.event_outlined,
-                              size: 10,
-                              color: cs.onSurface.withValues(alpha: 0.4)),
+                          Icon(
+                            Icons.event_outlined,
+                            size: 10,
+                            color: cs.onSurface.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
@@ -1163,8 +1316,11 @@ class _CardsSyncScreenState extends State<CardsSyncScreen>
               onTap: () => _copyCard(card),
               child: Padding(
                 padding: const EdgeInsets.only(left: 8),
-                child: Icon(Icons.copy,
-                    size: 16, color: cs.onSurface.withValues(alpha: 0.4)),
+                child: Icon(
+                  Icons.copy,
+                  size: 16,
+                  color: cs.onSurface.withValues(alpha: 0.4),
+                ),
               ),
             ),
           ],

@@ -8,8 +8,7 @@ import 'core/app_bootstrap.dart';
 export 'app.dart' show ApplicationRoot, MyApp;
 export 'core/app_runtime.dart' show appDatabaseProvider, scaffoldMessengerKey;
 export 'core/navigation/custom_page_route.dart' show CustomPageRoute;
-export 'core/widgets/custom_loading_indicator.dart'
-    show CustomLoadingIndicator;
+export 'core/widgets/custom_loading_indicator.dart' show CustomLoadingIndicator;
 export 'features/auth/presentation/login_screen.dart' show LoginScreen;
 export 'features/dashboard/presentation/home_screen.dart'
     show HomeScreen, MikrotikMode, ServiceItem;

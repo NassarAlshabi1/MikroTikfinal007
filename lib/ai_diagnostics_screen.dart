@@ -70,9 +70,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       if (hasSnapshot) {
         await ref.read(diagnosticsProvider.notifier).askFollowUp(text);
       } else {
-        await ref.read(diagnosticsProvider.notifier).runDiagnostics(
-              userQuery: text,
-            );
+        await ref
+            .read(diagnosticsProvider.notifier)
+            .runDiagnostics(userQuery: text);
       }
     } finally {
       if (mounted) {
@@ -101,9 +101,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     _inputController.clear();
     setState(() => _inputEnabled = false);
     try {
-      await ref.read(diagnosticsProvider.notifier).runAgenticDiagnostics(
-            userQuery: text.isEmpty ? null : text,
-          );
+      await ref
+          .read(diagnosticsProvider.notifier)
+          .runAgenticDiagnostics(userQuery: text.isEmpty ? null : text);
     } finally {
       if (mounted) {
         setState(() => _inputEnabled = true);
@@ -123,10 +123,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
       final prefix = message.type == MessageType.user
           ? '👤 أنت'
           : message.type == MessageType.error
-              ? '❌ خطأ'
-              : message.type == MessageType.system
-                  ? 'ℹ️ نظام'
-                  : '🤖 AI';
+          ? '❌ خطأ'
+          : message.type == MessageType.system
+          ? 'ℹ️ نظام'
+          : '🤖 AI';
       buffer.writeln('[$prefix]');
       buffer.writeln(message.content);
       buffer.writeln();
@@ -252,9 +252,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     : Theme.of(context).primaryColor,
               ),
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text('تنفيذ',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface)),
+              child: Text(
+                'تنفيذ',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
             ),
           ],
         ),
@@ -266,14 +269,17 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     // نفّذ الأمر
     setState(() => _inputEnabled = false);
     try {
-      final result =
-          await ref.read(diagnosticsProvider.notifier).executeCommand(command);
+      final result = await ref
+          .read(diagnosticsProvider.notifier)
+          .executeCommand(command);
       // حدّث السجل
       ref.read(historyManagerProvider.notifier).refresh();
       if (mounted) {
         if (result.success) {
-          showSuccessSnackBar(context,
-              'تم تنفيذ الأمر بنجاح (${result.elapsed.inMilliseconds}ms)');
+          showSuccessSnackBar(
+            context,
+            'تم تنفيذ الأمر بنجاح (${result.elapsed.inMilliseconds}ms)',
+          );
         } else {
           showErrorSnackBar(context, 'فشل: ${result.error ?? "خطأ غير معروف"}');
         }
@@ -351,9 +357,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   break;
                 case 'settings':
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const AiSettingsScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
                   );
                   break;
               }
@@ -390,7 +394,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               const PopupMenuDivider(),
               PopupMenuItem<String>(
                 value: 'settings',
-                child: _actionMenuItem(Icons.settings, 'إعدادات الذكاء الاصطناعي'),
+                child: _actionMenuItem(
+                  Icons.settings,
+                  'إعدادات الذكاء الاصطناعي',
+                ),
               ),
             ],
           ),
@@ -428,7 +435,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                             );
                             if (context.mounted) {
                               showSuccessSnackBar(
-                                  context, 'تم نسخ ${commands.length} أمر');
+                                context,
+                                'تم نسخ ${commands.length} أمر',
+                              );
                             }
                           },
                           onCopyMessage: _copyMessage,
@@ -483,8 +492,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               color: script.isDangerous
                   ? Theme.of(context).appColors.error
                   : (script.hasModerate
-                      ? Theme.of(context).appColors.warning
-                      : Theme.of(context).appColors.success),
+                        ? Theme.of(context).appColors.warning
+                        : Theme.of(context).appColors.success),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -505,8 +514,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 Text(
                   script.description,
                   style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).textTheme.bodySmall?.color),
+                    fontSize: 13,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -529,28 +539,31 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .appColors
-                          .error
-                          .withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).appColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                          color: Theme.of(context)
-                              .appColors
-                              .error
-                              .withValues(alpha: 0.5)),
+                        color: Theme.of(
+                          context,
+                        ).appColors.error.withValues(alpha: 0.5),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.warning,
-                            color: Theme.of(context).appColors.error, size: 18),
+                        Icon(
+                          Icons.warning,
+                          color: Theme.of(context).appColors.error,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'هذا السكربت يحتوي على أوامر خطرة. سيتم عمل backup تلقائياً قبل التنفيذ.',
                             style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).appColors.error),
+                              fontSize: 12,
+                              color: Theme.of(context).appColors.error,
+                            ),
                           ),
                         ),
                       ],
@@ -560,24 +573,26 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .appColors
-                          .warning
-                          .withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).appColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.info,
-                            color: Theme.of(context).appColors.warning,
-                            size: 18),
+                        Icon(
+                          Icons.info,
+                          color: Theme.of(context).appColors.warning,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'سيتم عمل backup تلقائياً قبل التنفيذ.',
                             style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).appColors.warning),
+                              fontSize: 12,
+                              color: Theme.of(context).appColors.warning,
+                            ),
                           ),
                         ),
                       ],
@@ -599,11 +614,14 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   : Theme.of(context).primaryColor,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            icon: Icon(Icons.play_arrow,
-                color: Theme.of(context).colorScheme.onSurface),
-            label: Text('تنفيذ',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            icon: Icon(
+              Icons.play_arrow,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            label: Text(
+              'تنفيذ',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
           ),
         ],
       ),
@@ -614,8 +632,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     // تنفيذ السكربت عبر الـ provider
     setState(() => _inputEnabled = false);
     try {
-      final result =
-          await ref.read(diagnosticsProvider.notifier).executeScript(script);
+      final result = await ref
+          .read(diagnosticsProvider.notifier)
+          .executeScript(script);
       if (mounted) {
         if (result.overallSuccess) {
           showSuccessSnackBar(
@@ -623,10 +642,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             '✅ تم تنفيذ السكربت بنجاح (${result.successCount}/${result.script.commands.length})',
           );
         } else {
-          showErrorSnackBar(
-            context,
-            '⚠️ اكتمل مع ${result.failureCount} خطأ',
-          );
+          showErrorSnackBar(context, '⚠️ اكتمل مع ${result.failureCount} خطأ');
         }
         _scrollToBottom();
       }
@@ -649,8 +665,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         builder: (ctx) => AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.check_circle,
-                  color: Theme.of(context).appColors.success),
+              Icon(
+                Icons.check_circle,
+                color: Theme.of(context).appColors.success,
+              ),
               const SizedBox(width: 8),
               const Text('لا توجد إصلاحات'),
             ],
@@ -691,8 +709,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.auto_fix_high,
-                      color: Theme.of(context).appColors.warning, size: 24),
+                  Icon(
+                    Icons.auto_fix_high,
+                    color: Theme.of(context).appColors.warning,
+                    size: 24,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -745,16 +766,20 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => _showFixPlanDialog(ctx, fixes),
-                      icon: Icon(Icons.checklist,
-                          color: Theme.of(context).appColors.primary),
+                      icon: Icon(
+                        Icons.checklist,
+                        color: Theme.of(context).appColors.primary,
+                      ),
                       label: Text(
                         '📋 خطة شاملة (معاينة + تنفيذ آمن + استعادة)',
                         style: TextStyle(
-                            color: Theme.of(context).appColors.primary),
+                          color: Theme.of(context).appColors.primary,
+                        ),
                       ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(
-                            color: Theme.of(context).appColors.primary),
+                          color: Theme.of(context).appColors.primary,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -768,12 +793,15 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         Navigator.of(ctx).pop();
                         _applyAllSafeFixes(fixes);
                       },
-                      icon: Icon(Icons.bolt,
-                          color: Theme.of(context).colorScheme.onSurface),
+                      icon: Icon(
+                        Icons.bolt,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       label: Text(
                         'تطبيق كل الإصلاحات الآمنة فقط',
                         style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface),
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).appColors.success,
@@ -795,16 +823,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     final riskColor = fix.risk == CommandRiskLevel.dangerous
         ? Theme.of(context).appColors.error
         : fix.risk == CommandRiskLevel.moderate
-            ? Theme.of(context).appColors.warning
-            : Theme.of(context).appColors.success;
+        ? Theme.of(context).appColors.warning
+        : Theme.of(context).appColors.success;
 
     return ExpansionTile(
       leading: CircleAvatar(
         backgroundColor: riskColor.withValues(alpha: 0.2),
-        child: Text(
-          fix.category.icon,
-          style: const TextStyle(fontSize: 18),
-        ),
+        child: Text(fix.category.icon, style: const TextStyle(fontSize: 18)),
       ),
       title: Row(
         children: [
@@ -818,14 +843,17 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color:
-                    Theme.of(context).appColors.success.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).appColors.success.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 'تلقائي',
                 style: TextStyle(
-                    fontSize: 10, color: Theme.of(context).appColors.success),
+                  fontSize: 10,
+                  color: Theme.of(context).appColors.success,
+                ),
               ),
             ),
         ],
@@ -848,8 +876,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               Text(
                 fix.description,
                 style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).textTheme.bodySmall?.color),
+                  fontSize: 12,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -860,7 +889,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               Text(
                 fix.impact,
                 style: TextStyle(
-                    fontSize: 12, color: Theme.of(context).appColors.warning),
+                  fontSize: 12,
+                  color: Theme.of(context).appColors.warning,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -893,8 +924,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       final commands = fix.script.commands.join('\n');
                       SecureClipboard.copy(commands, sensitive: false);
                       if (mounted) {
-                        showSuccessSnackBar(context,
-                            'تم نسخ ${fix.script.commands.length} أمر');
+                        showSuccessSnackBar(
+                          context,
+                          'تم نسخ ${fix.script.commands.length} أمر',
+                        );
                       }
                     },
                     icon: const Icon(Icons.copy, size: 16),
@@ -906,15 +939,18 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       Navigator.of(context).pop();
                       _handleExecuteScript(fix.script);
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: riskColor,
+                    style: ElevatedButton.styleFrom(backgroundColor: riskColor),
+                    icon: Icon(
+                      Icons.play_arrow,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    icon: Icon(Icons.play_arrow,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.onSurface),
-                    label: Text('تنفيذ',
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface)),
+                    label: Text(
+                      'تنفيذ',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -930,8 +966,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     final safeFixes = fixes.where((f) => f.autoApplySafe).toList();
 
     if (safeFixes.isEmpty) {
-      showSuccessSnackBar(context,
-          'لا توجد إصلاحات آمنة للتطبيق التلقائي. راجع الإصلاحات يدوياً.');
+      showSuccessSnackBar(
+        context,
+        'لا توجد إصلاحات آمنة للتطبيق التلقائي. راجع الإصلاحات يدوياً.',
+      );
       return;
     }
 
@@ -957,11 +995,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).appColors.success),
+              backgroundColor: Theme.of(context).appColors.success,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('تطبيق',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            child: Text(
+              'تطبيق',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
           ),
         ],
       ),
@@ -976,8 +1016,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
     for (final fix in safeFixes) {
       try {
-        final result =
-            await ref.read(diagnosticsProvider.notifier).applyAutoFix(fix);
+        final result = await ref
+            .read(diagnosticsProvider.notifier)
+            .applyAutoFix(fix);
         if (result.overallSuccess) {
           successCount++;
         } else {
@@ -1001,7 +1042,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
 
   /// يفتح نافذة خطة الإصلاح الشاملة (dry-run + تنفيذ آمن + rollback)
   Future<void> _showFixPlanDialog(
-      BuildContext parentContext, List<ProposedFix> fixes) async {
+    BuildContext parentContext,
+    List<ProposedFix> fixes,
+  ) async {
     // أغلق نافذة قائمة الإصلاحات أولاً
     Navigator.of(parentContext).pop();
 
@@ -1010,7 +1053,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     final snapshot = diagState.lastSnapshot;
     if (snapshot == null) {
       showSuccessSnackBar(
-          context, 'لا توجد بيانات تشخيص متاحة. شغّل التشخيص أولاً.');
+        context,
+        'لا توجد بيانات تشخيص متاحة. شغّل التشخيص أولاً.',
+      );
       return;
     }
 
@@ -1028,10 +1073,7 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => FixPlanDialog(
-        plan: plan,
-        method: method,
-      ),
+      builder: (_) => FixPlanDialog(plan: plan, method: method),
     );
 
     // بعد إغلاق النافذة، حدّث الحالة
@@ -1057,9 +1099,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const AiSettingsScreen())),
             child: const Text('إعداد'),
           ),
         ],
@@ -1068,11 +1110,12 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
   }
 
   Widget _buildStatusBar(DiagnosticsState state) {
-    final isGeminiFlash25 = state.settings.provider == AiProvider.gemini &&
+    final isGeminiFlash25 =
+        state.settings.provider == AiProvider.gemini &&
         state.settings.model == 'gemini-2.5-flash';
     final isOpenRouterFlash =
         state.settings.provider == AiProvider.openRouter &&
-            state.settings.model == 'google/gemini-2.5-flash';
+        state.settings.model == 'google/gemini-2.5-flash';
 
     return Container(
       width: double.infinity,
@@ -1084,8 +1127,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             state.settings.provider == AiProvider.openAI
                 ? Icons.smart_toy
                 : state.settings.provider == AiProvider.openRouter
-                    ? Icons.swap_horiz
-                    : Icons.auto_awesome,
+                ? Icons.swap_horiz
+                : Icons.auto_awesome,
             size: 16,
             color: state.settings.provider == AiProvider.openRouter
                 ? Theme.of(context).appColors.primary
@@ -1100,32 +1143,26 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isOpenRouterFlash
-                    ? Theme.of(context)
-                        .appColors
-                        .primary
-                        .withValues(alpha: 0.25)
+                    ? Theme.of(
+                        context,
+                      ).appColors.primary.withValues(alpha: 0.25)
                     : isGeminiFlash25
-                        ? Theme.of(context)
-                            .appColors
-                            .info
-                            .withValues(alpha: 0.25)
-                        : Theme.of(context)
-                            .primaryColor
-                            .withValues(alpha: 0.15),
+                    ? Theme.of(context).appColors.info.withValues(alpha: 0.25)
+                    : Theme.of(context).primaryColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: isOpenRouterFlash
                     ? Border.all(
-                        color: Theme.of(context)
-                            .appColors
-                            .primary
-                            .withValues(alpha: 0.5))
+                        color: Theme.of(
+                          context,
+                        ).appColors.primary.withValues(alpha: 0.5),
+                      )
                     : isGeminiFlash25
-                        ? Border.all(
-                            color: Theme.of(context)
-                                .appColors
-                                .info
-                                .withValues(alpha: 0.5))
-                        : null,
+                    ? Border.all(
+                        color: Theme.of(
+                          context,
+                        ).appColors.info.withValues(alpha: 0.5),
+                      )
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1134,14 +1171,14 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     isOpenRouterFlash
                         ? Icons.swap_horiz
                         : isGeminiFlash25
-                            ? Icons.bolt
-                            : Icons.memory,
+                        ? Icons.bolt
+                        : Icons.memory,
                     size: 12,
                     color: isOpenRouterFlash
                         ? Theme.of(context).appColors.primary
                         : isGeminiFlash25
-                            ? Theme.of(context).appColors.info
-                            : Theme.of(context).textTheme.bodySmall?.color,
+                        ? Theme.of(context).appColors.info
+                        : Theme.of(context).textTheme.bodySmall?.color,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
@@ -1152,8 +1189,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         color: isOpenRouterFlash
                             ? Theme.of(context).appColors.primary
                             : isGeminiFlash25
-                                ? Theme.of(context).appColors.info
-                                : Theme.of(context).colorScheme.onSurface,
+                            ? Theme.of(context).appColors.info
+                            : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isOpenRouterFlash || isGeminiFlash25
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -1162,8 +1199,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down,
-                      size: 14, color: Theme.of(context).hintColor),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 14,
+                    color: Theme.of(context).hintColor,
+                  ),
                 ],
               ),
             ),
@@ -1182,14 +1222,18 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(state.settings.mode.icon,
-                      size: 12, color: Theme.of(context).colorScheme.onSurface),
+                  Icon(
+                    state.settings.mode.icon,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     state.settings.mode.displayName,
                     style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).colorScheme.onSurface),
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ],
               ),
@@ -1220,14 +1264,18 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(Icons.swap_horiz,
-                      color: Theme.of(context).appColors.info),
+                  Icon(
+                    Icons.swap_horiz,
+                    color: Theme.of(context).appColors.info,
+                  ),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       'اختر الموديل',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -1254,8 +1302,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
-                    Icon(Icons.swap_horiz,
-                        size: 14, color: Theme.of(context).appColors.primary),
+                    Icon(
+                      Icons.swap_horiz,
+                      size: 14,
+                      color: Theme.of(context).appColors.primary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'OpenRouter (نماذج متعددة)',
@@ -1274,7 +1325,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ctx: ctx,
                 provider: AiProvider.openRouter,
                 model: model,
-                isSelected: settings.provider == AiProvider.openRouter &&
+                isSelected:
+                    settings.provider == AiProvider.openRouter &&
                     settings.model == model,
                 isRecommended: model == 'google/gemini-2.5-flash',
                 description: _openRouterModelDescription(model),
@@ -1289,8 +1341,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome,
-                        size: 14, color: Theme.of(context).appColors.info),
+                    Icon(
+                      Icons.auto_awesome,
+                      size: 14,
+                      color: Theme.of(context).appColors.info,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Google Gemini',
@@ -1309,7 +1364,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ctx: ctx,
                 provider: AiProvider.gemini,
                 model: model,
-                isSelected: settings.provider == AiProvider.gemini &&
+                isSelected:
+                    settings.provider == AiProvider.gemini &&
                     settings.model == model,
                 isRecommended: model == recommendedGemini,
                 description: _geminiModelDescription(model),
@@ -1324,8 +1380,11 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
-                    Icon(Icons.smart_toy,
-                        size: 14, color: Theme.of(context).appColors.success),
+                    Icon(
+                      Icons.smart_toy,
+                      size: 14,
+                      color: Theme.of(context).appColors.success,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'OpenAI (ChatGPT)',
@@ -1344,7 +1403,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 ctx: ctx,
                 provider: AiProvider.openAI,
                 model: model,
-                isSelected: settings.provider == AiProvider.openAI &&
+                isSelected:
+                    settings.provider == AiProvider.openAI &&
                     settings.model == model,
                 isRecommended: false,
                 description: _openAiModelDescription(model),
@@ -1422,8 +1482,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         color: isSelected
             ? Theme.of(context).appColors.info
             : (isRecommended
-                ? Theme.of(context).appColors.warning
-                : Theme.of(context).disabledColor),
+                  ? Theme.of(context).appColors.warning
+                  : Theme.of(context).disabledColor),
         size: 22,
       ),
       title: Row(
@@ -1440,8 +1500,8 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                 color: isSelected
                     ? Theme.of(context).appColors.info
                     : (isRecommended
-                        ? Theme.of(context).appColors.warning
-                        : Theme.of(context).colorScheme.onSurface),
+                          ? Theme.of(context).appColors.warning
+                          : Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ),
@@ -1450,21 +1510,23 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color:
-                    Theme.of(context).appColors.warning.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).appColors.warning.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                    color: Theme.of(context)
-                        .appColors
-                        .warning
-                        .withValues(alpha: 0.5)),
+                  color: Theme.of(
+                    context,
+                  ).appColors.warning.withValues(alpha: 0.5),
+                ),
               ),
               child: Text(
                 'موصى به',
                 style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).appColors.warning,
-                    fontWeight: FontWeight.bold),
+                  fontSize: 10,
+                  color: Theme.of(context).appColors.warning,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -1474,21 +1536,27 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           ? null
           : Text(
               description,
-              style:
-                  TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).hintColor,
+              ),
             ),
       trailing: isRecommended
-          ? Icon(Icons.bolt,
-              color: Theme.of(context).appColors.warning, size: 18)
+          ? Icon(
+              Icons.bolt,
+              color: Theme.of(context).appColors.warning,
+              size: 18,
+            )
           : null,
       onTap: () async {
         await ref
             .read(aiSettingsNotifierProvider.notifier)
             .setProviderAndModel(provider, model);
         // حدّث الـ diagnostics notifier بالإعدادات الجديدة
-        final newSettings = (ref.read(aiSettingsNotifierProvider).valueOrNull ??
-                AiSettings.default_)
-            .copyWith(provider: provider, model: model);
+        final newSettings =
+            (ref.read(aiSettingsNotifierProvider).valueOrNull ??
+                    AiSettings.default_)
+                .copyWith(provider: provider, model: model);
         ref.read(diagnosticsProvider.notifier).updateSettings(newSettings);
         if (ctx.mounted) Navigator.of(ctx).pop();
       },
@@ -1518,25 +1586,31 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             ...DiagnosticMode.values.map((mode) {
               final isSelected = mode == currentMode;
               return ListTile(
-                leading: Icon(mode.icon,
-                    color: isSelected
-                        ? Theme.of(context).primaryColor
-                        : Theme.of(context).textTheme.bodySmall?.color),
+                leading: Icon(
+                  mode.icon,
+                  color: isSelected
+                      ? Theme.of(context).primaryColor
+                      : Theme.of(context).textTheme.bodySmall?.color,
+                ),
                 title: Text(mode.displayName),
                 subtitle: Text(
                   mode.description,
                   style: TextStyle(
-                      fontSize: 12, color: Theme.of(context).hintColor),
+                    fontSize: 12,
+                    color: Theme.of(context).hintColor,
+                  ),
                 ),
                 trailing: isSelected
-                    ? Icon(Icons.check_circle,
-                        color: Theme.of(context).primaryColor)
+                    ? Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).primaryColor,
+                      )
                     : null,
                 onTap: () {
                   ref.read(aiSettingsNotifierProvider.notifier).setMode(mode);
-                  ref.read(diagnosticsProvider.notifier).updateSettings(
-                        settings.copyWith(mode: mode),
-                      );
+                  ref
+                      .read(diagnosticsProvider.notifier)
+                      .updateSettings(settings.copyWith(mode: mode));
                   Navigator.of(ctx).pop();
                 },
               );
@@ -1575,16 +1649,21 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       color: colors.primaryContainer,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(Icons.health_and_safety_outlined,
-                        color: colors.onPrimaryContainer, size: 28),
+                    child: Icon(
+                      Icons.health_and_safety_outlined,
+                      color: colors.onPrimaryContainer,
+                      size: 28,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('مركز تشخيص MikroTik v6',
-                            style: theme.textTheme.titleLarge),
+                        Text(
+                          'مركز تشخيص MikroTik v6',
+                          style: theme.textTheme.titleLarge,
+                        ),
                         const SizedBox(height: 6),
                         Text(
                           'تحليل قائم على بيانات الراوتر، مع فصل الأدلة عن الاستنتاجات واقتراحات آمنة قابلة للمراجعة.',
@@ -1625,8 +1704,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed:
-                          state.isLoading ? null : _handleAgenticDiagnose,
+                      onPressed: state.isLoading
+                          ? null
+                          : _handleAgenticDiagnose,
                       icon: const Icon(Icons.psychology_outlined),
                       label: const Text('تشخيص عميق'),
                     ),
@@ -1637,11 +1717,13 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Text('أو اكتب سؤالك بالأسفل',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colors.textTertiary,
-            )),
+        Text(
+          'أو اكتب سؤالك بالأسفل',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colors.textTertiary,
+          ),
+        ),
       ],
     );
   }
@@ -1661,8 +1743,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
         children: [
           Icon(icon, size: 16, color: foreground),
           const SizedBox(width: 6),
-          Text(label,
-              style: theme.textTheme.labelMedium?.copyWith(color: foreground)),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(color: foreground),
+          ),
         ],
       ),
     );
@@ -1683,19 +1767,26 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.forum_outlined,
-                      size: 16, color: colors.textTertiary),
+                  Icon(
+                    Icons.forum_outlined,
+                    size: 16,
+                    color: colors.textTertiary,
+                  ),
                   const SizedBox(width: 6),
-                  Text('اسأل عن الشبكة أو اطلب تفسير نتيجة',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: colors.textSecondary,
-                      )),
+                  Text(
+                    'اسأل عن الشبكة أو اطلب تفسير نتيجة',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
                   const Spacer(),
                   if (state.isLoading)
-                    Text('جارٍ التحليل…',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colors.primary,
-                        )),
+                    Text(
+                      'جارٍ التحليل…',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.primary,
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1721,8 +1812,9 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                       icon: const Icon(Icons.psychology_outlined),
                       style: IconButton.styleFrom(
                         foregroundColor: colors.secondary,
-                        backgroundColor:
-                            colors.secondary.withValues(alpha: 0.10),
+                        backgroundColor: colors.secondary.withValues(
+                          alpha: 0.10,
+                        ),
                       ),
                     ),
                   ),
@@ -1745,8 +1837,10 @@ class _AiDiagnosticsScreenState extends ConsumerState<AiDiagnosticsScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide:
-                              BorderSide(color: colors.primary, width: 1.5),
+                          borderSide: BorderSide(
+                            color: colors.primary,
+                            width: 1.5,
+                          ),
                         ),
                         filled: true,
                         fillColor: colors.surfaceVariant,
@@ -1817,8 +1911,9 @@ class _MessageBubble extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) _buildAvatar(context),
@@ -1832,13 +1927,12 @@ class _MessageBubble extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isError
-                        ? Theme.of(context)
-                            .appColors
-                            .error
-                            .withValues(alpha: 0.1)
+                        ? Theme.of(
+                            context,
+                          ).appColors.error.withValues(alpha: 0.1)
                         : isUser
-                            ? Theme.of(context).primaryColor
-                            : Theme.of(context).colorScheme.surface,
+                        ? Theme.of(context).primaryColor
+                        : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
@@ -1855,10 +1949,9 @@ class _MessageBubble extends StatelessWidget {
                         style: TextStyle(
                           color: isUser
                               ? Theme.of(context).colorScheme.onSurface
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.9),
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.9),
                           fontSize: 14,
                           height: 1.5,
                         ),
@@ -1868,7 +1961,9 @@ class _MessageBubble extends StatelessWidget {
                           message.suggestedCommands!.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Divider(
-                            height: 1, color: Theme.of(context).dividerColor),
+                          height: 1,
+                          color: Theme.of(context).dividerColor,
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -1886,23 +1981,28 @@ class _MessageBubble extends StatelessWidget {
                             if (onCopyAllCommands != null)
                               TextButton.icon(
                                 onPressed: () => onCopyAllCommands!(
-                                    message.suggestedCommands!),
-                                icon: Icon(Icons.copy_all,
-                                    size: 14,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.color),
-                                label: Text('نسخ الكل',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.color)),
+                                  message.suggestedCommands!,
+                                ),
+                                icon: Icon(
+                                  Icons.copy_all,
+                                  size: 14,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodySmall?.color,
+                                ),
+                                label: Text(
+                                  'نسخ الكل',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.color,
+                                  ),
+                                ),
                                 style: TextButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
                                   minimumSize: const Size(0, 28),
                                 ),
                               ),
@@ -1933,19 +2033,23 @@ class _MessageBubble extends StatelessWidget {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).primaryColor,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                               ),
-                              icon: Icon(Icons.play_circle_fill,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  size: 18),
+                              icon: Icon(
+                                Icons.play_circle_fill,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                size: 18,
+                              ),
                               label: Text(
                                 'تنفيذ السكربت كاملاً (${message.suggestedCommands!.length} أوامر)',
                                 style: TextStyle(
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
-                                    fontSize: 12),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           ),
@@ -1959,7 +2063,10 @@ class _MessageBubble extends StatelessWidget {
                               message.suggestedCommands!.isEmpty) &&
                           message.type == MessageType.assistant) ...[
                         ..._buildExtractedScripts(
-                            context, message, onExecuteScript!),
+                          context,
+                          message,
+                          onExecuteScript!,
+                        ),
                       ],
                     ],
                   ),
@@ -1972,12 +2079,13 @@ class _MessageBubble extends StatelessWidget {
                       color: Colors.transparent,
                       child: IconButton(
                         onPressed: () => onCopyMessage!(message.content),
-                        icon: Icon(Icons.copy,
-                            size: 16,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.5)),
+                        icon: Icon(
+                          Icons.copy,
+                          size: 16,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
                         tooltip: 'نسخ نص الرسالة',
                         padding: const EdgeInsets.all(4),
                         constraints: const BoxConstraints(),
@@ -2013,8 +2121,11 @@ class _MessageBubble extends StatelessWidget {
       const SizedBox(height: 8),
       Row(
         children: [
-          Icon(Icons.code,
-              size: 14, color: Theme.of(context).appColors.warning),
+          Icon(
+            Icons.code,
+            size: 14,
+            color: Theme.of(context).appColors.warning,
+          ),
           const SizedBox(width: 4),
           Text(
             'سكربتات جاهزة للتنفيذ (${scripts.length})',
@@ -2048,8 +2159,8 @@ class _MessageBubble extends StatelessWidget {
         isUser
             ? Icons.person
             : message.type == MessageType.error
-                ? Icons.error_outline
-                : Icons.smart_toy,
+            ? Icons.error_outline
+            : Icons.smart_toy,
         size: 18,
         color: Theme.of(context).colorScheme.onSurface,
       ),
@@ -2069,15 +2180,19 @@ class _MessageBubble extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline,
-              size: 18, color: Theme.of(context).primaryColor),
+          Icon(
+            Icons.info_outline,
+            size: 18,
+            color: Theme.of(context).primaryColor,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message.content,
               style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).textTheme.bodySmall?.color),
+                fontSize: 13,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
           ),
         ],
@@ -2108,8 +2223,8 @@ class _CommandChip extends StatelessWidget {
     final riskEmoji = _riskLevel == CommandRiskLevel.dangerous
         ? '🚨'
         : _riskLevel == CommandRiskLevel.moderate
-            ? '⚠️'
-            : '✅';
+        ? '⚠️'
+        : '✅';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -2132,8 +2247,11 @@ class _CommandChip extends StatelessWidget {
               children: [
                 Text(riskEmoji, style: const TextStyle(fontSize: 14)),
                 const SizedBox(width: 6),
-                Icon(Icons.terminal,
-                    size: 14, color: Theme.of(context).appColors.success),
+                Icon(
+                  Icons.terminal,
+                  size: 14,
+                  color: Theme.of(context).appColors.success,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -2159,8 +2277,9 @@ class _CommandChip extends StatelessWidget {
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     minimumSize: const Size(0, 30),
-                    foregroundColor:
-                        Theme.of(context).textTheme.bodySmall?.color,
+                    foregroundColor: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.color,
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -2193,24 +2312,21 @@ class _ScriptCard extends StatelessWidget {
   final RouterOsScript script;
   final VoidCallback onExecute;
 
-  const _ScriptCard({
-    required this.script,
-    required this.onExecute,
-  });
+  const _ScriptCard({required this.script, required this.onExecute});
 
   @override
   Widget build(BuildContext context) {
     final riskColor = script.isDangerous
         ? Theme.of(context).appColors.error
         : script.hasModerate
-            ? Theme.of(context).appColors.warning
-            : Theme.of(context).appColors.success;
+        ? Theme.of(context).appColors.warning
+        : Theme.of(context).appColors.success;
 
     final riskIcon = script.isDangerous
         ? Icons.dangerous
         : script.hasModerate
-            ? Icons.warning
-            : Icons.check_circle;
+        ? Icons.warning
+        : Icons.check_circle;
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -2256,8 +2372,10 @@ class _ScriptCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               script.description,
-              style:
-                  TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).hintColor,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -2302,8 +2420,10 @@ class _ScriptCard extends StatelessWidget {
             children: [
               Text(
                 '${script.commands.length} أوامر',
-                style:
-                    TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).hintColor,
+                ),
               ),
               const Spacer(),
               TextButton.icon(
@@ -2322,12 +2442,18 @@ class _ScriptCard extends StatelessWidget {
               const SizedBox(width: 4),
               ElevatedButton.icon(
                 onPressed: onExecute,
-                icon: Icon(Icons.play_arrow,
-                    size: 14, color: Theme.of(context).colorScheme.onSurface),
-                label: Text('تنفيذ',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).colorScheme.onSurface)),
+                icon: Icon(
+                  Icons.play_arrow,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                label: Text(
+                  'تنفيذ',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: riskColor,
                   padding: const EdgeInsets.symmetric(horizontal: 10),

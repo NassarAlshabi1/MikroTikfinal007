@@ -181,7 +181,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       }
     } catch (e) {
       _updateTest(
-          test.id, DiagnosticStatus.error, 'فشل الفحص: ${e.toString()}');
+        test.id,
+        DiagnosticStatus.error,
+        'فشل الفحص: ${e.toString()}',
+      );
     } finally {
       _generateRecommendations();
     }
@@ -196,7 +199,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       final test = _tests[index];
       test.status = status;
       test.message = message;
-      test.checkedAt = status == DiagnosticStatus.running ? null : DateTime.now();
+      test.checkedAt = status == DiagnosticStatus.running
+          ? null
+          : DateTime.now();
       if (status == DiagnosticStatus.running && id == 'latency') {
         test.latencyMs = null;
         test.latencyMetrics = null;
@@ -208,8 +213,13 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
     });
   }
 
-  void _updateTestWithSpeed(String id, DiagnosticStatus status, String message,
-      {double? downloadSpeed, double? uploadSpeed}) {
+  void _updateTestWithSpeed(
+    String id,
+    DiagnosticStatus status,
+    String message, {
+    double? downloadSpeed,
+    double? uploadSpeed,
+  }) {
     if (!mounted) return;
     setState(() {
       final index = _tests.indexWhere((test) => test.id == id);
@@ -235,10 +245,16 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
     }
     if (success >= 1) {
       _updateTest(
-          test.id, DiagnosticStatus.success, 'تم الوصول إلى البوابة $gw');
+        test.id,
+        DiagnosticStatus.success,
+        'تم الوصول إلى البوابة $gw',
+      );
     } else {
       _updateTest(
-          test.id, DiagnosticStatus.error, 'تعذر الوصول إلى البوابة $gw');
+        test.id,
+        DiagnosticStatus.error,
+        'تعذر الوصول إلى البوابة $gw',
+      );
     }
   }
 
@@ -247,14 +263,23 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       final r = await _dio.get('https://www.google.com/generate_204');
       if (r.statusCode == 204 || r.statusCode == 200) {
         _updateTest(
-            test.id, DiagnosticStatus.success, 'الاتصال بالإنترنت يعمل');
+          test.id,
+          DiagnosticStatus.success,
+          'الاتصال بالإنترنت يعمل',
+        );
       } else {
-        _updateTest(test.id, DiagnosticStatus.warning,
-            'استجابة غير متوقعة من الإنترنت');
+        _updateTest(
+          test.id,
+          DiagnosticStatus.warning,
+          'استجابة غير متوقعة من الإنترنت',
+        );
       }
     } on DioException catch (e) {
-      _updateTest(test.id, DiagnosticStatus.error,
-          'لا يوجد اتصال بالإنترنت: ${e.message}');
+      _updateTest(
+        test.id,
+        DiagnosticStatus.error,
+        'لا يوجد اتصال بالإنترنت: ${e.message}',
+      );
     }
   }
 
@@ -265,11 +290,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
         _updateTest(test.id, DiagnosticStatus.success, 'خادم DNS يعمل');
       } else {
         _updateTest(
-            test.id, DiagnosticStatus.warning, 'لا يمكن حل أسماء النطاقات');
+          test.id,
+          DiagnosticStatus.warning,
+          'لا يمكن حل أسماء النطاقات',
+        );
       }
     } catch (e) {
       _updateTest(
-          test.id, DiagnosticStatus.error, 'فشل فحص DNS: ${e.toString()}');
+        test.id,
+        DiagnosticStatus.error,
+        'فشل فحص DNS: ${e.toString()}',
+      );
     }
   }
 
@@ -362,9 +393,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       await speedTestDio.post(
         uploadTestUrl,
         data: uploadData,
-        options: Options(
-          headers: {'Content-Type': 'application/octet-stream'},
-        ),
+        options: Options(headers: {'Content-Type': 'application/octet-stream'}),
       );
       uploadStopwatch.stop();
 
@@ -381,8 +410,13 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
           ? DiagnosticStatus.warning
           : DiagnosticStatus.success;
 
-      _updateTestWithSpeed(test.id, status, message,
-          downloadSpeed: downloadSpeedMbps, uploadSpeed: uploadSpeedMbps);
+      _updateTestWithSpeed(
+        test.id,
+        status,
+        message,
+        downloadSpeed: downloadSpeedMbps,
+        uploadSpeed: uploadSpeedMbps,
+      );
     } catch (e) {
       throw Exception('فشل اختبار السرعة: ${e.toString()}');
     } finally {
@@ -399,109 +433,123 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
     final speedTest = _tests.firstWhere((t) => t.id == 'speed_test');
 
     if (gateway.status == DiagnosticStatus.error) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'تعذر الوصول إلى الراوتر',
-        description:
-            'لا يمكن الاتصال بالبوابة الافتراضية${_gatewayIp != null ? ' ($_gatewayIp)' : ''}.',
-        severity: SeverityLevel.high,
-        icon: Icons.router,
-        steps: [
-          'تحقق من اتصالك بشبكة Wi‑Fi',
-          'تأكد من عنوان IP للبوابة',
-          'أعد تشغيل الراوتر',
-          'تحقق من الكابلات والتوصيلات',
-        ],
-      ));
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'تعذر الوصول إلى الراوتر',
+          description:
+              'لا يمكن الاتصال بالبوابة الافتراضية${_gatewayIp != null ? ' ($_gatewayIp)' : ''}.',
+          severity: SeverityLevel.high,
+          icon: Icons.router,
+          steps: [
+            'تحقق من اتصالك بشبكة Wi‑Fi',
+            'تأكد من عنوان IP للبوابة',
+            'أعد تشغيل الراوتر',
+            'تحقق من الكابلات والتوصيلات',
+          ],
+        ),
+      );
     }
 
     if (internet.status == DiagnosticStatus.error) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'لا يوجد اتصال بالإنترنت',
-        description: 'تعذر الوصول إلى الإنترنت من الشبكة الحالية.',
-        severity: SeverityLevel.high,
-        icon: Icons.public_off,
-        steps: [
-          'تحقق من حالة الاشتراك لدى مزود الخدمة',
-          'أعد تشغيل المودم والراوتر',
-          'تحقق من وجود انقطاع عام في المنطقة',
-        ],
-      ));
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'لا يوجد اتصال بالإنترنت',
+          description: 'تعذر الوصول إلى الإنترنت من الشبكة الحالية.',
+          severity: SeverityLevel.high,
+          icon: Icons.public_off,
+          steps: [
+            'تحقق من حالة الاشتراك لدى مزود الخدمة',
+            'أعد تشغيل المودم والراوتر',
+            'تحقق من وجود انقطاع عام في المنطقة',
+          ],
+        ),
+      );
     }
 
     if (dns.status == DiagnosticStatus.error ||
         dns.status == DiagnosticStatus.warning) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'مشكلة في DNS',
-        description: 'قد لا تعمل خدمة حل أسماء النطاقات بالشكل الصحيح.',
-        severity: SeverityLevel.medium,
-        icon: Icons.dns,
-        steps: [
-          'جرّب استخدام خوادم DNS عامة مثل 1.1.1.1 أو 8.8.8.8',
-          'تحقق من إعدادات DNS على الراوتر',
-        ],
-      ));
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'مشكلة في DNS',
+          description: 'قد لا تعمل خدمة حل أسماء النطاقات بالشكل الصحيح.',
+          severity: SeverityLevel.medium,
+          icon: Icons.dns,
+          steps: [
+            'جرّب استخدام خوادم DNS عامة مثل 1.1.1.1 أو 8.8.8.8',
+            'تحقق من إعدادات DNS على الراوتر',
+          ],
+        ),
+      );
     }
 
     final latencyMetrics = latency.latencyMetrics;
     final packetLoss = latencyMetrics?.packetLossPercent;
     if (packetLoss != null && packetLoss >= 25) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'فقد حزم في الاتصال',
-        description:
-            'فُقد ${packetLoss.toStringAsFixed(0)}% من حزم اختبار الاتصال؛ قد يسبب ذلك تقطعاً أو تأخراً.',
-        severity: packetLoss >= 50 ? SeverityLevel.high : SeverityLevel.medium,
-        icon: Icons.network_check,
-        steps: [
-          'أعد الاختبار قرب الراوتر ثم عبر اتصال سلكي إن أمكن.',
-          'تحقق من الكابل أو جودة إشارة Wi‑Fi والتداخل اللاسلكي.',
-          'أوقف مؤقتاً التنزيلات الكثيفة وأعد الاختبار للمقارنة.',
-        ],
-      ));
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'فقد حزم في الاتصال',
+          description:
+              'فُقد ${packetLoss.toStringAsFixed(0)}% من حزم اختبار الاتصال؛ قد يسبب ذلك تقطعاً أو تأخراً.',
+          severity: packetLoss >= 50
+              ? SeverityLevel.high
+              : SeverityLevel.medium,
+          icon: Icons.network_check,
+          steps: [
+            'أعد الاختبار قرب الراوتر ثم عبر اتصال سلكي إن أمكن.',
+            'تحقق من الكابل أو جودة إشارة Wi‑Fi والتداخل اللاسلكي.',
+            'أوقف مؤقتاً التنزيلات الكثيفة وأعد الاختبار للمقارنة.',
+          ],
+        ),
+      );
     }
 
     final jitter = latencyMetrics?.jitterMs;
     if (jitter != null && jitter >= 30) {
-      _recommendations.add(NetworkRecommendation(
-        title: 'تذبذب في زمن الاستجابة',
-        description:
-            'متوسط التغير بين الردود ${jitter.toStringAsFixed(1)} مللي ثانية؛ قد يؤثر على المكالمات والألعاب.',
-        severity: SeverityLevel.medium,
-        icon: Icons.multiline_chart,
-        steps: [
-          'أعد الاختبار أكثر من مرة في أوقات مختلفة.',
-          'قارن النتيجة بين Wi‑Fi والاتصال السلكي.',
-          'تحقق من ازدحام الشبكة والأجهزة التي ترفع أو تنزّل البيانات.',
-        ],
-      ));
+      _recommendations.add(
+        NetworkRecommendation(
+          title: 'تذبذب في زمن الاستجابة',
+          description:
+              'متوسط التغير بين الردود ${jitter.toStringAsFixed(1)} مللي ثانية؛ قد يؤثر على المكالمات والألعاب.',
+          severity: SeverityLevel.medium,
+          icon: Icons.multiline_chart,
+          steps: [
+            'أعد الاختبار أكثر من مرة في أوقات مختلفة.',
+            'قارن النتيجة بين Wi‑Fi والاتصال السلكي.',
+            'تحقق من ازدحام الشبكة والأجهزة التي ترفع أو تنزّل البيانات.',
+          ],
+        ),
+      );
     }
 
     if (latency.latencyMs != null) {
       if (latency.latencyMs! > 150) {
-        _recommendations.add(NetworkRecommendation(
-          title: 'زمن استجابة مرتفع',
-          description:
-              'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية أعلى من المتوقع.',
-          severity: SeverityLevel.medium,
-          icon: Icons.punch_clock,
-          steps: [
-            'تحقق من الأجهزة التي قد تستهلك النطاق بشكل كبير',
-            'جرّب إعادة تشغيل الراوتر',
-            'اختبر الكابل أو شبكة الـ Wi‑Fi',
-          ],
-        ));
+        _recommendations.add(
+          NetworkRecommendation(
+            title: 'زمن استجابة مرتفع',
+            description:
+                'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية أعلى من المتوقع.',
+            severity: SeverityLevel.medium,
+            icon: Icons.punch_clock,
+            steps: [
+              'تحقق من الأجهزة التي قد تستهلك النطاق بشكل كبير',
+              'جرّب إعادة تشغيل الراوتر',
+              'اختبر الكابل أو شبكة الـ Wi‑Fi',
+            ],
+          ),
+        );
       } else if (latency.latencyMs! <= 50 &&
           (packetLoss == null || packetLoss < 25) &&
           (jitter == null || jitter < 30)) {
-        _recommendations.add(NetworkRecommendation(
-          title: 'زمن استجابة ممتاز',
-          description:
-              'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية مناسب للألعاب والبث.',
-          severity: SeverityLevel.info,
-          icon: Icons.speed,
-          steps: [
-            'لا توجد إجراءات مطلوبة',
-          ],
-        ));
+        _recommendations.add(
+          NetworkRecommendation(
+            title: 'زمن استجابة ممتاز',
+            description:
+                'المتوسط ${latency.latencyMs!.toStringAsFixed(0)} مللي ثانية مناسب للألعاب والبث.',
+            severity: SeverityLevel.info,
+            icon: Icons.speed,
+            steps: ['لا توجد إجراءات مطلوبة'],
+          ),
+        );
       }
     }
 
@@ -549,14 +597,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       builder: (context) => AlertDialog(
         title: const Text('تحذير اختبار السرعة'),
         content: const Text(
-            'سيتم استهلاك نحو 15 ميجابايت (10 للتحميل و5 للرفع). هل تريد المتابعة؟'),
+          'سيتم استهلاك نحو 15 ميجابايت (10 للتحميل و5 للرفع). هل تريد المتابعة؟',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('إلغاء')),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('متابعة')),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('متابعة'),
+          ),
         ],
       ),
     );
@@ -571,10 +622,12 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
   int get _countPending =>
       _tests.where((t) => t.status == DiagnosticStatus.pending).length;
   int get _countCompleted => _tests
-      .where((test) =>
-          test.status == DiagnosticStatus.success ||
-          test.status == DiagnosticStatus.warning ||
-          test.status == DiagnosticStatus.error)
+      .where(
+        (test) =>
+            test.status == DiagnosticStatus.success ||
+            test.status == DiagnosticStatus.warning ||
+            test.status == DiagnosticStatus.error,
+      )
       .length;
 
   Color _statusColor(DiagnosticStatus s) {
@@ -621,7 +674,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
     final report = StringBuffer()
       ..writeln('تقرير فحص اتصال الشبكة')
       ..writeln('وقت إعداد التقرير: ${DateTime.now().toLocal()}')
-      ..writeln('المصدر: اختبارات اتصال من الهاتف؛ ليست قراءة لإعدادات الراوتر.')
+      ..writeln(
+        'المصدر: اختبارات اتصال من الهاتف؛ ليست قراءة لإعدادات الراوتر.',
+      )
       ..writeln('البوابة: $gateway')
       ..writeln()
       ..writeln('الملخص')
@@ -658,10 +713,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
         !_hasCompletedTest
             ? 'لا توجد نتائج مكتملة بعد؛ شغّل الفحوصات قبل استخلاص نتيجة.'
             : hasIncompleteTests
-                ? 'لا توجد توصيات نهائية بعد؛ ما زالت فحوصات غير مكتملة.'
-                : hasAlerts
-                    ? 'لم تُنشأ توصيات تلقائية؛ راجع حالات التحذير أو الفشل.'
-                    : 'اكتملت الفحوصات دون توصيات.',
+            ? 'لا توجد توصيات نهائية بعد؛ ما زالت فحوصات غير مكتملة.'
+            : hasAlerts
+            ? 'لم تُنشأ توصيات تلقائية؛ راجع حالات التحذير أو الفشل.'
+            : 'اكتملت الفحوصات دون توصيات.',
       );
     } else {
       for (final recommendation in _recommendations) {
@@ -681,30 +736,27 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
     try {
       await Clipboard.setData(ClipboardData(text: _buildNetworkReport()));
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم نسخ تقرير فحص الشبكة.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تم نسخ تقرير فحص الشبكة.')));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر نسخ تقرير الفحص.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذر نسخ تقرير الفحص.')));
     }
   }
 
   Future<void> _shareNetworkReport() async {
     try {
       await SharePlus.instance.share(
-        ShareParams(
-          text: _buildNetworkReport(),
-          subject: 'تقرير فحص الشبكة',
-        ),
+        ShareParams(text: _buildNetworkReport(), subject: 'تقرير فحص الشبكة'),
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر مشاركة تقرير الفحص.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذر مشاركة تقرير الفحص.')));
     }
   }
 
@@ -758,11 +810,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       _tests.any((test) => test.status == DiagnosticStatus.running);
 
   bool get _hasCompletedTest => _tests.any(
-        (test) =>
-            test.status == DiagnosticStatus.success ||
-            test.status == DiagnosticStatus.warning ||
-            test.status == DiagnosticStatus.error,
-      );
+    (test) =>
+        test.status == DiagnosticStatus.success ||
+        test.status == DiagnosticStatus.warning ||
+        test.status == DiagnosticStatus.error,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -841,15 +893,13 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
           _buildTabPage([
             _buildSummaryCard(),
             const SizedBox(height: 12),
-              _buildStatsRow(),
-              const SizedBox(height: 12),
-              _buildProgressCard(),
-              const SizedBox(height: 12),
-              _buildSummaryStateCard(),
+            _buildStatsRow(),
+            const SizedBox(height: 12),
+            _buildProgressCard(),
+            const SizedBox(height: 12),
+            _buildSummaryStateCard(),
           ]),
-          _buildTabPage([
-            _buildTestsSection(),
-          ]),
+          _buildTabPage([_buildTestsSection()]),
           _buildTabPage([
             _buildRecommendationsSection(),
             const SizedBox(height: 16),
@@ -914,7 +964,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
         gradient: LinearGradient(
           colors: [
             primary.withValues(alpha: 0.6),
-            primary.withValues(alpha: 0.3)
+            primary.withValues(alpha: 0.3),
           ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
@@ -935,14 +985,16 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.2),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(Icons.health_and_safety,
-                    color: Theme.of(context).colorScheme.onSurface, size: 36),
+                child: Icon(
+                  Icons.health_and_safety,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  size: 36,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -961,8 +1013,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     Text(
                       'تشخيص شامل لحالة الشبكة',
                       style: TextStyle(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                          fontSize: 13),
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -986,14 +1039,15 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                   : const Icon(Icons.play_arrow),
               label: Text(
                 _isRunningAll ? 'جاري التشغيل...' : 'تشغيل جميع الفحوصات',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.2),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.2),
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -1011,16 +1065,31 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
     return Row(
       children: [
         Expanded(
-            child: _buildChip('ناجحة', _countSuccess.toString(),
-                Theme.of(context).appColors.success, Icons.check_circle)),
+          child: _buildChip(
+            'ناجحة',
+            _countSuccess.toString(),
+            Theme.of(context).appColors.success,
+            Icons.check_circle,
+          ),
+        ),
         const SizedBox(width: 10),
         Expanded(
-            child: _buildChip('تحذير', _countWarning.toString(),
-                Theme.of(context).appColors.warning, Icons.warning)),
+          child: _buildChip(
+            'تحذير',
+            _countWarning.toString(),
+            Theme.of(context).appColors.warning,
+            Icons.warning,
+          ),
+        ),
         const SizedBox(width: 10),
         Expanded(
-            child: _buildChip('فشل', _countError.toString(),
-                Theme.of(context).appColors.error, Icons.error)),
+          child: _buildChip(
+            'فشل',
+            _countError.toString(),
+            Theme.of(context).appColors.error,
+            Icons.error,
+          ),
+        ),
       ],
     );
   }
@@ -1028,8 +1097,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
   Widget _buildProgressCard() {
     final theme = Theme.of(context);
     final progress = _tests.isEmpty ? 0.0 : _countCompleted / _tests.length;
-    final runningCount =
-        _tests.where((test) => test.status == DiagnosticStatus.running).length;
+    final runningCount = _tests
+        .where((test) => test.status == DiagnosticStatus.running)
+        .length;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1096,7 +1166,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
           Text(
             title,
             style: TextStyle(
-              color: Theme.of(context).textTheme.bodySmall?.color ??
+              color:
+                  Theme.of(context).textTheme.bodySmall?.color ??
                   Theme.of(context).textTheme.bodySmall?.color,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -1118,16 +1189,19 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.titleLarge?.color ??
+              color:
+                  Theme.of(context).textTheme.titleLarge?.color ??
                   Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
         const SizedBox(height: 8),
-        ..._tests.map((t) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildTestCard(t),
-            )),
+        ..._tests.map(
+          (t) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildTestCard(t),
+          ),
+        ),
       ],
     );
   }
@@ -1141,10 +1215,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1168,7 +1239,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     Text(
                       t.title,
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.titleMedium?.color ??
+                        color:
+                            Theme.of(context).textTheme.titleMedium?.color ??
                             Theme.of(context).colorScheme.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1178,7 +1250,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     Text(
                       t.description,
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodySmall?.color ??
+                        color:
+                            Theme.of(context).textTheme.bodySmall?.color ??
                             Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 13,
                       ),
@@ -1188,13 +1261,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: color.withValues(alpha: 0.5), width: 1),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   _statusLabel(t.status),
@@ -1214,19 +1291,22 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.timer,
-                      color: Theme.of(context)
-                              .iconTheme
-                              .color
-                              ?.withValues(alpha: 0.7) ??
-                          Theme.of(context).textTheme.bodySmall?.color,
-                      size: 16),
+                  Icon(
+                    Icons.timer,
+                    color:
+                        Theme.of(
+                          context,
+                        ).iconTheme.color?.withValues(alpha: 0.7) ??
+                        Theme.of(context).textTheme.bodySmall?.color,
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       _formatLatencyMetrics(t.latencyMetrics!),
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        color:
+                            Theme.of(context).textTheme.bodyMedium?.color ??
                             Theme.of(context).colorScheme.onSurface,
                         fontSize: 13,
                         height: 1.4,
@@ -1242,22 +1322,25 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  Icon(Icons.speed,
-                      color: Theme.of(context)
-                              .iconTheme
-                              .color
-                              ?.withValues(alpha: 0.7) ??
-                          Theme.of(context).textTheme.bodySmall?.color,
-                      size: 16),
+                  Icon(
+                    Icons.speed,
+                    color:
+                        Theme.of(
+                          context,
+                        ).iconTheme.color?.withValues(alpha: 0.7) ??
+                        Theme.of(context).textTheme.bodySmall?.color,
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'التحميل: ${t.downloadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps • الرفع: ${t.uploadSpeedMbps?.toStringAsFixed(2) ?? '-'} Mbps',
                       style: TextStyle(
-                          color:
-                              Theme.of(context).textTheme.bodyMedium?.color ??
-                                  Theme.of(context).colorScheme.onSurface,
-                          fontSize: 14),
+                        color:
+                            Theme.of(context).textTheme.bodyMedium?.color ??
+                            Theme.of(context).colorScheme.onSurface,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ],
@@ -1266,17 +1349,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.05),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             width: double.infinity,
             child: Text(
               t.message,
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodySmall?.color ??
+                color:
+                    Theme.of(context).textTheme.bodySmall?.color ??
                     Theme.of(context).textTheme.bodySmall?.color,
                 fontSize: 13,
               ),
@@ -1330,22 +1413,24 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .appColors
-                        .warning
-                        .withValues(alpha: 0.15),
+                    color: Theme.of(
+                      context,
+                    ).appColors.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: Theme.of(context)
-                            .appColors
-                            .warning
-                            .withValues(alpha: 0.3)),
+                      color: Theme.of(
+                        context,
+                      ).appColors.warning.withValues(alpha: 0.3),
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber,
-                          color: Theme.of(context).appColors.warning, size: 18),
+                      Icon(
+                        Icons.warning_amber,
+                        color: Theme.of(context).appColors.warning,
+                        size: 18,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         '~15MB',
@@ -1369,14 +1454,17 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
   Widget _buildRecommendationsSection() {
     final hasIncompleteTests = _countPending > 0 || _isAnyTestRunning;
     final allClear =
-        _hasCompletedTest && !hasIncompleteTests && _countWarning == 0 && _countError == 0;
+        _hasCompletedTest &&
+        !hasIncompleteTests &&
+        _countWarning == 0 &&
+        _countError == 0;
     final emptyMessage = !_hasCompletedTest
         ? 'شغّل الفحوصات أولاً لعرض توصيات مبنية على النتائج.'
         : hasIncompleteTests
-            ? 'لا توجد توصيات نهائية بعد؛ أكمل الفحوصات المتبقية للحصول على صورة أوضح.'
-            : allClear
-                ? 'اكتملت الفحوصات دون ظهور مؤشرات تتطلب توصية.'
-                : 'لا توجد توصيات تلقائية، لكن راجع حالات التحذير أو الفشل في تبويب الفحوصات.';
+        ? 'لا توجد توصيات نهائية بعد؛ أكمل الفحوصات المتبقية للحصول على صورة أوضح.'
+        : allClear
+        ? 'اكتملت الفحوصات دون ظهور مؤشرات تتطلب توصية.'
+        : 'لا توجد توصيات تلقائية، لكن راجع حالات التحذير أو الفشل في تبويب الفحوصات.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1388,7 +1476,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.titleLarge?.color ??
+              color:
+                  Theme.of(context).textTheme.titleLarge?.color ??
                   Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -1417,7 +1506,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                   child: Text(
                     emptyMessage,
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      color:
+                          Theme.of(context).textTheme.bodyMedium?.color ??
                           Theme.of(context).colorScheme.onSurface,
                       fontSize: 15,
                     ),
@@ -1426,10 +1516,12 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
               ],
             ),
           ),
-        ..._recommendations.map((r) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildRecommendationCard(r),
-            )),
+        ..._recommendations.map(
+          (r) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildRecommendationCard(r),
+          ),
+        ),
       ],
     );
   }
@@ -1463,10 +1555,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: sevColor.withValues(alpha: 0.4),
-          width: 1.5,
-        ),
+        border: Border.all(color: sevColor.withValues(alpha: 0.4), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1493,10 +1582,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                           child: Text(
                             r.title,
                             style: TextStyle(
-                              color: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.color ??
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium?.color ??
                                   Theme.of(context).colorScheme.onSurface,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -1505,7 +1594,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: sevColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
@@ -1525,7 +1616,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     Text(
                       r.description,
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodySmall?.color ??
+                        color:
+                            Theme.of(context).textTheme.bodySmall?.color ??
                             Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 13,
                       ),
@@ -1539,10 +1631,10 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                 },
                 icon: Icon(
                   r.expanded ? Icons.expand_less : Icons.expand_more,
-                  color: Theme.of(context)
-                          .iconTheme
-                          .color
-                          ?.withValues(alpha: 0.6) ??
+                  color:
+                      Theme.of(
+                        context,
+                      ).iconTheme.color?.withValues(alpha: 0.6) ??
                       Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),
@@ -1551,12 +1643,14 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
           if (r.expanded) ...[
             const SizedBox(height: 16),
             Divider(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+            ),
             const SizedBox(height: 12),
             Text(
               'خطوات الحل:',
               style: TextStyle(
-                color: Theme.of(context).textTheme.titleSmall?.color ??
+                color:
+                    Theme.of(context).textTheme.titleSmall?.color ??
                     Theme.of(context).colorScheme.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -1595,7 +1689,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                         style: TextStyle(
                           color:
                               Theme.of(context).textTheme.bodyMedium?.color ??
-                                  Theme.of(context).colorScheme.onSurface,
+                              Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                         ),
                       ),
@@ -1624,7 +1718,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.titleLarge?.color ??
+              color:
+                  Theme.of(context).textTheme.titleLarge?.color ??
                   Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -1637,7 +1732,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (context) => const NetworkMapScreen()),
+                      builder: (context) => const NetworkMapScreen(),
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(18),
@@ -1647,7 +1743,9 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                        color: primary.withValues(alpha: 0.3), width: 1.5),
+                      color: primary.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -1657,8 +1755,11 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                           color: primary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child:
-                            Icon(Icons.hub_outlined, size: 32, color: primary),
+                        child: Icon(
+                          Icons.hub_outlined,
+                          size: 32,
+                          color: primary,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -1666,7 +1767,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                         style: TextStyle(
                           color:
                               Theme.of(context).textTheme.titleSmall?.color ??
-                                  Theme.of(context).colorScheme.onSurface,
+                              Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -1683,7 +1784,8 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (context) => const RogueDhcpDetectorScreen()),
+                      builder: (context) => const RogueDhcpDetectorScreen(),
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(18),
@@ -1693,25 +1795,27 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                        color: Theme.of(context)
-                            .appColors
-                            .error
-                            .withValues(alpha: 0.3),
-                        width: 1.5),
+                      color: Theme.of(
+                        context,
+                      ).appColors.error.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .appColors
-                              .error
-                              .withValues(alpha: 0.2),
+                          color: Theme.of(
+                            context,
+                          ).appColors.error.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Icon(Icons.security,
-                            size: 32, color: Theme.of(context).appColors.error),
+                        child: Icon(
+                          Icons.security,
+                          size: 32,
+                          color: Theme.of(context).appColors.error,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -1719,7 +1823,7 @@ class _NetworkDoctorScreenState extends State<NetworkDoctorScreen>
                         style: TextStyle(
                           color:
                               Theme.of(context).textTheme.titleSmall?.color ??
-                                  Theme.of(context).colorScheme.onSurface,
+                              Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),

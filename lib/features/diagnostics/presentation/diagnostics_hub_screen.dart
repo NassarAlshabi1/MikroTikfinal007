@@ -17,9 +17,7 @@ class DiagnosticsHubScreen extends StatelessWidget {
   const DiagnosticsHubScreen({super.key});
 
   void _open(BuildContext context, Widget screen) {
-    Navigator.of(context).push(
-      CustomPageRoute<void>(builder: (_) => screen),
-    );
+    Navigator.of(context).push(CustomPageRoute<void>(builder: (_) => screen));
   }
 
   @override
@@ -46,7 +44,8 @@ class DiagnosticsHubScreen extends StatelessWidget {
     final analysisTools = <_DiagnosticDestination>[
       _DiagnosticDestination(
         title: 'تحليل سجلات MikroTik',
-        description: 'اجمع السجلات أو حلّل نصاً محفوظاً واعرض الأحداث والتوصيات.',
+        description:
+            'اجمع السجلات أو حلّل نصاً محفوظاً واعرض الأحداث والتوصيات.',
         icon: Icons.receipt_long_outlined,
         onTap: () => _open(context, const LogAnalysisScreen()),
       ),
@@ -85,9 +84,7 @@ class DiagnosticsHubScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('مركز التشخيص'),
-      ),
+      appBar: AppBar(title: const Text('مركز التشخيص')),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -141,7 +138,8 @@ class DiagnosticsHubScreen extends StatelessWidget {
       builder: (context, constraints) {
         const spacing = 12.0;
         final columns = constraints.maxWidth >= 680 ? 2 : 1;
-        final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        final width =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
         return Wrap(
           spacing: spacing,
@@ -150,9 +148,7 @@ class DiagnosticsHubScreen extends StatelessWidget {
               .map(
                 (destination) => SizedBox(
                   width: width,
-                  child: _DiagnosticDestinationCard(
-                    destination: destination,
-                  ),
+                  child: _DiagnosticDestinationCard(destination: destination),
                 ),
               )
               .toList(growable: false),

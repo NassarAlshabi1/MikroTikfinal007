@@ -117,9 +117,7 @@ Future<_ShardOutcome> _processShard({
     sendPort.send({
       'type': 'progress',
       // لا نعرض 100% إلا بعد انتهاء جميع الشاردات والتحقق النهائي.
-      'progress': totalCards == 0
-          ? 0.0
-          : min(completed / totalCards, 0.99),
+      'progress': totalCards == 0 ? 0.0 : min(completed / totalCards, 0.99),
       'status': 'تمت معالجة $completed من $totalCards كرت',
     });
   }
@@ -146,15 +144,9 @@ Future<_ShardOutcome> _processShard({
       final warning = result.activationWarning;
       if (warning != null) activationWarnings.add(warning);
     } on RouterOSTrapError catch (error) {
-      failedAdds.add({
-        'username': username,
-        'reason': _friendlyError(error),
-      });
+      failedAdds.add({'username': username, 'reason': _friendlyError(error)});
     } catch (error) {
-      failedAdds.add({
-        'username': username,
-        'reason': _friendlyError(error),
-      });
+      failedAdds.add({'username': username, 'reason': _friendlyError(error)});
       if (_isConnectionFailure(error)) connectionError = error;
     }
 
@@ -230,10 +222,8 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         isar: localIsar,
         profileName: data.selectedProfile!.trim(),
         users: plannedUsers,
-        sharedUsers: CardNumberPolicy.parseAsciiInteger(
-              data.sharedUsers.trim(),
-            ) ??
-            1,
+        sharedUsers:
+            CardNumberPolicy.parseAsciiInteger(data.sharedUsers.trim()) ?? 1,
         generationJobId: data.generationJobId,
       );
       if (!preparation.canProceed) {
@@ -273,19 +263,22 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
         if (start >= plannedUsers.length) break;
         final shardUsers = plannedUsers.sublist(start, end);
 
-        final shardClient =
-            await MikrotikConnector.connectWithConfig(data.connectionConfig);
+        final shardClient = await MikrotikConnector.connectWithConfig(
+          data.connectionConfig,
+        );
         shardClients.add(shardClient);
-        futures.add(_processShard(
-          users: shardUsers,
-          client: shardClient,
-          serviceMode: data.serviceMode,
-          profile: profile,
-          data: data,
-          sendPort: sendPort,
-          cardsBefore: start,
-          totalCards: plannedUsers.length,
-        ));
+        futures.add(
+          _processShard(
+            users: shardUsers,
+            client: shardClient,
+            serviceMode: data.serviceMode,
+            profile: profile,
+            data: data,
+            sendPort: sendPort,
+            cardsBefore: start,
+            totalCards: plannedUsers.length,
+          ),
+        );
       }
 
       final shardOutcomes = await Future.wait(futures);
@@ -336,7 +329,7 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       final reason = failedAdds.isEmpty
           ? 'لم يتم إنشاء أي كرت على الراوتر.'
           : 'فشل إنشاء ${failedAdds.length} كرت: '
-              '${failedAdds.first['reason']}';
+                '${failedAdds.first['reason']}';
       throw FormatException(reason);
     }
 
@@ -352,14 +345,26 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       'warning': _composeWarning(warnings),
     });
   } on MikrotikCredentialsMissingException catch (e) {
-    _sendError(sendPort, 'خطأ في بيانات الدخول: ${e.message}',
-        newlyCreatedUsers.length, newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      'خطأ في بيانات الدخول: ${e.message}',
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } on MikrotikConnectionException catch (e) {
-    _sendError(sendPort, 'خطأ في الاتصال: ${e.message}',
-        newlyCreatedUsers.length, newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      'خطأ في الاتصال: ${e.message}',
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } on RouterOSTrapError catch (e) {
-    _sendError(sendPort, _friendlyError(e.message), newlyCreatedUsers.length,
-        newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      _friendlyError(e.message),
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } on TimeoutException {
     _sendError(
       sendPort,
@@ -369,11 +374,19 @@ void bulkAddIsolate(BulkAddIsolateData data) async {
       newlyCreatedUsers,
     );
   } on FormatException catch (e) {
-    _sendError(sendPort, e.message.toString(), newlyCreatedUsers.length,
-        newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      e.message.toString(),
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } catch (e) {
-    _sendError(sendPort, _friendlyError(e), newlyCreatedUsers.length,
-        newlyCreatedUsers);
+    _sendError(
+      sendPort,
+      _friendlyError(e),
+      newlyCreatedUsers.length,
+      newlyCreatedUsers,
+    );
   } finally {
     await localIsar?.close();
   }
@@ -426,14 +439,16 @@ void _validateInput(BulkAddIsolateData data) {
     }
     if (data.prefix.length >= data.length) {
       throw const FormatException(
-          'طول البادئة يجب أن يكون أقل من الطول الإجمالي للمستخدم.');
+        'طول البادئة يجب أن يكون أقل من الطول الإجمالي للمستخدم.',
+      );
     }
   }
   if (data.selectedProfile == null || data.selectedProfile!.trim().isEmpty) {
     throw const FormatException('يجب اختيار فئة User Manager.');
   }
-  final sharedUsers =
-      CardNumberPolicy.parseAsciiInteger(data.sharedUsers.trim());
+  final sharedUsers = CardNumberPolicy.parseAsciiInteger(
+    data.sharedUsers.trim(),
+  );
   if (sharedUsers == null || sharedUsers < 1 || sharedUsers > 1000) {
     throw const FormatException('Shared Users يجب أن يكون رقماً بين 1 و1000.');
   }
@@ -454,7 +469,8 @@ void _validateInput(BulkAddIsolateData data) {
     final combinations = _combinationCount(randomPartLength, data.charType);
     if (data.count > combinations) {
       throw const FormatException(
-          'عدد الكروت أكبر من عدد الأسماء الممكنة؛ زد طول المستخدم أو غيّر نوع الأحرف.');
+        'عدد الكروت أكبر من عدد الأسماء الممكنة؛ زد طول المستخدم أو غيّر نوع الأحرف.',
+      );
     }
   } else {
     if (data.plannedUsers!.isEmpty || data.plannedUsers!.length != data.count) {
@@ -501,12 +517,14 @@ String _generateUniqueUsername({
   final normalizedPrefix = CardNumberPolicy.toAsciiDigits(data.prefix);
   final randomPartLength = data.length - normalizedPrefix.length;
   for (var attempt = 0; attempt < maxAttemptsPerCard; attempt++) {
-    final username = normalizedPrefix +
+    final username =
+        normalizedPrefix +
         _generateRandomString(randomPartLength, data.charType);
     if (existingUsernames.add(username)) return username;
   }
   throw StateError(
-      'تعذر توليد أسماء مستخدمين فريدة. زد الطول أو قلل عدد الكروت.');
+    'تعذر توليد أسماء مستخدمين فريدة. زد الطول أو قلل عدد الكروت.',
+  );
 }
 
 String _generatePassword({

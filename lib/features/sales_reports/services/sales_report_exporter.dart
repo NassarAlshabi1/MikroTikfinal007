@@ -23,27 +23,31 @@ class SalesReportExporter {
     required DateTime lastSyncedAt,
   }) {
     final buffer = StringBuffer('\uFEFF');
-    buffer.writeln([
-      'username',
-      'profile',
-      'uptime_used',
-      'uptime_limit',
-      'expires_at',
-      'status',
-      'last_synced_at',
-    ].map(_csvCell).join(','));
+    buffer.writeln(
+      [
+        'username',
+        'profile',
+        'uptime_used',
+        'uptime_limit',
+        'expires_at',
+        'status',
+        'last_synced_at',
+      ].map(_csvCell).join(','),
+    );
 
     final syncedAt = lastSyncedAt.toLocal().toIso8601String();
     for (final card in cards) {
-      buffer.writeln([
-        card.name,
-        card.profile,
-        card.uptimeUsed,
-        card.limitUptime,
-        card.expires,
-        cardUsageReportStatus(card, filter),
-        syncedAt,
-      ].map(_csvCell).join(','));
+      buffer.writeln(
+        [
+          card.name,
+          card.profile,
+          card.uptimeUsed,
+          card.limitUptime,
+          card.expires,
+          cardUsageReportStatus(card, filter),
+          syncedAt,
+        ].map(_csvCell).join(','),
+      );
     }
     return buffer.toString();
   }
@@ -62,19 +66,19 @@ class SalesReportExporter {
       '${exportDirectory.path}/cards_${filter.fileSuffix}_$timestamp.csv',
     );
     await file.writeAsBytes(
-      utf8.encode(buildCsv(
-        cards: cards,
-        filter: filter,
-        lastSyncedAt: lastSyncedAt,
-      )),
+      utf8.encode(
+        buildCsv(cards: cards, filter: filter, lastSyncedAt: lastSyncedAt),
+      ),
       flush: true,
     );
 
-    await SharePlus.instance.share(ShareParams(
-      files: [XFile(file.path)],
-      subject: filter.title,
-      text: 'تقرير حالة كروت User Manager، دون كلمات مرور أو بيانات بيع.',
-    ));
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        subject: filter.title,
+        text: 'تقرير حالة كروت User Manager، دون كلمات مرور أو بيانات بيع.',
+      ),
+    );
   }
 
   static Future<void> sharePdf({
@@ -93,51 +97,50 @@ class SalesReportExporter {
     );
     final generatedAt = DateTime.now();
 
-    document.addPage(pw.MultiPage(
-      maxPages: 500,
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.all(28),
-      build: (context) => [
-        _rtlText(
-          filter.title,
-          style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.SizedBox(height: 8),
-        _rtlText('وقت إنشاء التقرير: ${_formatDate(generatedAt)}'),
-        _rtlText('آخر مزامنة مع الراوتر: ${_formatDate(lastSyncedAt)}'),
-        _rtlText('إجمالي سجلات User Manager: $totalCount'),
-        _rtlText('عدد الصفوف المصدّرة حسب التصفية الحالية: ${cards.length}'),
-        _rtlText(
-          'الكروت المستخدمة: $usedCount  |  المنتهية/المعطّلة: $expiredCount',
-        ),
-        _rtlText('المستخدمة والمنتهية معاً: $overlappingCount'),
-        _rtlText(
-          'التقرير يعرض حالة الاستخدام فقط؛ لا يتضمن أسعاراً أو إيرادات.',
-          style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-        ),
-        pw.SizedBox(height: 12),
-        _pdfRow(
-          const [
+    document.addPage(
+      pw.MultiPage(
+        maxPages: 500,
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        build: (context) => [
+          _rtlText(
+            filter.title,
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          _rtlText('وقت إنشاء التقرير: ${_formatDate(generatedAt)}'),
+          _rtlText('آخر مزامنة مع الراوتر: ${_formatDate(lastSyncedAt)}'),
+          _rtlText('إجمالي سجلات User Manager: $totalCount'),
+          _rtlText('عدد الصفوف المصدّرة حسب التصفية الحالية: ${cards.length}'),
+          _rtlText(
+            'الكروت المستخدمة: $usedCount  |  المنتهية/المعطّلة: $expiredCount',
+          ),
+          _rtlText('المستخدمة والمنتهية معاً: $overlappingCount'),
+          _rtlText(
+            'التقرير يعرض حالة الاستخدام فقط؛ لا يتضمن أسعاراً أو إيرادات.',
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+          ),
+          pw.SizedBox(height: 12),
+          _pdfRow(const [
             'اسم الكرت',
             'الفئة',
             'الاستخدام',
             'حد الوقت',
             'الانتهاء',
             'الحالة',
-          ],
-          isHeader: true,
-        ),
-        for (final card in cards)
-          _pdfRow([
-            card.name,
-            card.profile.isEmpty ? 'غير محدد' : card.profile,
-            card.uptimeUsed.isEmpty ? 'غير متاح' : card.uptimeUsed,
-            card.limitUptime.isEmpty ? 'غير محدد' : card.limitUptime,
-            card.expires.isEmpty ? 'غير محدد' : card.expires,
-            cardUsageReportStatus(card, filter),
-          ]),
-      ],
-    ));
+          ], isHeader: true),
+          for (final card in cards)
+            _pdfRow([
+              card.name,
+              card.profile.isEmpty ? 'غير محدد' : card.profile,
+              card.uptimeUsed.isEmpty ? 'غير متاح' : card.uptimeUsed,
+              card.limitUptime.isEmpty ? 'غير محدد' : card.limitUptime,
+              card.expires.isEmpty ? 'غير محدد' : card.expires,
+              cardUsageReportStatus(card, filter),
+            ]),
+        ],
+      ),
+    );
 
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(generatedAt);
     await Printing.sharePdf(
@@ -152,11 +155,7 @@ class SalesReportExporter {
       child: pw.Container(
         width: double.infinity,
         margin: const pw.EdgeInsets.only(bottom: 4),
-        child: pw.Text(
-          text,
-          textAlign: pw.TextAlign.right,
-          style: style,
-        ),
+        child: pw.Text(text, textAlign: pw.TextAlign.right, style: style),
       ),
     );
   }
