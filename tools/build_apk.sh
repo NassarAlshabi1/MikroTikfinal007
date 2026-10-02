@@ -41,4 +41,11 @@ flutter build apk --release --target-platform android-arm64 \
 APK="build/app/outputs/flutter-apk/app-release.apk"
 echo
 echo "✅ تم البناء: $APK"
-echo "   الاسم المقترح للنشر: MikroNet-${VERSION}-arm64.apk"
+echo "   ملف النشر (واحد فقط): MikroNet-2.0.0.0-arm64.apk  (رقم الإصدار: $VERSION)"
+echo
+if [ -f android/signing.properties ]; then
+  echo "🔐 التوقيع: مفتاح MikroNet الثابت ⇒ التثبيت فوق أي نسخة سابقة يعمل بلا تعارض."
+else
+  echo "⚠️  تحذير: android/signing.properties غير موجود — سيُوقَّع الإصدار بمفتاح التصحيح"
+  echo "    ولن يُثبَّت فوق النسخ المنشورة (ستظهر رسالة تعارض الحزمة)."
+fi

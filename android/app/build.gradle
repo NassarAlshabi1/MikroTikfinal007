@@ -5,6 +5,20 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// ═══ مفتاح التوقيع الموحّد ═══
+// كل بناء (CI أو محلي) يُوقَّع بنفس المفتاح ⇒ تُثبَّت النسخة الجديدة فوق القديمة
+// مباشرة بلا رسالة «تعارض الحزمة/لم يتم تثبيت التطبيق».
+// الأولوية: android/key.properties (خاص، مُتجاهَل في git) ثم android/signing.properties (المشترك).
+def signingProps = new Properties()
+def signingPropsFile = rootProject.file('key.properties')
+if (!signingPropsFile.exists()) {
+    signingPropsFile = rootProject.file('signing.properties')
+}
+def hasSigningProps = signingPropsFile.exists()
+if (hasSigningProps) {
+    signingProps.load(new FileInputStream(signingPropsFile))
+}
+
 android {
     namespace = "com.miknet.marina"
     compileSdk = flutter.compileSdkVersion
@@ -34,11 +48,24 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            if (hasSigningProps) {
+                storeFile file(signingProps['storeFile'])
+                storePassword signingProps['storePassword']
+                keyAlias signingProps['keyAlias']
+                keyPassword signingProps['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // التوقيع بالمفتاح الموحّد إن توفّر، وإلا يبقى توقيع التصحيح (تطوير فقط)
+            signingConfig = hasSigningProps ? signingConfigs.release : signingConfigs.debug
+            if (!hasSigningProps) {
+                println "⚠️  تحذير: لم يُعثر على android/signing.properties — سيُوقَّع الإصدار بمفتاح التصحيح ولن يُثبَّت فوق النسخ المنشورة."
+            }
         }
     }
 }

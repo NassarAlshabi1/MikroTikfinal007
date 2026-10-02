@@ -127,6 +127,46 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # 🔐 بوابة المفتاح الموحّد: نفس مفتاح التوقيع في كل بناء ⇒ النسخة الجديدة
+      #    تُثبَّت فوق المثبَّتة بلا رسالة «تعارض الحزمة/لم يتم تثبيت التطبيق».
+      #    لو تغيّر المفتاح يومًا يتوقف البناء هنا (بدل نشر APK لا يُثبَّت فوق القديم).
+      - name: Verify fixed signing key
+        id: signing
+        shell: bash
+        run: |
+          set -e
+          KS="android/app/keystore/mikronet-release.p12"
+          PROPS="android/signing.properties"
+          FP_FILE="android/signing-fingerprint.txt"
+          [ -f "$KS" ] || { echo "::error::ملف مفتاح التوقيع غير موجود: $KS"; exit 1; }
+          [ -f "$PROPS" ] || { echo "::error::ملف إعدادات التوقيع غير موجود: $PROPS"; exit 1; }
+          [ -f "$FP_FILE" ] || { echo "::error::ملف البصمة المرجعية غير موجود: $FP_FILE"; exit 1; }
+
+          STORE_PASS=$(grep -m1 '^storePassword=' "$PROPS" | cut -d= -f2-)
+          EXPECTED=$(tr -d '[:space:]:' < "$FP_FILE" | tr 'a-f' 'A-F')
+          INFO=$(keytool -list -v -keystore "$KS" -storepass "$STORE_PASS" 2>&1 || true)
+
+          if ! echo "$INFO" | grep -q "PrivateKeyEntry"; then
+            echo "::error::مفتاح التوقيع لا يحتوي مفتاحًا خاصًا (PrivateKeyEntry)"
+            echo "$INFO" | tail -20
+            exit 1
+          fi
+
+          ACTUAL=$(echo "$INFO" | grep -m1 -o 'SHA256: .*' | sed 's/SHA256: //' | tr -d ':' | tr 'a-f' 'A-F')
+          echo "بصمة المفتاح الحالي : $ACTUAL"
+          echo "البصمة المرجعية     : $EXPECTED"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::مفتاح التوقيع تغيّر! النسخ الجديدة لن تُثبَّت فوق المثبَّتة. أرجع المفتاح الأصلي (أو حدّث $FP_FILE عن قصد)."
+            exit 1
+          fi
+          echo "✅ مفتاح التوقيع مطابق — التحديث فوق النسخ المثبَّتة سيعمل"
+          echo "fingerprint=$ACTUAL" >> "$GITHUB_OUTPUT"
+          {
+            echo "### 🔐 مفتاح التوقيع"
+            echo "- بصمة الشهادة SHA-256: \`$ACTUAL\`"
+            echo "- ✅ مطابق للمرجع ⇒ التثبيت فوق النسخة السابقة يعمل"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -174,7 +214,9 @@ jobs:
           fi
 
           CODE=$(( BASE_CODE + N ))
-          ASSET="MikroNet-${VERSION}-arm64.apk"
+          # 📦 ملف واحد فقط باسم ثابت ⇒ رابط releases/latest/download يبقى صالحًا دائمًا
+          #    رقم الإصدار يظهر داخل التطبيق وفي عنوان الإصدار (لا في اسم الملف)
+          ASSET="MikroNet-2.0.0.0-arm64.apk"
 
           {
             echo "version_name=$VERSION"
@@ -187,7 +229,7 @@ jobs:
             echo "## إصدار هذا البناء"
             echo "- versionName: **$VERSION**"
             echo "- versionCode: **$CODE**"
-            echo "- الملف: \`$ASSET\`"
+            echo "- ملف APK واحد: \`$ASSET\`"
             echo "- رقم البناء: $N (السابق: ${PREV:-لا شيء})"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -274,24 +316,74 @@ jobs:
             fi
           fi
 
-      # إعادة تسمية الملف باسم الإصدار ليكون التحميل واضحًا
-      - name: Rename APK with version
+      # 🔐 تأكيد أن APK المولَّد موقّع بالمفتاح الموحّد نفسه
+      #    (بدونه تظهر عند التثبيت رسالة «تعارض الحزمة / لم يتم تثبيت التطبيق»)
+      - name: Verify APK signature (fixed key)
         shell: bash
         run: |
+          set -e
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          APKSIGNER=$(ls "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          EXPECTED=$(tr -d '[:space:]:' < android/signing-fingerprint.txt | tr 'a-f' 'A-F')
+
+          FP=""
+          if [ -n "$APKSIGNER" ]; then
+            FP=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 -i 'SHA-256 digest' | sed 's/.*: //' | tr -d ':' | tr 'a-f' 'A-F')
+          fi
+          if [ -z "$FP" ]; then
+            FP=$(keytool -printcert -jarfile "$APK" 2>/dev/null | grep -m1 -o 'SHA256: .*' | sed 's/SHA256: //' | tr -d ':' | tr 'a-f' 'A-F' || true)
+          fi
+          [ -n "$FP" ] || { echo "::error::تعذّر قراءة توقيع APK"; exit 1; }
+
+          echo "توقيع APK       : $FP"
+          echo "البصمة المرجعية : $EXPECTED"
+          if [ "$FP" != "$EXPECTED" ]; then
+            echo "::error::APK موقّع بمفتاح مختلف — لن يُثبَّت فوق النسخة المثبَّتة"
+            exit 1
+          fi
+          echo "✅ APK موقّع بالمفتاح الموحّد — التحديث فوق النسخة المثبَّتة يعمل"
+
+          SHA=$(sha256sum "$APK" | awk '{print $1}')
+          echo "SHA-256 للملف   : $SHA"
+          {
+            echo ""
+            echo "== التوقيع =="
+            echo "signer-cert-sha256: $FP"
+            echo "apk-sha256: $SHA"
+          } >> apk_version.txt
+
+      # 📦 ملف واحد فقط (لا نسختين) — اسم ثابت يضمن رابط تحميل دائم
+      - name: Prepare single APK (fixed name)
+        shell: bash
+        run: |
+          set -e
           mkdir -p release_out
-          ASSET="${{ steps.version.outputs.asset_name }}"
-          cp build/app/outputs/flutter-apk/app-release.apk "release_out/$ASSET"
-          # نسخة باسم ثابت يبقى رابط releases/latest/download/... صالحًا مع كل إصدار
-          cp build/app/outputs/flutter-apk/app-release.apk "release_out/MikroNet-2.0.0.0-arm64.apk"
+          NAME="${{ steps.version.outputs.asset_name }}"
+          cp build/app/outputs/flutter-apk/app-release.apk "release_out/$NAME"
+
+          COUNT=$(ls release_out/*.apk 2>/dev/null | wc -l)
+          if [ "$COUNT" != "1" ]; then
+            echo "::error::يجب أن يكون ملف APK واحدًا فقط (الموجود: $COUNT)"
+            ls -l release_out/
+            exit 1
+          fi
+
           ls -lh release_out/
-          echo "ASSET_NAME=$ASSET" >> "$GITHUB_ENV"
+          echo "ASSET_NAME=$NAME" >> "$GITHUB_ENV"
+          echo "RELEASE_SHA256=$(sha256sum "release_out/$NAME" | awk '{print $1}')" >> "$GITHUB_ENV"
+          echo "SIGN_FP=${{ steps.signing.outputs.fingerprint }}" >> "$GITHUB_ENV"
+          {
+            echo "### 📦 ملف النشر"
+            echo "- \`$NAME\` (ملف واحد فقط)"
+            echo "- sha256: \`$(sha256sum "release_out/$NAME" | awk '{print $1}')\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         with:
           name: mikronet-release-apk
           path: |
             release_out/${{ steps.version.outputs.asset_name }}
-            release_out/MikroNet-2.0.0.0-arm64.apk
             apk_version.txt
 
       # نشر الإصدار مع ملف APK (رابط تحميل مباشر للجميع بلا حاجة لتسجيل الدخول)
@@ -314,12 +406,9 @@ jobs:
           BUILD_NUMBER="${{ steps.version.outputs.build_number }}"
           VERSION_CODE="${{ steps.version.outputs.version_code }}"
 
-          # الاسم الثابت هو المرفق الأساسي (يضمن بقاء رابط releases/latest/download صالحًا دائمًا)
-          NAME="MikroNet-2.0.0.0-arm64.apk"
+          # ملف واحد فقط باسم ثابت (يضمن بقاء رابط releases/latest/download صالحًا دائمًا)
+          NAME="${{ steps.version.outputs.asset_name }}"
           ASSET="release_out/$NAME"
-          # نسخة إضافية باسم يحمل الإصدار — إضافة اختيارية لا تُفشل النشر إن تعذّرت
-          VERSIONED="${{ steps.version.outputs.asset_name }}"
-          VERSIONED_PATH="release_out/$VERSIONED"
 
           LOCAL_SIZE=$(stat -c%s "$ASSET" 2>/dev/null)
           echo "version=$VERSION code=$VERSION_CODE asset=$NAME size=${LOCAL_SIZE:-missing}"
@@ -327,7 +416,17 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG="${GITHUB_REF_NAME}"; else TAG="v2.0.0.0-arm64"; fi
 
           NOTES="إصدار **MikroNet ${VERSION}** (versionCode ${VERSION_CODE}) — للأجهزة الحديثة (arm64-v8a)
-          ملف التحميل باسم ثابت \`MikroNet-2.0.0.0-arm64.apk\`، ورقم الإصدار يظهر في معلومات التطبيق بعد التثبيت وفي عنوان هذا الإصدار.
+
+          📦 **ملف واحد فقط**: \`$NAME\` — رابط تحميل دائم: \`releases/latest/download/$NAME\`
+          رقم الإصدار يظهر داخل التطبيق بعد التثبيت وفي عنوان هذا الإصدار.
+
+          ✅ **التثبيت فوق نسخة سابقة يعمل مباشرة** — كل الإصدارات موقّعة بنفس مفتاح التوقيع الثابت
+          (بصمة الشهادة SHA-256: \`${SIGN_FP}\`)، فلا تظهر رسالة «تعارض الحزمة».
+          ⚠️ إن كانت النسخة المثبَّتة من إصدار قديم (قبل 2.0.0.49) فاحذفها مرة واحدة ثم ثبّت هذه؛
+          بعدها كل التحديثات القادمة تُثبَّت فوقها مباشرة.
+
+          🔒 **تحقق من سلامة الملف** (للتأكد أن التحميل لم يُعدَّل):
+          \`SHA-256: ${RELEASE_SHA256}\`
 
           الميزات: إدارة Hotspot كاملة (قسائم + جلسات + باقات + رفع صفحة الدخول) · حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · فحص الكيبل · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · خط Cairo · واجهة عربية RTL.
 
@@ -337,7 +436,8 @@ jobs:
 
           متطلبات التثبيت: معالج ARM 64-بت (arm64-v8a) — لا يدعم الأجهزة القديمة 32-بت (armeabi-v7a) ولا المحاكيات (x86_64).
 
-          ملاحظة: هذا الإصدار موقّع بمفتاح التصحيح (debug keystore) للاستخدام والتجربة المباشرة."
+          ملاحظة: هذا الإصدار موقّع بمفتاح MikroNet الثابت (\`android/app/keystore/mikronet-release.p12\`)
+          لضمان قبول التحديث فوق النسخة المثبَّتة."
 
           remote_size() {
             gh api "repos/$REPO/releases/tags/$1" -q ".assets[] | select(.name==\"$2\") | .size" 2>/dev/null | head -1
@@ -376,17 +476,6 @@ jobs:
             fi
           fi
 
-          # نسخة إضافية باسم يحمل الإصدار (اختيارية: الفشل هنا لا يؤثر على النشر)
-          if [ -n "$published_tag" ] && [ -f "$VERSIONED_PATH" ]; then
-            alias_log=$(gh release upload "$published_tag" "$VERSIONED_PATH#$VERSIONED" 2>&1)
-            alias_status=$?
-            if [ "$alias_status" = "0" ]; then
-              echo "::notice::alias asset uploaded: $VERSIONED"
-            else
-              echo "::warning::alias asset skipped (exit=$alias_status): $(echo "$alias_log" | tail -1)"
-            fi
-          fi
-
           {
             echo "### Publish summary"
             echo "- version: **$VERSION** (versionCode $VERSION_CODE)"
@@ -394,7 +483,7 @@ jobs:
             echo "- published tag: ${published_tag:-none}"
             if [ -n "$published_tag" ]; then
               echo "- remote asset size: $(remote_size "$published_tag" "$NAME")"
-              echo "- primary asset: $NAME (ثابت) + $VERSIONED (اختياري)"
+              echo "- المرفق: $NAME (ملف واحد فقط)"
             fi
           } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null
 
