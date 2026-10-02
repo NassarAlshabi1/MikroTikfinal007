@@ -172,7 +172,8 @@ class ResourceCarouselItem extends StatelessWidget {
   Widget build(BuildContext context) {
     // قراءة آمنة للنسبة (لا انهيار لو وصلت قيمة غير رقمية) + حصرها بين 0 و 1
     final parsed = double.tryParse(percent.replaceAll('%', '').trim());
-    double val = (parsed == null || parsed.isNaN ? 0 : parsed / 100).clamp(0.0, 1.0);
+    final double val =
+        (parsed == null || parsed.isNaN ? 0.0 : parsed / 100).clamp(0.0, 1.0).toDouble();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(15),
