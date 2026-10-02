@@ -93,7 +93,7 @@ class HostUsersPage extends GetView<HostUsersController> {
       decoration: BoxDecoration(
         color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.shade50),
+        border: Border.all(color: const Color(0xFF1E3A5F)),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
       ),
       child: ListTile(

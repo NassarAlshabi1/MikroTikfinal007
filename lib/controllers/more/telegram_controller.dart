@@ -173,7 +173,7 @@ class TelegramFeaturesController extends GetxController {
     final current = await TelegramSettingsStore.load();
     await TelegramSettingsStore.save(current.copyWith(
       features: Map<String, bool>.from(features),
-      dailyHour: dailyHour.value,
+      dailySummaryHour: dailyHour.value,
       intervalMinutes: intervalMinutes.value,
     ));
     await TelegramReportService.restart();

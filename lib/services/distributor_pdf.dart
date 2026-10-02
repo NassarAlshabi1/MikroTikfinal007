@@ -149,7 +149,7 @@ class DistributorPdf {
       border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
       children: [
         pw.TableRow(
-          decoration: const pw.BoxDecoration(color: Pdfconst Color(0xFF94A3B8)100),
+          decoration: const pw.BoxDecoration(color: PdfColors.blueGrey100),
           children: headers
               .map(
                 (header) => pw.Container(

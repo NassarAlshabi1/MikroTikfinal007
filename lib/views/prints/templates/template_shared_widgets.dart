@@ -41,7 +41,7 @@ Widget buildFieldPosition(
 Widget buildCanvasArea(BaseTemplateController controller) {
   return Container(
     padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
+    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
     height: 200,
     alignment: Alignment.center,
     child: SingleChildScrollView(
@@ -96,7 +96,7 @@ Widget textFieldWithOutButton(
       decoration: BoxDecoration(
         color: const Color(0xFF16213A), 
         borderRadius: BorderRadius.circular(((padding/4)+1)*4), 
-        border: Border.all(color: Colors.blue.shade100)
+        border: Border.all(color: const Color(0xFF1E3A5F))
       ),
       child: TextField(
         controller: controller, 
@@ -114,7 +114,7 @@ Widget textFieldWithOutButton(
 Widget whiteContainer(Widget child) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
+      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
       child: child
     );
   }

@@ -54,7 +54,7 @@ class PrintTemplatesDesignView extends StatelessWidget {
                               // item settings container
                               Container(
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
+                                decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
                                 height: 200, // كبرنا المساحة قليلاً لتأخذ راحتها
                                 alignment: Alignment.center,
                                 // استخدمنا ScrollView عشان لو الكرت كبير ما ينضغط ويخرب الحسبة
@@ -694,7 +694,7 @@ Widget locationControl(
 Widget whiteContainer(Widget child) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
+      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
       child: child
     );
   }
@@ -744,7 +744,7 @@ Widget textFieldWithButton(
   }
 ) => Container(
     padding: const EdgeInsets.all(6),
-    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.blue.shade50)),
+    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFF1E3A5F))),
     child: Row(children: [
       const SizedBox(width: 10),
       const Icon(Icons.text_fields_rounded, color: Colors.grey, size: 20),
@@ -769,7 +769,7 @@ Widget textFieldWithOutButton(
       decoration: BoxDecoration(
         color: const Color(0xFF16213A), 
         borderRadius: BorderRadius.circular(((padding/4)+1)*4), 
-        border: Border.all(color: Colors.blue.shade100)
+        border: Border.all(color: const Color(0xFF1E3A5F))
       ),
       child: TextField(
         controller: controller, 
@@ -788,7 +788,7 @@ Widget textFieldWithOutButton(
 //   children: [
 //     Container(
 //         padding: const EdgeInsets.all(6),
-//         decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.blue.shade50)),
+//         decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFF1E3A5F))),
 //         child: Row(children: [
 //           const SizedBox(width: 10),
 //           const Icon(Icons.text_fields_rounded, color: Colors.grey, size: 20),

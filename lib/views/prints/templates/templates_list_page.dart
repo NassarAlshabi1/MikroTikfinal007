@@ -104,7 +104,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
         color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
-        border: Border.all(color: Colors.blue.shade50),
+        border: Border.all(color: const Color(0xFF1E3A5F)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -226,7 +226,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     borderRadius: BorderRadius.circular(12),
     child: Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.shade100)),
+      decoration: BoxDecoration(color: const Color(0xFF3B1D24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
       child: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 22),
     ),
   );
@@ -236,7 +236,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     borderRadius: BorderRadius.circular(12),
     child: Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.shade100)),
+      decoration: BoxDecoration(color: const Color(0xFF3B1D24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
       child: const Icon(Icons.mode_edit_outline_outlined, color: Colors.purple, size: 22),
     ),
   );

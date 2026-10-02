@@ -159,7 +159,7 @@ Widget _addButton() {
               decoration: BoxDecoration(
                 color: active ? const Color(0xFF3B82F6) : Colors.white,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: active ? Colors.transparent : const Color(0xFF94A3B8).shade50),
+                border: Border.all(color: active ? Colors.transparent : const Color(0xFF243352)),
               ),
               child: Text(
                 "$f\n${controller.cardCounts[f]?.value}",

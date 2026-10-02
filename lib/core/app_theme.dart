@@ -47,7 +47,13 @@ class AppTheme {
   const AppTheme._();
 
   static ThemeData dark() {
-    final base = ThemeData.dark(useMaterial3: true);
+    final base = ThemeData(
+      brightness: Brightness.dark,
+      useMaterial3: true,
+      // الخط المعتمد في كل التطبيق (طلب 16)
+      fontFamily: 'Cairo',
+      fontFamilyFallback: const ['Cairo'],
+    );
 
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
@@ -60,9 +66,6 @@ class AppTheme {
     );
 
     return base.copyWith(
-      // الخط المعتمد في كل التطبيق (طلب 16)
-      fontFamily: 'Cairo',
-      fontFamilyFallback: const ['Cairo'],
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.page,
       canvasColor: AppColors.page,

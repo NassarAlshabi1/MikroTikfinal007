@@ -118,7 +118,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
             color: isSelected ? const Color(0xFF3B82F6) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-                color: isSelected ? Colors.transparent : Colors.blue.shade50),
+                color: isSelected ? Colors.transparent : const Color(0xFF1E3A5F)),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
@@ -170,7 +170,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
             decoration: BoxDecoration(
               color: const Color(0xFF16213A),
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.blue.shade50),
+              border: Border.all(color: const Color(0xFF1E3A5F)),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withOpacity(0.02), blurRadius: 10)

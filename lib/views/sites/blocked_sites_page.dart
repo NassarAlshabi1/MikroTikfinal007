@@ -97,7 +97,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         leading: CircleAvatar(
-          backgroundColor: Colors.red.shade50,
+          backgroundColor: const Color(0xFF3B1D24),
           child: const Icon(Icons.public_off_rounded, color: Colors.red, size: 20),
         ),
         title: Text(

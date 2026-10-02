@@ -53,7 +53,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
       decoration: BoxDecoration(
         color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.green.shade50),
+        border: Border.all(color: const Color(0xFF14532D)),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
       ),
       child: Column(
