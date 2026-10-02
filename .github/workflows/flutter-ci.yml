@@ -190,14 +190,21 @@ jobs:
             release_out/MikroNet-2.0.0.0-arm64.apk
             apk_version.txt
 
-      # عند دفع وسم مثل v2.0.0.0: يُنشأ GitHub Release ويُرفَق به ملف APK
-      # (رابط تحميل مباشر للجميع بلا حاجة لتسجيل الدخول)
-      - name: Publish GitHub Release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      # نشر الإصدار مع ملف APK (رابط تحميل مباشر للجميع بلا حاجة لتسجيل الدخول)
+      # - عند دفع وسم مثل v2.0.0.0
+      # - أو عند وجود وسم [publish release] في رسالة الالتزام (لتحديث إصدار قائم،
+      #   إذ إن وسوم المستودع محميّة ضد الحذف/النقل فيُحدَّث الملف المرفق بدل إنشاء وسم جديد)
+      - name: Publish GitHub Release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || contains(github.event.head_commit.message, '[publish release]') }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -e
+          # الوسم الهدف: الوسم المدفوع، أو v2.0.0.0 عند التحديث من فرع
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG="${GITHUB_REF_NAME}"; else TAG="v2.0.0.0"; fi
+          echo "target release: $TAG"
+
           NOTES="إصدار MikroNet 2.0.0.0 (versionCode 2000) — للأجهزة الحديثة (arm64-v8a)
 
           الميزات: حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · واجهة عربية RTL.
@@ -209,9 +216,15 @@ jobs:
           متطلبات التثبيت: معالج ARM 64-بت (arm64-v8a) — لا يدعم الأجهزة القديمة 32-بت (armeabi-v7a) ولا المحاكيات (x86_64).
 
           ملاحظة: هذا الإصدار موقّع بمفتاح التصحيح (debug keystore) للاستخدام والتجربة المباشرة."
-          gh release create "${GITHUB_REF_NAME}" \
-            "release_out/MikroNet-2.0.0.0-arm64.apk#MikroNet-2.0.0.0-arm64.apk" \
-            --title "MikroNet 2.0.0.0" \
-            --notes "$NOTES" \
-            --latest || \
-          gh release upload "${GITHUB_REF_NAME}" "release_out/MikroNet-2.0.0.0-arm64.apk#MikroNet-2.0.0.0-arm64.apk" --clobber
+          ASSET="release_out/MikroNet-2.0.0.0-arm64.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # إصدار قائم: استبدل/أضف الملف وحدّث الملاحظات
+            gh release upload "$TAG" "$ASSET#MikroNet-2.0.0.0-arm64.apk" --clobber
+            gh release edit "$TAG" --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest
+            # إزالة الملف القديم غير المخصّص للأجهزة الحديثة إن وُجد
+            gh release delete-asset "$TAG" "MikroNet-2.0.0.0.apk" --yes || true
+          else
+            gh release create "$TAG" "$ASSET#MikroNet-2.0.0.0-arm64.apk" \
+              --title "MikroNet 2.0.0.0" --notes "$NOTES" --latest
+          fi
+          gh release view "$TAG" --json name,assets -q '"اسم الإصدار: \(.name)", (.assets[] | "  ملف: \(.name) — \(.size) بايت")'
