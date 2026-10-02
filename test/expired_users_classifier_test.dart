@@ -213,7 +213,7 @@ void main() {
       expect(result.withoutLimits, 1);
     });
 
-    test('krت له باقة ولم يستهلك ← لا يُحذف', () {
+    test('كرت له باقة ولم يستهلك ← لا يُحذف', () {
       final result = ExpiredUsersClassifier.classify(
         users: [
           v6User(id: '*8', username: 'unused', actualProfile: 'PF-1w', uptimeUsed: '0s'),

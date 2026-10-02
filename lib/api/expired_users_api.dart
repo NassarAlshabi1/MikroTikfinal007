@@ -112,12 +112,12 @@ class ExpiredUsersApi {
   static Future<AppResponse<ExpiredUsersScanResult>> scan() async {
     try {
       final fetchResult = await _fetchUsers();
-      if (!fetchResult.item1) {
-        return AppResponse(status: false, message: fetchResult.item2);
+      if (!fetchResult.ok) {
+        return AppResponse(status: false, message: fetchResult.message);
       }
 
-      final users = fetchResult.item3;
-      final paths = fetchResult.item4;
+      final users = fetchResult.rows;
+      final paths = fetchResult.paths;
 
       if (users.isEmpty) {
         return AppResponse(
@@ -308,8 +308,9 @@ class ExpiredUsersApi {
 
   // ================== جلب البيانات ==================
 
-  /// إرجاع: (نجاح؟, رسالة الخطأ, الصفوف, المسارات المستخدمة).
-  static Future<(bool, String, List<Map>, UserManagerPaths)> _fetchUsers() async {
+  /// إرجاع نتيجة الجلب: نجاح؟ + رسالة الخطأ + الصفوف + المسارات المستخدمة فعليًا.
+  static Future<({bool ok, String message, List<Map> rows, UserManagerPaths paths})>
+      _fetchUsers() async {
     Object? lastError;
     var anyPathWorked = false;
 
@@ -322,7 +323,7 @@ class ExpiredUsersApi {
             tag: 'expired_users_scan',
           );
           anyPathWorked = true;
-          return (true, "", result.whereType<Map>().toList(), paths);
+          return (ok: true, message: "", rows: result.whereType<Map>().toList(), paths: paths);
         } catch (e) {
           lastError = e;
           // خطأ "no such command" ← لا فائدة من تجربة حقول أخرى على نفس المسار
@@ -338,12 +339,12 @@ class ExpiredUsersApi {
     }
 
     return (
-      false,
-      "تعذّر قراءة مستخدمي User Manager.\n"
+      ok: false,
+      message: "تعذّر قراءة مستخدمي User Manager.\n"
           "تأكد من تفعيل حزمة user-manager على الراوتر وصلاحيات الحساب (read/write/api).\n"
           "(${lastError ?? "خطأ غير معروف"})",
-      <Map>[],
-      activePaths,
+      rows: <Map>[],
+      paths: activePaths,
     );
   }
 
