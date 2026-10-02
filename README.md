@@ -1,16 +1,224 @@
-# mikronet
+<div dir="rtl">
 
-A new Flutter project.
+# 🚀 ميكرونت — MikroNet
 
-## Getting Started
+**النظام الأذكى لإدارة شبكات MikroTik والتحكم بالروتر من هاتفك**
 
-This project is a starting point for a Flutter application.
+![Flutter](https://img.shields.io/badge/Flutter-3.27-02569B?logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.5+-0175C2?logo=dart&logoColor=white)
+![GetX](https://img.shields.io/badge/GetX-4.7-8E24AA)
+![Platform](https://img.shields.io/badge/Android-APK-3DDC84?logo=android&logoColor=white)
+![Language](https://img.shields.io/badge/اللغة-العربية-1E88E5)
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 📖 نبذة عن النظام
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**ميكرونت (MikroNet)** هو نظام متكامل لإدارة شبكات MikroTik من هاتفك بسهولة واحترافية، يجمع بين إدارة المستخدمين، إنشاء الكروت، المحاسبة، مراقبة الشبكة، وإدارة المبيعات في تطبيق واحد باللغة العربية.
+
+سواء كنت تدير شبكة **Hotspot** أو **User Manager** أو **PPPoE**، يمنحك ميكرونت الأدوات التي تحتاجها لإدارة شبكتك بشكل أسرع وأسهل.
+
+---
+
+## 🔥 أهم مميزات ميكرونت
+
+### 👥 إدارة المستخدمين والهوتسبوت واليوزر مانجر
+
+- إدارة مستخدمي Hotspot ومتابعة حالة الكروت.
+- معرفة المستخدمين النشطين والمستخدمين والمنتهية صلاحيتهم وغير المرتبطين بالباقات.
+- إدارة User Manager والتحكم بالحسابات والباقات والمستخدمين.
+- إدارة اشتراكات PPPoE / Broadband.
+- إنشاء وتعديل وحذف المستخدمين والباقات.
+- متابعة استهلاك المستخدمين والبيانات ومدة الاتصال.
+- التحكم المباشر براوتر MikroTik عبر API.
+
+**داخل التطبيق:** `المستخدمون` ← *النشطون* / *المحفوظون* / *Host*، مع صفحات *الباقات* و*البطاقات*.
+
+### 🎫 إنشاء وطباعة كروت الشبكة
+
+- إنشاء كرت واحد أو آلاف الكروت بسهولة.
+- تصدير وطباعة كروت الشبكة.
+- تصميم قوالب خاصة للكروت.
+- استخدام قوالب جاهزة للطباعة.
+- إضافة الصور والشعارات وبيانات الشبكة إلى تصميم الكرت.
+
+**داخل التطبيق:** `الطباعة` ← *الدفعات* (Batches) / *القوالب* (Templates) / معاينة PDF، مع تخزين القوالب محليًا (SQLite).
+
+![نموذج كرت شبكة](images/100.jpg)
+
+### 💰 المحاسبة والمبيعات والأرباح
+
+- متابعة مبيعات الكروت اليومية والشهرية.
+- معرفة إجمالي المبيعات والأرباح.
+- إدارة نقاط البيع والموزعين.
+- متابعة حساب كل موزع دائن / مدين.
+- تقارير مالية ومحاسبية مفصلة.
+- تصدير تقارير PDF لكل موزع أو نقطة بيع.
+- تنظيم الحسابات دون الحاجة إلى دفاتر خارجية.
+
+**داخل التطبيق:** `التقارير` ← *تقرير المبيعات* / *تقرير حالة النظام*.
+
+### 📊 مراقبة الراوتر والشبكة
+
+- متابعة حالة الراوتر لحظة بلحظة.
+- مراقبة استخدام CPU.
+- مراقبة RAM والذاكرة.
+- متابعة درجات حرارة الراوتر.
+- مراقبة حركة البيانات واستهلاك الإنترنت.
+- متابعة المنافذ Ports / Interfaces.
+- معرفة الأجهزة المتصلة وغير المتصلة بالشبكة.
+
+**داخل التطبيق:** لوحة *الصفحة الرئيسية* (بطاقة حالة النظام + رسوم بيانية) وتقرير *حالة النظام*.
+
+### 🌐 إدارة صفحات الهوتسبوت
+
+- رفع صفحات Hotspot إلى الراوتر بسهولة.
+- قوالب صفحات تسجيل دخول جاهزة.
+- تعديل اسم الشبكة.
+- إضافة الباقات والأسعار.
+- إضافة نقاط البيع وأرقام التواصل.
+- تخصيص صفحات الهوتسبوت بما يناسب هوية شبكتك.
+
+**داخل التطبيق:** `المواقع` ← *الحجب* / *ذاكرة DNS* / *إعدادات DNS*.
+
+### 🤖 التكامل مع Telegram
+
+- ربط الشبكة مع Telegram.
+- استقبال تقارير المبيعات.
+- استقبال تقارير الشبكة والراوتر.
+- إرسال الإشعارات والتنبيهات مباشرة إلى Telegram.
+- متابعة أهم أحداث الشبكة حتى عندما لا يكون التطبيق مفتوحًا.
+
+### 💾 النسخ الاحتياطي
+
+- إنشاء نسخة احتياطية للراوتر.
+- الاحتفاظ بنسخ احتياطية لإعدادات الشبكة.
+- استعادة النسخة الاحتياطية عند الحاجة.
+
+**داخل التطبيق:** `المزيد` ← *النسخ الاحتياطي والاستعادة* (Backup / Restore).
+
+### 🔐 الأمان وسهولة الاستخدام
+
+- حماية بيانات الاتصال والحسابات.
+- واجهة عربية بالكامل.
+- تصميم بسيط وسهل الاستخدام.
+- مناسب لأصحاب الشبكات والموزعين والفنيين.
+- لا تحتاج إلى خبرة متقدمة لاستخدام الوظائف الأساسية.
+
+---
+
+## 🚀 كل ما تحتاجه لإدارة شبكتك في مكان واحد
+
+مع **ميكرونت MikroNet** يمكنك إدارة المستخدمين، إنشاء الكروت، متابعة المبيعات، مراقبة الراوتر، إدارة الموزعين والتحكم بشبكتك من خلال تطبيق واحد.
+
+© حمّل ميكرونت الآن وابدأ بإدارة شبكة MikroTik بسهولة واحترافية.
+
+💡 وهناك المزيد من الأدوات والمميزات داخل التطبيق.
+
+---
+
+## 🛠 التقنيات المستخدمة
+
+| التقنية | الاستخدام |
+| --- | --- |
+| **Flutter / Dart** (SDK `^3.5.1`) | واجهات التطبيق (Android / iOS / Web / Desktop) |
+| **GetX** | إدارة الحالة، التنقل، والحقن (Routes + Controllers) |
+| **router_os_client** | الاتصال المباشر براوتر MikroTik عبر API |
+| **sqflite** | قاعدة بيانات محلية (قوالب الكروت، البيانات المحفوظة) |
+| **pdf + printing** | توليد وطباعة كروت الشبكة وتقارير PDF |
+| **encrypt + crypto** | حماية بيانات الاتصال والحسابات |
+| **file_picker + image_picker + permission_handler** | اختيار ملفات الصور والصلاحيات |
+| **charset** + RTL (`Directionality`) | واجهة عربية بالكامل وخط مخصص (`myfont`) |
+
+## 📂 بنية المشروع
+
+```text
+.
+├── lib/
+│   ├── main.dart                 # نقطة انطلاق التطبيق (GetMaterialApp)
+│   ├── core/
+│   │   ├── app_pages.dart        # تعريف كل المسارات (GetPage)
+│   │   └── string_extensions.dart
+│   ├── api/                      # طبقة الاتصال بالراوتر و REST
+│   │   ├── login_api.dart        # تسجيل الدخول والراوترات المحفوظة
+│   │   ├── router_api.dart       # معلومات الراوتر (CPU / RAM / Uptime …)
+│   │   ├── cards_api.dart        # إنشاء وإدارة الكروت
+│   │   ├── profiles_api.dart     # الباقات (Hotspot / User Manager)
+│   │   ├── users_api.dart        # المستخدمون + users/{active,host,saved}
+│   │   ├── sites_api.dart        # المواقع و DNS والحجب
+│   │   ├── reports_api.dart      # تقارير المبيعات وحالة النظام
+│   │   ├── backup_api.dart       # النسخ الاحتياطي والاستعادة
+│   │   ├── print_api.dart        # قوالب ودفعات الطباعة
+│   │   └── version7_api.dart     # دعم RouterOS v7
+│   ├── controllers/              # منطق التطبيق (GetX Controllers)
+│   │   ├── login_controller.dart / home_controller.dart
+│   │   ├── cards/  users/  prints/  reports/  sites/  more/
+│   │   └── helpers/ (functions, permissions, widgets)
+│   ├── models/                   # النماذج (login, cards, users, sites, print, selles)
+│   ├── services/                 # MikroTik client / RouterOS client / SQLite
+│   └── views/                    # الواجهات (Views) وبنية مشتركة للـ widgets
+├── images/ , fonts/              # صور وقوالب الخطوط (myfont)
+├── android/ ios/ web/ linux/ macos/ windows/
+├── Dockerfile                    # بيئة بناء APK جاهزة (Flutter + Android SDK)
+└── pubspec.yaml
+```
+
+## ⚙️ التشغيل والبناء
+
+### المتطلبات
+
+- **Flutter** 3.27 أو أحدث (القناة المستقرة) — [التثبيت](https://docs.flutter.dev/get-started/install)
+- **Dart** SDK `^3.5.1`
+- **Android SDK** (للبناء على أندرويد)
+
+### خطوات التشغيل
+
+```bash
+# 1) جلب الحزم
+flutter pub get
+
+# 2) تشغيل التطبيق (جهاز/محاكي متصل)
+flutter run
+
+# 3) بناء ملف APK للإصدار
+flutter build apk --release
+# أو لكل معماريات الأندرويد:
+flutter build apk --split-per-abi
+```
+
+### البناء عبر Docker (بدون تثبيت Flutter محليًا)
+
+يوفر المستودع `Dockerfile` يحتوي Flutter 3.27.2 + Android SDK جاهزَين:
+
+```bash
+docker build -t mikronet .
+docker run --rm -v "$PWD/build:/app/build" mikronet
+# الناتج: build/app/outputs/flutter-apk/app-release.apk
+```
+
+> ملاحظة: ملف `.studio.env` يحتوي `STUDIO_URL` الخاص ببيئة التطوير.
+
+## 🗺️ خارطة الطريق (الميزات قيد التنفيذ)
+
+الأقسام التالية موجودة في رؤية المنتج وتُضاف تدريجيًا إلى الكود:
+
+| الميزة | الحالة |
+| --- | --- |
+| إدارة المستخدمين والكروت والباقات | ✅ مُنفّذة |
+| طباعة الكروت والدفعات وقوالب PDF | ✅ مُنفّذة |
+| تقارير المبيعات وحالة النظام | ✅ مُنفّذة |
+| النسخ الاحتياطي والاستعادة للراوتر | ✅ مُنفّذة |
+| إدارة المواقع و DNS والحجب | ✅ مُنفّذة |
+| 🔜 رفع صفحات Hotspot وتخصيص اسم الشبكة | قيد التنفيذ |
+| 🔜 إدارة نقاط البيع والموزعين (دائن / مدين) | قيد التنفيذ |
+| 🔜 تكامل Telegram (تقارير وإشعارات فورية) | قيد التنفيذ |
+| 🔜 تقارير PDF لكل موزع / نقطة بيع | قيد التنفيذ |
+| 🔜 مراقبة درجات الحرارة والحساسات | قيد التنفيذ |
+
+## 📦 المصدر والحقوق
+
+- الكود منسوخ من فرع **`controller`** في المستودع: [zaidaburas/MikroNet](https://github.com/zaidaburas/MikroNet/tree/controller)
+  - آخر التزام مُستورد: `1524715 add DockerFile`
+- المستودع الحالي: [NassarAlshabi1/MikroTikfinal007](https://github.com/NassarAlshabi1/MikroTikfinal007)
+
+</div>
