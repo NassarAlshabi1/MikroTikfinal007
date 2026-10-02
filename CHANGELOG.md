@@ -51,6 +51,8 @@
 ### التحقق الآلي
 - `flutter analyze` ⇒ **صفر أخطاء** (errors=0).
 - **34 اختبار وحدة** ناجح: 17 لمحلّل مدد RouterOS + 17 لتصنيف المنتهين بحمولات v6 الحقيقية.
-- بناء APK ناجح في CI: `MikroNet-2.0.0.0.apk` (~25 MB).
+- بناء APK ناجح في CI: `MikroNet-2.0.0.0-arm64.apk` — **~9 MB فقط** (بدل ~25 MB عند تضمين كل المعماريات).
+- الإصدار منشور في GitHub Releases برابط تحميل مباشر:
+  <https://github.com/NassarAlshabi1/MikroTikfinal007/releases/tag/v2.0.0.0-arm64>
 
 </div>
