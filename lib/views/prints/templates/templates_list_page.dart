@@ -41,7 +41,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                         child: 
                        ListView.builder(
                         
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                         itemCount: controller.allTemplates.length,
                         itemBuilder: (_, i) {
                           final t = controller.allTemplates[i];
@@ -123,7 +123,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
               child: Container(color: Colors.black.withOpacity(0.2)),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -138,13 +138,13 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                   Row(
                     children: [
                       _gridDetail(Icons.table_rows_rounded, "صفوف: $rows"),
-                      const SizedBox(width: 15),
+                      const SizedBox(width: 11),
                       _gridDetail(Icons.view_column_rounded, "أعمدة: $cols"),
                       const Spacer(),
                        Text("${t.withPassword ? "مع":"بدون"} كلمة مرور", style: TextStyle(fontSize: 11, color: Colors.grey)),
                     ],
                   ),
-                  const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, thickness: 0.5)),
+                  const Padding(padding: EdgeInsets.symmetric(vertical: 9), child: Divider(height: 1, thickness: 0.5)),
                   Row(
                     children: [
                       Expanded(
@@ -208,7 +208,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     onTap: onTap,
     borderRadius: BorderRadius.circular(12),
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -246,7 +246,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(Icons.folder_open_rounded, size: 70, color: Colors.grey.shade300),
-        const SizedBox(height: 15),
+        const SizedBox(height: 11),
         const Text("لا توجد قوالب محفوظة", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
       ],
     ),

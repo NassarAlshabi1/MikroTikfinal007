@@ -51,7 +51,7 @@ class CardItemTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
         child: Padding(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(11),
           child: Row(
             children: [
               // أيقونة الحالة الديناميكية
@@ -68,7 +68,7 @@ class CardItemTile extends StatelessWidget {
                   size: 26,
                 ),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 11),
               // معلومات الكرت
               Expanded(
                 child: Column(

@@ -33,7 +33,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
               child: RefreshIndicator(
                 onRefresh: controller.load,
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                   children: [
                     Obx(() => _totalsCard()),
@@ -67,7 +67,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
 
   Widget _totalsCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
@@ -169,7 +169,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
           borderRadius: BorderRadius.circular(20),
           onTap: () => controller.goToStatement(summary.distributor),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(10),
             child: Column(
               children: [
                 Row(

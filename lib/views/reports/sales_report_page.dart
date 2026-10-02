@@ -25,16 +25,16 @@ class SalesReportPage extends GetView<SalesReportController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   // 1. حقول اختيار التاريخ
                   _buildDateSelectors(context, controller),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   // 2. الكارد الكبير للملخص
                   Obx(() => _buildSummaryCard(controller)),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   // 3. قائمة الكروت المباعة (الكروت الصغيرة)
                   Obx(() {
@@ -84,7 +84,7 @@ class SalesReportPage extends GetView<SalesReportController> {
             child: _dateContainer("من تاريخ", controller.fromDate),
           ),
         ),
-        const SizedBox(width: 15),
+        const SizedBox(width: 11),
         Expanded(
           child: InkWell(
             onTap: () => controller.pickToDate(context),
@@ -97,7 +97,7 @@ class SalesReportPage extends GetView<SalesReportController> {
 
   Widget _dateContainer(String label, Rx<DateTime?> dateRx) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -128,7 +128,7 @@ class SalesReportPage extends GetView<SalesReportController> {
   Widget _buildSummaryCard(SalesReportController controller) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)], // تدرج أزرق مشابه لهوية التطبيق
@@ -155,7 +155,7 @@ class SalesReportPage extends GetView<SalesReportController> {
           
           if (controller.summaryByProfile.isNotEmpty) ...[
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 15),
+              padding: EdgeInsets.symmetric(vertical: 11),
               child: Divider(color: Colors.white24, height: 1),
             ),
             const Text("تفصيل حسب الفئة:", style: TextStyle(color: Colors.white70, fontSize: 12)),
@@ -214,7 +214,7 @@ class SalesReportPage extends GetView<SalesReportController> {
   Widget _buildSmallCard(item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -235,7 +235,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                 ),
                 child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF1E3A8A), size: 20),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 11),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -269,7 +269,7 @@ class SalesReportPage extends GetView<SalesReportController> {
   // --- منطقة الأزرار أسفل الصفحة ---
   Widget _buildActionButtons(SalesReportController controller) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -286,12 +286,12 @@ class SalesReportPage extends GetView<SalesReportController> {
               label: const Text("توليد التقرير", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E3A8A), // اللون الأزرق الرئيسي
-                padding: const EdgeInsets.symmetric(vertical: 15),
+                padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 11),
           Expanded(
             flex: 1,
             child: OutlinedButton.icon(
@@ -300,7 +300,7 @@ class SalesReportPage extends GetView<SalesReportController> {
               label: const Text("طباعة", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFF1E3A8A), width: 1.5),
-                padding: const EdgeInsets.symmetric(vertical: 15),
+                padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),

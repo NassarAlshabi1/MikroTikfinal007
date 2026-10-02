@@ -30,7 +30,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   const SectionTitle(title: "إدارة الطباعة"),
@@ -52,7 +52,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
                     onTap: controller.gotToTemplates,
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 16),
 
                   // const SectionTitle(title: "معلومات الطباعة"),
                   
@@ -67,7 +67,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
 
             // 4. الفوتر الموحد مع تمرير اسم القسم
              AppMiniFooter(title: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 14,vertical: 5),
       
       child: Row(
         children: [
@@ -79,7 +79,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
             ),
             child: const Icon(Icons.info_outline, color: Color(0xFF64748B), size: 20),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 11),
           const Expanded(
             child: Text(
               "يمكنك إنشاء دفعة كروت أولاً، ثم ربطها بقالب طباعة جاهز من استوديو التصميم.",
@@ -103,7 +103,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
   /* ================= INFO CARD (Custom for this view) ================= */
   Widget _buildInfoCard({required IconData icon, required String text}) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -126,7 +126,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
             ),
             child: Icon(icon, color: const Color(0xFF64748B), size: 20),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 11),
           Expanded(
             child: Text(
               text,

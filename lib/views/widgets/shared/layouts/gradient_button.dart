@@ -15,7 +15,7 @@ class GradientButton extends StatelessWidget {
     this.label = 'تأكيد', // قيمة افتراضية للنص
     this.colors = const [Color(0xff1E3C72), Color(0xff2563EB)], // الألوان الافتراضية المطلوبة
     this.width,
-    this.height = 45.0, // ارتفاع افتراضي
+    this.height = 40.0, // ارتفاع افتراضي
   });
 
   @override
@@ -26,13 +26,13 @@ class GradientButton extends StatelessWidget {
       shadowColor: Colors.transparent,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
       ),
     );
 
     const textStyle = TextStyle(
       fontWeight: FontWeight.bold,
-      fontSize: 14,
+      fontSize: 13,
     );
 
     return Container(
@@ -40,7 +40,7 @@ class GradientButton extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: colors),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: colors.first.withOpacity(0.3),
@@ -53,7 +53,7 @@ class GradientButton extends StatelessWidget {
           // إذا تم تمرير أيقونة، نعرض الزر مع الأيقونة
           ? ElevatedButton.icon(
               onPressed: onPressed ?? () {}, // إذا كان null نعطيه دالة فارغة
-              icon: Icon(icon, size: 18),
+              icon: Icon(icon, size: 16),
               label: Text(label, style: textStyle),
               style: buttonStyle,
             )

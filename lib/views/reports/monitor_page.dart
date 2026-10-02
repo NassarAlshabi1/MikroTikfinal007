@@ -55,7 +55,7 @@ class MonitorPage extends GetView<MonitorController> {
   // ===================== تبويب الموارد =====================
   Widget _resourcesTab() {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       children: [
         Row(
           children: [
@@ -81,7 +81,7 @@ class MonitorPage extends GetView<MonitorController> {
         if (controller.temperatureValue != null)
           Container(
             margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFFB91C1C), Color(0xFFEF4444)],
@@ -117,7 +117,7 @@ class MonitorPage extends GetView<MonitorController> {
         Obx(() {
           if (!controller.hasHealth) {
             return Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
@@ -136,7 +136,7 @@ class MonitorPage extends GetView<MonitorController> {
                 .toList(),
           );
         }),
-        const SizedBox(height: 30),
+        const SizedBox(height: 14),
       ],
     );
   }
@@ -144,7 +144,7 @@ class MonitorPage extends GetView<MonitorController> {
   Widget _resourceCard(String label, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -182,7 +182,7 @@ class MonitorPage extends GetView<MonitorController> {
   Widget _healthRow(String name, String value) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -209,7 +209,7 @@ class MonitorPage extends GetView<MonitorController> {
     return RefreshIndicator(
       onRefresh: controller.loadAll,
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         children: [
           Row(
@@ -238,7 +238,7 @@ class MonitorPage extends GetView<MonitorController> {
           Obx(() {
             if (controller.interfaces.isEmpty) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
@@ -255,7 +255,7 @@ class MonitorPage extends GetView<MonitorController> {
                   .toList(),
             );
           }),
-          const SizedBox(height: 30),
+          const SizedBox(height: 14),
         ],
       ),
     );
@@ -271,7 +271,7 @@ class MonitorPage extends GetView<MonitorController> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),

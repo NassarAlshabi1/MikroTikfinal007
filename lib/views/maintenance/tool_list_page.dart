@@ -39,7 +39,7 @@ class ToolListPage extends GetView<ToolListController> {
                         return Expanded(
                           child: Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Text(
                                 "تعذّر قراءة القائمة:\n${controller.errorMessage.value}",
                                 textAlign: TextAlign.center,
@@ -63,7 +63,7 @@ class ToolListPage extends GetView<ToolListController> {
 
                       return Expanded(
                         child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           itemCount: controller.filteredRows.length,
                           itemBuilder: (context, index) {
                             final row = controller.filteredRows[index];
@@ -149,7 +149,7 @@ class ToolListPage extends GetView<ToolListController> {
           borderRadius: BorderRadius.circular(18),
           onTap: () => _showDetails(row),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(10),
             child: Row(
               children: [
                 Container(
@@ -210,7 +210,7 @@ class ToolListPage extends GetView<ToolListController> {
       Directionality(
         textDirection: TextDirection.rtl,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(10),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(26)),

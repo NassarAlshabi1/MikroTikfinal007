@@ -119,7 +119,7 @@ class BatchesView extends GetView<BatchesListController> {
     return Transform.translate(
       offset: const Offset(0, -15),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
@@ -136,7 +136,7 @@ class BatchesView extends GetView<BatchesListController> {
   /* ================= البحث والإضافة ================= */
   Widget _buildSearchRow() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       child: Row(
         children: [
           Expanded(
@@ -153,7 +153,7 @@ class BatchesView extends GetView<BatchesListController> {
                   hintText: "بحث عن دفعة...",
                   prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF1E3A8A)),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(vertical: 9),
                 ),
               ),
             ),
@@ -203,7 +203,7 @@ class BatchesView extends GetView<BatchesListController> {
         onTap: () => filterType.value = key, // تحديث الفلتر تفاعلياً
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 5),
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
           decoration: BoxDecoration(
             color: active ? const Color(0xFF1E3A8A) : Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -261,7 +261,7 @@ class BatchesView extends GetView<BatchesListController> {
               ),
               const Divider(height: 1),
               Padding(
-                padding: const EdgeInsets.all(15),
+                padding: const EdgeInsets.all(11),
                 child: Wrap(
                   spacing: 20,
                   runSpacing: 10,
@@ -320,7 +320,7 @@ class BatchesView extends GetView<BatchesListController> {
                     "هل أنت متأكد من رغبتك في حذف الدفعة '${batch.name}'؟\nالرجاء تحديد نطاق الحذف المناسب:",
                     style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.5, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
                   _buildDeleteOptionCard(
                     title: "من السيرفر (المايكروتك) فقط",
                     value: 1,
@@ -390,7 +390,7 @@ class BatchesView extends GetView<BatchesListController> {
       onTap: () => onChanged(value),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
           color: bgColor,
           border: Border.all(color: borderColor, width: 1.5),
@@ -453,7 +453,7 @@ class BatchesView extends GetView<BatchesListController> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
                   InkWell(
                     onTap: () async {
                       DateTime? picked = await showDatePicker(
@@ -541,7 +541,7 @@ class BatchesView extends GetView<BatchesListController> {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: const BoxDecoration(
           color: Color(0xFFF8FAFC),
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),

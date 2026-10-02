@@ -29,14 +29,14 @@ class LoginPage extends GetView<LoginController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   const SectionTitle(title: "بيانات تسجيل الدخول"),
                   
                   // 2. الكرت الأبيض الذي يحتوي على الحقول
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -151,7 +151,7 @@ class LoginPage extends GetView<LoginController> {
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 16),
 
                   // 3. أزرار الإجراءات
                   _buildActionBtn(

@@ -36,7 +36,7 @@ class CableTestPage extends GetView<CableTestController> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 children: [
                   _portsCard(),
                   const SizedBox(height: 14),
@@ -417,7 +417,7 @@ class CableTestPage extends GetView<CableTestController> {
       return Padding(
         padding: const EdgeInsets.only(top: 12),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [_navy, _blue],
@@ -505,7 +505,7 @@ class CableTestPage extends GetView<CableTestController> {
   Widget _card({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),

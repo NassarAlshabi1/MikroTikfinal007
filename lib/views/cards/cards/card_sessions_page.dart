@@ -47,7 +47,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
 
                 // 4. عرض قائمة الجلسات الحقيقية
                 return ListView.builder(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(10),
                   physics: const BouncingScrollPhysics(),
                   itemCount: controller.sessionsList.length,
                   itemBuilder: (context, index) {
@@ -101,7 +101,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.history_toggle_off_rounded, size: 60, color: Colors.blueGrey.shade100),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           const Text(
             "لا توجد جلسات مسجلة لهذا الكرت",
             style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold),

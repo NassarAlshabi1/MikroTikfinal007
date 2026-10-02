@@ -28,7 +28,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
               child: RefreshIndicator(
                 onRefresh: controller.load,
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                   children: [
                     Obx(() => _summaryCard()),
@@ -81,7 +81,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
                       }
                       if (controller.transactions.isEmpty) {
                         return Container(
-                          padding: const EdgeInsets.all(22),
+                          padding: const EdgeInsets.all(11),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(18),
@@ -99,7 +99,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
                             .toList(),
                       );
                     }),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 14),
                   ],
                 ),
               ),
@@ -120,7 +120,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
     final isDebit = balance >= 0;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
@@ -223,7 +223,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),

@@ -53,7 +53,7 @@ class PrintTemplatesDesignView extends StatelessWidget {
                               const SizedBox(height: 5,),
                               // item settings container
                               Container(
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
                                 height: 200, // كبرنا المساحة قليلاً لتأخذ راحتها
                                 alignment: Alignment.center,
@@ -284,7 +284,7 @@ class PrintTemplatesDesignView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
@@ -693,7 +693,7 @@ Widget locationControl(
 
 Widget whiteContainer(Widget child) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
       child: child
     );

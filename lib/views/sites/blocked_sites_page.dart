@@ -95,7 +95,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         leading: CircleAvatar(
           backgroundColor: Colors.red.shade50,
           child: const Icon(Icons.public_off_rounded, color: Colors.red, size: 20),
@@ -155,7 +155,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
                 ),
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 11),
             
             // الحقل الثاني: القيمة المراد حظرها (إجباري)
             TextField(
@@ -201,7 +201,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
         children: [
           Icon(Icons.shield_outlined,
               size: 70, color: Colors.green.withOpacity(0.4)),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           Text(
             "لا توجد قيود في ${controller.pageTitle} حالياً",
             style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),

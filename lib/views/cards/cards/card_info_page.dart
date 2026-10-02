@@ -41,7 +41,7 @@ class CardInfoPage extends GetView<CardInfoController> {
               
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(22),
+                  padding: const EdgeInsets.all(11),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -70,11 +70,11 @@ class CardInfoPage extends GetView<CardInfoController> {
                       // 3. قسم الحالة (مربوط بـ Obx للتحديث التلقائي)
                       _buildStatusSection(),
                       
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 14),
                       
                       // 4. أزرار التحكم
                       _buildSaveButton(),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 11),
                       _buildDeleteButton(),
                     ],
                   ),
@@ -90,7 +90,7 @@ class CardInfoPage extends GetView<CardInfoController> {
   /* ================= STATUS SECTION ================= */
   Widget _buildStatusSection() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -111,7 +111,7 @@ class CardInfoPage extends GetView<CardInfoController> {
               Obx(() => StatusBadge(status: controller.status.value)),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -150,7 +150,7 @@ class CardInfoPage extends GetView<CardInfoController> {
     style: OutlinedButton.styleFrom(
       side: BorderSide(color: c.withOpacity(0.5)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 9),
     ),
     child: Text(t, style: TextStyle(color: c, fontWeight: FontWeight.bold, fontSize: 13)),
   );
@@ -202,7 +202,7 @@ class CardInfoPage extends GetView<CardInfoController> {
         "حذف هذا الكرت نهائياً", 
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
       ),
-      style: TextButton.styleFrom(padding: const EdgeInsets.all(15)),
+      style: TextButton.styleFrom(padding: const EdgeInsets.all(11)),
     ),
       ),
     ),

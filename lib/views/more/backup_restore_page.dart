@@ -26,8 +26,8 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
             
             Expanded(
               child: Container(
-                margin:const EdgeInsets.symmetric(horizontal: 20,vertical: 25),
-                  padding: const EdgeInsets.all(15),
+                margin:const EdgeInsets.symmetric(horizontal: 14,vertical: 25),
+                  padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
                    color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(25),
@@ -81,7 +81,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
                       //   ],
                       // )),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 14),
                       
                       // زر النسخ الاحتياطي
                       _buildActionBtn(
@@ -91,7 +91,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
                         onTap: controller.createBackup,
                       ),
                       
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 11),
 
                       // خط فاصل مع كلمة "أو"
                       Row(
@@ -105,7 +105,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
                         ],
                       ),
                       
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 11),
 
                       // زر الاستعادة
                       _buildActionBtn(
@@ -177,7 +177,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
       onTap: () => onChanged(!value),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
         decoration: BoxDecoration(
           color: value ? const Color(0xFF1E3A8A).withOpacity(0.05) : Colors.white,
           border: Border.all(
@@ -193,7 +193,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
               color: value ? const Color(0xFF1E3A8A) : Colors.grey.shade400,
               size: 24,
             ),
-            const SizedBox(width: 15),
+            const SizedBox(width: 11),
             Icon(icon, color: Colors.blueGrey, size: 20),
             const SizedBox(width: 8),
             Expanded(

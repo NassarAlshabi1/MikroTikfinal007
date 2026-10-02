@@ -35,7 +35,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
                 }
 
                 return ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   children: [
                     const SectionTitle(title: "أمن الشبكة"),
 
@@ -49,7 +49,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
                       },
                     ),
 
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 16),
                     const SectionTitle(title: "عناوين التوجيه (DNS)"),
 
                     /// الحقول النصية
@@ -106,7 +106,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
       ),
       child: SwitchListTile(
         activeColor: const Color(0xFF1E3A8A),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         title: Text(title,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         subtitle: Text(subtitle,
@@ -148,7 +148,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
           hintText: hint,
           labelStyle: const TextStyle(fontSize: 13, color: Colors.blueGrey),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 11),
         ),
       ),
     );

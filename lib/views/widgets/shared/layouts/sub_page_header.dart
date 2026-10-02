@@ -29,14 +29,14 @@ class PremiumHeader extends StatelessWidget {
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(35),
-          bottomRight: Radius.circular(35),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
           child: Column(
             children: [
               Row(
@@ -46,44 +46,48 @@ class PremiumHeader extends StatelessWidget {
                   if (showBackButton)
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded, 
-                            color: Colors.white, size: 22),
+                            color: Colors.white, size: 19),
                       onPressed: goBack ?? Get.back,
                     )
                   else
-                    const SizedBox(width: 48), // مساحة فارغة للحفاظ على التوازن
+                    const SizedBox(width: 40), // مساحة فارغة للحفاظ على التوازن
 
                   // العنوان الرئيسي
-                  Text(
+                  Flexible(
+                    child: Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white, 
-                      fontSize: 18, 
+                      fontSize: 16, 
                       fontWeight: FontWeight.bold,
                       //fontFamily: 'Cairo', // تأكد من إضافة الخط في pubspec
                     ),
                   ),
+                  ),
 
                   // أيقونة مخصصة تظهر على اليسار
                   icon != null 
-                    ? Icon(icon, color: Colors.white.withOpacity(0.5), size: 28)
-                    : const SizedBox(width: 48),
+                    ? Icon(icon, color: Colors.white.withOpacity(0.5), size: 22)
+                    : const SizedBox(width: 40),
                 ],
               ),
               
               // العنوان الفرعي يظهر فقط إذا قمت بتمريره
               if (subtitle != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     subtitle!,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8), 
-                      fontSize: 11,
+                      fontSize: 10,
                     ),
                   ),
                 ),

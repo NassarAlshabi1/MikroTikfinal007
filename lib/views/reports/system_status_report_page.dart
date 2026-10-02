@@ -44,26 +44,26 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                   onRefresh: controller.fetchSystemStatus,
                   color: const Color(0xFF1E3A8A),
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     children: [
                       // 1. كارت المعالج (CPU)
                       _buildCpuCard(state.cpu),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 11),
 
                       // 2. كارت الذاكرة (Memory)
                       _buildMemoryCard(state.totalMemory.formatBytes, state.freeMemory.formatBytes),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 11),
 
                       // 3. كارت التخزين والقرص (Disk)
                       _buildDiskCard(state.totalDiskSpace, state.freeDiskSpace),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 11),
 
                       // 4. كروت المعلومات الإضافية
                       Row(
                         children: [
                           Expanded(child: _buildInfoCard("وقت التشغيل", state.uptime.formatUptime, Icons.timer_rounded, const Color(0xFFF59E0B))),
-                          const SizedBox(width: 15),
+                          const SizedBox(width: 11),
                           Expanded(child: _buildInfoCard("إصدار النظام", state.version, Icons.info_outline_rounded, const Color(0xFF0EA5E9))),
                         ],
                       ),
@@ -90,7 +90,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     Color statusColor = load > 80 ? Colors.redAccent : (load > 50 ? Colors.orange : const Color(0xFF10B981));
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -144,7 +144,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
   // --- كارت الذاكرة (Memory) ---
   Widget _buildMemoryCard(String totalMem, String freeMem) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], 
@@ -170,7 +170,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
               const Text("الذاكرة (RAM)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -192,7 +192,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     int percent = total > 0 ? ((used / total) * 100).toInt() : 0;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)], 
@@ -224,7 +224,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
               Text("$percent%", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
@@ -234,7 +234,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
               minHeight: 6,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -262,7 +262,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
   // --- كروت المعلومات الصغيرة ---
   Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -291,9 +291,9 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.wifi_off_rounded, size: 60, color: Colors.grey),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           const Text("لم نتمكن من جلب بيانات النظام", style: TextStyle(color: Colors.grey, fontSize: 16)),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           ElevatedButton.icon(
             onPressed: controller.fetchSystemStatus, // استخدام مباشر
             icon: const Icon(Icons.refresh_rounded),
@@ -309,7 +309,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
   // تم إزالة البارامتر، الدالة الآن تستخدم controller الموروث مباشرة
   Widget _buildActionButtons() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -324,7 +324,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
           label: const Text("تحديث حالة النظام", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1E3A8A), 
-            padding: const EdgeInsets.symmetric(vertical: 15),
+            padding: const EdgeInsets.symmetric(vertical: 11),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),

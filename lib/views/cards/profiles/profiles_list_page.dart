@@ -71,7 +71,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
           ),
           const Divider(indent: 20, endIndent: 20, height: 1),
           Padding(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.all(11),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -98,13 +98,13 @@ class ProfilesListPage extends GetView<ProfilesListController> {
       builder: (ctx) => Container(
         height: MediaQuery.of(ctx).size.height * 0.85,
         decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(10),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text("تفاصيل الباقة المتقدمة", textAlign: TextAlign.right, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 25),
+              const SizedBox(height: 16),
               _field(controller.nameCtrl, "اسم الباقة", Icons.badge_outlined),
               _field(controller.priceCtrl, "سعر البيع", Icons.payments_outlined, isNum: true),
               
@@ -134,7 +134,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
               _sectionLabel("تحديد السرعة"),
               _field(controller.speedCtrl, "مثال: 4M/4M", Icons.speed),
               
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               _saveButton(index),
             ],
           ),

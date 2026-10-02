@@ -31,7 +31,7 @@ class HostUsersPage extends GetView<HostUsersController> {
                 return RefreshIndicator(
                   onRefresh: controller.fetchHosts,
                   child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(10),
                   physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                   itemCount: controller.hosts.length,
                   itemBuilder: (context, i) => _buildHostCard(controller.hosts[i]),

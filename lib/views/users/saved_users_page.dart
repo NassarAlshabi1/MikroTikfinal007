@@ -44,7 +44,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
             _buildFiltersSection(),
             _searchField(),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 14),
               child: SectionTitle(title: "قائمة الأجهزة"),
             ),
 
@@ -90,7 +90,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
   Widget _buildFiltersSection() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 11),
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
@@ -155,7 +155,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
         child: 
       ListView.builder(
         itemCount: devices.length,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         physics: const BouncingScrollPhysics(),
         itemBuilder: (_, i) {
           final d = devices[i];
@@ -179,7 +179,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
             child: ListTile(
               //isThreeLine: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               leading: CircleAvatar(
                 radius: 24,
                 backgroundColor: _getStatusColor(d).withOpacity(0.1),
@@ -242,13 +242,13 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                       decoration: BoxDecoration(
                           color: Colors.blueGrey.shade100,
                           borderRadius: BorderRadius.circular(10))),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 16),
                   const Text("إضافة جهاز جديد",
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF0F172A))),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 16),
                   _modernField(nameCtrl, "اسم الجهاز", Icons.badge_outlined),
                   _modernField(ipCtrl, "IP Address", Icons.wifi_rounded),
                   _modernField(macCtrl, "MAC Address", Icons.memory_rounded),
@@ -256,7 +256,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                   // Dropdown المنسق
                   Container(
                     margin: const EdgeInsets.only(bottom: 25),
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 11),
                     decoration: BoxDecoration(
                         color: const Color(0xffF1F5F9),
                         borderRadius: BorderRadius.circular(15)),
@@ -342,10 +342,10 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                 decoration: BoxDecoration(
                     color: Colors.blueGrey.shade100,
                     borderRadius: BorderRadius.circular(10))),
-            const SizedBox(height: 25),
+            const SizedBox(height: 16),
             const Text("إدارة الجهاز",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 25),
+            const SizedBox(height: 16),
             _modernField(nameCtrl, "أدخل مسمى للجهاز", Icons.edit_note_rounded),
             SizedBox(
               width: double.infinity,
@@ -366,7 +366,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
               ),
             ),
             const Padding(
-                padding: EdgeInsets.symmetric(vertical: 15),
+                padding: EdgeInsets.symmetric(vertical: 11),
                 child: Divider(thickness: 0.8)),
 
             // --- منطق أزرار الحظر ---
@@ -414,7 +414,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 11),
         decoration: BoxDecoration(
             color: const Color(0xffF1F5F9),
             borderRadius: BorderRadius.circular(15)),
@@ -451,7 +451,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
   Widget _searchField() {
     return Container(
       height: 55,
-      margin: const EdgeInsets.symmetric(horizontal: 18,vertical: 5),
+      margin: const EdgeInsets.symmetric(horizontal: 13,vertical: 5),
       //padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -474,7 +474,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
           prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF1E3A8A)),
           suffixIcon: Icon(Icons.search_off_rounded,color: Color(0x00000000),),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 15),
+          contentPadding: EdgeInsets.symmetric(vertical: 11),
         ),
       ),
     );

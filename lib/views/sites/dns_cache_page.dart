@@ -47,7 +47,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
 
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Column(
                   children: [
                     // بطاقة الإحصائية بتصميم v4.5 المطور
@@ -94,7 +94,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
   /* ================= بطاقة الإحصائيات ================= */
   Widget _buildStatCard(int count) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xff1E3A8A), Color(0xff3B82F6)],
@@ -120,7 +120,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
             ),
             child: const Icon(Icons.speed_rounded, color: Colors.white, size: 30),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 11),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -157,7 +157,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
       ),
       child: ListTile(
         // تم زيادة البادينغ العمودي لاستيعاب السطور الإضافية في الـ subtitle
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -235,7 +235,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
         children: [
           Icon(Icons.auto_awesome_rounded,
               size: 60, color: Colors.blue.withOpacity(0.2)),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           const Text("الذاكرة نظيفة تماماً",
               style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
         ],

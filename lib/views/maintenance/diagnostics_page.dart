@@ -60,7 +60,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
   // ===================== Ping =====================
   Widget _pingTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       children: [
         _inputRow(controller.pingAddressCtrl, "العنوان (IP أو النطاق)", Icons.wifi_tethering_rounded),
         _inputRow(controller.pingCountCtrl, "عدد المحاولات", Icons.tag_rounded, isNumber: true),
@@ -77,7 +77,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
           if (controller.pingSummary.value.isEmpty) return const SizedBox.shrink();
           return Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: const Color(0xFF0F172A),
               borderRadius: BorderRadius.circular(16),
@@ -106,7 +106,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
   // ===================== Traceroute =====================
   Widget _tracerouteTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       children: [
         _inputRow(controller.traceAddressCtrl, "العنوان المطلوب تتبعه", Icons.route_rounded),
         Obx(
@@ -145,7 +145,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             children: [
               Obx(
@@ -184,7 +184,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
               );
             }
             return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               itemCount: controller.torchRows.length,
               itemBuilder: (context, index) {
                 final row = controller.torchRows[index];
@@ -204,7 +204,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
   // ===================== Fetch =====================
   Widget _fetchTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       children: [
         _inputRow(controller.fetchUrlCtrl, "الرابط (URL)", Icons.link_rounded),
         _inputRow(controller.fetchPathCtrl, "اسم الملف على الراوتر", Icons.description_rounded),
@@ -239,7 +239,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
   // ===================== Sniffer =====================
   Widget _snifferTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       children: [
         Obx(
           () => _dropdownRow(
@@ -318,7 +318,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
                       hintText: "بحث في السجل...",
                       prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                      contentPadding: EdgeInsets.symmetric(vertical: 9, horizontal: 12),
                     ),
                   ),
                 ),
@@ -343,7 +343,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
               );
             }
             return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               itemCount: rows.length,
               itemBuilder: (context, index) {
                 final row = rows[index];

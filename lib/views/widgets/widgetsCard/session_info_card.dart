@@ -33,7 +33,7 @@ class SessionInfoCard extends StatelessWidget {
         children: [
           // شريط الوقت العلوي في البطاقة
           Container(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
               color: Colors.blueGrey.withOpacity(0.03),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -51,7 +51,7 @@ class SessionInfoCard extends StatelessWidget {
           ),
           
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(10),
             child: Column(
               children: [
                 _buildRow(Icons.lan_outlined, "العنوان (IP)", ip),
@@ -61,7 +61,7 @@ class SessionInfoCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(child: _buildTraffic(Icons.cloud_upload, "رفع", upload, Colors.orange)),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 11),
                     Expanded(child: _buildTraffic(Icons.cloud_download, "تنزيل", download, Colors.blue)),
                   ],
                 ),

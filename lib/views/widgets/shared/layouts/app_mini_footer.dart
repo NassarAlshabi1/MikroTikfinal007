@@ -13,20 +13,20 @@ class AppMiniFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.blueGrey.shade50)),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30), 
-          topRight: Radius.circular(30),
+          topLeft: Radius.circular(22), 
+          topRight: Radius.circular(22),
     ),
     boxShadow: [
       BoxShadow(
         color: Colors.black.withOpacity(0.08),
         spreadRadius: 1, 
-        blurRadius: 10 ,
-        offset: const Offset(0, -3), 
+        blurRadius: 8 ,
+        offset: const Offset(0, -2), 
       ),
     ],
       ),

@@ -116,7 +116,7 @@ class HotspotPage extends GetView<HotspotController> {
 
   Widget _summaryStrip(Map<String, int> summary) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [_navy, _blue],
@@ -510,7 +510,7 @@ class HotspotPage extends GetView<HotspotController> {
                   final server = list[index];
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -570,7 +570,7 @@ class HotspotPage extends GetView<HotspotController> {
       final issues = controller.loginIssues;
 
       return ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         children: [
           _card(
             child: Column(
@@ -1033,7 +1033,7 @@ class HotspotPage extends GetView<HotspotController> {
       prefixIcon: Icon(icon, size: 20),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -1064,7 +1064,7 @@ class HotspotPage extends GetView<HotspotController> {
   Widget _card({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -1081,7 +1081,7 @@ class HotspotPage extends GetView<HotspotController> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -1143,7 +1143,7 @@ class HotspotPage extends GetView<HotspotController> {
     if (error.isNotEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -33,12 +33,12 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                   }
 
                   return ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     children: [
                       _resourcesBar(),
                       ...controller.sections.map((section) => _sectionCard(section)),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 14),
                     ],
                   );
                 }),
@@ -54,7 +54,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
   Widget _resourcesBar() {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
@@ -98,7 +98,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),

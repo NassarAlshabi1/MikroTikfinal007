@@ -40,7 +40,7 @@ Widget buildFieldPosition(
 // ----------------- Canvas Builder ----------------- //
 Widget buildCanvasArea(BaseTemplateController controller) {
   return Container(
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
     height: 200,
     alignment: Alignment.center,
@@ -113,7 +113,7 @@ Widget textFieldWithOutButton(
 
 Widget whiteContainer(Widget child) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
       child: child
     );
@@ -168,7 +168,7 @@ Widget buildSettingsArea(BaseTemplateController controller, double screenWidth) 
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             locationControl("تحريك مكان اسم المستخدم", controller.x, controller.y, func: (p0) => controller.update(), Icons.person_outline, top: 0, left: 0, bottom: (controller.itemHeight * 2) - 20, right: (controller.itemWidth * 2) - 30),
-            const SizedBox(width: 20),
+            const SizedBox(width: 14),
             locationControl("تحريك مكان كلمة المرور", controller.x2, controller.y2, func: (p0) => controller.update(), Icons.password, top: 0, left: 0, bottom: (controller.itemHeight * 2) - 20, right: (controller.itemWidth * 2) - 30, color: Colors.red),
           ]
         ),

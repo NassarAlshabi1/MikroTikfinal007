@@ -49,7 +49,7 @@ class AppScaffoldLayout extends StatelessWidget {
 
   Widget _header(BuildContext context) {
     return Container(
-      height: 150,
+      height: 118,
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -58,13 +58,13 @@ class AppScaffoldLayout extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(40),
+          bottom: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
             color: Color(0x441E3C72),
-            blurRadius: 18,
-            offset: Offset(0, 6),
+            blurRadius: 13,
+            offset: Offset(0, 5),
           )
         ],
       ),
@@ -90,9 +90,9 @@ class AppScaffoldLayout extends StatelessWidget {
                 title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -116,7 +116,7 @@ class AppScaffoldLayout extends StatelessWidget {
 
   Widget _footer() {
     return Container(
-      height: 58,
+      height: 46,
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -131,7 +131,7 @@ class AppScaffoldLayout extends StatelessWidget {
           footerText,
           style: const TextStyle(
             color: Colors.white70,
-            fontSize: 12,
+            fontSize: 11,
           ),
         ),
       ),

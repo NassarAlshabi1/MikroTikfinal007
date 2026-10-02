@@ -29,7 +29,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   
@@ -44,7 +44,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
                     onTap: controller.goToDnsSettings, // التوجيه لصفحة الإعدادات
                   ),
                   
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   // ================= القسم الثاني: السجلات المؤقتة =================
                   const SectionTitle(title: "السجلات المؤقتة"),
@@ -57,7 +57,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
                     onTap: controller.goToDnsCache, 
                   ),
                   
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   
                   // ================= القسم الثالث: الحظر والرقابة =================
                   const SectionTitle(title: "جدار الحماية والرقابة"),

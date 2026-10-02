@@ -30,7 +30,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   // عنوان القسم
@@ -46,7 +46,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                   ),
 
                   // مسافة بين البطاقات
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // الموزعون والمحاسبة
                   MainActionCard(
@@ -57,7 +57,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     onTap: controller.goToDistributors,
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // مراقبة الشبكة
                   MainActionCard(
@@ -68,7 +68,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     onTap: controller.goToMonitor,
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // إدارة Hotspot
                   MainActionCard(
@@ -79,7 +79,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     onTap: controller.goToHotspot,
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // أدوات الصيانة
                   MainActionCard(
@@ -90,7 +90,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     onTap: controller.goToMaintenance,
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // النسخ الاحتياطي لبيانات التطبيق
                   MainActionCard(
@@ -102,7 +102,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                   ),
 
                   // مسافة بين البطاقات
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // الزر الثاني: إعادة التشغيل
                   MainActionCard(

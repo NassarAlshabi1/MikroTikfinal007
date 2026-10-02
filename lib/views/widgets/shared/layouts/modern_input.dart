@@ -20,10 +20,10 @@ class ModernInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: isReadOnly ? const Color(0xFFE2E8F0) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: isReadOnly ? [] : [
           BoxShadow(
             color: Colors.black.withOpacity(0.03), 
@@ -45,7 +45,7 @@ class ModernInput extends StatelessWidget {
           labelText: label,
           labelStyle: TextStyle(
             color: isReadOnly ? Colors.blueGrey.shade400 : Colors.blueGrey, 
-            fontSize: 13
+            fontSize: 12
           ),
           prefixIcon: Icon(
             icon, 
@@ -53,7 +53,7 @@ class ModernInput extends StatelessWidget {
             size: 20
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         style: TextStyle(
           color: isReadOnly ? Colors.blueGrey.shade600 : Colors.black,

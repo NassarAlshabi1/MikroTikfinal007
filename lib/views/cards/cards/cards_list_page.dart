@@ -70,10 +70,10 @@ class CardsListPage extends GetView<CardsListController> {
   /* ================= منطقة البحث والفلترة ================= */
   Widget _buildSearchAndFilterArea() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Column(
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -83,7 +83,7 @@ class CardsListPage extends GetView<CardsListController> {
               _addButton(),
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           _buildFilterChips(),
           const SizedBox(height: 10),
         ],
@@ -113,7 +113,7 @@ class CardsListPage extends GetView<CardsListController> {
           hintStyle: TextStyle(fontSize: 13, color: Colors.blueGrey),
           prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF1E3A8A)),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 15),
+          contentPadding: EdgeInsets.symmetric(vertical: 11),
         ),
       ),
     );

@@ -28,7 +28,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   const SectionTitle(title: "إنشاء نسخة جديدة"),
@@ -108,7 +108,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
                           .toList(),
                     );
                   }),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 14),
                 ],
               ),
             ),
@@ -120,7 +120,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
 
   Widget _emptyState() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -144,7 +144,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),

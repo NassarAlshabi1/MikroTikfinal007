@@ -28,7 +28,7 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   // عنوان القسم
@@ -44,7 +44,7 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
                   ),
 
                   // مسافة بين البطاقات
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // الزر الثاني: تقرير حالة النظام
                   MainActionCard(

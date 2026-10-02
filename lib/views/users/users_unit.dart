@@ -29,7 +29,7 @@ class UsersUnitPage extends GetView<UsersUnitController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   
@@ -50,7 +50,7 @@ class UsersUnitPage extends GetView<UsersUnitController> {
                   ),
 
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   const SectionTitle(title: "التحكم والأمان"),
                   

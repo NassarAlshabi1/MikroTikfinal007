@@ -26,7 +26,7 @@ class DistributorFormPage extends GetView<DistributorFormController> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 children: [
                   const SectionTitle(title: "البيانات الأساسية"),
                   ModernInput(

@@ -66,7 +66,7 @@ void showLoadingDialog({String text="processing..."}) {
       content: Row(
         children: [
           const CircularProgressIndicator(),
-          const SizedBox(width: 20),
+          const SizedBox(width: 14),
           Text(text),
         ],
       ),

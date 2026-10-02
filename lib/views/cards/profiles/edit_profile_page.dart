@@ -25,7 +25,7 @@ class EditProfilePage extends GetView<EditProfileController> {
             
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 25),
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(

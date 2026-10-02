@@ -30,7 +30,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   const SectionTitle(title: "إدارة الكروت والخدمات"),
@@ -53,7 +53,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     onTap: controller.goToAddSingleCard, // استخدام دالة المتحكم
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // حذف المستخدمين المنتهين (فحص ذكي للمدة)
                   MainActionCard(
@@ -64,7 +64,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     onTap: controller.goToExpiredUsers,
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   // إدارة Hotspot (قسائم الإنترنت)
                   MainActionCard(
@@ -75,7 +75,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     onTap: controller.goToHotspot,
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 11),
 
                   const SectionTitle(title: "الاشتراكات والأسعار"),
 

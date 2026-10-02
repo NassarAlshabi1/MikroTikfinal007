@@ -93,7 +93,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
           ),
           const Divider(height: 1, indent: 20, endIndent: 20),
           Padding(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.all(11),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [

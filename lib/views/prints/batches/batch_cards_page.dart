@@ -34,7 +34,7 @@ class GeneratedCardsView extends StatelessWidget {
             
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -44,7 +44,7 @@ class GeneratedCardsView extends StatelessWidget {
                         // 1. إضافة لوحة التحكم (الإحصائيات والأزرار)
                         _buildControlPanel(controller),
                         
-                        const SizedBox(height: 25),
+                        const SizedBox(height: 16),
                         const SectionTitle(title: "تفاصيل الكروت"),
                         const SizedBox(height: 12),
                         
@@ -84,7 +84,7 @@ class GeneratedCardsView extends StatelessWidget {
             _buildStatItem("كروت متبقية", remainingCount.toString(), Colors.orange, Icons.hourglass_empty_rounded),
           ],
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 11),
         
         // صف أزرار التحكم
         Row(
@@ -124,7 +124,7 @@ class GeneratedCardsView extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -178,7 +178,7 @@ class GeneratedCardsView extends StatelessWidget {
   Widget _buildStatItem(String title, String value, Color color, IconData icon) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -251,7 +251,7 @@ class GeneratedCardsView extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -359,7 +359,7 @@ class GeneratedCardsView extends StatelessWidget {
       child: Column(
         children: [
           Icon(Icons.layers_clear_rounded, size: 60, color: Colors.grey.shade300),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           const Text(
             "لا توجد كروت مولدة حتى الآن",
             style: TextStyle(

@@ -41,7 +41,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                       child: RefreshIndicator(
                         onRefresh: controller.scan,
                         child: ListView(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                           children: [
                             _statsCard(),
@@ -102,7 +102,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
     final total = result?.totalUsers ?? 0;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
@@ -241,7 +241,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
     if (users.isEmpty) {
       return [
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),

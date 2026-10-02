@@ -57,7 +57,7 @@ class _AddBatchViewState extends State<AddBatchView> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                     child: Column(
                       children: [
                         const SectionTitle(title: "إعدادات الدفعة الجديدة"),
@@ -78,7 +78,7 @@ class _AddBatchViewState extends State<AddBatchView> {
 
   Widget _buildFormCard(BatchesFormController controller) {
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -94,7 +94,7 @@ class _AddBatchViewState extends State<AddBatchView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFieldLabel("المعلومات الأساسية",controller),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           _buildModernInput(
               controller.batchName, "اسم الدفعة (مثال: دفعة الشتاء)", Icons.badge_outlined,controller),
           _buildModernInput(
@@ -102,7 +102,7 @@ class _AddBatchViewState extends State<AddBatchView> {
               isNumber: true),
           const Divider(height: 40),
           _buildFieldLabel("إعدادات الربط والتصميم",controller),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           
           // تم إضافة حقل اختيار العميل هنا
           _buildCustomerDropdown(controller),
@@ -119,7 +119,7 @@ class _AddBatchViewState extends State<AddBatchView> {
           const Divider(height: 40),
           
           _buildFieldLabel("طول الرموز",controller),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -128,7 +128,7 @@ class _AddBatchViewState extends State<AddBatchView> {
               Expanded(child: Text("طول كلمة المرور")),
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           Row(
             children: [
               Expanded(
@@ -146,7 +146,7 @@ class _AddBatchViewState extends State<AddBatchView> {
           // const Divider(height: 40),
           // 
           _buildFieldLabel("تخصيص الرموز (اختياري)",controller),
-          const SizedBox(height: 15),
+          const SizedBox(height: 11),
           Row(
             children: [
               Expanded(
@@ -189,7 +189,7 @@ class _AddBatchViewState extends State<AddBatchView> {
           prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A), size: 20),
           border: InputBorder.none,
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),
         onChanged: (value) {
           controller.update();
@@ -291,7 +291,7 @@ class _AddBatchViewState extends State<AddBatchView> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 9),
               decoration: BoxDecoration(
                 color: isSelected
                     ? const Color(0xFF1E3A8A)
@@ -355,7 +355,7 @@ class _AddBatchViewState extends State<AddBatchView> {
     return InkWell(
       onTap: tap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
+        padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
             gradient: LinearGradient(colors: colors),
             borderRadius: BorderRadius.circular(15),
