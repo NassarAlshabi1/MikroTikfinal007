@@ -165,6 +165,13 @@ class ExpiredUsersApi {
       for (final user in users) {
         final candidate = _buildCandidate(user, limitsByProfile, statesByUser);
 
+        // قاعدة الأمان: من تعذّر تحليل مدة استهلاكه لا يُحذف ولا يُصنَّف "لم يكمل"
+        if (candidate.rawUptimeUsed.trim().isNotEmpty &&
+            MikrotikDuration.parse(candidate.rawUptimeUsed) == null) {
+          unparsable++;
+          continue;
+        }
+
         if (!candidate.hasLimit && !candidate.isStateUsed) {
           withoutLimits++;
           continue;
