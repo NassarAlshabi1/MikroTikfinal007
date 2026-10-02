@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:charset/charset.dart';
+import 'ftp_client.dart';
 import 'router.dart';
 
 class MikrotikClient {
@@ -247,6 +249,54 @@ class MikrotikClient {
     } catch (e) {
       return 0;
     }
+  }
+
+  /// تنزيل ملف من ذاكرة الراوتر عبر خدمة الويب (www).
+  ///
+  /// يعمل مع الملفات الثنائية (‎.backup‎) والنصية (‎.rsc‎) بدون تشويه،
+  /// لكنه يتطلب أن تكون خدمة www مُفعّلة على الراوتر:
+  /// `/ip service enable www`
+  static Future<List<int>> httpDownloadFile(String fileName, {int? port}) async {
+    _checkConnection();
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 20);
+    try {
+      final targetPort = port ?? 80;
+      final uri = Uri.parse('http://$_address:$targetPort/${Uri.encodeComponent(fileName)}');
+      final request = await client.getUrl(uri);
+      final credentials = base64.encode(utf8.encode('$_user:$_password'));
+      request.headers.set(HttpHeaders.authorizationHeader, 'Basic $credentials');
+      final response = await request.close();
+
+      if (response.statusCode != 200) {
+        await response.drain();
+        throw Exception('HTTP ${response.statusCode} من الراوتر');
+      }
+
+      final bytes = <int>[];
+      await for (final chunk in response) {
+        bytes.addAll(chunk);
+      }
+      return bytes;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  /// رفع ملف من الهاتف إلى ذاكرة الراوتر عبر FTP (يتطلب تفعيل خدمة ftp).
+  static Future<void> ftpUploadFile({
+    required String fileName,
+    required List<int> bytes,
+    int port = 21,
+  }) async {
+    _checkConnection();
+    await FtpClient.upload(
+      host: _address,
+      user: _user,
+      password: _password,
+      remoteName: fileName,
+      bytes: bytes,
+      port: port,
+    );
   }
 
   static Future<void> cancelCommand(String tag)async{

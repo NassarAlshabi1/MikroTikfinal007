@@ -6,6 +6,7 @@ import 'package:mikronet/controllers/dialog_helper.dart';
 import '../core/app_pages.dart';
 import '../core/string_extensions.dart'; 
 import '/api/reports_api.dart';
+import '../services/telegram_report_service.dart';
 
 class HomeController extends GetxController with GetSingleTickerProviderStateMixin {
   
@@ -38,6 +39,9 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
     
     fetchRealData();
     _startDataRefreshTimer();
+
+    // تشغيل مُرسل تقارير Telegram إن كان مُفعّلًا في الإعدادات
+    TelegramReportService.restart();
   }
 
   @override
@@ -108,6 +112,8 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   void goToSites() => Get.toNamed(AppRoutes.sites);
   void goToReports() => Get.toNamed(AppRoutes.reports);
   void goToMoreSettings() => Get.toNamed(AppRoutes.more);
+  void goToDistributors() => Get.toNamed(AppRoutes.distributors);
+  void goToMonitor() => Get.toNamed(AppRoutes.monitor);
 
   void logout(){
     showConfirmDialog(message: "هل انت متاكد من قطع الاتصال", onConfirm: Get.back);

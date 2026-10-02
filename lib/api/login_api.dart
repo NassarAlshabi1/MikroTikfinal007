@@ -1,6 +1,7 @@
 import '/models/response.dart';
 import '/models/login_model.dart';
 import '/services/mikrotik_client.dart';
+import '/services/secure_store.dart';
 import 'database_api.dart';
 
 
@@ -16,9 +17,47 @@ class LoginApi {
     }
     
     for (var m in result) {
-      response.data?.add(LoginModel.fromDatabase(m));
+      final storedModel = LoginModel.fromDatabase(m);
+      response.data?.add(await _decrypt(storedModel));
+
+      // ترقية تلقائية: تشفير أي بيانات قديمة غير مشفّرة وإعادة حفظها.
+      if (!SecureStore.isEncrypted(storedModel.password) ||
+          !SecureStore.isEncrypted(storedModel.hostAddress)) {
+        await _encryptAndUpdate(storedModel.id, storedModel);
+      }
     }
     return response;
+  }
+
+  /// فك تشفير حقول الراوتر المحفوظ.
+  static Future<LoginModel> _decrypt(LoginModel model) async {
+    return LoginModel(
+      id: model.id,
+      hostAddress: await SecureStore.decryptText(model.hostAddress),
+      username: await SecureStore.decryptText(model.username),
+      password: await SecureStore.decryptText(model.password),
+      port: model.port,
+      networkName: await SecureStore.decryptText(model.networkName),
+    );
+  }
+
+  /// تجهيز الحقول الحساسة للتخزين (مشفّرة).
+  static Future<Map<String, dynamic>> _encryptedRow(LoginModel model) async {
+    return <String, dynamic>{
+      "host": await SecureStore.encryptText(model.hostAddress),
+      "username": await SecureStore.encryptText(model.username),
+      "password": await SecureStore.encryptText(model.password),
+      "port": model.port,
+      "name": await SecureStore.encryptText(model.networkName),
+    };
+  }
+
+  static Future<void> _encryptAndUpdate(int id, LoginModel model) async {
+    try {
+      await DBApi.update("saved_logins", await _encryptedRow(model), "id=$id");
+    } catch (_) {
+      // لا نُفشل القراءة بسبب فشل الترقية
+    }
   }
 
   static Future<AppResponse<LoginModel>> getOneLogin(int id)async{
@@ -35,7 +74,7 @@ class LoginApi {
 
   static Future<AppResponse<void>> saveLoginData(LoginModel data)async{
     try {
-      await DBApi.insert("saved_logins", data.toDatabase());
+      await DBApi.insert("saved_logins", await _encryptedRow(data));
       return AppResponse(status: true, message: "inserted",);
     } catch (e) {
       return AppResponse(status: false, message: e.toString());
@@ -44,7 +83,15 @@ class LoginApi {
 
   static Future<AppResponse<int>> editLoginData(int id,Map<String,dynamic> data)async{
     try {
-      int result = await DBApi.update("saved_logins", data,"id=$id");
+      final secured = Map<String, dynamic>.from(data);
+      const sensitiveKeys = ["host", "username", "password", "name"];
+      for (final key in sensitiveKeys) {
+        final value = secured[key];
+        if (value != null && !SecureStore.isEncrypted(value.toString())) {
+          secured[key] = await SecureStore.encryptText(value.toString());
+        }
+      }
+      int result = await DBApi.update("saved_logins", secured,"id=$id");
       return AppResponse(status: true, message: "updated", data: result);
     } catch (e) {
       return AppResponse(status: false, message: e.toString());

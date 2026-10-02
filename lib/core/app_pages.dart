@@ -75,6 +75,21 @@ import '/controllers/sites/blocked_sites_controller.dart';
 import '../views/prints/prints_unit.dart';
 import '../views/reports/reports_unit.dart';
 
+// ======== الاستيرادات الجديدة: النسخ الاحتياطي، Telegram، الموزعون، المراقبة ========
+import '../controllers/more/router_backup_controller.dart';
+import '../controllers/more/telegram_controller.dart';
+import '../controllers/distributors/distributors_list_controller.dart';
+import '../controllers/distributors/distributor_form_controller.dart';
+import '../controllers/distributors/distributor_statement_controller.dart';
+import '../controllers/reports/monitor_controller.dart';
+import '../models/distributor_model.dart';
+import '../views/more/router_backup_page.dart';
+import '../views/more/telegram_page.dart';
+import '../views/distributors/distributors_list_page.dart';
+import '../views/distributors/distributor_form_page.dart';
+import '../views/distributors/distributor_statement_page.dart';
+import '../views/reports/monitor_page.dart';
+
 /*
 import '/view/backups/backup_view.dart';
 
@@ -123,6 +138,16 @@ class AppRoutes {
 
   static const String more = '/more';
   static const String backup = '/more/backup';
+  static const String routerBackup = '/more/router_backup';
+  static const String telegram = '/more/telegram';
+
+  // الموزعون والمحاسبة
+  static const String distributors = '/distributors';
+  static const String distributorForm = '/distributors/form';
+  static const String distributorStatement = '/distributors/statement';
+
+  // مراقبة الشبكة
+  static const String monitor = '/reports/monitor';
   // مسارات إدارة المواقع
 }
 
@@ -276,6 +301,46 @@ class AppPages {
       name: AppRoutes.backup, 
       page: () => const BackupRestorePage(),
       binding: BindingsBuilder(() => Get.lazyPut(() => BackupRestoreController())),
+    ),
+    // ======== النسخ الاحتياطي الحقيقي للراوتر ========
+    GetPage(
+      name: AppRoutes.routerBackup,
+      page: () => const RouterBackupPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => RouterBackupController())),
+    ),
+    // ======== تكامل Telegram ========
+    GetPage(
+      name: AppRoutes.telegram,
+      page: () => const TelegramPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => TelegramController())),
+    ),
+    // ======== الموزعون والمحاسبة ========
+    GetPage(
+      name: AppRoutes.distributors,
+      page: () => const DistributorsListPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => DistributorsListController())),
+    ),
+    GetPage(
+      name: AppRoutes.distributorForm,
+      page: () => const DistributorFormPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(
+        () => DistributorFormController(
+          Get.arguments is DistributorModel ? Get.arguments as DistributorModel : null,
+        ),
+      )),
+    ),
+    GetPage(
+      name: AppRoutes.distributorStatement,
+      page: () => const DistributorStatementPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(
+        () => DistributorStatementController(Get.arguments as DistributorModel),
+      )),
+    ),
+    // ======== مراقبة الشبكة المتقدمة ========
+    GetPage(
+      name: AppRoutes.monitor,
+      page: () => const MonitorPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => MonitorController())),
     ),
   ];
 }

@@ -5,7 +5,9 @@ String implode(List<String> list, String delimiter) {
 }
 
 String quoteValue(String value) {
-  return "'$value'";
+  // تهريب علامة الاقتباس المفردة لمنع كسر جملة SQL (والتخفيف من حقن SQL).
+  final escaped = value.replaceAll("'", "''");
+  return "'$escaped'";
 }
 
 String generateInsertQuery(Map<String, dynamic> data, String table) {
@@ -21,6 +23,11 @@ String generateInsertQuery(Map<String, dynamic> data, String table) {
 
 class DBApi{
   static final SqlDb _db=SqlDb();
+
+  /// تنفيذ أمر SQL مباشر (CREATE TABLE / PRAGMA / معاملات...).
+  static Future<void> execute(String sql) async {
+    await _db.executeData(sql);
+  }
 
   // @protected
   static Future<List> select(String table,

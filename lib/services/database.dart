@@ -76,6 +76,36 @@ class SqlDb {
     );
   """;
 
+  // ================= جداول الموزعين والمحاسبة (إصدار 2) =================
+  String distributors="""
+    CREATE TABLE IF NOT EXISTS distributors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone TEXT,
+      note TEXT,
+      is_active INTEGER DEFAULT 1,
+      created_at INTEGER
+    );
+  """;
+
+  String distributorTransactions="""
+    CREATE TABLE IF NOT EXISTS dist_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      distributor_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      amount REAL DEFAULT 0,
+      cost REAL DEFAULT 0,
+      cards_count INTEGER DEFAULT 0,
+      note TEXT,
+      tx_date TEXT,
+      created_at INTEGER,
+      FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+    );
+  """;
+
+  /// جداول إصدار 2 (تُنشأ عند ترقية قاعدة بيانات قديمة).
+  List<String> get versionTwoTables => [distributors, distributorTransactions];
+
   
 
   Future<Database?> get db async {
@@ -92,13 +122,22 @@ class SqlDb {
     String path = join(databasePath, "mikrotik.db");
     Database database = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
       onConfigure: (db) async {
         await db.execute("PRAGMA foreign_keys = ON");
       },
     );
     return database;
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      for (final statement in versionTwoTables) {
+        await db.execute(statement);
+      }
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -108,6 +147,8 @@ class SqlDb {
     mybatch.execute(batches);
     mybatch.execute(cards);
     mybatch.execute(savedLogins);
+    mybatch.execute(distributors);
+    mybatch.execute(distributorTransactions);
     // mybatch.execute(inss);
 
     await mybatch.commit();
@@ -133,5 +174,19 @@ class SqlDb {
   Future<int> deleteData(String sql) async {
     Database? myDb = await db;
     return await myDb!.rawDelete(sql);
+  }
+
+  /// تنفيذ أمر SQL مباشر (مثل أوامر CREATE TABLE أو المعاملات).
+  // @protected
+  Future<void> executeData(String sql, [List<Object?>? arguments]) async {
+    Database? myDb = await db;
+    await myDb!.execute(sql, arguments);
+  }
+
+  /// تنفيذ عدة أوامر داخل معاملة واحدة (Transaction).
+  // @protected
+  Future<T> transactionData<T>(Future<T> Function(Transaction txn) action) async {
+    Database? myDb = await db;
+    return await myDb!.transaction<T>(action);
   }
 }

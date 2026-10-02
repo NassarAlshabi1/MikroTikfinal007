@@ -36,13 +36,58 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                   // عنوان القسم
                   const SectionTitle(title: "إدارة النظام"),
                   
-                  // الزر الأول: النسخ الاحتياطي
+                  // النسخ الاحتياطي الحقيقي لراوتر MikroTik
                   MainActionCard(
-                    title: "النسخ الاحتياطي والاستعادة",
-                    subtitle: "حفظ نسخة من إعدادات المايكروتك أو استرجاعها",
+                    title: "نسخ الراوتر الاحتياطي",
+                    subtitle: "إنشاء نسخة إعدادات على الراوتر وتنزيلها أو استعادتها",
+                    icon: Icons.settings_backup_restore_rounded,
+                    color: const Color(0xFF1E3A8A),
+                    onTap: controller.goToRouterBackup,
+                  ),
+
+                  // مسافة بين البطاقات
+                  const SizedBox(height: 15),
+
+                  // الموزعون والمحاسبة
+                  MainActionCard(
+                    title: "الموزعون والمحاسبة",
+                    subtitle: "نقاط البيع، الأرصدة، الأرباح، وكشوف الحساب PDF",
+                    icon: Icons.groups_rounded,
+                    color: const Color(0xFF10B981),
+                    onTap: controller.goToDistributors,
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // مراقبة الشبكة
+                  MainActionCard(
+                    title: "مراقبة الشبكة",
+                    subtitle: "حرارة الراوتر، المنافذ، وحركة البيانات لحظيًا",
+                    icon: Icons.monitor_heart_rounded,
+                    color: const Color(0xFF7C3AED),
+                    onTap: controller.goToMonitor,
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // تكامل Telegram
+                  MainActionCard(
+                    title: "تكامل Telegram",
+                    subtitle: "تقارير المبيعات وحالة الشبكة إلى Telegram",
+                    icon: Icons.send_rounded,
+                    color: const Color(0xFF0EA5E9),
+                    onTap: controller.goToTelegram,
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // النسخ الاحتياطي لبيانات التطبيق
+                  MainActionCard(
+                    title: "نسخ بيانات التطبيق",
+                    subtitle: "حفظ قوالب الكروت والراوترات المحفوظة كملف قاعدة بيانات",
                     icon: Icons.save_rounded,
-                    color: const Color(0xFF3B82F6), // لون أزرق مناسب للحفظ والأمان
-                    onTap: controller.goToBackupAndRestore, // استدعاء الدالة من المتحكم
+                    color: const Color(0xFF3B82F6),
+                    onTap: controller.goToBackupAndRestore,
                   ),
 
                   // مسافة بين البطاقات

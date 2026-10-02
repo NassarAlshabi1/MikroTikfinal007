@@ -5,9 +5,29 @@ import 'package:mikronet/core/app_pages.dart';
 
 class MoreUnitController extends GetxController {
   
-  // دالة الانتقال لصفحة النسخ الاحتياطي والاستعادة
+  // دالة الانتقال لصفحة النسخ الاحتياطي والاستعادة (بيانات التطبيق)
   void goToBackupAndRestore() {
     Get.toNamed(AppRoutes.backup);
+  }
+
+  // النسخ الاحتياطي الحقيقي لراوتر MikroTik
+  void goToRouterBackup() {
+    Get.toNamed(AppRoutes.routerBackup);
+  }
+
+  // تكامل Telegram
+  void goToTelegram() {
+    Get.toNamed(AppRoutes.telegram);
+  }
+
+  // الموزعون والمحاسبة
+  void goToDistributors() {
+    Get.toNamed(AppRoutes.distributors);
+  }
+
+  // مراقبة الشبكة المتقدمة
+  void goToMonitor() {
+    Get.toNamed(AppRoutes.monitor);
   }
 
   // دالة إعادة تشغيل النظام (الراوتر)
