@@ -29,10 +29,15 @@
 | 14 | **مراقبة حركة البيانات لكل منفذ** | `getInterfaceTraffic()` + تحديث كل 6 ثوانٍ | `/interface/monitor-traffic` |
 | 15 | **تشفير بيانات دخول الراوترات** | `lib/services/secure_store.dart` (AES-256-CBC بمفتاح على الجهاز) + ترقية تلقائية للبيانات القديمة | — |
 | 16 | **إصلاح ثغرة SQL** | `lib/api/database_api.dart` → تهريب علامة الاقتباس في `quoteValue` | — |
-| 17 | **حذف المستخدمين المنتهين بفحص ذكي** | `lib/services/mikrotik_duration.dart` (محلّل مدد) + `lib/api/expired_users_api.dart` + صفحة `views/cards/expired_users_page.dart` | `/tool/user-manager/user/remove` · `/user-manager/user/remove` |
+| 17 | **حذف المستخدمين المنتهين بفحص ذكي (متوافق مع v6 و v7)** | `lib/services/mikrotik_duration.dart` (محلّل مدد) + `lib/services/expired_users_classifier.dart` (منطق نقي) + `lib/api/expired_users_api.dart` + صفحة `views/cards/expired_users_page.dart` | v6: `/tool/user-manager/user/print|remove` + `profile/limitation` · v7: `/user-manager/*` + `user-profile.state=used` |
 | 18 | **التحقق الآلي من الكود (CI)** | `.github/workflows/flutter-ci.yml` → `flutter analyze` + بناء APK اختياري | GitHub Actions |
 
-**حالة التحقق الآلي:** ✅ اختبارات وحدة لمحلّل المدد تنجح (`flutter test test/mikrotik_duration_test.dart`)
+**حالة التحقق الآلي:** ✅ 17 اختبارًا لمحلّل المدد (`test/mikrotik_duration_test.dart`) + 22 اختبارًا لتصنيف المنتهين
+بحمولات v6 الحقيقية (`test/expired_users_classifier_test.dart`) — يُشغَّلان معًا في CI.
+
+**التوافق مع RouterOS v6:** موثّق بالتفصيل في [`V6_COMPATIBILITY.md`](V6_COMPATIBILITY.md) — حقول v6
+(`username`/`actual-profile`/`uptime-used`/`customer` ولا يوجد `name`)، إشارة الانتهاء الأصلية `!actual-profile`
+مع استهلاك، قراءة الحد من limitation/validity (لا من المستخدم)، والحذف بـ `numbers`/`.id` مع تنظيف الجلسات.
 و ✅ `flutter analyze` = **صفر أخطاء** (17 تحذيرًا متبقية كلها في الكود المستورد القديم: دوال غير مستخدمة/كود ميت، وهي غير مُفشِلة).
 
 ---

@@ -128,6 +128,26 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
               _stat("المحدد للحذف", controller.selectedCount, const Color(0xFF60A5FA)),
             ],
           ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${result?.versionLabel ?? 'إصدار غير محدد'}"
+                  "${(result?.clearedProfileCount ?? 0) > 0 ? " • منها ${result!.clearedProfileCount} بالباقة المُزالة (معيار v6)" : ""}"
+                  "${(result?.stateUsedCount ?? 0) > 0 ? " • منها ${result!.stateUsedCount} بحالة used (معيار v7)" : ""}",
+                  style: const TextStyle(color: Colors.white70, fontSize: 10.5, height: 1.5),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -245,7 +265,8 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
   }
 
   Widget _userCard(ExpiredUserCandidate user) {
-    final isBytesOnly = !user.uptimeExhausted;
+    final reason = user.expiredReason;
+    final reasonColor = _reasonColor(reason);
 
     return Obx(() {
       final selected = controller.selection[user.id] == true;
@@ -298,10 +319,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                                 ),
                               ),
                             ),
-                            _badge(
-                              isBytesOnly ? "انتهى الرصيد" : "انتهت المدة",
-                              isBytesOnly ? const Color(0xFFF59E0B) : const Color(0xFFEF4444),
-                            ),
+                            _badge(reason, reasonColor),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -337,6 +355,22 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
         ),
       );
     });
+  }
+
+  /// لون الشارة حسب سبب الانتهاء (معايير v6 / v7).
+  Color _reasonColor(String reason) {
+    switch (reason) {
+      case 'انتهت المدة':
+        return const Color(0xFFEF4444);
+      case 'الباقة مُزالة (v6)':
+        return const Color(0xFF7C3AED);
+      case 'الباقة مستهلكة (v7)':
+        return const Color(0xFF0EA5E9);
+      case 'انتهى الرصيد':
+        return const Color(0xFFF59E0B);
+      default:
+        return const Color(0xFF64748B);
+    }
   }
 
   Widget _badge(String label, Color color) {

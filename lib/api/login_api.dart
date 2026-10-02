@@ -3,6 +3,7 @@ import '/models/login_model.dart';
 import '/services/mikrotik_client.dart';
 import '/services/secure_store.dart';
 import 'database_api.dart';
+import 'expired_users_api.dart';
 
 
 class LoginApi {
@@ -109,6 +110,9 @@ class LoginApi {
   static Future<AppResponse> loginToMikrotik(LoginModel router) async{
     MikrotikClient.init(address: router.hostAddress, user: router.username, password: router.password, port: router.port,useSsl: false);
     //MikrotikClient.init(address: "127.0.0.1", user: "admin", password: "admin", port: 8727,useSsl: false);
+    // راوتر جديد = إصدار قد يختلف (v6/v7) ← نُصفّر المسارات المخزّنة
+    ExpiredUsersApi.resetPaths();
+
     try {  
       var result= await MikrotikClient.login();
       return AppResponse(status: result, message: "");
