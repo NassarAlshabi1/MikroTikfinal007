@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart > test_output.txt 2>&1
+          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart > test_output.txt 2>&1
           status=$?
           echo "unit_tests exit=$status"
           tail -n 40 test_output.txt
@@ -153,7 +153,7 @@ jobs:
           {
             echo "== APK metadata =="
             if [ -n "$AAPT" ]; then
-              "$AAPT" dump badging "$APK" | grep -E "^package:|^application-label|^native-code"
+              "$AAPT" dump badging "$APK" | grep -E "^package:|^application-label|^native-code" || true
             else
               echo "(aapt not found — skipping metadata)"
             fi
@@ -202,7 +202,7 @@ jobs:
         run: |
           set -e
           # الوسم الهدف: الوسم المدفوع، أو v2.0.0.0 عند التحديث من فرع
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG="${GITHUB_REF_NAME}"; else TAG="v2.0.0.0"; fi
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG="${GITHUB_REF_NAME}"; else TAG="v2.0.0.0-arm64"; fi
           echo "target release: $TAG"
 
           NOTES="إصدار MikroNet 2.0.0.0 (versionCode 2000) — للأجهزة الحديثة (arm64-v8a)

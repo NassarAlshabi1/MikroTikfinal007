@@ -96,6 +96,9 @@ class MaintenanceHubController extends GetxController {
       case ToolKind.diagnostics:
         Get.toNamed(AppRoutes.maintenanceDiagnostics, arguments: tool.diagnostic);
         break;
+      case ToolKind.cable:
+        Get.toNamed(AppRoutes.maintenanceCableTest);
+        break;
       case ToolKind.list:
       case ToolKind.keyValue:
         Get.toNamed(AppRoutes.maintenanceTool, arguments: tool);

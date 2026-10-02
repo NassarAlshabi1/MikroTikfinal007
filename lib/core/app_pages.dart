@@ -96,10 +96,12 @@ import '../views/cards/expired_users_page.dart';
 import '../controllers/maintenance/maintenance_hub_controller.dart';
 import '../controllers/maintenance/tool_list_controller.dart';
 import '../controllers/maintenance/diagnostics_controller.dart';
+import '../controllers/maintenance/cable_test_controller.dart';
 import '../models/maintenance_tools.dart';
 import '../views/maintenance/maintenance_hub_page.dart';
 import '../views/maintenance/tool_list_page.dart';
 import '../views/maintenance/diagnostics_page.dart';
+import '../views/maintenance/cable_test_page.dart';
 
 /*
 import '/view/backups/backup_view.dart';
@@ -164,6 +166,7 @@ class AppRoutes {
   static const String maintenance = '/maintenance';
   static const String maintenanceTool = '/maintenance/tool';
   static const String maintenanceDiagnostics = '/maintenance/diagnostics';
+  static const String maintenanceCableTest = '/maintenance/cable_test';
   // مسارات إدارة المواقع
 }
 
@@ -372,6 +375,11 @@ class AppPages {
           Get.arguments is DiagnosticTool ? Get.arguments as DiagnosticTool : null,
         ),
       )),
+    ),
+    GetPage(
+      name: AppRoutes.maintenanceCableTest,
+      page: () => const CableTestPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => CableTestController())),
     ),
     // ======== مراقبة الشبكة المتقدمة ========
     GetPage(

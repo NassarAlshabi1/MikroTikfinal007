@@ -12,6 +12,9 @@ enum ToolKind {
 
   /// أدوات التشخيص التفاعلية (Ping / Traceroute / Torch / Fetch / Sniffer / Log).
   diagnostics,
+
+  /// صفحة فحص الكيبل وأزواج الإيثرنت.
+  cable,
 }
 
 /// أدوات التشخيص المتاحة داخل صفحة الأدوات.
@@ -38,6 +41,24 @@ class MaintenanceTool {
     this.menu,
     this.diagnostic,
   });
+
+  /// أداة تفتح صفحة **فحص الكيبل**.
+  factory MaintenanceTool.cable({
+    required String id,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+  }) {
+    return MaintenanceTool(
+      id: id,
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      color: color,
+      kind: ToolKind.cable,
+    );
+  }
 
   factory MaintenanceTool.list({
     required String id,
@@ -92,6 +113,13 @@ class MaintenanceCatalog {
       icon: Icons.biotech_rounded,
       color: const Color(0xFF2563EB),
       tools: [
+        MaintenanceTool.cable(
+          id: "cable_test",
+          title: "فحص الكيبل",
+          subtitle: "اختبار أزواج الإيثرنت وسرعة الاتصال",
+          icon: Icons.cable_rounded,
+          color: const Color(0xFF0D9488),
+        ),
         _diag(DiagnosticTool.ping, "Ping", "فحص الوصول لعنوان", Icons.wifi_tethering_rounded, const Color(0xFF1D4ED8)),
         _diag(DiagnosticTool.traceroute, "اختبار النطاق", "تتبع مسار الحزم", Icons.route_rounded, const Color(0xFFF59E0B)),
         _diag(DiagnosticTool.torch, "Torch", "مراقبة حركة منفذ لحظيًا", Icons.bolt_rounded, const Color(0xFF7C3AED)),

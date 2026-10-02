@@ -1,4 +1,5 @@
 import '../models/response.dart';
+import '../services/cable_diagnostics.dart';
 import '../services/mikrotik_client.dart';
 
 /// أدوات الصيانة والتشخيص لراوتر RouterOS.
@@ -237,6 +238,124 @@ class MaintenanceApi {
   }
 
   // ================= القراءة العامة لأي قائمة =================
+
+  // ================= فحص الكيبل والمنافذ =================
+
+  /// منافذ الإيثرنت في الراوتر (للاختيار في صفحة فحص الكيبل).
+  static Future<AppResponse<List<Map<String, String>>>> ethernetPorts() async {
+    const attempts = [
+      ".id,name,default-name,running,disabled,slave,switch,comment",
+      ".id,name,running,disabled,comment",
+      ".id,name",
+    ];
+
+    Object? lastError;
+    for (final fields in attempts) {
+      try {
+        final response = await MikrotikClient.printData(
+          commands: ["/interface/ethernet/print"],
+          fields: fields,
+          tag: "tool_eth_ports",
+        );
+        return AppResponse(status: true, message: "done", data: _toRows(response));
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    // بعض الأجهزة القديمة لا تملك قائمة /interface/ethernet ⇒ نرجع لكل المنافذ
+    try {
+      final response = await MikrotikClient.printData(
+        commands: ["/interface/print"],
+        fields: ".id,name,type,running,disabled,comment",
+        tag: "tool_iface_ports",
+      );
+      final rows = _toRows(response).where((row) {
+        final type = (row["type"] ?? "").toLowerCase();
+        final name = (row["name"] ?? "").toLowerCase();
+        if (type.isNotEmpty && !type.contains('ether')) return false;
+        if (name.startsWith('sfp')) return false;
+        return true;
+      }).toList();
+      return AppResponse(status: true, message: "done", data: rows);
+    } catch (_) {
+      return AppResponse(
+        status: false,
+        message: lastError?.toString() ?? "تعذّر قراءة منافذ الإيثرنت",
+      );
+    }
+  }
+
+  /// فحص أزواج الكيبل (`/interface/ethernet/cable-test`).
+  ///
+  /// يرجع الصفوف الخام ليتولّى `CableTestResult.parse` تفسيرها، مع رسالة خطأ
+  /// عربية واضحة عند عدم دعم الميزة (SFP / CHR / إصدار بلا دعم).
+  static Future<AppResponse<List<Map<String, String>>>> cableTest({
+    required String interfaceName,
+  }) async {
+    Object? lastError;
+
+    for (final command in CableDiagnostics.cableTestCommandCandidates(interfaceName)) {
+      try {
+        final response = await MikrotikClient.fetch(
+          command: command,
+          customTag: "tool_cable_test",
+        );
+        return AppResponse(status: true, message: "done", data: _toRows(response));
+      } catch (e) {
+        lastError = e;
+        final text = e.toString().toLowerCase();
+        // خطأ "غير مدعوم"/"لا يوجد أمر" ⇒ لا فائدة من تجربة صيغ أخرى
+        if (text.contains('not supported') ||
+            text.contains('unsupported') ||
+            text.contains('no such command') ||
+            text.contains('unknown command')) {
+          break;
+        }
+      }
+    }
+
+    return AppResponse(
+      status: false,
+      message: CableDiagnostics.friendlyError(lastError?.toString() ?? ""),
+    );
+  }
+
+  /// معلومات الاتصال الفعلية (السرعة · duplex) من `/interface/ethernet/monitor once`.
+  static Future<AppResponse<EthernetLinkInfo>> ethernetMonitor({
+    required String interfaceName,
+  }) async {
+    Object? lastError;
+
+    for (final command in CableDiagnostics.monitorCommandCandidates(interfaceName)) {
+      try {
+        final response = await MikrotikClient.fetch(
+          command: command,
+          customTag: "tool_eth_monitor",
+        );
+        return AppResponse(
+          status: true,
+          message: "done",
+          data: EthernetLinkInfo.parse(interfaceName: interfaceName, rows: response),
+        );
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    return AppResponse(
+      status: false,
+      message: CableDiagnostics.friendlyError(lastError?.toString() ?? ""),
+    );
+  }
+
+  /// تحويل استجابة الراوتر إلى قائمة صفوف نصية.
+  static List<Map<String, String>> _toRows(List response) {
+    return response
+        .whereType<Map>()
+        .map((row) => row.map((key, value) => MapEntry(key.toString(), value?.toString() ?? "")))
+        .toList();
+  }
 
   /// قراءة أي قائمة في RouterOS (تُستخدم لعرض IP / DHCP / ARP / NAT / Queue ...).
   static Future<AppResponse<List<Map<String, String>>>> printList(RouterMenuSpec menu) {
