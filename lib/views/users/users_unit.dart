@@ -17,7 +17,7 @@ class UsersUnitPage extends GetView<UsersUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             // 1. الهيدر الموحد
@@ -68,7 +68,7 @@ class UsersUnitPage extends GetView<UsersUnitController> {
             // 4. الفوتر مع تمرير اسم القسم المطلوب (حل المشكلة)
             AppMiniFooter(
               title: Text("مراقبة الجلسات النشطة والتحكم بالأجهزة",
-                style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey.shade400),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
               ),
           ],
         ),

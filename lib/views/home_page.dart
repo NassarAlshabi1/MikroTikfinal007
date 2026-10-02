@@ -22,7 +22,7 @@ class HomePage extends GetView<HomeController> {
     child :Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF1F5F9),
+        backgroundColor: const Color(0xFF1B2740),
         body: Column(
           children: [
             HomeHeader(
@@ -109,7 +109,7 @@ class HomePage extends GetView<HomeController> {
         subtitle: controller.diskSpaceDetails.value, // الإجمالي والمستخدم
         value: controller.diskSpacePercent.value,    // النسبة المئوية
         icon: Icons.sd_storage_rounded,
-        color: const Color(0xFF64748B),
+        color: const Color(0xFF94A3B8),
         actionText: "تفاصيل القرص",
         onTap: controller.checkDiskSpace, 
       ),
@@ -183,7 +183,7 @@ class HomePage extends GetView<HomeController> {
           style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF1E293B)),
+              color: Color(0xFFE8EEF9)),
         ),
       ),
     );

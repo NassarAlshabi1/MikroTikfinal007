@@ -28,7 +28,7 @@ class CardInfoPage extends GetView<CardInfoController> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: const Color(0xFFF1F5F9),
+          backgroundColor: const Color(0xFF1B2740),
           body: Column(
             children: [
               // 1. الهيدر الموحد
@@ -92,7 +92,7 @@ class CardInfoPage extends GetView<CardInfoController> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)
@@ -105,7 +105,7 @@ class CardInfoPage extends GetView<CardInfoController> {
             children: [
               const Text(
                 "حالة الكرت", 
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF475569))
+                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8FA3C0))
               ),
               // استخدام Obx لمراقبة تغير الحالة في المتحكم
               Obx(() => StatusBadge(status: controller.status.value)),
@@ -141,7 +141,7 @@ class CardInfoPage extends GetView<CardInfoController> {
     padding: const EdgeInsets.only(bottom: 12, right: 5),
     child: Text(
       label, 
-      style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B), fontSize: 15)
+      style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9), fontSize: 15)
     ),
   );
 
@@ -164,7 +164,7 @@ class CardInfoPage extends GetView<CardInfoController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1E3A8A).withOpacity(0.3), 
+            color: const Color(0xFF3B82F6).withOpacity(0.3), 
             blurRadius: 12, 
             offset: const Offset(0, 6)
           )

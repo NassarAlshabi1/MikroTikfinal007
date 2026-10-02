@@ -47,28 +47,28 @@ class HostUsersPage extends GetView<HostUsersController> {
                     children: [
                       Icon(Icons.circle,color: Colors.green,size: 15,),
                       SizedBox(width: 5,),
-                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                  Row(
                     children: [
                       Icon(Icons.circle,color: Colors.red,size: 15,),
                       SizedBox(width: 5,),
-                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle,color: Colors.blue,size: 15,),
                       SizedBox(width: 5,),
-                      Text("بكرت",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("بكرت",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle,color: Colors.grey,size: 15,),
                       SizedBox(width: 5,),
-                      Text("بدون كرت",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("بدون كرت",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                 ],
@@ -91,7 +91,7 @@ class HostUsersPage extends GetView<HostUsersController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.blue.shade50),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
@@ -115,7 +115,7 @@ class HostUsersPage extends GetView<HostUsersController> {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(25),
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+        decoration: const BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

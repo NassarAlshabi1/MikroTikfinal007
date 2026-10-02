@@ -37,7 +37,7 @@ class CardItemTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
@@ -79,19 +79,19 @@ class CardItemTile extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.w900, 
                         fontSize: 15, 
-                        color: Color(0xFF1E293B)
+                        color: Color(0xFFE8EEF9)
                       ),
                     ),
                     Text(
                       "باقة: $package",
-                      style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 11),
+                      style: TextStyle(color: const Color(0xFF8FA3C0), fontSize: 11),
                     ),
                   ],
                 ),
               ),
               // زر الانتقال لسجل الجلسات
               IconButton(
-                icon: const Icon(Icons.analytics_outlined, color: Color(0xFF1E3A8A), size: 22),
+                icon: const Icon(Icons.analytics_outlined, color: Color(0xFF3B82F6), size: 22),
                 onPressed: onAnalyticsTap,
               ),
             ],

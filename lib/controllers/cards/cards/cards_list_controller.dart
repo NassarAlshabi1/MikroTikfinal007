@@ -159,7 +159,7 @@ class CardsListController extends GetxController {
     }
 
     Get.back(); 
-    Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A))), barrierDismissible: false);
+    Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))), barrierDismissible: false);
 
     try {
       AppResponse<void> response = await CardsApi.addOneCard(

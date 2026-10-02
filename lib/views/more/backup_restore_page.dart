@@ -15,7 +15,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             const PremiumHeader(
@@ -29,9 +29,9 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
                 margin:const EdgeInsets.symmetric(horizontal: 14,vertical: 25),
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                   color: const Color(0xFFF1F5F9),
+                   color: const Color(0xFF1B2740),
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                    border: Border.all(color: const Color(0xFF243352), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 15,
@@ -87,7 +87,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
                       _buildActionBtn(
                         title: "إنشاء نسخة احتياطية",
                         icon: Icons.cloud_upload_rounded,
-                        color: const Color(0xFF1E3A8A), // أزرق داكن
+                        color: const Color(0xFF3B82F6), // أزرق داكن
                         onTap: controller.createBackup,
                       ),
                       
@@ -96,12 +96,12 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
                       // خط فاصل مع كلمة "أو"
                       Row(
                         children: [
-                          Expanded(child: Divider(color: Colors.blueGrey.shade200)),
+                          Expanded(child: Divider(color: const Color(0xFF243352))),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text("أو", style: TextStyle(color: Colors.blueGrey.shade400, fontWeight: FontWeight.bold)),
+                            child: Text("أو", style: TextStyle(color: const Color(0xFF8FA3C0), fontWeight: FontWeight.bold)),
                           ),
-                          Expanded(child: Divider(color: Colors.blueGrey.shade200)),
+                          Expanded(child: Divider(color: const Color(0xFF243352))),
                         ],
                       ),
                       
@@ -123,7 +123,7 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
             AppMiniFooter(
               title: Text(
                 "النسخ الاحتياطي يضمن عدم فقدان كروتك وبياناتك",
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey.shade400),
+                style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF8FA3C0)),
               ),
             ),
           ],
@@ -179,9 +179,9 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
         decoration: BoxDecoration(
-          color: value ? const Color(0xFF1E3A8A).withOpacity(0.05) : Colors.white,
+          color: value ? const Color(0xFF3B82F6).withOpacity(0.05) : Colors.white,
           border: Border.all(
-            color: value ? const Color(0xFF1E3A8A) : const Color(0xFFE2E8F0),
+            color: value ? const Color(0xFF3B82F6) : const Color(0xFF243352),
             width: value ? 1.5 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -190,18 +190,18 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
           children: [
             Icon(
               value ? Icons.check_circle_rounded : Icons.circle_outlined,
-              color: value ? const Color(0xFF1E3A8A) : Colors.grey.shade400,
+              color: value ? const Color(0xFF3B82F6) : const Color(0xFF8FA3C0),
               size: 24,
             ),
             const SizedBox(width: 11),
-            Icon(icon, color: Colors.blueGrey, size: 20),
+            Icon(icon, color: const Color(0xFF94A3B8), size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
                   fontWeight: value ? FontWeight.bold : FontWeight.w600,
-                  color: value ? const Color(0xFF1E3A8A) : Colors.blueGrey.shade700,
+                  color: value ? const Color(0xFF3B82F6) : const Color(0xFF94A3B8),
                   fontSize: 14,
                 ),
               ),
@@ -221,14 +221,14 @@ class BackupRestorePage extends GetView<BackupRestoreController> {
             width: 4,
             height: 18,
             decoration: BoxDecoration(
-                color: const Color(0xFF1E3A8A),
+                color: const Color(0xFF3B82F6),
                 borderRadius: BorderRadius.circular(10))),
         const SizedBox(width: 8),
         Text(title,
             style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
-                color: Color(0xFF1E3A8A))),
+                color: Color(0xFF3B82F6))),
       ],
     ),
   );

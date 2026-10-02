@@ -15,7 +15,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             // الهيدر
@@ -30,7 +30,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 // نستخدم controller مباشرة لأن GetView توفره لنا
                 if (controller.isLoading.value) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
+                    child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
                   );
                 }
 
@@ -42,7 +42,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 
                 return RefreshIndicator(
                   onRefresh: controller.fetchSystemStatus,
-                  color: const Color(0xFF1E3A8A),
+                  color: const Color(0xFF3B82F6),
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -92,7 +92,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
@@ -127,7 +127,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 height: 70,
                 child: CircularProgressIndicator(
                   value: load / 100,
-                  backgroundColor: const Color(0xFFF1F5F9),
+                  backgroundColor: const Color(0xFF1B2740),
                   color: statusColor,
                   strokeWidth: 8,
                   strokeCap: StrokeCap.round,
@@ -163,7 +163,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: const Color(0xFF16213A).withOpacity(0.2), shape: BoxShape.circle),
                 child: const Icon(Icons.sd_storage_rounded, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 10),
@@ -214,7 +214,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: const Color(0xFF16213A).withOpacity(0.2), shape: BoxShape.circle),
                     child: const Icon(Icons.storage_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 10),
@@ -229,7 +229,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: total > 0 ? used / total : 0,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: const Color(0xFF16213A).withOpacity(0.2),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
               minHeight: 6,
             ),
@@ -252,7 +252,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(label, style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 12)),
         const SizedBox(height: 5),
         Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
       ],
@@ -264,7 +264,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
@@ -277,7 +277,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 5),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B))),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE8EEF9))),
         ],
       ),
     );
@@ -298,7 +298,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             onPressed: controller.fetchSystemStatus, // استخدام مباشر
             icon: const Icon(Icons.refresh_rounded),
             label: const Text("إعادة المحاولة"),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
           )
         ],
       ),
@@ -311,7 +311,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
         ],
@@ -323,7 +323,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
           icon: const Icon(Icons.sync_rounded, color: Colors.white),
           label: const Text("تحديث حالة النظام", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1E3A8A), 
+            backgroundColor: const Color(0xFF3B82F6), 
             padding: const EdgeInsets.symmetric(vertical: 11),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),

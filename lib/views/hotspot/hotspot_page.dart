@@ -12,19 +12,19 @@ class HotspotPage extends GetView<HotspotController> {
   const HotspotPage({super.key});
 
   static const _navy = Color(0xFF0F172A);
-  static const _blue = Color(0xFF1E3A8A);
+  static const _blue = Color(0xFF3B82F6);
   static const _primary = Color(0xFF2563EB);
   static const _green = Color(0xFF16A34A);
   static const _amber = Color(0xFFF59E0B);
   static const _red = Color(0xFFDC2626);
-  static const _slate = Color(0xFF64748B);
+  static const _slate = Color(0xFF94A3B8);
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -131,7 +131,7 @@ class HotspotPage extends GetView<HotspotController> {
           _stat("فعال", summary["active"] ?? 0, const Color(0xFF4ADE80)),
           _stat("قارب على الانتهاء", summary["near"] ?? 0, const Color(0xFFFCD34D)),
           _stat("منتهي", summary["exhausted"] ?? 0, const Color(0xFFFCA5A5)),
-          _stat("معطّل", summary["disabled"] ?? 0, Colors.white70),
+          _stat("معطّل", summary["disabled"] ?? 0, const Color(0xB3E8EEF9)),
         ],
       ),
     );
@@ -144,7 +144,7 @@ class HotspotPage extends GetView<HotspotController> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 9.5),
+            style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 9.5),
           ),
           const SizedBox(height: 4),
           Text(
@@ -233,10 +233,10 @@ class HotspotPage extends GetView<HotspotController> {
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF16213A),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? _primary.withOpacity(0.55) : const Color(0xFFE2E8F0),
+            color: selected ? _primary.withOpacity(0.55) : const Color(0xFF243352),
             width: selected ? 1.4 : 1,
           ),
         ),
@@ -370,10 +370,10 @@ class HotspotPage extends GetView<HotspotController> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color(0xFF16213A),
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: selected ? _primary.withOpacity(0.55) : const Color(0xFFE2E8F0),
+                          color: selected ? _primary.withOpacity(0.55) : const Color(0xFF243352),
                           width: selected ? 1.4 : 1,
                         ),
                       ),
@@ -512,9 +512,9 @@ class HotspotPage extends GetView<HotspotController> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFF16213A),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: const Color(0xFF243352)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1032,15 +1032,15 @@ class HotspotPage extends GetView<HotspotController> {
       labelText: label,
       prefixIcon: Icon(icon, size: 20),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFF1B2740),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: Color(0xFF243352)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: Color(0xFF243352)),
       ),
     );
   }
@@ -1066,9 +1066,9 @@ class HotspotPage extends GetView<HotspotController> {
       width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFF243352)),
       ),
       child: child,
     );
@@ -1083,9 +1083,9 @@ class HotspotPage extends GetView<HotspotController> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFF243352)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

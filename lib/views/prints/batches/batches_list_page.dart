@@ -19,9 +19,9 @@ class BatchesView extends GetView<BatchesListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF1E3A8A),
+          backgroundColor: const Color(0xFF3B82F6),
           onPressed: () {
             Get.to(() => AddBatchView(controller: BatchesFormController()))?.then((_) {
              controller.update(); // لتحديث القائمة بعد العودة من الإضافة
@@ -121,13 +121,13 @@ class BatchesView extends GetView<BatchesListController> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF16213A),
           borderRadius: BorderRadius.circular(15),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
         ),
         child: Text(
           "إجمالي الدفعات: $count",
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1E3A8A)),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF3B82F6)),
         ),
       ),
     );
@@ -142,16 +142,16 @@ class BatchesView extends GetView<BatchesListController> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFF16213A),
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: const Color(0xFF243352)),
               ),
               child: TextField(
                 controller: searchCtrl,
                 onChanged: (val) => searchQuery.value = val, // تحديث البحث تفاعلياً
                 decoration: const InputDecoration(
                   hintText: "بحث عن دفعة...",
-                  prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF1E3A8A)),
+                  prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF3B82F6)),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 9),
                 ),
@@ -169,7 +169,7 @@ class BatchesView extends GetView<BatchesListController> {
           //   child: Container(
           //     padding: const EdgeInsets.all(12),
           //     decoration: BoxDecoration(
-          //       color: const Color(0xFF1E3A8A),
+          //       color: const Color(0xFF3B82F6),
           //       borderRadius: BorderRadius.circular(15),
           //     ),
           //     child: const Icon(Icons.add_rounded, color: Colors.white),
@@ -205,14 +205,14 @@ class BatchesView extends GetView<BatchesListController> {
           margin: const EdgeInsets.symmetric(horizontal: 5),
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
           decoration: BoxDecoration(
-            color: active ? const Color(0xFF1E3A8A) : Colors.white,
+            color: active ? const Color(0xFF3B82F6) : Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: active ? Colors.transparent : const Color(0xFFE2E8F0)),
+            border: Border.all(color: active ? Colors.transparent : const Color(0xFF243352)),
           ),
           child: Text(
             title,
             style: TextStyle(
-              color: active ? Colors.white : Colors.blueGrey,
+              color: active ? Colors.white : const Color(0xFF94A3B8),
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
@@ -234,9 +234,9 @@ class BatchesView extends GetView<BatchesListController> {
         return Container(
           margin: const EdgeInsets.only(bottom: 15),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF16213A),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+            border: Border.all(color: const Color(0xFF243352), width: 1.5),
           ),
           child: Column(
             children: [
@@ -318,7 +318,7 @@ class BatchesView extends GetView<BatchesListController> {
                 children: [
                   Text(
                     "هل أنت متأكد من رغبتك في حذف الدفعة '${batch.name}'؟\nالرجاء تحديد نطاق الحذف المناسب:",
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.5, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF8FA3C0), height: 1.5, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 11),
                   _buildDeleteOptionCard(
@@ -410,7 +410,7 @@ class BatchesView extends GetView<BatchesListController> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  color: isSelected ? activeColor : Colors.blueGrey,
+                  color: isSelected ? activeColor : const Color(0xFF94A3B8),
                 ),
               ),
             ),
@@ -432,9 +432,9 @@ class BatchesView extends GetView<BatchesListController> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
             children: [
-              Icon(Icons.edit_square, color: Color(0xFF1E3A8A)),
+              Icon(Icons.edit_square, color: Color(0xFF3B82F6)),
               SizedBox(width: 10),
-              Text("تعديل بيانات الدفعة", style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold, fontSize: 16)),
+              Text("تعديل بيانات الدفعة", style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
           content: Obx(() => Column(
@@ -444,8 +444,8 @@ class BatchesView extends GetView<BatchesListController> {
                     controller: nameController,
                     decoration: InputDecoration(
                       labelText: "اسم الدفعة",
-                      labelStyle: const TextStyle(fontSize: 13, color: Colors.blueGrey),
-                      prefixIcon: const Icon(Icons.title, color: Colors.blueGrey, size: 20),
+                      labelStyle: const TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      prefixIcon: const Icon(Icons.title, color: const Color(0xFF94A3B8), size: 20),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -464,7 +464,7 @@ class BatchesView extends GetView<BatchesListController> {
                         builder: (context, child) {
                           return Theme(
                             data: Theme.of(context).copyWith(
-                              colorScheme: const ColorScheme.light(primary: Color(0xFF1E3A8A)),
+                              colorScheme: const ColorScheme.dark(primary: Color(0xFF3B82F6), onPrimary: Colors.white),
                             ),
                             child: child!,
                           );
@@ -477,8 +477,8 @@ class BatchesView extends GetView<BatchesListController> {
                     child: InputDecorator(
                       decoration: InputDecoration(
                         labelText: "تاريخ الإنشاء",
-                        labelStyle: const TextStyle(fontSize: 13, color: Colors.blueGrey),
-                        prefixIcon: const Icon(Icons.calendar_month_rounded, color: Colors.blueGrey, size: 20),
+                        labelStyle: const TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
+                        prefixIcon: const Icon(Icons.calendar_month_rounded, color: const Color(0xFF94A3B8), size: 20),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Text(
@@ -517,13 +517,13 @@ class BatchesView extends GetView<BatchesListController> {
       width: 130,
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.blueGrey),
+          Icon(icon, size: 16, color: const Color(0xFF94A3B8)),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-              Text("$val", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+              Text("$val", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8FA3C0))),
             ],
           ),
         ],
@@ -543,7 +543,7 @@ class BatchesView extends GetView<BatchesListController> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: const BoxDecoration(
-          color: Color(0xFFF8FAFC),
+          color: Color(0xFF0B1220),
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
         child: Row(

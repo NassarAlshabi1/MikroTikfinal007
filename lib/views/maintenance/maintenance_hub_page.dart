@@ -15,7 +15,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -78,7 +78,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
     return Expanded(
       child: Column(
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+          Text(label, style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10)),
           const SizedBox(height: 4),
           Text(
             value,
@@ -100,7 +100,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -124,7 +124,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
-                    color: Color(0xFF1E293B),
+                    color: Color(0xFFE8EEF9),
                   ),
                 ),
               ),
@@ -181,7 +181,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
-                  color: Color(0xFF1E293B),
+                  color: Color(0xFFE8EEF9),
                 ),
               ),
               if (count >= 0) ...[

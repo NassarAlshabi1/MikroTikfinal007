@@ -42,7 +42,7 @@ class HomeHeader extends StatelessWidget {
                           color: Colors.greenAccent, size: 10)),
                   const SizedBox(width: 8),
                   const Text("ميكروتك: متصل الآن",
-                      style: TextStyle(color: Colors.white70, fontSize: 11)),
+                      style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11)),
                 ],
               ),
             ],
@@ -52,7 +52,7 @@ class HomeHeader extends StatelessWidget {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                  color: Colors.white10,
+                  color: const Color(0x1AE8EEF9),
                   borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.power_settings_new_rounded,
                   color: Colors.white, size: 20),

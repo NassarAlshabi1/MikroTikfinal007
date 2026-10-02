@@ -20,7 +20,7 @@ class GeneratedCardsView extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: GetBuilder<GeneratedCardsController>(
           init: GeneratedCardsController(generatedCards),
           builder: (controller) {
@@ -94,7 +94,7 @@ class GeneratedCardsView extends StatelessWidget {
                 controller.isLoading 
                   ? "جاري المزامنة..." 
                   : (controller.isUploading ? "جاري الإرسال..." : "بدء الإضافة للسيرفر"), 
-                canStart ? [const Color(0xFF1E3A8A), const Color(0xFF0F172A)] : [Colors.grey.shade400, Colors.grey.shade600], 
+                canStart ? [const Color(0xFF1E3A8A), const Color(0xFF0F172A)] : [const Color(0xFF8FA3C0), const Color(0xFF94A3B8)], 
                 controller.isUploading || controller.isLoading ? Icons.sync : Icons.cloud_upload_rounded, 
                 () {
                   if(canStart) _handleStartUpload(controller);
@@ -105,7 +105,7 @@ class GeneratedCardsView extends StatelessWidget {
             Expanded(
               child: _buildActionBtn(
                 "إيقاف العملية", 
-                canStop ? [const Color(0xFFEF4444), const Color(0xFF991B1B)] : [Colors.grey.shade400, Colors.grey.shade600], 
+                canStop ? [const Color(0xFFEF4444), const Color(0xFF991B1B)] : [const Color(0xFF8FA3C0), const Color(0xFF94A3B8)], 
                 Icons.stop_circle_rounded, 
                 () {
                   if(canStop) _handleStopUpload(controller);
@@ -126,9 +126,9 @@ class GeneratedCardsView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+        border: Border.all(color: const Color(0xFF243352), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -149,8 +149,8 @@ class GeneratedCardsView extends StatelessWidget {
               : SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: DataTable(
-                    headingTextStyle: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E3A8A), fontSize: 13),
-                    dataTextStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569), fontSize: 13),
+                    headingTextStyle: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF3B82F6), fontSize: 13),
+                    dataTextStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF8FA3C0), fontSize: 13),
                     columnSpacing: 25,
                     horizontalMargin: 15,
                     columns: const [
@@ -180,7 +180,7 @@ class GeneratedCardsView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF16213A),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: color.withOpacity(0.3), width: 1),
         ),
@@ -195,7 +195,7 @@ class GeneratedCardsView extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                Text(title, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
                 Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
               ],
             )
@@ -253,9 +253,9 @@ class GeneratedCardsView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+        border: Border.all(color: const Color(0xFF243352), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -271,12 +271,12 @@ class GeneratedCardsView extends StatelessWidget {
               child: DataTable(
                 headingTextStyle: const TextStyle(
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF1E3A8A),
+                  color: Color(0xFF3B82F6),
                   fontSize: 13,
                 ),
                 dataTextStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF475569),
+                  color: Color(0xFF8FA3C0),
                   fontSize: 13,
                 ),
                 columnSpacing: 25,
@@ -307,14 +307,14 @@ class GeneratedCardsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: const Color(0xFF1B2740),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFF243352)),
       ),
       child: Text(
         profileName,
         style: const TextStyle(
-          color: Color(0xFF1E3A8A),
+          color: Color(0xFF3B82F6),
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -358,7 +358,7 @@ class GeneratedCardsView extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Icon(Icons.layers_clear_rounded, size: 60, color: Colors.grey.shade300),
+          Icon(Icons.layers_clear_rounded, size: 60, color: const Color(0xFF243352)),
           const SizedBox(height: 11),
           const Text(
             "لا توجد كروت مولدة حتى الآن",

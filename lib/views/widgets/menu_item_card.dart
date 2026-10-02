@@ -19,7 +19,7 @@ class MenuItemCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF16213A),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
@@ -30,9 +30,9 @@ class MenuItemCard extends StatelessWidget {
             Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A8A).withOpacity(0.05),
+                    color: const Color(0xFF3B82F6).withOpacity(0.05),
                     shape: BoxShape.circle),
-                child: Icon(icon, size: 23, color: const Color(0xFF1E3A8A))),
+                child: Icon(icon, size: 23, color: const Color(0xFF3B82F6))),
             const SizedBox(height: 5),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),

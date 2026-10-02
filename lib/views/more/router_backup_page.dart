@@ -17,7 +17,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -75,7 +75,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
                           child: Text(
                             controller.statusMessage.value,
                             style: const TextStyle(
-                              color: Color(0xFF64748B),
+                              color: Color(0xFF94A3B8),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -84,7 +84,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
                         IconButton(
                           tooltip: "تحديث",
                           onPressed: controller.loadFiles,
-                          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E3A8A)),
+                          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF3B82F6)),
                         ),
                       ],
                     ),
@@ -122,7 +122,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Column(
@@ -132,7 +132,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
           Text(
             "لا توجد ملفات نسخ أو تصدير على الراوتر.\nأنشئ نسخة جديدة من الأعلى.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF64748B), height: 1.6),
+            style: TextStyle(color: Color(0xFF94A3B8), height: 1.6),
           ),
         ],
       ),
@@ -146,7 +146,7 @@ class RouterBackupPage extends GetView<RouterBackupController> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -183,13 +183,13 @@ class RouterBackupPage extends GetView<RouterBackupController> {
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
-                        color: Color(0xFF1E293B),
+                        color: Color(0xFFE8EEF9),
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       "${file.readableSize} • ${file.lastModified}",
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                     ),
                   ],
                 ),

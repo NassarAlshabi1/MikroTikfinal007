@@ -101,7 +101,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
         border: Border.all(color: Colors.blue.shade50),
@@ -192,9 +192,9 @@ class TemplatesListPage extends GetView<TemplatesListController> {
   /* ================= المكونات الصغيرة ================= */
   Widget _gridDetail(IconData icon, String txt) => Row(
     children: [
-      Icon(icon, size: 14, color: Colors.blueGrey),
+      Icon(icon, size: 14, color: const Color(0xFF94A3B8)),
       const SizedBox(width: 4),
-      Text(txt, style: const TextStyle(fontSize: 12, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+      Text(txt, style: const TextStyle(fontSize: 12, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
     ],
   );
 
@@ -245,14 +245,14 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.folder_open_rounded, size: 70, color: Colors.grey.shade300),
+        Icon(Icons.folder_open_rounded, size: 70, color: const Color(0xFF243352)),
         const SizedBox(height: 11),
         const Text("لا توجد قوالب محفوظة", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
       ],
     ),
   );
 
-  Widget _footer() => Container(height: 30, width: double.infinity, color: const Color(0xff0F172A), child: const Center(child: Text("Micronet Professional Edition v4.5", style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold))));
+  Widget _footer() => Container(height: 30, width: double.infinity, color: const Color(0xff0F172A), child: const Center(child: Text("Micronet Professional Edition v4.5", style: TextStyle(color: const Color(0x61E8EEF9), fontSize: 10, fontWeight: FontWeight.bold))));
 
   void _confirmDelete(BuildContext context, int id,Function(int) onDelete) async {
     final confirm = await showDialog<bool>(

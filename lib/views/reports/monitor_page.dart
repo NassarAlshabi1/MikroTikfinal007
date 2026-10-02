@@ -13,7 +13,7 @@ class MonitorPage extends GetView<MonitorController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -24,7 +24,7 @@ class MonitorPage extends GetView<MonitorController> {
             ),
             TabBar(
               controller: controller.tabController,
-              labelColor: const Color(0xFF1E3A8A),
+              labelColor: const Color(0xFF3B82F6),
               unselectedLabelColor: const Color(0xFF94A3B8),
               indicatorColor: const Color(0xFF2563EB),
               tabs: const [
@@ -75,7 +75,7 @@ class MonitorPage extends GetView<MonitorController> {
         const SizedBox(height: 16),
         const Text(
           "الحساسات",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF1E293B)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFFE8EEF9)),
         ),
         const SizedBox(height: 10),
         if (controller.temperatureValue != null)
@@ -99,7 +99,7 @@ class MonitorPage extends GetView<MonitorController> {
                   children: [
                     const Text(
                       "درجة الحرارة",
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                      style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 13),
                     ),
                     Text(
                       controller.temperatureValue!,
@@ -119,13 +119,13 @@ class MonitorPage extends GetView<MonitorController> {
             return Container(
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFF16213A),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Text(
                 "لا يوفّر هذا الراوتر بيانات حساسات عبر /system/health، "
                 "أو أن الإصدار لا يدعمها. (الخَطأ الشائع: بعض أجهزة RouterOS v6)",
-                style: TextStyle(color: Color(0xFF64748B), height: 1.6, fontSize: 12),
+                style: TextStyle(color: Color(0xFF94A3B8), height: 1.6, fontSize: 12),
               ),
             );
           }
@@ -146,7 +146,7 @@ class MonitorPage extends GetView<MonitorController> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF16213A),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -170,7 +170,7 @@ class MonitorPage extends GetView<MonitorController> {
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 15,
-                color: Color(0xFF1E293B),
+                color: Color(0xFFE8EEF9),
               ),
             ),
           ],
@@ -184,19 +184,19 @@ class MonitorPage extends GetView<MonitorController> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(name, style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
+          Text(name, style: const TextStyle(fontSize: 13, color: Color(0xFF8FA3C0))),
           Text(
             value,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: Color(0xFF1E3A8A),
+              color: Color(0xFF3B82F6),
             ),
           ),
         ],
@@ -217,7 +217,7 @@ class MonitorPage extends GetView<MonitorController> {
               const Expanded(
                 child: Text(
                   "قراءة لحظية كل 6 ثوانٍ للمنافذ العاملة",
-                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                 ),
               ),
               Obx(
@@ -240,12 +240,12 @@ class MonitorPage extends GetView<MonitorController> {
               return Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFF16213A),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Text(
                   "لم يتم العثور على منافذ، أو تعذّر قراءة /interface/print.",
-                  style: TextStyle(color: Color(0xFF64748B)),
+                  style: TextStyle(color: Color(0xFF94A3B8)),
                 ),
               );
             }
@@ -273,7 +273,7 @@ class MonitorPage extends GetView<MonitorController> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -305,13 +305,13 @@ class MonitorPage extends GetView<MonitorController> {
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Color(0xFF1E293B),
+                        color: Color(0xFFE8EEF9),
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       "${element.type}${element.comment.isEmpty ? "" : " • ${element.comment}"}",
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                     ),
                   ],
                 ),

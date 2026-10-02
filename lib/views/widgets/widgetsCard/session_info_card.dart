@@ -23,7 +23,7 @@ class SessionInfoCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8)),
@@ -35,16 +35,16 @@ class SessionInfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-              color: Colors.blueGrey.withOpacity(0.03),
+              color: const Color(0xFF94A3B8).withOpacity(0.03),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.history_toggle_off_rounded, size: 18, color: Color(0xFF1E3A8A)),
+                const Icon(Icons.history_toggle_off_rounded, size: 18, color: Color(0xFF3B82F6)),
                 const SizedBox(width: 10),
                 Text(
                   "$from  ←  $to",
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFE8EEF9)),
                 ),
               ],
             ),
@@ -56,7 +56,7 @@ class SessionInfoCard extends StatelessWidget {
               children: [
                 _buildRow(Icons.lan_outlined, "العنوان (IP)", ip),
                 _buildRow(Icons.fingerprint_rounded, "الماك (MAC)", mac),
-                const Divider(height: 25, color: Color(0xFFF1F5F9)),
+                const Divider(height: 25, color: Color(0xFF1B2740)),
                 // عرض الرفع والتنزيل بجانب بعض
                 Row(
                   children: [
@@ -78,7 +78,7 @@ class SessionInfoCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.blueGrey.shade300),
+          Icon(icon, size: 16, color: const Color(0xFF243352)),
           const SizedBox(width: 10),
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
           const Spacer(),

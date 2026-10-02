@@ -16,9 +16,9 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF1E3A8A),
+          backgroundColor: const Color(0xFF3B82F6),
           onPressed: () {
             controller.goToAddProfile();
             // controller.prepareSheet();
@@ -58,16 +58,16 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFF243352)),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
       ),
       child: Column(
         children: [
           ListTile(
             title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            trailing: Text("${p.price} ريال", style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.w900, fontSize: 18)),
+            trailing: Text("${p.price} ريال", style: const TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.w900, fontSize: 18)),
           ),
           const Divider(indent: 20, endIndent: 20, height: 1),
           Padding(
@@ -97,7 +97,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         height: MediaQuery.of(ctx).size.height * 0.85,
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+        decoration: const BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
         padding: const EdgeInsets.all(10),
         child: SingleChildScrollView(
           child: Column(
@@ -151,9 +151,9 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E3A8A))),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF3B82F6))),
         const SizedBox(width: 8),
-        Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFF1E3A8A), borderRadius: BorderRadius.circular(10))),
+        Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFF3B82F6), borderRadius: BorderRadius.circular(10))),
       ],
     ),
   );
@@ -166,8 +166,8 @@ class ProfilesListPage extends GetView<ProfilesListController> {
       textAlign: TextAlign.right,
       decoration: InputDecoration(
         labelText: l,
-        prefixIcon: Icon(i, color: const Color(0xFF1E3A8A), size: 20),
-        filled: true, fillColor: const Color(0xFFF8FAFC),
+        prefixIcon: Icon(i, color: const Color(0xFF3B82F6), size: 20),
+        filled: true, fillColor: const Color(0xFF0B1220),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
       ),
     ),
@@ -183,7 +183,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
   );
 
   Widget _buildActions(BuildContext context, ProfilesModel p, int i) => Container(
-    decoration: const BoxDecoration(color: Color(0xFFF8FAFC), borderRadius: BorderRadius.vertical(bottom: Radius.circular(25))),
+    decoration: const BoxDecoration(color: Color(0xFF0B1220), borderRadius: BorderRadius.vertical(bottom: Radius.circular(25))),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -198,7 +198,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
 
   Widget _infoCell(IconData icon, String label, String value) => Column(
     children: [
-      Icon(icon, size: 18, color: Colors.blueGrey.shade400),
+      Icon(icon, size: 18, color: const Color(0xFF8FA3C0)),
       const SizedBox(height: 4),
       Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
       Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),

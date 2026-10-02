@@ -22,7 +22,7 @@ class ModernInput extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: isReadOnly ? const Color(0xFFE2E8F0) : Colors.white,
+        color: isReadOnly ? const Color(0xFF243352) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: isReadOnly ? [] : [
           BoxShadow(
@@ -44,19 +44,19 @@ class ModernInput extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: isReadOnly ? Colors.blueGrey.shade400 : Colors.blueGrey, 
+            color: isReadOnly ? const Color(0xFF8FA3C0) : const Color(0xFF94A3B8), 
             fontSize: 12
           ),
           prefixIcon: Icon(
             icon, 
-            color: isReadOnly ? Colors.blueGrey.shade400 : const Color(0xFF1E3A8A), 
+            color: isReadOnly ? const Color(0xFF8FA3C0) : const Color(0xFF3B82F6), 
             size: 20
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         style: TextStyle(
-          color: isReadOnly ? Colors.blueGrey.shade600 : Colors.black,
+          color: isReadOnly ? const Color(0xFF94A3B8) : Colors.black,
           fontWeight: isReadOnly ? FontWeight.bold : FontWeight.normal,
         ),
       ),

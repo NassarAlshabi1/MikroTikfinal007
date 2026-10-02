@@ -41,7 +41,7 @@ Widget buildFieldPosition(
 Widget buildCanvasArea(BaseTemplateController controller) {
   return Container(
     padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
+    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
     height: 200,
     alignment: Alignment.center,
     child: SingleChildScrollView(
@@ -94,7 +94,7 @@ Widget textFieldWithOutButton(
 ) => Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: Colors.white, 
+        color: const Color(0xFF16213A), 
         borderRadius: BorderRadius.circular(((padding/4)+1)*4), 
         border: Border.all(color: Colors.blue.shade100)
       ),
@@ -114,7 +114,7 @@ Widget textFieldWithOutButton(
 Widget whiteContainer(Widget child) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
+      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.blue.shade100)),
       child: child
     );
   }
@@ -159,7 +159,7 @@ Widget buildSettingsArea(BaseTemplateController controller, double screenWidth) 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.pickImage, icon: Icons.image_outlined, label: 'اختيار صورة', colors: [Colors.blueGrey.shade700, Colors.blueGrey.shade900]),
+            GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.pickImage, icon: Icons.image_outlined, label: 'اختيار صورة', colors: [const Color(0xFF94A3B8), const Color(0xFFE8EEF9)]),
             GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.preview, icon: Icons.remove_red_eye_rounded, label: 'معاينة', colors: [Colors.lightGreen.shade700, Colors.lime.shade900]),
           ],
         ),

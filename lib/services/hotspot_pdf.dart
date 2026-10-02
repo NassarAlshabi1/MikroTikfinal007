@@ -66,7 +66,7 @@ class HotspotVoucherPdf {
                   children: [
                     pw.Text(title, style: _style(font, size: 14, bold: true, color: PdfColors.white)),
                     if (subtitle.isNotEmpty)
-                      pw.Text(subtitle, style: _style(font, size: 9, color: PdfColors.blueGrey100)),
+                      pw.Text(subtitle, style: _style(font, size: 9, color: Pdfconst Color(0xFF94A3B8)100)),
                   ],
                 ),
               )
@@ -169,7 +169,7 @@ class HotspotVoucherPdf {
   static pw.Widget _line(String text, pw.Font? font, {PdfColor? color}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 2),
-      child: pw.Text(text, style: _style(font, size: 8, color: color ?? PdfColors.blueGrey800)),
+      child: pw.Text(text, style: _style(font, size: 8, color: color ?? Pdfconst Color(0xFF94A3B8)800)),
     );
   }
 

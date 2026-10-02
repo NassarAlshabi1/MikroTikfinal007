@@ -220,7 +220,7 @@ class LoginController extends GetxController {
                   item.networkName.trim().isEmpty ? 'بدون اسم' : item.networkName,
                   style: const TextStyle(color: Colors.white),
                 ),
-                subtitle: Text("User: ${item.username}", style: const TextStyle(color: Colors.white70)),
+                subtitle: Text("User: ${item.username}", style: const TextStyle(color: const Color(0xB3E8EEF9))),
                 trailing: IconButton(onPressed: (){
                   showConfirmDialog(message: "confirm", onConfirm: ()async{
                     var result = await LoginApi.deleteLoginData(savedRouters[index].id);

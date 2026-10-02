@@ -14,7 +14,7 @@ class EditProfilePage extends GetView<EditProfileController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
              PremiumHeader(
@@ -29,9 +29,9 @@ class EditProfilePage extends GetView<EditProfileController> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                   color: const Color(0xFFF1F5F9),
+                   color: const Color(0xFF1B2740),
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                    border: Border.all(color: const Color(0xFF243352), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 15,
@@ -151,7 +151,7 @@ class EditProfilePage extends GetView<EditProfileController> {
             
            AppMiniFooter(
               title: Text("تعديل بيانات الباقة الحالية",
-                style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey.shade400),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
               ),
           ],
         ),
@@ -178,7 +178,7 @@ class EditProfilePage extends GetView<EditProfileController> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1E3A8A).withOpacity(0.3),
+              color: const Color(0xFF3B82F6).withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             )
@@ -204,14 +204,14 @@ class EditProfilePage extends GetView<EditProfileController> {
                 width: 4,
                 height: 18,
                 decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A8A),
+                    color: const Color(0xFF3B82F6),
                     borderRadius: BorderRadius.circular(10))),
             const SizedBox(width: 8),
             Text(title,
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: Color(0xFF1E3A8A))),
+                    color: Color(0xFF3B82F6))),
           ],
         ),
       );

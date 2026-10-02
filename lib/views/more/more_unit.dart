@@ -18,7 +18,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             // الهيدر المطور
@@ -41,7 +41,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "نسخ الراوتر الاحتياطي",
                     subtitle: "إنشاء نسخة إعدادات على الراوتر وتنزيلها أو استعادتها",
                     icon: Icons.settings_backup_restore_rounded,
-                    color: const Color(0xFF1E3A8A),
+                    color: const Color(0xFF3B82F6),
                     onTap: controller.goToRouterBackup,
                   ),
 
@@ -77,6 +77,17 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     icon: Icons.wifi_rounded,
                     color: const Color(0xFF0D9488),
                     onTap: controller.goToHotspot,
+                  ),
+
+                  const SizedBox(height: 11),
+
+                  // تكامل Telegram
+                  MainActionCard(
+                    title: "التكامل مع التليجرام",
+                    subtitle: "إشعارات فورية وتقارير دورية عبر بوت تيليجرام",
+                    icon: Icons.send_rounded,
+                    color: const Color(0xFF229ED9),
+                    onTap: controller.goToTelegram,
                   ),
 
                   const SizedBox(height: 11),

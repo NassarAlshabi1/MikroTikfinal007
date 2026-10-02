@@ -17,14 +17,14 @@ class DnsCachePage extends GetView<DnsCacheController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF1F5F9),
+        backgroundColor: const Color(0xFF1B2740),
 
         // 1. الزر العائم
         /*floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 90),
           child: FloatingActionButton.extended(
             onPressed: controller.clearCache,
-            backgroundColor: const Color(0xFF1E3A8A),
+            backgroundColor: const Color(0xFF3B82F6),
             elevation: 8,
             icon: const Icon(Icons.delete_sweep_rounded, color: Colors.white),
             label: const Text(
@@ -115,7 +115,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: const Color(0xFF16213A).withOpacity(0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.speed_rounded, color: Colors.white, size: 30),
@@ -125,7 +125,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text("إجمالي السجلات",
-                  style: TextStyle(color: Colors.white70, fontSize: 13)),
+                  style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 13)),
               Text(
                 "$count سجل نشط",
                 style: const TextStyle(
@@ -145,7 +145,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.blue.withOpacity(0.05)),
         boxShadow: [
@@ -175,7 +175,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
           style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: Color(0xFF1E293B)),
+              color: Color(0xFFE8EEF9)),
         ),
         
         // 2. التعديل هنا: استخدام Column لعرض البيانات، النوع، والوقت
@@ -187,7 +187,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
             Text(
               site.data.isNotEmpty ? site.data : "0.0.0.0", 
               style: TextStyle(
-                  color: Colors.blueGrey.shade600, 
+                  color: const Color(0xFF94A3B8), 
                   fontSize: 12, 
                   letterSpacing: 0.5,
                   fontWeight: FontWeight.w500),
@@ -199,21 +199,21 @@ class DnsCachePage extends GetView<DnsCacheController> {
             Row(
               children: [
                 // النوع (Type)
-                Icon(Icons.category_outlined, size: 12, color: Colors.grey.shade500),
+                Icon(Icons.category_outlined, size: 12, color: const Color(0xFF94A3B8)),
                 const SizedBox(width: 3),
                 Text(
                   site.type.isNotEmpty ? site.type : "N/A",
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                  style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 11),
                 ),
                 
                 const SizedBox(width: 12), // مسافة بين النوع والوقت
                 
                 // الوقت المتبقي (TTL)
-                Icon(Icons.history_toggle_off_rounded, size: 12, color: Colors.grey.shade500),
+                Icon(Icons.history_toggle_off_rounded, size: 12, color: const Color(0xFF94A3B8)),
                 const SizedBox(width: 3),
                 Text(
                   site.ttl.isNotEmpty ? site.ttl : "00:00:00",
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                  style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 11),
                 ),
               ],
             ),

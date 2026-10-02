@@ -16,7 +16,7 @@ class LoginPage extends GetView<LoginController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC), 
+        backgroundColor: const Color(0xFF0B1220), 
         body: Column(
           children: [
             // 1. الهيدر
@@ -38,7 +38,7 @@ class LoginPage extends GetView<LoginController> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFF16213A),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.blue.withOpacity(0.05)),
                       boxShadow: [
@@ -81,9 +81,9 @@ class LoginPage extends GetView<LoginController> {
                               margin: const EdgeInsets.only(top: 4, bottom: 12),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: const Color(0xFF1B2740),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(color: const Color(0xFF243352)),
                               ),
                               child: Row(
                                 children: [
@@ -106,12 +106,12 @@ class LoginPage extends GetView<LoginController> {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1E293B),
+                                            color: Color(0xFFE8EEF9),
                                           ),
                                         ),
                                         Text(
                                           "فعّله إذا كان الراوتر يستخدم TLS على منفذك المخصّص",
-                                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                          style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                                         ),
                                       ],
                                     ),
@@ -173,8 +173,8 @@ class LoginPage extends GetView<LoginController> {
                   _buildActionBtn(
                     text: "البيانات المحفوظة",
                     icon: Icons.manage_search_rounded,
-                    bgColor: const Color(0xFFE2E8F0), 
-                    textColor: const Color(0xFF475569), 
+                    bgColor: const Color(0xFF243352), 
+                    textColor: const Color(0xFF8FA3C0), 
                     onPressed: controller.showSavedData,
                   ),
                 ],
@@ -184,8 +184,8 @@ class LoginPage extends GetView<LoginController> {
             // 4. الفوتر
              AppMiniFooter(
               title: Text("تسجيل الدخول إلى الميكروتك",
-                style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey.shade400),),
-              subTitle: Text("الرجاء إدخال بيانات الراوتر للمتابعة",style: TextStyle(color: Colors.blueGrey.shade200,fontSize: 12),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
+              subTitle: Text("الرجاء إدخال بيانات الراوتر للمتابعة",style: TextStyle(color: const Color(0xFF243352),fontSize: 12),),
               ),
           ],
         ),
@@ -209,15 +209,15 @@ class LoginPage extends GetView<LoginController> {
         controller: ctrl,
         obscureText: isObscured,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), letterSpacing: 1.2),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFE8EEF9), letterSpacing: 1.2),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, letterSpacing: 0),
           hintMaxLines: 1,
           floatingLabelAlignment: FloatingLabelAlignment.center,
-          labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13, letterSpacing: 0),
-          prefixIcon: Icon(icon, color: const Color(0xFF475569), size: 22), 
+          labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, letterSpacing: 0),
+          prefixIcon: Icon(icon, color: const Color(0xFF8FA3C0), size: 22), 
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
@@ -231,18 +231,18 @@ class LoginPage extends GetView<LoginController> {
           contentPadding: const EdgeInsets.only(top: 16,bottom: 16,right: 0,left: 20),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderSide: const BorderSide(color: Color(0xFF243352)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderSide: const BorderSide(color: Color(0xFF243352)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFF1B2740),
         ),
       );
     }

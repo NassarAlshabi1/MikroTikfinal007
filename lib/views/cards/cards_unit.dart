@@ -18,7 +18,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             // الهيدر المطور المشترك
@@ -93,7 +93,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
 
             AppMiniFooter(
               title: Text("إدارة الكروت",
-                style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey.shade400),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
               ),
           ],
         ),

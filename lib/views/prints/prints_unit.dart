@@ -18,7 +18,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             // 1. الهيدر الموحد بالفخامة الجديدة
@@ -48,7 +48,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
                     title: "قوالب الطباعة",
                     subtitle: "تصميم • تعديل • حفظ القوالب",
                     icon: Icons.style_rounded, // أيقونة متناسقة مع التصميم
-                    color: const Color(0xFF1E3A8A),
+                    color: const Color(0xFF3B82F6),
                     onTap: controller.gotToTemplates,
                   ),
 
@@ -74,10 +74,10 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: const Color(0xFF1B2740),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.info_outline, color: Color(0xFF64748B), size: 20),
+            child: const Icon(Icons.info_outline, color: Color(0xFF94A3B8), size: 20),
           ),
           const SizedBox(width: 11),
           const Expanded(
@@ -85,7 +85,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
               "يمكنك إنشاء دفعة كروت أولاً، ثم ربطها بقالب طباعة جاهز من استوديو التصميم.",
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF475569),
+                color: Color(0xFF8FA3C0),
                 fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
@@ -105,7 +105,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.blue.withOpacity(0.1)),
         boxShadow: [
@@ -121,10 +121,10 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: const Color(0xFF1B2740),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: const Color(0xFF64748B), size: 20),
+            child: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
           ),
           const SizedBox(width: 11),
           Expanded(
@@ -132,7 +132,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
               text,
               style: const TextStyle(
                 fontSize: 13,
-                color: Color(0xFF475569),
+                color: Color(0xFF8FA3C0),
                 fontWeight: FontWeight.w500,
                 height: 1.4,
               ),

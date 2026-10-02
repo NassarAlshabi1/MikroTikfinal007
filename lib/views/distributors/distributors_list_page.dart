@@ -15,7 +15,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         floatingActionButton: FloatingButton(
           text: "إضافة موزع",
           iconBtn: Icons.person_add_alt_1_rounded,
@@ -80,7 +80,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
         children: [
           const Row(
             children: [
-              Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 20),
+              Icon(Icons.account_balance_wallet_rounded, color: const Color(0xB3E8EEF9), size: 20),
               SizedBox(width: 8),
               Text(
                 "الإجماليات العامة",
@@ -107,7 +107,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white70, fontSize: 11),
+            style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
@@ -128,7 +128,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Column(
@@ -138,7 +138,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
           Text(
             "لا يوجد موزعون بعد.\nأضف أول موزع أو نقطة بيع لمتابعة حساباته.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF64748B), height: 1.6),
+            style: TextStyle(color: Color(0xFF94A3B8), height: 1.6),
           ),
         ],
       ),
@@ -153,7 +153,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -192,7 +192,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
-                              color: Color(0xFF1E293B),
+                              color: Color(0xFFE8EEF9),
                             ),
                           ),
                           const SizedBox(height: 3),
@@ -200,7 +200,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
                             summary.distributor.phone.isEmpty
                                 ? "بدون رقم هاتف"
                                 : summary.distributor.phone,
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                           ),
                         ],
                       ),
@@ -237,7 +237,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
                     IconButton(
                       tooltip: "تعديل",
                       onPressed: () => controller.goToEdit(summary.distributor),
-                      icon: const Icon(Icons.edit_rounded, size: 20, color: Color(0xFF1E3A8A)),
+                      icon: const Icon(Icons.edit_rounded, size: 20, color: Color(0xFF3B82F6)),
                     ),
                     IconButton(
                       tooltip: "حذف",
@@ -247,9 +247,9 @@ class DistributorsListPage extends GetView<DistributorsListController> {
                     const Spacer(),
                     const Text(
                       "عرض كشف الحساب",
-                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
                     ),
-                    const Icon(Icons.arrow_back_ios_new_rounded, size: 12, color: Color(0xFF64748B)),
+                    const Icon(Icons.arrow_back_ios_new_rounded, size: 12, color: Color(0xFF94A3B8)),
                   ],
                 ),
               ],
@@ -271,7 +271,7 @@ class DistributorsListPage extends GetView<DistributorsListController> {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: Color(0xFFE8EEF9),
             ),
           ),
         ],

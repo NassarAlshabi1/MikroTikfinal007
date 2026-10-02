@@ -83,7 +83,7 @@ class DistributorStatementController extends GetxController {
             ),
             ElevatedButton(
               onPressed: () => Get.back(result: true),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
               child: const Text("حفظ", style: TextStyle(color: Colors.white)),
             ),
           ],

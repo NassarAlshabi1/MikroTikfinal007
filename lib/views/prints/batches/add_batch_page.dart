@@ -41,7 +41,7 @@ class _AddBatchViewState extends State<AddBatchView> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: GetBuilder<BatchesFormController>(
           init: BatchesFormController(),
           builder: (controller) {
@@ -80,9 +80,9 @@ class _AddBatchViewState extends State<AddBatchView> {
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+        border: Border.all(color: const Color(0xFF243352), width: 1.5),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -170,7 +170,7 @@ class _AddBatchViewState extends State<AddBatchView> {
         style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w900,
-            color: Color(0xFF1E3A8A)));
+            color: Color(0xFF3B82F6)));
   }
 
   Widget _buildModernInput(
@@ -179,14 +179,14 @@ class _AddBatchViewState extends State<AddBatchView> {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
+          color: const Color(0xFF1B2740),
           borderRadius: BorderRadius.circular(15)),
       child: TextField(
         controller: ctrl,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A), size: 20),
+          prefixIcon: Icon(icon, color: const Color(0xFF3B82F6), size: 20),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -237,8 +237,8 @@ class _AddBatchViewState extends State<AddBatchView> {
       },
       hintText: "اختر العميل",
       selectedKeyName: "id",
-      bgColor: const Color(0xFFF1F5F9),
-      border: Border.all(color: Colors.grey.shade300),
+      bgColor: const Color(0xFF1B2740),
+      border: Border.all(color: const Color(0xFF243352)),
     ),
   );
 
@@ -255,8 +255,8 @@ class _AddBatchViewState extends State<AddBatchView> {
       },
       hintText: "اختر باقة",
       selectedKeyName: "id",
-      bgColor: const Color(0xFFF1F5F9),
-      border: Border.all(color: Colors.grey.shade300),
+      bgColor: const Color(0xFF1B2740),
+      border: Border.all(color: const Color(0xFF243352)),
     ),
   );
 
@@ -273,7 +273,7 @@ class _AddBatchViewState extends State<AddBatchView> {
             IconButton(
               tooltip: "تحديث القوالب",
               onPressed: () => controller.reloadTemplates(),
-              icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E3A8A)),
+              icon: const Icon(Icons.refresh_rounded, color: Color(0xFF3B82F6)),
             ),
           ],
         ),
@@ -282,7 +282,7 @@ class _AddBatchViewState extends State<AddBatchView> {
             padding: const EdgeInsets.only(right: 54, bottom: 6),
             child: Text(
               "القوالب المتاحة: ${controller.allTemplates.length}",
-              style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+              style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
             ),
           ),
         if (hasSkipped)
@@ -321,8 +321,8 @@ class _AddBatchViewState extends State<AddBatchView> {
           ? "تعذّر جلب القوالب"
           : "لا توجد قوالب — أنشئ قالبًا من قسم الطباعة",
       selectedKeyName: "id",
-      bgColor: const Color(0xFFF1F5F9),
-      border: Border.all(color: Colors.grey.shade300),
+      bgColor: const Color(0xFF1B2740),
+      border: Border.all(color: const Color(0xFF243352)),
     ),
   );
   
@@ -342,19 +342,19 @@ class _AddBatchViewState extends State<AddBatchView> {
               padding: const EdgeInsets.symmetric(vertical: 9),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF1E3A8A)
-                    : const Color(0xFFF1F5F9),
+                    ? const Color(0xFF3B82F6)
+                    : const Color(0xFF1B2740),
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
                     color: isSelected
                         ? Colors.transparent
-                        : const Color(0xFFE2E8F0)),
+                        : const Color(0xFF243352)),
               ),
               child: Column(
                 children: [
                   Icon(opt['icon'],
                       color:
-                          isSelected ? Colors.white : const Color(0xFF64748B),
+                          isSelected ? Colors.white : const Color(0xFF94A3B8),
                       size: 20),
                   const SizedBox(height: 4),
                   Text(opt['label'],textAlign: TextAlign.center,
@@ -363,7 +363,7 @@ class _AddBatchViewState extends State<AddBatchView> {
                           fontWeight: FontWeight.bold,
                           color: isSelected
                               ? Colors.white
-                              : const Color(0xFF64748B))),
+                              : const Color(0xFF94A3B8))),
                 ],
               ),
             ),

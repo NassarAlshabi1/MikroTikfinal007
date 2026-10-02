@@ -22,7 +22,7 @@ Future<bool> confirmAction(String message) async {
         ),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xFF475569), height: 1.5),
+          style: const TextStyle(color: Color(0xFF8FA3C0), height: 1.5),
         ),
         actions: [
           TextButton(
@@ -35,7 +35,7 @@ Future<bool> confirmAction(String message) async {
           ElevatedButton(
             onPressed: () => Get.back(result: true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E3A8A),
+              backgroundColor: const Color(0xFF3B82F6),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text("تأكيد", style: TextStyle(color: Colors.white)),

@@ -20,7 +20,7 @@ Future<bool> showConfirmDialog({
       textDirection: TextDirection.rtl,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF16213A),
         title: Row(
           children: [
             Container(
@@ -34,13 +34,13 @@ Future<bool> showConfirmDialog({
             const SizedBox(width: 15),
             const Text(
               "تأكيد العملية",
-              style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A), fontSize: 18),
+              style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9), fontSize: 18),
             ),
           ],
         ),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xFF475569), fontSize: 14, height: 1.5),
+          style: const TextStyle(color: Color(0xFF8FA3C0), fontSize: 14, height: 1.5),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [
@@ -67,7 +67,7 @@ Future<bool> showConfirmDialog({
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1E3A8A).withOpacity(0.3),
+                        color: const Color(0xFF3B82F6).withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       )
@@ -124,15 +124,15 @@ Future<void> showMsgDialog({required String message, MsgType type = MsgType.msg}
       ),
     MsgType.info => (
         Icons.info_outline_rounded,
-        const Color(0xFF1E3A8A), // أزرق (لونك الأصلي)
+        const Color(0xFF3B82F6), // أزرق (لونك الأصلي)
         "معلومة",
         [const Color(0xFF0F172A), const Color(0xFF1E3A8A)]
       ),
     MsgType.msg => (
         Icons.notifications_none_rounded,
-        const Color(0xFF475569), // رمادي مزرق للرسائل العادية
+        const Color(0xFF8FA3C0), // رمادي مزرق للرسائل العادية
         "تنبيه",
-        [const Color(0xFF334155), const Color(0xFF475569)]
+        [const Color(0xFF8FA3C0), const Color(0xFF8FA3C0)]
       ),
   };
 
@@ -141,7 +141,7 @@ Future<void> showMsgDialog({required String message, MsgType type = MsgType.msg}
       textDirection: TextDirection.rtl,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF16213A),
         title: Row(
           children: [
             Container(
@@ -155,13 +155,13 @@ Future<void> showMsgDialog({required String message, MsgType type = MsgType.msg}
             const SizedBox(width: 15),
             Text(
               titleText, // تغيير العنوان
-              style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A), fontSize: 18),
+              style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9), fontSize: 18),
             ),
           ],
         ),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xFF475569), fontSize: 14, height: 1.5),
+          style: const TextStyle(color: Color(0xFF8FA3C0), fontSize: 14, height: 1.5),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [

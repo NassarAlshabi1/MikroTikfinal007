@@ -21,7 +21,7 @@ class MySelectedMenu extends StatefulWidget {
       required this.items,
       this.value,
       this.bgColor,
-      this.textStyle=const TextStyle(fontWeight: FontWeight.bold,color: Colors.black),
+      this.textStyle=const TextStyle(fontWeight: FontWeight.bold,color: Color(0xFFE8EEF9)),
       this.width=80,
       this.border,
       this.borderRadiusCircular= 15,
@@ -31,7 +31,7 @@ class MySelectedMenu extends StatefulWidget {
       this.selectedValueName = "name",
       this.hintText = "Select One",
       this.emptyText="لاتوجد بيانات",
-      this.icon=const Icon(Icons.keyboard_arrow_down,size: 20,color: Color(0xFF1E3A8A),),
+      this.icon=const Icon(Icons.keyboard_arrow_down,size: 20,color: Color(0xFF3B82F6),),
     });
   @override
   State<StatefulWidget> createState() => _MySelectedMenu();

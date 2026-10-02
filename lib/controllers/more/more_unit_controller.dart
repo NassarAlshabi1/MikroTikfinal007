@@ -25,6 +25,11 @@ class MoreUnitController extends GetxController {
     Get.toNamed(AppRoutes.hotspot);
   }
 
+  // تكامل Telegram (ضبط البوت + تفعيل المميزات)
+  void goToTelegram() {
+    Get.toNamed(AppRoutes.telegram);
+  }
+
   // الموزعون والمحاسبة
   void goToDistributors() {
     Get.toNamed(AppRoutes.distributors);

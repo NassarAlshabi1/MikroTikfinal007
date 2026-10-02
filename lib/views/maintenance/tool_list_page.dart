@@ -13,7 +13,7 @@ class ToolListPage extends GetView<ToolListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -43,7 +43,7 @@ class ToolListPage extends GetView<ToolListController> {
                               child: Text(
                                 "تعذّر قراءة القائمة:\n${controller.errorMessage.value}",
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF64748B), height: 1.6),
+                                style: const TextStyle(color: Color(0xFF94A3B8), height: 1.6),
                               ),
                             ),
                           ),
@@ -55,7 +55,7 @@ class ToolListPage extends GetView<ToolListController> {
                           child: Center(
                             child: Text(
                               "لا توجد عناصر في هذه القائمة",
-                              style: TextStyle(color: Color(0xFF64748B)),
+                              style: TextStyle(color: Color(0xFF94A3B8)),
                             ),
                           ),
                         );
@@ -90,7 +90,7 @@ class ToolListPage extends GetView<ToolListController> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFF16213A),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -117,7 +117,7 @@ class ToolListPage extends GetView<ToolListController> {
           IconButton(
             tooltip: "تحديث",
             onPressed: controller.load,
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E3A8A)),
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF3B82F6)),
           ),
         ],
       ),
@@ -132,7 +132,7 @@ class ToolListPage extends GetView<ToolListController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
         border: isDisabled ? Border.all(color: const Color(0xFFFCA5A5)) : null,
         boxShadow: [
@@ -181,7 +181,7 @@ class ToolListPage extends GetView<ToolListController> {
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13.5,
-                          color: Color(0xFF1E293B),
+                          color: Color(0xFFE8EEF9),
                         ),
                       ),
                       if (secondary.isNotEmpty) ...[
@@ -190,7 +190,7 @@ class ToolListPage extends GetView<ToolListController> {
                           secondary,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.5),
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8), height: 1.5),
                         ),
                       ],
                     ],
@@ -212,7 +212,7 @@ class ToolListPage extends GetView<ToolListController> {
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF16213A),
             borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
           ),
           child: SingleChildScrollView(
@@ -248,7 +248,7 @@ class ToolListPage extends GetView<ToolListController> {
                                 entry.key,
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF64748B),
+                                  color: Color(0xFF94A3B8),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -256,7 +256,7 @@ class ToolListPage extends GetView<ToolListController> {
                             Expanded(
                               child: SelectableText(
                                 entry.value,
-                                style: const TextStyle(fontSize: 12.5, color: Color(0xFF1E293B)),
+                                style: const TextStyle(fontSize: 12.5, color: Color(0xFFE8EEF9)),
                               ),
                             ),
                           ],

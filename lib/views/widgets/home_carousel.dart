@@ -39,8 +39,8 @@ class HomeCarousel extends StatelessWidget {
               height: 7,
               decoration: BoxDecoration(
                 color: currentPage == index
-                    ? const Color(0xFF1E3A8A)
-                    : Colors.grey.shade300,
+                    ? const Color(0xFF3B82F6)
+                    : const Color(0xFF243352),
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -114,7 +114,7 @@ class ActionCarouselItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style:
-                        const TextStyle(color: Colors.white70, fontSize: 10)),
+                        const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10)),
                 const Spacer(),
                 if (value != null)
                   Text(value!,
@@ -199,7 +199,7 @@ class ResourceCarouselItem extends StatelessWidget {
                 child: Text(label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                    style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11)),
               ),
               Text(percent,
                   style: TextStyle(
@@ -211,7 +211,7 @@ class ResourceCarouselItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
                 value: val,
-                backgroundColor: Colors.white10,
+                backgroundColor: const Color(0x1AE8EEF9),
                 color: color,
                 minHeight: 6),
           ),

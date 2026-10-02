@@ -16,7 +16,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -79,7 +79,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
             Text(
               controller.errorMessage.value,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF64748B), height: 1.7),
+              style: const TextStyle(color: Color(0xFF94A3B8), height: 1.7),
             ),
             const SizedBox(height: 16),
             GradientButton(
@@ -120,10 +120,10 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
               _stat("لم يكملوا بعد", running, const Color(0xFFFCD34D)),
             ],
           ),
-          const Divider(color: Colors.white24, height: 22),
+          const Divider(color: const Color(0x3DE8EEF9), height: 22),
           Row(
             children: [
-              _stat("بلا حدود", result?.withoutLimits ?? 0, Colors.white70),
+              _stat("بلا حدود", result?.withoutLimits ?? 0, const Color(0xB3E8EEF9)),
               _stat("غير قابل للتحليل", result?.unparsable ?? 0, const Color(0xFFFDA4AF)),
               _stat("المحدد للحذف", controller.selectedCount, const Color(0xFF60A5FA)),
             ],
@@ -133,7 +133,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.10),
+              color: const Color(0xFF16213A).withOpacity(0.10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -143,7 +143,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                   "${result?.versionLabel ?? 'إصدار غير محدد'}"
                   "${(result?.clearedProfileCount ?? 0) > 0 ? " • منها ${result!.clearedProfileCount} بالباقة المُزالة (معيار v6)" : ""}"
                   "${(result?.stateUsedCount ?? 0) > 0 ? " • منها ${result!.stateUsedCount} بحالة used (معيار v7)" : ""}",
-                  style: const TextStyle(color: Colors.white70, fontSize: 10.5, height: 1.5),
+                  style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10.5, height: 1.5),
                 ),
               ],
             ),
@@ -160,7 +160,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 10.5),
+            style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10.5),
           ),
           const SizedBox(height: 5),
           Text(
@@ -178,7 +178,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -222,13 +222,13 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       children: [
         const Text(
           "المؤهلون للحذف",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF1E293B)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFE8EEF9)),
         ),
         const Spacer(),
         IconButton(
           tooltip: "إعادة الفحص",
           onPressed: controller.scan,
-          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E3A8A)),
+          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF3B82F6)),
         ),
       ],
     );
@@ -243,7 +243,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF16213A),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Column(
@@ -253,7 +253,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
               Text(
                 "لا يوجد مستخدمون استهلكوا مدتهم كاملة ✅",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF64748B), height: 1.6),
+                style: TextStyle(color: Color(0xFF94A3B8), height: 1.6),
               ),
             ],
           ),
@@ -274,10 +274,10 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF16213A),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF2563EB).withOpacity(0.5) : const Color(0xFFE2E8F0),
+            color: selected ? const Color(0xFF2563EB).withOpacity(0.5) : const Color(0xFF243352),
           ),
           boxShadow: [
             BoxShadow(
@@ -315,7 +315,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 13.5,
-                                  color: Color(0xFF1E293B),
+                                  color: Color(0xFFE8EEF9),
                                 ),
                               ),
                             ),
@@ -325,7 +325,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                         const SizedBox(height: 6),
                         Text(
                           "${user.profile} • المستهلك: ${user.usedLabel} / الحد: ${user.limitLabel}",
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                         ),
                         const SizedBox(height: 6),
                         ClipRRect(
@@ -333,7 +333,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                           child: LinearProgressIndicator(
                             value: (user.percent / 100).clamp(0.0, 1.0),
                             minHeight: 6,
-                            backgroundColor: const Color(0xFFE2E8F0),
+                            backgroundColor: const Color(0xFF243352),
                             valueColor: AlwaysStoppedAnimation(
                               user.percent >= 100 ? const Color(0xFFEF4444) : const Color(0xFFF59E0B),
                             ),
@@ -369,7 +369,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       case 'انتهى الرصيد':
         return const Color(0xFFF59E0B);
       default:
-        return const Color(0xFF64748B);
+        return const Color(0xFF94A3B8);
     }
   }
 
@@ -392,7 +392,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         boxShadow: [
           BoxShadow(color: Color(0x11000000), blurRadius: 14, offset: Offset(0, -4)),
         ],

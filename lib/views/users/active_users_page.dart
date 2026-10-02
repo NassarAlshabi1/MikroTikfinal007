@@ -51,7 +51,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(color: Colors.green.shade50),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
@@ -70,7 +70,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
                 Expanded(
                   child: Text(
                     a.label, 
-                    style: const TextStyle(fontSize: 12, color: Colors.blueGrey, fontWeight: FontWeight.normal),
+                    style: const TextStyle(fontSize: 12, color: const Color(0xFF94A3B8), fontWeight: FontWeight.normal),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -114,7 +114,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(25),
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(35))),
+        decoration: const BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.vertical(top: Radius.circular(35))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

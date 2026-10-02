@@ -20,13 +20,13 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF1F5F9),
+        backgroundColor: const Color(0xFF1B2740),
 
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 90),
           child: FloatingActionButton.extended(
             onPressed: () => _showAddSiteDialog(context),
-            backgroundColor: const Color(0xFF1E3A8A),
+            backgroundColor: const Color(0xFF3B82F6),
             elevation: 8,
             icon: const Icon(Icons.add_moderator_rounded, color: Colors.white),
             label: const Text(
@@ -83,7 +83,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.red.withOpacity(0.08), width: 1),
         boxShadow: [
@@ -105,14 +105,14 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,
-            color: Color(0xFF0F172A),
+            color: Color(0xFFE8EEF9),
           ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
             site.name, 
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 12),
           ),
         ),
         trailing: IconButton(
@@ -147,7 +147,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
               decoration: InputDecoration(
                 hintText: "اسم القاعدة (مثال: Facebook Block)",
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: const Color(0xFF1B2740),
                 prefixIcon: const Icon(Icons.label_outline_rounded, color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -164,7 +164,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
               decoration: InputDecoration(
                 hintText: controller.inputHint, 
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: const Color(0xFF1B2740),
                 prefixIcon: const Icon(Icons.block_rounded, color: Colors.redAccent),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -181,7 +181,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E3A8A),
+              backgroundColor: const Color(0xFF3B82F6),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               elevation: 0,

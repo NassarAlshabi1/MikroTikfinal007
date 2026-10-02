@@ -60,21 +60,21 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                     children: [
                       Icon(Icons.circle,color: Colors.green,size: 15,),
                       SizedBox(width: 5,),
-                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                  Row(
                     children: [
                       Icon(Icons.circle,color: Colors.red,size: 15,),
                       SizedBox(width: 5,),
-                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle,color: Colors.blue,size: 15,),
                       SizedBox(width: 5,),
-                      Text("عادي",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("عادي",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                 ],
@@ -115,21 +115,21 @@ class SavedUsersPage extends GetView<SavedUsersController> {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1E3A8A) : Colors.white,
+            color: isSelected ? const Color(0xFF3B82F6) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: isSelected ? Colors.transparent : Colors.blue.shade50),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                        color: const Color(0xFF1E3A8A).withOpacity(0.2),
+                        color: const Color(0xFF3B82F6).withOpacity(0.2),
                         blurRadius: 8)
                   ]
                 : [],
           ),
           child: Text(title,
               style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.blueGrey,
+                  color: isSelected ? Colors.white : const Color(0xFF94A3B8),
                   fontWeight: FontWeight.bold,
                   fontSize: 13)),
         ),
@@ -168,7 +168,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFF16213A),
               borderRadius: BorderRadius.circular(22),
               border: Border.all(color: Colors.blue.shade50),
               boxShadow: [
@@ -188,12 +188,12 @@ class SavedUsersPage extends GetView<SavedUsersController> {
               ),
               title: Text(d.label,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+                      fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9))),
               subtitle: Text("${d.srcAddress} • ${d.macAddress}\n$deviceType",
                   style:
-                      const TextStyle(fontSize: 11, color: Colors.blueGrey)),
+                      const TextStyle(fontSize: 11, color: const Color(0xFF94A3B8))),
               trailing: const Icon(Icons.more_horiz_rounded,
-                  color: Colors.blueGrey),
+                  color: const Color(0xFF94A3B8)),
               onTap: () => _showOptionsSheet(Get.context ?? _, d),
             ),
           );
@@ -229,7 +229,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
               bottom: MediaQuery.of(context).viewInsets.bottom + 30,
             ),
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFF16213A),
               borderRadius: BorderRadius.vertical(top: Radius.circular(35)),
             ),
             child: SingleChildScrollView(
@@ -240,14 +240,14 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                       width: 45,
                       height: 5,
                       decoration: BoxDecoration(
-                          color: Colors.blueGrey.shade100,
+                          color: const Color(0xFF1B2740),
                           borderRadius: BorderRadius.circular(10))),
                   const SizedBox(height: 16),
                   const Text("إضافة جهاز جديد",
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A))),
+                          color: Color(0xFFE8EEF9))),
                   const SizedBox(height: 16),
                   _modernField(nameCtrl, "اسم الجهاز", Icons.badge_outlined),
                   _modernField(ipCtrl, "IP Address", Icons.wifi_rounded),
@@ -331,7 +331,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
             top: 20,
             bottom: MediaQuery.of(_).viewInsets.bottom + 30),
         decoration: const BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF16213A),
             borderRadius: BorderRadius.vertical(top: Radius.circular(35))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -340,7 +340,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                 width: 45,
                 height: 5,
                 decoration: BoxDecoration(
-                    color: Colors.blueGrey.shade100,
+                    color: const Color(0xFF1B2740),
                     borderRadius: BorderRadius.circular(10))),
             const SizedBox(height: 16),
             const Text("إدارة الجهاز",
@@ -442,7 +442,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
       title: Text(t,
           style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: Color(0xFFE8EEF9),
               fontSize: 14)),
       trailing: const Icon(Icons.arrow_back_ios_new_rounded,
           size: 14, color: Colors.black12),
@@ -454,7 +454,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
       margin: const EdgeInsets.symmetric(horizontal: 13,vertical: 5),
       //padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -470,8 +470,8 @@ class SavedUsersPage extends GetView<SavedUsersController> {
         textAlign: TextAlign.center,
         decoration: const InputDecoration(
           hintText: "بحث باسم الجهاز او ip او mac",
-          hintStyle: TextStyle(fontSize: 13, color: Colors.blueGrey),
-          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF1E3A8A)),
+          hintStyle: TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
+          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF3B82F6)),
           suffixIcon: Icon(Icons.search_off_rounded,color: Color(0x00000000),),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 11),

@@ -128,7 +128,7 @@ class GeneratedCardsController extends GetxController {
       "اكتملت العملية.\nنجح: $successCount \nفشل: $failCount", 
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 4),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF16213A),
     );
   }
 

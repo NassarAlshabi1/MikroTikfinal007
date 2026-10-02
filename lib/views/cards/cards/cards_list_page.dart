@@ -16,7 +16,7 @@ class CardsListPage extends GetView<CardsListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             // 1. الهيدر
@@ -41,21 +41,21 @@ class CardsListPage extends GetView<CardsListController> {
                     children: [
                       Icon(Icons.circle,color: Colors.blue,size: 15,),
                       SizedBox(width: 5,),
-                      Text("جديدة",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("جديدة",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle,color: Colors.green,size: 15,),
                       SizedBox(width: 5,),
-                      Text("نشطة",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("نشطة",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                  Row(
                     children: [
                       Icon(Icons.circle,color: Colors.red,size: 15,),
                       SizedBox(width: 5,),
-                      Text("منتهية",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
+                      Text("منتهية",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
                     ],
                   ),
                 ],
@@ -95,7 +95,7 @@ class CardsListPage extends GetView<CardsListController> {
     return Container(
       height: 55,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -110,8 +110,8 @@ class CardsListPage extends GetView<CardsListController> {
         onChanged: (v) => controller.setSearch(v),
         decoration: const InputDecoration(
           hintText: "بحث برقم الكرت أو الباقة...",
-          hintStyle: TextStyle(fontSize: 13, color: Colors.blueGrey),
-          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF1E3A8A)),
+          hintStyle: TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
+          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF3B82F6)),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 11),
         ),
@@ -157,15 +157,15 @@ Widget _addButton() {
               padding: const EdgeInsets.symmetric(vertical: 6), // حشوة من الأعلى والأسفل فقط
               alignment: Alignment.center, // 👈 مهم جداً لتوسيط النص داخل المساحة الممتدة
               decoration: BoxDecoration(
-                color: active ? const Color(0xFF1E3A8A) : Colors.white,
+                color: active ? const Color(0xFF3B82F6) : Colors.white,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: active ? Colors.transparent : Colors.blueGrey.shade50),
+                border: Border.all(color: active ? Colors.transparent : const Color(0xFF94A3B8).shade50),
               ),
               child: Text(
                 "$f\n${controller.cardCounts[f]?.value}",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: active ? Colors.white : Colors.blueGrey, 
+                  color: active ? Colors.white : const Color(0xFF94A3B8), 
                   fontWeight: FontWeight.w900, 
                   fontSize: 12 // يمكنك تكبير الخط إلى 13 إذا أردت
                 ),
@@ -184,7 +184,7 @@ Widget _addButton() {
     return Obx(() {
       // 1. حالة التحميل من المتحكم
       if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+        return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
       }
 
       // 2. حالة القائمة فارغة (سواء كانت فارغة أصلاً أو بسبب البحث)
@@ -217,11 +217,11 @@ Widget _addButton() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.search_off_rounded, size: 60, color: Colors.blueGrey.shade100),
+        Icon(Icons.search_off_rounded, size: 60, color: const Color(0xFF1B2740)),
         const SizedBox(height: 10),
         const Text(
           "لم يتم العثور على نتائج", 
-          style: TextStyle(color: Colors.blueGrey, fontSize: 13)
+          style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 13)
         ),
       ],
     );

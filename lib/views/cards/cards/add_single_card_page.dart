@@ -14,7 +14,7 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             const PremiumHeader(
@@ -29,9 +29,9 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
                 child: Container(
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xFF16213A),
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                    border: Border.all(color: const Color(0xFF243352), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 15,
@@ -93,7 +93,7 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
             
            AppMiniFooter(
               title: Text("إنشاء حساب مستخدم جديد في الشبكة",
-                style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey.shade400),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
               ),
           ],
         ),
@@ -104,9 +104,9 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: const Color(0xFF0B1220),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFF243352)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -116,7 +116,7 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
               ? controller.selectedCustomer.value?.name
               : null, 
           isExpanded: true,
-          icon: const Icon(Icons.person_search_rounded, color: Color(0xFF1E3A8A)),
+          icon: const Icon(Icons.person_search_rounded, color: Color(0xFF3B82F6)),
           hint: const Text("اختر العميل"),
           items: controller.customers.map((c) => DropdownMenuItem(
             value: c.name,
@@ -139,7 +139,7 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w900,
-        color: Color(0xFF1E3A8A),
+        color: Color(0xFF3B82F6),
       ),
     );
   }
@@ -148,15 +148,15 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: const Color(0xFF0B1220),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFF243352)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: controller.selectedProfile.value?.name,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF1E3A8A)),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF3B82F6)),
           hint: const Text("اختر الباقة"),
           items: controller.profiles.map((p) => DropdownMenuItem(
             value: p.name,
@@ -181,13 +181,13 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: controller.isLoading.value 
-              ? [Colors.grey, Colors.blueGrey]
+              ? [Colors.grey, const Color(0xFF94A3B8)]
               : [const Color(0xFF0F172A), const Color(0xFF1E3A8A)]
           ),
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1E3A8A).withOpacity(0.3),
+              color: const Color(0xFF3B82F6).withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             )

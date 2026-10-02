@@ -15,7 +15,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -83,13 +83,13 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
                         return Container(
                           padding: const EdgeInsets.all(11),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: const Color(0xFF16213A),
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: const Text(
                             "لا توجد حركات مسجلة لهذا الموزع بعد.",
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Color(0xFF64748B)),
+                            style: TextStyle(color: Color(0xFF94A3B8)),
                           ),
                         );
                       }
@@ -136,7 +136,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
             children: [
               const Text(
                 "الرصيد الحالي",
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 13),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -160,7 +160,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 26),
             ),
           ),
-          const Divider(color: Colors.white24, height: 24),
+          const Divider(color: const Color(0x3DE8EEF9), height: 24),
           Row(
             children: [
               _stat("المبيعات", summary.totalSales),
@@ -178,7 +178,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
     return Expanded(
       child: Column(
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+          Text(label, style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11)),
           const SizedBox(height: 4),
           Text(
             value.toStringAsFixed(0),
@@ -225,7 +225,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -260,12 +260,12 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
               children: [
                 Text(
                   "${transaction.type.arabicLabel}${transaction.cardsCount > 0 ? " • ${transaction.cardsCount} كرت" : ""}",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFE8EEF9)),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   "${transaction.txDate}${transaction.note.isEmpty ? "" : " • ${transaction.note}"}",
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                 ),
               ],
             ),

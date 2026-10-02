@@ -98,6 +98,10 @@ import '../controllers/maintenance/tool_list_controller.dart';
 import '../controllers/maintenance/diagnostics_controller.dart';
 import '../controllers/maintenance/cable_test_controller.dart';
 import '../controllers/hotspot/hotspot_controller.dart';
+import '../controllers/more/telegram_controller.dart';
+import '../views/more/telegram_page.dart';
+import '../views/more/telegram_setup_page.dart';
+import '../views/more/telegram_features_page.dart';
 import '../models/maintenance_tools.dart';
 import '../views/maintenance/maintenance_hub_page.dart';
 import '../views/maintenance/tool_list_page.dart';
@@ -172,6 +176,9 @@ class AppRoutes {
 
   // Hotspot
   static const String hotspot = '/hotspot';
+  static const String telegram = '/telegram';
+  static const String telegramSetup = '/telegram/setup';
+  static const String telegramFeatures = '/telegram/features';
   // مسارات إدارة المواقع
 }
 
@@ -385,6 +392,21 @@ class AppPages {
       name: AppRoutes.hotspot,
       page: () => const HotspotPage(),
       binding: BindingsBuilder(() => Get.lazyPut(() => HotspotController())),
+    ),
+    // ======== تكامل Telegram ========
+    GetPage(
+      name: AppRoutes.telegram,
+      page: () => const TelegramPage(),
+    ),
+    GetPage(
+      name: AppRoutes.telegramSetup,
+      page: () => const TelegramSetupPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => TelegramSetupController())),
+    ),
+    GetPage(
+      name: AppRoutes.telegramFeatures,
+      page: () => const TelegramFeaturesPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => TelegramFeaturesController())),
     ),
     GetPage(
       name: AppRoutes.maintenanceCableTest,

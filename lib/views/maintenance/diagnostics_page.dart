@@ -14,7 +14,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             PremiumHeader(
@@ -26,7 +26,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
             TabBar(
               controller: controller.tabController,
               isScrollable: true,
-              labelColor: const Color(0xFF1E3A8A),
+              labelColor: const Color(0xFF3B82F6),
               unselectedLabelColor: const Color(0xFF94A3B8),
               indicatorColor: const Color(0xFF2563EB),
               tabs: const [
@@ -123,7 +123,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
           if (controller.traceRows.isEmpty) {
             return const Text(
               "لا توجد نتائج بعد. أدخل عنوانًا وابدأ الاختبار.",
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
             );
           }
           return Column(
@@ -179,7 +179,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
               return const Center(
                 child: Text(
                   "لا توجد بيانات بعد. شغّل Torch لعرض الحركة الحيّة.",
-                  style: TextStyle(color: Color(0xFF64748B)),
+                  style: TextStyle(color: Color(0xFF94A3B8)),
                 ),
               );
             }
@@ -230,7 +230,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
         const Text(
           "ملاحظة: يجب أن يكون الراوتر متصلًا بالإنترنت، ويُحفظ الملف في ذاكرة الراوتر "
           "(يمكن عرضه من المزيد ← نسخ الراوتر الاحتياطي).",
-          style: TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.7),
+          style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), height: 1.7),
         ),
       ],
     );
@@ -276,14 +276,14 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
         const SizedBox(height: 18),
         const Text(
           "حالة الـ Sniffer على الراوتر",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF1E293B)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFFE8EEF9)),
         ),
         const SizedBox(height: 8),
         Obx(() {
           if (controller.snifferStatus.isEmpty) {
             return const Text(
               "لا توجد بيانات حالة (قد لا يدعم الراوتر التقاط الحزم).",
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
             );
           }
           return Column(
@@ -307,7 +307,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xFF16213A),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: TextField(
@@ -326,7 +326,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
               const SizedBox(width: 8),
               IconButton(
                 onPressed: controller.loadLogs,
-                icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E3A8A)),
+                icon: const Icon(Icons.refresh_rounded, color: Color(0xFF3B82F6)),
               ),
             ],
           ),
@@ -339,7 +339,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
             final rows = controller.filteredLogs;
             if (rows.isEmpty) {
               return const Center(
-                child: Text("لا توجد أحداث في السجل", style: TextStyle(color: Color(0xFF64748B))),
+                child: Text("لا توجد أحداث في السجل", style: TextStyle(color: Color(0xFF94A3B8))),
               );
             }
             return ListView.builder(
@@ -351,7 +351,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xFF16213A),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Column(
@@ -362,7 +362,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
                           Expanded(
                             child: Text(
                               row["message"] ?? "-",
-                              style: const TextStyle(fontSize: 12.5, color: Color(0xFF1E293B), height: 1.5),
+                              style: const TextStyle(fontSize: 12.5, color: Color(0xFFE8EEF9), height: 1.5),
                             ),
                           ),
                         ],
@@ -388,7 +388,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
@@ -414,7 +414,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(16),
       ),
       child: DropdownButtonHideUnderline(
@@ -436,7 +436,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: dense ? 8 : 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -446,7 +446,7 @@ class DiagnosticsPage extends GetView<DiagnosticsController> {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 12, color: Color(0xFFE8EEF9), fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(width: 8),

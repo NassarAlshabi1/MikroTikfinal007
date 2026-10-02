@@ -21,7 +21,7 @@ class MainActionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 11),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -62,7 +62,7 @@ class MainActionCard extends StatelessWidget {
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14.5,
-                          color: Color(0xFF1E293B),
+                          color: Color(0xFFE8EEF9),
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -71,7 +71,7 @@ class MainActionCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.blueGrey.shade400,
+                          color: const Color(0xFF8FA3C0),
                           fontSize: 11,
                         ),
                       ),
@@ -79,7 +79,7 @@ class MainActionCard extends StatelessWidget {
                   ),
                 ),
                 // سهم الانتقال
-                Icon(Icons.chevron_left_rounded, color: Colors.blueGrey.shade200),
+                Icon(Icons.chevron_left_rounded, color: const Color(0xFF243352)),
               ],
             ),
           ),

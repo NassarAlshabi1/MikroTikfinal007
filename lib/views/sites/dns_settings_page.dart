@@ -18,7 +18,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF1F5F9),
+        backgroundColor: const Color(0xFF1B2740),
         body: Column(
           children: [
             // الهيدر
@@ -31,7 +31,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+                  return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
                 }
 
                 return ListView(
@@ -95,7 +95,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -105,7 +105,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
         ],
       ),
       child: SwitchListTile(
-        activeColor: const Color(0xFF1E3A8A),
+        activeColor: const Color(0xFF3B82F6),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         title: Text(title,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -128,7 +128,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.blue.withOpacity(0.05)),
         boxShadow: [
@@ -143,10 +143,10 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
         keyboardType: TextInputType.number,
         style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2),
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A)),
+          prefixIcon: Icon(icon, color: const Color(0xFF3B82F6)),
           labelText: label,
           hintText: hint,
-          labelStyle: const TextStyle(fontSize: 13, color: Colors.blueGrey),
+          labelStyle: const TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 11),
         ),

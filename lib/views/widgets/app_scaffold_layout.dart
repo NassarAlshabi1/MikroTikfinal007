@@ -130,7 +130,7 @@ class AppScaffoldLayout extends StatelessWidget {
         child: Text(
           footerText,
           style: const TextStyle(
-            color: Colors.white70,
+            color: const Color(0xB3E8EEF9),
             fontSize: 11,
           ),
         ),

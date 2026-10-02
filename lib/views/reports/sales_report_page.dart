@@ -13,7 +13,7 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF0B1220),
         body: Column(
           children: [
             // الهيدر المشترك
@@ -39,7 +39,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                   // 3. قائمة الكروت المباعة (الكروت الصغيرة)
                   Obx(() {
                     if (controller.isLoading.value) {
-                      return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
                     }
                     if (controller.salesList.isEmpty) {
                       return const Center(
@@ -99,7 +99,7 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
@@ -107,7 +107,7 @@ class SalesReportPage extends GetView<SalesReportController> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.date_range_rounded, color: Color(0xFF1E3A8A), size: 20),
+          const Icon(Icons.date_range_rounded, color: Color(0xFF3B82F6), size: 20),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +115,7 @@ class SalesReportPage extends GetView<SalesReportController> {
               Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
               Obx(() => Text(
                 dateRx.value != null ? "${dateRx.value!.year}-${dateRx.value!.month}-${dateRx.value!.day}" : "اختر التاريخ",
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF3B82F6)),
               )),
             ],
           ),
@@ -131,19 +131,19 @@ class SalesReportPage extends GetView<SalesReportController> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)], // تدرج أزرق مشابه لهوية التطبيق
+          colors: [Color(0xFF3B82F6), Color(0xFF3B82F6)], // تدرج أزرق مشابه لهوية التطبيق
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF1E3A8A).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(color: const Color(0xFF3B82F6).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("ملخص المبيعات الإجمالي", style: TextStyle(color: Colors.white70, fontSize: 14)),
+          const Text("ملخص المبيعات الإجمالي", style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 14)),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,9 +156,9 @@ class SalesReportPage extends GetView<SalesReportController> {
           if (controller.summaryByProfile.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 11),
-              child: Divider(color: Colors.white24, height: 1),
+              child: Divider(color: const Color(0x3DE8EEF9), height: 1),
             ),
-            const Text("تفصيل حسب الفئة:", style: TextStyle(color: Colors.white70, fontSize: 12)),
+            const Text("تفصيل حسب الفئة:", style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 12)),
             const SizedBox(height: 10),
             // إنشاء تفاصيل الفئات ديناميكياً
             Wrap(
@@ -171,14 +171,14 @@ class SalesReportPage extends GetView<SalesReportController> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: const Color(0xFF16213A).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("فئة $profile", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                      Text("$count كرت = $total ريال", style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                      Text("$count كرت = $total ريال", style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11)),
                     ],
                   ),
                 );
@@ -195,14 +195,14 @@ class SalesReportPage extends GetView<SalesReportController> {
       children: [
         Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+          decoration: BoxDecoration(color: const Color(0xFF16213A).withOpacity(0.2), shape: BoxShape.circle),
           child: Icon(icon, color: Colors.white, size: 20),
         ),
         const SizedBox(width: 10),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+            Text(label, style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11)),
             Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
@@ -216,7 +216,7 @@ class SalesReportPage extends GetView<SalesReportController> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5, offset: const Offset(0, 2)),
@@ -233,7 +233,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                   color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF1E3A8A), size: 20),
+                child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF3B82F6), size: 20),
               ),
               const SizedBox(width: 11),
               Column(
@@ -254,10 +254,10 @@ class SalesReportPage extends GetView<SalesReportController> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A8A).withOpacity(0.1),
+                  color: const Color(0xFF3B82F6).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(5),
                 ),
-                child: Text("باقة ${item.profile}", style: const TextStyle(color: Color(0xFF1E3A8A), fontSize: 10, fontWeight: FontWeight.bold)),
+                child: Text("باقة ${item.profile}", style: const TextStyle(color: Color(0xFF3B82F6), fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -271,7 +271,7 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF16213A),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
         ],
@@ -285,7 +285,7 @@ class SalesReportPage extends GetView<SalesReportController> {
               icon: const Icon(Icons.sync_rounded, color: Colors.white),
               label: const Text("توليد التقرير", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A8A), // اللون الأزرق الرئيسي
+                backgroundColor: const Color(0xFF3B82F6), // اللون الأزرق الرئيسي
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -296,10 +296,10 @@ class SalesReportPage extends GetView<SalesReportController> {
             flex: 1,
             child: OutlinedButton.icon(
               onPressed: () => controller.printReport(),
-              icon: const Icon(Icons.print_rounded, color: Color(0xFF1E3A8A)),
-              label: const Text("طباعة", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+              icon: const Icon(Icons.print_rounded, color: Color(0xFF3B82F6)),
+              label: const Text("طباعة", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3B82F6))),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF1E3A8A), width: 1.5),
+                side: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

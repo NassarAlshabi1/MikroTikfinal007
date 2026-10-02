@@ -80,7 +80,7 @@ class PremiumHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: const Color(0xFF16213A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(

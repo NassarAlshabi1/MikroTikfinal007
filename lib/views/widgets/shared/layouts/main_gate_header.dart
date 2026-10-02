@@ -49,7 +49,7 @@ class MainGateHeader extends StatelessWidget {
             left: -14,
             child: CircleAvatar(
               radius: 45,
-              backgroundColor: Colors.white.withOpacity(0.05),
+              backgroundColor: const Color(0xFF16213A).withOpacity(0.05),
             ),
           ),
           Center(
@@ -62,13 +62,13 @@ class MainGateHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: const Color(0xFF16213A).withOpacity(0.2),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24, width: 2),
+                    border: Border.all(color: const Color(0x3DE8EEF9), width: 2),
                   ),
                   child: CircleAvatar(
                     radius: 26,
-                    backgroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF16213A),
                     child:icon != null ? Icon(icon, color: const Color(0xff1E3C72), size: 26):null,
                   ),
                 ),
@@ -105,7 +105,7 @@ class MainGateHeader extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: const Color(0xFF16213A).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.white12),
                   ),

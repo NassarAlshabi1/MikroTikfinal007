@@ -15,8 +15,8 @@ class AppMiniFooter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.blueGrey.shade50)),
+        color: const Color(0xFF16213A),
+        border: Border(top: BorderSide(color: const Color(0xFF94A3B8).shade50)),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(22), 
           topRight: Radius.circular(22),
