@@ -39,7 +39,16 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed .
+        shell: bash
+        run: |
+          set +e
+          dart format --output=none --set-exit-if-changed . > /tmp/dart-format.log 2>&1
+          format_status=$?
+          cat /tmp/dart-format.log
+          while IFS= read -r changed_file; do
+            printf '::error file=%s,title=Dart formatting required::Run dart format %s\n' "$changed_file" "$changed_file"
+          done < <(sed -n 's/^Changed //p' /tmp/dart-format.log)
+          exit "$format_status"
 
       - name: Analyze project source
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
