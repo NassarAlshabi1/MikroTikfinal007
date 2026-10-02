@@ -2,6 +2,8 @@
 
 # 🚀 ميكرونت — MikroNet
 
+> **الإصدار الحالي: `2.0.0.0`** (versionCode `2000`) — سجل التغييرات في [`CHANGELOG.md`](CHANGELOG.md)
+
 **النظام الأذكى لإدارة شبكات MikroTik والتحكم بالروتر من هاتفك**
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.27-02569B?logo=flutter&logoColor=white)
@@ -192,11 +194,18 @@ flutter pub get
 # 2) تشغيل التطبيق (جهاز/محاكي متصل)
 flutter run
 
-# 3) بناء ملف APK للإصدار
+# 3) بناء ملف APK للإصدار (الإصدار 2.0.0.0)
 flutter build apk --release
 # أو لكل معماريات الأندرويد:
 flutter build apk --split-per-abi
 ```
+
+### تحميل ملف APK الجاهز
+
+- **أحدث إصدار (رابط تحميل مباشر بلا تسجيل دخول):** صفحة الإصدارات
+  [Releases](https://github.com/NassarAlshabi1/MikroTikfinal007/releases) ← حمّل `MikroNet-2.0.0.0.apk`.
+- لإنشاء إصدار جديد تلقائيًا: ادفع وسمًا يبدأ بـ `v` (مثل `v2.0.0.0`) فيبني CI الملف
+  وينشره في Releases ويُرفق APK به.
 
 ### البناء عبر Docker (بدون تثبيت Flutter محليًا)
 

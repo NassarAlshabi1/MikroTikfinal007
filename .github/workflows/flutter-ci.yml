@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - '**'
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - '**'
@@ -113,7 +115,7 @@ jobs:
   build-apk:
     name: Build release APK
     # يعمل عند الطلب اليدوي، أو عند وجود وسم [build apk] في رسالة الالتزام
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || contains(github.event.head_commit.message, '[build apk]') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || contains(github.event.head_commit.message, '[build apk]') || startsWith(github.ref, 'refs/tags/v') }}
     needs: analyze
     runs-on: ubuntu-latest
     steps:
@@ -136,7 +138,61 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
+      # إثبات الإصدار المدمج داخل APK عبر aapt (يُطبع في السجلات وملخص الخطوة)
+      - name: Verify APK version metadata
+        shell: bash
+        run: |
+          set +e
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          AAPT=$(ls "$SDK"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)
+          if [ -z "$AAPT" ]; then AAPT=$(ls "$SDK"/build-tools/*/aapt 2>/dev/null | sort -V | tail -1); fi
+          {
+            echo "== APK metadata =="
+            if [ -n "$AAPT" ]; then
+              "$AAPT" dump badging "$APK" 2>/dev/null | grep -E "^package:|^application-label" || true
+            else
+              echo "(aapt not found — skipping)"
+            fi
+            ls -lh "$APK" 2>/dev/null || true
+          } | tee apk_version.txt
+          cat apk_version.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+
+      # إعادة تسمية الملف باسم الإصدار ليكون التحميل واضحًا
+      - name: Rename APK with version
+        shell: bash
+        run: |
+          mkdir -p release_out
+          cp build/app/outputs/flutter-apk/app-release.apk release_out/MikroNet-2.0.0.0.apk
+          ls -lh release_out/
+
       - uses: actions/upload-artifact@v4
         with:
           name: mikronet-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            release_out/MikroNet-2.0.0.0.apk
+            apk_version.txt
+
+      # عند دفع وسم مثل v2.0.0.0: يُنشأ GitHub Release ويُرفَق به ملف APK
+      # (رابط تحميل مباشر للجميع بلا حاجة لتسجيل الدخول)
+      - name: Publish GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="إصدار MikroNet 2.0.0.0 (versionCode 2000)
+
+          الميزات: حذف المستخدمين المنتهين بفحص ذكي متوافق مع RouterOS v6 و v7 · أدوات صيانة كاملة · نسخ احتياطي واستعادة · الموزعون والمحاسبة · واجهة عربية RTL.
+
+          \`\`\`
+          $(cat apk_version.txt 2>/dev/null)
+          \`\`\`
+
+          ملاحظة: هذا الإصدار موقّع بمفتاح التصحيح (debug keystore) للاستخدام والتجربة المباشرة."
+          gh release create "${GITHUB_REF_NAME}" \
+            "release_out/MikroNet-2.0.0.0.apk#MikroNet-2.0.0.0.apk" \
+            --title "MikroNet 2.0.0.0" \
+            --notes "$NOTES" \
+            --latest || \
+          gh release upload "${GITHUB_REF_NAME}" "release_out/MikroNet-2.0.0.0.apk#MikroNet-2.0.0.0.apk" --clobber
