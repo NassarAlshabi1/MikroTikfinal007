@@ -32,9 +32,28 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
       # ملاحظة: الكود الموروث (فرع controller الأصلي) يحتوي تحذيرات موجودة مسبقًا،
-      # لذا نجعل التحذيرات والمعلومات غير مُفشِلة مع إبقاء الأخطاء مُفشِلة للبناء.
-      - name: flutter analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      # لذا نجعل التحذيرات والمعلومات غير مُفشِلة مع إبقاء الأخطاء مُفشِلة.
+      # كما نُخرج الأخطاء كـ annotations لأن سجلات Actions غير قابلة للقراءة من كل البيئات.
+      - name: Analyze (machine readable)
+        shell: bash
+        run: |
+          set +e
+          dart analyze --format=machine --no-fatal-warnings --no-fatal-infos > analyze.txt 2>&1
+          status=$?
+          echo "===== totals ====="
+          awk -F'|' '{print $1}' analyze.txt | sort | uniq -c | sort -rn
+          echo "===== errors ====="
+          grep -c '^ERROR' analyze.txt || true
+          echo "===== files with errors ====="
+          grep '^ERROR' analyze.txt | awk -F'|' '{print $3}' | sort | uniq -c | sort -rn | head -30
+          echo "===== first 50 errors ====="
+          grep '^ERROR' analyze.txt | head -50
+          echo "===== annotations ====="
+          grep '^ERROR' analyze.txt | head -40 | while IFS='|' read -r sev type file line col len msg code; do
+            echo "::error file=$file,line=$line::[$code] $msg"
+          done
+          echo "::notice::ERRORS=$(grep -c '^ERROR' analyze.txt || echo 0)"
+          exit $status
       - name: dart format check (report only)
         run: dart format --output=none --set-exit-if-changed lib || true
 
