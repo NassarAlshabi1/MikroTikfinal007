@@ -42,7 +42,15 @@ jobs:
       # (دوال غير مستخدمة/كود ميت)، لذا نجعل التحذيرات والمعلومات غير مُفشِلة
       # مع إبقاء الأخطاء (errors) مُفشِلة للبناء.
       - name: Unit tests (محلل مدد RouterOS والحذف الذكي)
-        run: flutter test test/mikrotik_duration_test.dart
+        id: unit_tests
+        shell: bash
+        run: |
+          set +e
+          flutter test test/mikrotik_duration_test.dart > test_output.txt 2>&1
+          status=$?
+          echo "unit_tests exit=$status"
+          tail -n 40 test_output.txt
+          exit $status
 
       - name: flutter analyze
         id: analyze
@@ -80,6 +88,9 @@ jobs:
             echo "commit=$GITHUB_SHA"
             echo "ref=$GITHUB_REF"
             echo "analyze_step_outcome=${{ steps.analyze.outcome }}"
+            echo "unit_tests_outcome=${{ steps.unit_tests.outcome }}"
+            echo "===== UNIT TESTS OUTPUT (last 120 lines) ====="
+            tail -n 120 test_output.txt 2>/dev/null || echo "(no test output)"
             echo "===== TOTALS ====="
             echo "errors=$(grep -cE '^\s*error\s+•' analyze_text.txt 2>/dev/null || echo 0)"
             echo "warnings=$(grep -cE '^\s*warning\s+•' analyze_text.txt 2>/dev/null || echo 0)"
