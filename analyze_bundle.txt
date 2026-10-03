@@ -1,0 +1,488 @@
+run_id=37147472155
+commit=24ecb2315cea15aa598b068e44614bf29f61b94a
+ref=refs/heads/arena/01a0fa82-mikrotikfinal007
+analyze_step_outcome=success
+unit_tests_outcome=success
+===== UNIT TESTS OUTPUT (last 120 lines) =====
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: EthernetLinkInfo.parse — السرعة وduplex صيغ سرعة مختلفة: 10Mbps · 2.5Gbps · 1000000000
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: EthernetLinkInfo.parse — السرعة وduplex لا رابط ← hasLink=false وليس مخفّضًا
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: CableDiagnostics.combine — التشخيص والتوصيات كابل سليم + رابط 1Gbps ← تشخيص سليم
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: CableDiagnostics.combine — التشخيص والتوصيات عطل في الأزواج ← درجة عطل وتوصيات إصلاح الكيبل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: CableDiagnostics.combine — التشخيص والتوصيات أزواج سليمة لكن السرعة 100Mbps ← تحذير مع توصيات الفئة/الطرف الآخر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: CableDiagnostics.combine — التشخيص والتوصيات no-link ← تحذير «لا يوجد اتصال» بتوصيات فحص الطرف الآخر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: CableDiagnostics.combine — التشخيص والتوصيات غير مدعوم (CHR/SFP) ← شرح واضح بلا ادّعاء عطل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: CableDiagnostics.combine — التشخيص والتوصيات لا فحص بعد ← دعوة لتنفيذ الفحص
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: رسائل الأخطاء وأوامر الفحص رسائل RouterOS تُترجم لعربية واضحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/cable_diagnostics_test.dart: رسائل الأخطاء وأوامر الفحص أوامر المحاولة تحتوي اسم المنفذ وبترتيب صحيح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات مستخدم كامل الحدود: الحسابات والنِسب صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات كرت استهلك مدته كاملة ← منتهي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات كرت تجاوز المدة (1w2d3h4m5s ضد 1w) ← منتهي والنسبة > 100
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات قارب على الانتهاء (استهلك 85% وحد التنبيه 20%)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات استهلك رصيد البيانات فقط ← منتهي بالبيانات
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات مستخدم معطّل ← الحالة معطّل مهما كانت الحدود
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات بلا حدود إطلاقًا: لا يُحسب منتهيًا والنِسب صفر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات أحجام بوحدات RouterOS تُقرأ صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات مدة غير مفهومة لا تُخمَّن ← لا حدود
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotActiveSession.parse جلسة كاملة: المدة والاستهلاك ونوع الدخول بالعربية
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotActiveSession.parse أنواع دخول مختلفة تُترجم
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotActiveSession.parse لا خمول ← «لا خمول»
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم باقة كاملة الحقول
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم باقة بلا تحديد سرعة ← «بلا تحديد سرعة»
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم خادم: مجلد صفحة الدخول الافتراضي hotspot
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم مجلد مخصّص يُحترم
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم العدد والأطوال ونوع الأحرف صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم الأسماء فريدة دائمًا
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم الأحرف الملتبسة مُستثناة (0/O و 1/I/l)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم البادئة تُضاف لكل الأسماء
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم نفس البذرة ← نفس النتيجة (قابلية التكرار)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) مواصفات صحيحة ← بلا مشاكل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) عدد غير صالح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) أطوال غير صالحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) بادئة بأحرف غير مسموحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) صيغة مدة أو بيانات غير مفهومة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تصدير القسائم CSV بعناوين وأسطر صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تصدير القسائم تهريب الفواصل وعلامات الاقتباس
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تصدير القسائم أوامر RouterOS جاهزة للاستخدام اليدوي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول صفحة صالحة كاملة ← بلا أخطاء
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول login.html مفقود ← خطأ مُفشِل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول بدون $(link-login-only) ← خطأ
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول بدون viewport ← تحذير (وليس خطأ)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول ملفات موصى بها ناقصة ← ملاحظة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول ملف كبير جدًا ← تحذير
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول لا ملفات ← خطأ واضح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: قراءة المنفذ (ConnectionErrors.parsePort) منفذ عادي صحيح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: قراءة المنفذ (ConnectionErrors.parsePort) تجاهل المسافات الزائدة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: قراءة المنفذ (ConnectionErrors.parsePort) الأرقام العربية-الهندية (٠..٩) تُقبل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: قراءة المنفذ (ConnectionErrors.parsePort) الأرقام الفارسية الممتدة (۰..۹) تُقبل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: قراءة المنفذ (ConnectionErrors.parsePort) صيغ غير مفهومة ← null بلا تخمين
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: قراءة المنفذ (ConnectionErrors.parsePort) خارج المدى ← null
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: قراءة المنفذ (ConnectionErrors.parsePort) منافذ مخصّصة شائعة تُقبل (أي منفذ يعمل)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT عنوان بلا منفذ
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT عنوان مع منفذ مخصّص 1300
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT مسافات زائدة حول القيمة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT اسم مضيف (DNS) مع منفذ
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT IPv6 بين قوسين مع منفذ
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT IPv6 بلا قوسين لا يُقسَم خطأً
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT منفذ غير صالح بعد النقطتين ⇒ يُعامَل كله كعنوان (بلا تخمين)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: فصل العنوان عن المنفذ (splitHostPort) — صيغة IP:PORT قيمة فارغة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: منفذ TLS 8729 مشفّر والافتراضي 8728 عادي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) صلاحية الشبكة غير ممنوحة (سبب فشل نسخة الإصدار سابقًا)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) رفض الاتصال ← توجيه لتفعيل خدمة API
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) انتهاء المهلة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) اسم مستخدم أو كلمة مرور خاطئة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) صلاحيات غير كافية داخل الراوتر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) شبكة غير متاحة / لا مسار للراوتر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) فشل الاتصال المشفّر (SSL)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) انقطاع أثناء العملية
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) خطأ غير معروف ← يُعرض النص الأصلي للتشخيص
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) رسالة رفض الاتصال تذكر المنفذ المخصّص وخطوة الحل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) رسالة انتهاء المهلة تذكر المنفذ
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/connection_errors_test.dart: ترجمة الأخطاء إلى رسائل عربية (ConnectionErrors.describe) خطأ فارغ ← رسالة عامة واضحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) نص Base64 صحيح ← يُفكّ لبايتات مطابقة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) بايتات خام (Uint8List) ← تُعاد كما هي (قوالب قديمة كـBLOB)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) قائمة أرقام (List<int>) ← تُحوَّل إلى Uint8List
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) null ← صورة فارغة (لا انهيار)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) نص فارغ ← صورة فارغة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) نص غير Base64 ← صورة فارغة بدل الاستثناء
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) Future (خطأ الحفظ القديم) ← صورة فارغة لا انهيار
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) كائن نصي غريب ← صورة فارغة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: مسار يصلح كقالب (isUsableRow) اسم غير فارغ ← صالح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: مسار يصلح كقالب (isUsableRow) اسم فارغ أو مسافات أو null ← غير صالح (يُستبعد)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) صف كامل بقيم صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) صف كامل بصورة تالفة ← يُقرأ بنجاح بصورة فارغة (لا استثناء)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) قيم ناقصة ← قيم افتراضية معقولة بلا انهيار
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) أرقام مخزّنة كنصوص (SQLite TEXT) تُقرأ صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) صورة بصيغة BLOB قديمة تُقرأ كما هي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: الحفظ (toDatabase) الصورة تُشفَّر Base64 وتعود كما هي عند القراءة (دورة كاملة)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: كتالوج المميزات سبع ميزات بمعرّفات فريدة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: كتالوج المميزات كل ميزة لها عنوان وشرح وشارة غير فارغة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: كتالوج المميزات المعرّفات الأساسية موجودة (كما في الشاشة)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: كتالوج المميزات معرّف غير معروف ← null (بلا تخمين)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: تفعيل المميزات الافتراضي: كل الميزات مفعّلة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: تفعيل المميزات تفعيل/تعطيل الكل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: تفعيل المميزات تبديل ميزة واحدة لا يمسّ البقية
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: تفعيل المميزات isEnabled تعمل مع مفاتيح مفقودة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: تفعيل المميزات تنقية الإعدادات: المعرّف غير المعروف يُحذف والناقص يُضاف
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: تفعيل المميزات تنقية خريطة فارغة/باطلة ← الافتراضي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل رسالة انقطاع جهاز بث تحتوي الاسم والعنوان والحالة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل رسالة عودة الجهاز تعرض «عاد إلى الشبكة»
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل تقرير أجهزة البث يحسب المنقطعة ويضع تحذيرًا
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل حالة الراوتر تعرض كل الحقول
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل تقرير المبيعات يعرض العدد والإجمالي بمنزلتين
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل تنبيه المساحة يعرض الحرة والإجمالي والنسبة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل الملخص اليومي يجمع الأرقام ويظهر تحذير الأجهزة المنقطعة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل رسالة تجربة كل ميزة تُبنى بلا خطأ وبعنوان الميزة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل معرّف غير معروف في التجربة ← رسالة واضحة بلا استثناء
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: نصوص الرسائل تنسيق التاريخ يعرض أصفارًا بادئة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) تحويل الأحجام: MiB/GiB/KiB/B ورقم مجرّد
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) صيغة غير مفهومة ⇒ null بلا تخمين
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) نسبة الحرة تُحسب بدقة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) الإجمالي صفر أو صيغة مجهولة ⇒ null
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) تنبيه المساحة يظهر تحت 15% فقط
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) قراءة رد الـping: received=1 ⇒ وصل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) قراءة رد الـping: timeout أو received=0 ⇒ لم يصل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/telegram_features_test.dart: فحص صحة الشبكة (منطق نقي) قراءة رد الـping: time بلا status ⇒ وصل
+
+🎉 163 tests passed.
+===== TOTALS =====
+errors=0
+0
+warnings=19
+infos=331
+===== ERRORS ONLY =====
+(no errors)
+===== FULL OUTPUT (last 400 lines) =====
+Analyzing MikroTikfinal007...                                   
+
+   info • Don't invoke 'print' in production code • lib/api/reports_api.dart:41:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/add_single_card_controller.dart:75:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/add_single_card_controller.dart:78:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/cards_list_controller.dart:51:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/cards_list_controller.dart:52:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/cards_list_controller.dart:53:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/cards_list_controller.dart:55:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/cards_list_controller.dart:56:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/cards/cards/cards_list_controller.dart:57:7 • avoid_print
+warning • The declaration '_addNewCard' isn't referenced • lib/controllers/cards/cards/cards_list_controller.dart:155:16 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/dialog_helper.dart:29:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/dialog_helper.dart:70:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/dialog_helper.dart:150:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/dialog_helper.dart:177:36 • deprecated_member_use
+   info • Don't invoke 'print' in production code • lib/controllers/dialog_helper.dart:229:17 • avoid_print
+warning • This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: MySelectedMenu.value • lib/controllers/helpers/widgets.dart:4:7 • must_be_immutable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/helpers/widgets.dart:85:71 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/helpers/widgets.dart:96:71 • deprecated_member_use
+warning • The field doesn't override an inherited getter or setter • lib/controllers/login_controller.dart:29:22 • override_on_non_overriding_member
+   info • Unnecessary 'const' keyword • lib/controllers/login_controller.dart:223:88 • unnecessary_const
+   info • 'WillPopScope' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre • lib/controllers/prints/batches/add_batch_controller.dart:207:7 • deprecated_member_use
+   info • 'WillPopScope.new' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre • lib/controllers/prints/batches/add_batch_controller.dart:207:7 • deprecated_member_use
+   info • Don't invoke 'print' in production code • lib/controllers/prints/batches/batch_cards_controller.dart:54:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/prints/batches/batch_cards_controller.dart:83:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/prints/batches/batch_cards_controller.dart:87:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/controllers/prints/batches_controller.dart:436:11 • avoid_print
+   info • The imported package 'image' isn't a dependency of the importing package • lib/controllers/prints/pdf_view_controller.dart:11:8 • depend_on_referenced_packages
+warning • Dead code • lib/controllers/prints/pdf_view_controller.dart:168:47 • dead_code
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart' • lib/controllers/prints/templates/templates_list_controller.dart:2:8 • unnecessary_import
+warning • The left operand can't be null, so the right operand is never executed • lib/controllers/reports/sales_report_controller.dart:89:31 • dead_null_aware_expression
+warning • The left operand can't be null, so the right operand is never executed • lib/controllers/sites/dns_cache_controller.dart:30:29 • dead_null_aware_expression
+   info • Don't invoke 'print' in production code • lib/controllers/sites/sites_unit_controller.dart:15:5 • avoid_print
+warning • The declaration '_showLoading' isn't referenced • lib/controllers/users/host_users_controller.dart:67:8 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/core/app_theme.dart:74:33 • deprecated_member_use
+   info • Unnecessary 'this.' qualifier • lib/core/string_extensions.dart:7:20 • unnecessary_this
+   info • Unnecessary braces in a string interpolation • lib/services/cable_diagnostics.dart:184:78 • unnecessary_brace_in_string_interps
+   info • Unnecessary braces in a string interpolation • lib/services/cable_diagnostics.dart:187:56 • unnecessary_brace_in_string_interps
+   info • Unnecessary braces in a string interpolation • lib/services/cable_diagnostics.dart:189:62 • unnecessary_brace_in_string_interps
+   info • Use 'const' with the constructor to improve performance • lib/services/cable_diagnostics.dart:592:14 • prefer_const_constructors
+   info • The imported package 'path' isn't a dependency of the importing package • lib/services/database.dart:2:8 • depend_on_referenced_packages
+   info • Use 'const' with the constructor to improve performance • lib/services/distributor_pdf.dart:107:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/services/distributor_pdf.dart:107:51 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/services/hotspot_logic.dart:687:20 • prefer_const_constructors
+warning • The declaration '_isHeavyCommand' isn't referenced • lib/services/mikrotik_client.dart:109:15 • unused_element
+   info • Don't invoke 'print' in production code • lib/services/mikrotik_client.dart:138:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/mikrotik_client.dart:186:8 • avoid_print
+warning • Unused import: 'dart:convert' • lib/services/router.dart:2:8 • unused_import
+   info • The imported package 'logger' isn't a dependency of the importing package • lib/services/router.dart:8:8 • depend_on_referenced_packages
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:302:28 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:303:39 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:304:10 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:311:24 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:312:31 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:313:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:314:35 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/services/router.dart:316:10 • curly_braces_in_flow_control_structures
+   info • Statements in a for should be enclosed in a block • lib/services/router.dart:358:45 • curly_braces_in_flow_control_structures
+   info • Statements in a for should be enclosed in a block • lib/services/router.dart:377:41 • curly_braces_in_flow_control_structures
+   info • Constructors for public widgets should have a named 'key' parameter • lib/services/router.dart:383:7 • use_key_in_widget_constructors
+   info • Invalid use of a private type in a public API • lib/services/router.dart:385:3 • library_private_types_in_public_api
+   info • Use 'const' with the constructor to improve performance • lib/services/router.dart:406:16 • prefer_const_constructors
+   info • Don't invoke 'print' in production code • lib/services/router.dart:428:7 • avoid_print
+   info • Use 'const' with the constructor to improve performance • lib/services/router.dart:445:29 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/services/router.dart:447:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/services/router.dart:447:27 • prefer_const_constructors
+   info • The imported package 'logger' isn't a dependency of the importing package • lib/services/router_os_client.dart:7:8 • depend_on_referenced_packages
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/add_single_card_page.dart:38:45 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/add_single_card_page.dart:94:12 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/add_single_card_page.dart:95:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/add_single_card_page.dart:96:24 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/add_single_card_page.dart:190:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/card_info_page.dart:98:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/card_info_page.dart:151:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/card_info_page.dart:167:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/card_info_page.dart:191:59 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/card_sessions_page.dart:99:12 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/card_sessions_page.dart:100:14 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/views/cards/cards/card_sessions_page.dart:102:19 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/card_sessions_page.dart:103:11 • prefer_const_constructors
+   info • Unnecessary 'const' keyword • lib/views/cards/cards/card_sessions_page.dart:107:37 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/cards/cards/cards_list_page.dart:44:88 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/cards/cards/cards_list_page.dart:51:87 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/cards/cards/cards_list_page.dart:58:89 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/cards_list_page.dart:102:33 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/cards/cards/cards_list_page.dart:113:53 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/cards/cards_list_page.dart:133:46 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/cards_list_page.dart:217:12 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/views/cards/cards/cards_list_page.dart:219:17 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards/cards_list_page.dart:220:9 • prefer_const_constructors
+   info • Unnecessary 'const' keyword • lib/views/cards/cards/cards_list_page.dart:224:35 • unnecessary_const
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards_unit.dart:94:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards_unit.dart:95:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/cards_unit.dart:96:24 • prefer_const_constructors
+   info • Unnecessary 'const' keyword • lib/views/cards/expired_users_page.dart:123:32 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/expired_users_page.dart:136:46 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/cards/expired_users_page.dart:146:49 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/cards/expired_users_page.dart:163:43 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/expired_users_page.dart:280:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/expired_users_page.dart:284:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/expired_users_page.dart:380:22 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/cards/expired_users_page.dart:395:16 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/profiles/add_profile_page.dart:38:45 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/profiles/add_profile_page.dart:152:12 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/profiles/add_profile_page.dart:153:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/profiles/add_profile_page.dart:154:24 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/profiles/add_profile_page.dart:181:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/profiles/edit_profile_page.dart:38:45 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/profiles/edit_profile_page.dart:152:12 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/profiles/edit_profile_page.dart:153:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/cards/profiles/edit_profile_page.dart:154:24 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/profiles/edit_profile_page.dart:181:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/cards/profiles/profiles_list_page.dart:64:51 • deprecated_member_use
+warning • The declaration '_openUpsertSheet' isn't referenced • lib/views/cards/profiles/profiles_list_page.dart:93:8 • unused_element
+   info • Unnecessary 'const' keyword • lib/views/cards/profiles/profiles_list_page.dart:100:48 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/distributors/distributor_statement_page.dart:139:41 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/distributors/distributor_statement_page.dart:145:24 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/distributors/distributor_statement_page.dart:163:32 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/distributors/distributor_statement_page.dart:181:53 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/distributors/distributor_statement_page.dart:194:20 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/distributors/distributor_statement_page.dart:232:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/distributors/distributor_statement_page.dart:243:28 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/distributors/distributors_list_page.dart:83:65 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/distributors/distributors_list_page.dart:110:43 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/distributors/distributors_list_page.dart:160:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/distributors/distributors_list_page.dart:180:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/distributors/distributors_list_page.dart:211:43 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/hotspot/hotspot_page.dart:147:43 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/hotspot/hotspot_page.dart:239:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/hotspot/hotspot_page.dart:376:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/hotspot/hotspot_page.dart:1013:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/hotspot/hotspot_page.dart:1121:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/login_page.dart:43:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/login_page.dart:46:47 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/login_page.dart:185:14 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/login_page.dart:186:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/login_page.dart:187:24 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/login_page.dart:188:25 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/login_page.dart:188:76 • prefer_const_constructors
+warning • The value of the field '_primary' isn't used • lib/views/maintenance/cable_test_page.dart:17:16 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/cable_test_page.dart:210:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/cable_test_page.dart:281:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/cable_test_page.dart:283:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/cable_test_page.dart:291:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/cable_test_page.dart:375:35 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/maintenance/cable_test_page.dart:464:49 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/maintenance/cable_test_page.dart:482:69 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/maintenance/cable_test_page.dart:488:59 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/cable_test_page.dart:514:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/cable_test_page.dart:525:22 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/maintenance/maintenance_hub_page.dart:81:53 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/maintenance_hub_page.dart:107:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/maintenance_hub_page.dart:135:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/maintenance_hub_page.dart:164:25 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/tool_list_page.dart:97:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/tool_list_page.dart:140:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/maintenance/tool_list_page.dart:160:50 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/maintenance/tool_list_page.dart:215:20 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/backup_restore_page.dart:38:45 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:97:23 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/views/more/backup_restore_page.dart:98:35 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:99:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:99:43 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:100:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:102:36 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:102:54 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:104:27 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:104:43 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:123:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:124:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/more/backup_restore_page.dart:126:24 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/backup_restore_page.dart:148:28 • deprecated_member_use
+warning • The declaration '_buildCustomCheckbox' isn't referenced • lib/views/more/backup_restore_page.dart:170:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/backup_restore_page.dart:182:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/router_backup_page.dart:153:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/router_backup_page.dart:168:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/router_backup_page.dart:240:20 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_features_page.dart:86:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_features_page.dart:88:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_features_page.dart:120:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_features_page.dart:130:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_features_page.dart:151:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_features_page.dart:169:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_page.dart:92:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_page.dart:99:30 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_page.dart:175:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_setup_page.dart:183:26 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/more/telegram_setup_page.dart:190:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/add_batch_page.dart:88:35 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/batches/add_batch_page.dart:297:11 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/batches/add_batch_page.dart:299:20 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/add_batch_page.dart:412:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batch_cards_page.dart:134:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batch_cards_page.dart:185:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batch_cards_page.dart:190:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batch_cards_page.dart:217:53 • deprecated_member_use
+warning • The declaration '_buildTableCard1' isn't referenced • lib/views/prints/batches/batch_cards_page.dart:245:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batch_cards_page.dart:261:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batch_cards_page.dart:330:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batch_cards_page.dart:330:72 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/batches/batch_cards_page.dart:357:12 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/batches/batch_cards_page.dart:359:14 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/views/prints/batches/batch_cards_page.dart:360:19 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/batches/batch_cards_page.dart:361:11 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batches_list_page.dart:126:53 • deprecated_member_use
+warning • The declaration '_buildFilterTabs' isn't referenced • lib/views/prints/batches/batches_list_page.dart:184:10 • unused_element
+warning • The left operand can't be null, so the right operand is never executed • lib/views/prints/batches/batches_list_page.dart:352:45 • dead_null_aware_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batches_list_page.dart:386:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/batches/batches_list_page.dart:387:64 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/prints/batches/batches_list_page.dart:447:72 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/prints/batches/batches_list_page.dart:448:66 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/prints/batches/batches_list_page.dart:480:74 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/prints/batches/batches_list_page.dart:481:85 • unnecessary_const
+warning • The declaration '_buildInfoCard' isn't referenced • lib/views/prints/prints_unit.dart:104:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/prints_unit.dart:110:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/prints_unit.dart:113:33 • deprecated_member_use
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/views/prints/templates/template_shared_widgets.dart:162:152 • prefer_const_literals_to_create_immutables
+   info • Parameter 'key' could be a super parameter • lib/views/prints/templates/template_shared_widgets.dart:190:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_form.dart:290:78 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/prints/templates/templates_form.dart:293:40 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_form.dart:311:64 • deprecated_member_use
+warning • The declaration '_gradientButton' isn't referenced • lib/views/prints/templates/templates_form.dart:363:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_form.dart:369:49 • deprecated_member_use
+warning • The declaration '_footer' isn't referenced • lib/views/prints/templates/templates_form.dart:377:10 • unused_element
+   info • Unnecessary 'const' keyword • lib/views/prints/templates/templates_form.dart:377:195 • unnecessary_const
+   info • Parameter 'key' could be a super parameter • lib/views/prints/templates/templates_form.dart:424:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_form.dart:726:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_list_page.dart:106:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_list_page.dart:123:52 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/templates/templates_list_page.dart:144:81 • prefer_const_constructors
+   info • Unnecessary 'const' keyword • lib/views/prints/templates/templates_list_page.dart:197:61 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_list_page.dart:203:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/prints/templates/templates_list_page.dart:212:123 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/templates/templates_list_page.dart:244:32 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/templates/templates_list_page.dart:245:12 • prefer_const_constructors
+   info • Use 'const' literals as arguments to constructors of '@immutable' classes • lib/views/prints/templates/templates_list_page.dart:247:17 • prefer_const_literals_to_create_immutables
+   info • Use 'const' with the constructor to improve performance • lib/views/prints/templates/templates_list_page.dart:248:9 • prefer_const_constructors
+warning • The declaration '_footer' isn't referenced • lib/views/prints/templates/templates_list_page.dart:255:10 • unused_element
+   info • Unnecessary 'const' keyword • lib/views/prints/templates/templates_list_page.dart:255:195 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/reports/monitor_page.dart:102:47 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/monitor_page.dart:153:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/monitor_page.dart:280:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/monitor_page.dart:293:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/monitor_page.dart:322:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/sales_report_page.dart:105:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/sales_report_page.dart:140:52 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/reports/sales_report_page.dart:146:72 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/reports/sales_report_page.dart:159:37 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/reports/sales_report_page.dart:161:68 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/sales_report_page.dart:174:52 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/reports/sales_report_page.dart:181:86 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/sales_report_page.dart:198:68 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/reports/sales_report_page.dart:205:55 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/sales_report_page.dart:222:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/sales_report_page.dart:257:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/sales_report_page.dart:276:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:98:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:111:66 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:156:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:166:74 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:178:67 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:204:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:217:78 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:232:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:242:67 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/reports/system_status_report_page.dart:255:51 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:270:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/reports/system_status_report_page.dart:316:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/blocked_sites_page.dart:88:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/blocked_sites_page.dart:91:33 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/sites/blocked_sites_page.dart:99:18 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/sites/blocked_sites_page.dart:115:20 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/blocked_sites_page.dart:203:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_cache_page.dart:107:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_cache_page.dart:118:46 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/sites/dns_cache_page.dart:128:43 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_cache_page.dart:150:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_cache_page.dart:153:35 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/sites/dns_cache_page.dart:189:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/sites/dns_cache_page.dart:202:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/sites/dns_cache_page.dart:206:26 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/sites/dns_cache_page.dart:212:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/sites/dns_cache_page.dart:216:26 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_cache_page.dart:237:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_settings_page.dart:102:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_settings_page.dart:133:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_settings_page.dart:136:35 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/sites/dns_settings_page.dart:149:60 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/sites/dns_settings_page.dart:168:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/active_users_page.dart:57:51 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/users/active_users_page.dart:73:65 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/active_users_page.dart:117:48 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/active_users_page.dart:159:93 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/users/host_users_page.dart:50:88 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/host_users_page.dart:57:88 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/host_users_page.dart:64:87 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/host_users_page.dart:71:91 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/host_users_page.dart:97:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/host_users_page.dart:101:52 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/users/host_users_page.dart:118:48 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:63:88 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:70:88 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:77:87 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/saved_users_page.dart:125:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/saved_users_page.dart:176:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/saved_users_page.dart:185:53 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:194:60 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:196:26 • unnecessary_const
+   info • The referenced identifier is a wildcard • lib/views/users/saved_users_page.dart:197:61 • no_wildcard_variable_uses
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:232:22 • unnecessary_const
+   info • The referenced identifier is a wildcard • lib/views/users/saved_users_page.dart:332:35 • no_wildcard_variable_uses
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:334:20 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/saved_users_page.dart:439:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/users/saved_users_page.dart:461:33 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/users/saved_users_page.dart:473:53 • unnecessary_const
+   info • Use 'const' with the constructor to improve performance • lib/views/users/users_unit.dart:69:13 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/users/users_unit.dart:70:22 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/users/users_unit.dart:71:24 • prefer_const_constructors
+   info • Unnecessary 'const' keyword • lib/views/widgets/app_scaffold_layout.dart:133:20 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/home_carousel.dart:83:30 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/home_carousel.dart:89:30 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/home_carousel.dart:100:51 • deprecated_member_use
+   info • Unnecessary 'const' keyword • lib/views/widgets/home_carousel.dart:117:48 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/widgets/home_carousel.dart:202:51 • unnecessary_const
+   info • Unnecessary 'const' keyword • lib/views/widgets/home_header.dart:45:47 • unnecessary_const
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/menu_item_card.dart:25:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/menu_item_card.dart:33:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/cards/main_action_card.dart:28:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/cards/main_action_card.dart:47:34 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/widgets/shared/cards/main_action_card.dart:73:32 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/widgets/shared/cards/main_action_card.dart:82:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/widgets/shared/layouts/app_mini_footer.dart:19:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/views/widgets/shared/layouts/app_mini_footer.dart:19:29 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/app_mini_footer.dart:26:29 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/gradient_button.dart:46:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/main_gate_header.dart:52:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/main_gate_header.dart:65:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/main_gate_header.dart:89:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/main_gate_header.dart:108:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/modern_input.dart:29:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/sub_page_header.dart:72:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/sub_page_header.dart:83:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/shared/layouts/sub_page_header.dart:89:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/widgetsCard/card_item_tile.dart:44:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/widgetsCard/card_item_tile.dart:62:38 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/views/widgets/widgetsCard/card_item_tile.dart:87:30 • prefer_const_constructors
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/widgetsCard/session_info_card.dart:29:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/widgetsCard/session_info_card.dart:38:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/widgetsCard/session_info_card.dart:94:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/views/widgets/widgetsCard/status_badge.dart:15:55 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • test/mikrotik_duration_test.dart:138:9 • prefer_const_constructors
+
+350 issues found. (ran in 18.5s)
