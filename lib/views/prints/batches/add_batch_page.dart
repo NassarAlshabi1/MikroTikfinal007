@@ -265,21 +265,22 @@ class _AddBatchViewState extends State<AddBatchView> {
     final template = controller.allTemplates.firstWhereOrNull((item) => item.id == controller.selectedTemplate.value);
     final requiresPassword = template?.withPassword ?? false;
     final options = <_PasswordOption>[
-      const _PasswordOption('none', 'بدون كلمة مرور', 'القالب لا يطبع كلمة مرور', Icons.remove_circle_outline_rounded),
-      const _PasswordOption('diff', 'كلمات مختلفة', 'إنشاء كلمة مرور فريدة لكل كرت', Icons.pin_rounded),
-      const _PasswordOption('same', 'مثل اسم المستخدم', 'استخدم اسم المستخدم ككلمة مرور', Icons.sync_alt_rounded),
+      const _PasswordOption('none', 'اسم مستخدم فقط', 'بدون كلمة مرور', Icons.person_outline_rounded),
+      const _PasswordOption('diff', 'اسم مستخدم + كلمة مرور', 'كلمة مرور فريدة لكل كرت', Icons.password_rounded),
     ];
 
     return _sectionCard(
       icon: Icons.password_rounded,
-      title: 'نمط كلمة المرور',
-      subtitle: requiresPassword
-          ? 'القالب المختار يتضمن خانة لكلمة المرور؛ اختر كلمات مرور مختلفة.'
-          : 'اختر النمط المناسب للقالب.',
+      title: 'نمط توليد الكرت',
+      subtitle: template == null
+          ? 'اختر قالبًا أولًا؛ سيتم تفعيل النمط المطابق لتصميمه فقط.'
+          : requiresPassword
+              ? 'القالب يطبع خانة كلمة مرور؛ النمط المطابق هو اسم مستخدم مع كلمة مرور.'
+              : 'القالب لا يطبع كلمة مرور؛ النمط المطابق هو اسم مستخدم فقط.',
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth > 520 ? 3 : 1;
+            final columns = constraints.maxWidth > 520 ? 2 : 1;
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -292,8 +293,9 @@ class _AddBatchViewState extends State<AddBatchView> {
               ),
               itemBuilder: (context, index) {
                 final option = options[index];
-                final selected = controller.selectedPasswordType == option.id;
-                final disabled = requiresPassword ? option.id != 'diff' : option.id == 'diff';
+                final selected = template != null && controller.selectedPasswordType == option.id;
+                final disabled = template == null ||
+                    (requiresPassword ? option.id != 'diff' : option.id == 'diff');
                 return _passwordOption(
                   option,
                   selected: selected,

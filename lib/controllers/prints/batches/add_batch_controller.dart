@@ -15,11 +15,6 @@ import 'package:mikronet/models/response.dart';
 import 'package:mikronet/views/prints/templates/pdf_view.dart';
 
 class BatchesFormController extends GetxController {
-  List<Map<String, dynamic>> passwordTypes = [
-    {"id": "none", "label": "بدون \n", "icon": Icons.minimize_outlined},
-    {"id": "diff", "label": "ارقام مختلفة \n", "icon": Icons.pin_outlined},
-    {"id": "same", "label": "مطابقة اسم المستخدم", "icon": Icons.abc_rounded},
-  ];
   Map dataInsert = {};
   List<PrintTemplatesModel> allTemplates = [];
   List<ProfilesModel> allProfiles = [];
@@ -112,10 +107,9 @@ class BatchesFormController extends GetxController {
   void _normalizePasswordTypeForTemplate() {
     final template = allTemplates.firstWhereOrNull((item) => item.id == selectedTemplate.value);
     if (template == null) return;
-    if (template.withPassword && selectedPasswordType != 'diff') {
-      selectedPasswordType = 'diff';
-    } else if (!template.withPassword && selectedPasswordType == 'diff') {
-      selectedPasswordType = 'none';
+    final matchingType = template.withPassword ? 'diff' : 'none';
+    if (selectedPasswordType != matchingType) {
+      selectedPasswordType = matchingType;
     }
   }
 
@@ -165,15 +159,13 @@ class BatchesFormController extends GetxController {
       users: existingUsers, 
     );
 
-    if (dataInsert["password_type"] == "diff") {
+    if (selectedPasswordType == "diff") {
       generatedPasswords = generateUniqueRandomStrings(
         count: count,
         length: pLen,
       );
-    } else if (dataInsert["password_type"] == "same") {
-      generatedPasswords = List.from(generatedUsernames);
     } else {
-      generatedPasswords = List.generate(count, (i) => "");
+      generatedPasswords = List<String>.filled(count, "");
     }
 
     generatedCards = List.generate(
@@ -277,14 +269,6 @@ class BatchesFormController extends GetxController {
       }
     }
 
-    if (!template.withPassword && selectedPasswordType == "same") {
-      bool confirm = await showConfirmDialog(
-        message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
-        onConfirm: (){}
-      );
-      if (!confirm) return;
-    }
-
     generationProgress.value = 0.0;
     generationStatus.value = "يرجى الانتظار...\nجلب الكروت من ميكروتك";
     showProgressDialog();
@@ -360,13 +344,6 @@ class BatchesFormController extends GetxController {
       }
     }
 
-    if (!template.withPassword && selectedPasswordType == "same") {
-      bool confirm = await showConfirmDialog(
-        message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
-        onConfirm: (){}
-      );
-      if (!confirm) return;
-    }
     
     var profile = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString());
     if (profile == null) {
@@ -391,39 +368,40 @@ class BatchesFormController extends GetxController {
   }
 
   void validation() {
-    // تحقق من اختيار العميل أولاً
-    if (selectedCustomer.value == "") {
+    if (selectedCustomer.value.trim().isEmpty) {
       throw "يرجى اختيار العميل";
     }
-    if (selectedProfile.value == "") {
+    if (selectedProfile.value.trim().isEmpty) {
       throw "يرجى اختيار الباقة";
     }
-    if (selectedTemplate.value == 0) {
-      throw "يرجى اختيار القالب";
+    if (batchName.text.trim().isEmpty) {
+      throw "يرجى إدخال اسم الدفعة";
     }
-    if (batchName.text.trim().isEmpty ||
-        numOfCards.text.trim().isEmpty ||
-        usernameLength.text.trim().isEmpty) {
-      throw "يرجى تعبئة جميع الحقول";
+
+    final cardCount = int.tryParse(numOfCards.text.trim());
+    if (cardCount == null || cardCount <= 0) {
+      throw "عدد الكروت يجب أن يكون رقمًا أكبر من صفر";
     }
-    var template = allTemplates.firstWhere((t) => t.id == selectedTemplate.value);
+    final usernameSize = int.tryParse(usernameLength.text.trim());
+    if (usernameSize == null || usernameSize <= 0) {
+      throw "طول اسم المستخدم يجب أن يكون رقمًا أكبر من صفر";
+    }
+
+    final template = allTemplates.firstWhereOrNull((item) => item.id == selectedTemplate.value);
+    if (template == null) {
+      throw "يرجى اختيار قالب طباعة صالح";
+    }
+
     if (template.withPassword) {
-      switch (selectedPasswordType) {
-        case "none":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور بلا ";
-        case "same":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم ";
-        default:
-          if (passwordLength.text.trim().isEmpty) {
-            throw "ادخل طول كلمة المرور ";
-          }
+      if (selectedPasswordType != "diff") {
+        throw "القالب المحدد يطبع كلمة مرور؛ اختر نمط (اسم مستخدم + كلمة مرور)";
       }
-    } else {
-      switch (selectedPasswordType) {
-        case "diff":
-          throw "لايمكن ان يكون نمط كلمة المرور مختلف بينما القالب بدون كلمة مرور";
-        default:
+      final passwordSize = int.tryParse(passwordLength.text.trim());
+      if (passwordSize == null || passwordSize <= 0) {
+        throw "طول كلمة المرور يجب أن يكون رقمًا أكبر من صفر";
       }
+    } else if (selectedPasswordType != "none") {
+      throw "القالب المحدد لا يطبع كلمة مرور؛ اختر نمط (اسم مستخدم فقط)";
     }
   }
 
