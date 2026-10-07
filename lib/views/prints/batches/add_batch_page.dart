@@ -570,7 +570,7 @@ class _AddBatchViewState extends State<AddBatchView> {
     );
   }
 
-  Widget _actionBar(BatchesFormController controller) {
+  Widget _buildActionBar(BatchesFormController controller) {
     return SafeArea(
       top: false,
       child: Container(
