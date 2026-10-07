@@ -27,7 +27,6 @@ class AddBatchView extends StatefulWidget {
 
 class _AddBatchViewState extends State<AddBatchView> {
   bool showCustomerOnCard = false;
-  String namePattern = 'الأرقام فقط';
 
   BatchesFormController get form => widget.controller;
 
@@ -83,6 +82,8 @@ class _AddBatchViewState extends State<AddBatchView> {
                           _buildPagesAndCards(controller),
                           const SizedBox(height: 10),
                           _buildRangeRow(),
+                          const SizedBox(height: 10),
+                          _buildPrefixSuffix(controller),
                           const SizedBox(height: 10),
                           _buildGenerateMode(controller),
                           const SizedBox(height: 13),
@@ -312,25 +313,47 @@ class _AddBatchViewState extends State<AddBatchView> {
   }
 
   Widget _buildPasswordType(BatchesFormController controller) {
-    return _settingsCard(
-      title: 'اختر صنف الكرت',
-      icon: Icons.password_rounded,
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: controller.selectedPasswordType,
-          icon: const Icon(Icons.unfold_more_rounded, color: AppColors.textMuted),
-          dropdownColor: AppColors.card,
-          items: controller.passwordTypes.map((item) {
-            final id = item['id'] as String;
-            return DropdownMenuItem(value: id, child: Text(item['label'].toString().replaceAll('\n', ' ')));
-          }).toList(),
-          onChanged: (value) {
-            if (value == null) return;
-            controller.selectedPasswordType = value;
-            controller.update();
-          },
-        ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(17), border: Border.all(color: AppColors.border)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const Text('اختر صنف الكرت', style: TextStyle(color: AppColors.text, fontSize: 12)),
+          const SizedBox(height: 7),
+          Row(
+            children: controller.passwordTypes.map((item) {
+              final id = item['id'] as String;
+              final selected = controller.selectedPasswordType == id;
+              return Expanded(
+                child: InkWell(
+                  onTap: () {
+                    controller.selectedPasswordType = id;
+                    controller.update();
+                  },
+                  borderRadius: BorderRadius.circular(11),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: selected ? const Color(0xFF1E7FAA) : AppColors.soft,
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(color: selected ? AppColors.info : AppColors.border),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(item['icon'] as IconData, color: selected ? Colors.white : AppColors.textMuted, size: 19),
+                        const SizedBox(height: 3),
+                        Text(item['label'].toString().replaceAll('\n', ' '), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: selected ? Colors.white : AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -338,9 +361,19 @@ class _AddBatchViewState extends State<AddBatchView> {
   Widget _buildLengthAndCount(BatchesFormController controller) {
     return Row(
       children: [
-        Expanded(child: _textField(controller.usernameLength, 'اختر نمط الاسم', suffix: namePattern, onTap: _chooseNamePattern)),
+        Expanded(child: _textField(controller.usernameLength, 'اختر نمط الاسم', suffix: _namePatternLabel(controller.selectedNamePattern), onTap: () => _chooseNamePattern(controller))),
         const SizedBox(width: 10),
         Expanded(child: _textField(controller.passwordLength, 'عدد الأرقام بالكرت', numeric: true)),
+      ],
+    );
+  }
+
+  Widget _buildPrefixSuffix(BatchesFormController controller) {
+    return Row(
+      children: [
+        Expanded(child: _textField(controller.prefix, 'بادئة اختيارية', suffix: 'Prefix')),
+        const SizedBox(width: 10),
+        Expanded(child: _textField(controller.suffix, 'لاحقة اختيارية', suffix: 'Suffix')),
       ],
     );
   }
@@ -526,7 +559,23 @@ class _AddBatchViewState extends State<AddBatchView> {
     );
   }
 
-  void _chooseNamePattern() {
+  String _namePatternLabel(String value) {
+    switch (value) {
+      case 'letters':
+        return 'حروف فقط';
+      case 'mixed':
+        return 'حروف وأرقام';
+      default:
+        return 'الأرقام فقط';
+    }
+  }
+
+  void _chooseNamePattern(BatchesFormController controller) {
+    final options = <Map<String, String>>[
+      {'id': 'numbers', 'label': 'الأرقام فقط'},
+      {'id': 'letters', 'label': 'حروف فقط'},
+      {'id': 'mixed', 'label': 'حروف وأرقام'},
+    ];
     Get.bottomSheet(
       SafeArea(
         child: Container(
@@ -534,11 +583,12 @@ class _AddBatchViewState extends State<AddBatchView> {
           decoration: const BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: ['الأرقام فقط', 'حروف وأرقام', 'حروف صغيرة'].map((value) {
+            children: options.map((option) {
+              final value = option['id']!;
               return ListTile(
-                title: Text(value, textAlign: TextAlign.right),
-                trailing: Radio<String>(value: value, groupValue: namePattern, onChanged: (v) { if (v != null) { setState(() => namePattern = v); Get.back(); } }),
-                onTap: () { setState(() => namePattern = value); Get.back(); },
+                title: Text(option['label']!, textAlign: TextAlign.right),
+                trailing: Radio<String>(value: value, groupValue: controller.selectedNamePattern, onChanged: (v) { if (v != null) { controller.selectedNamePattern = v; controller.update(); Get.back(); } }),
+                onTap: () { controller.selectedNamePattern = value; controller.update(); Get.back(); },
               );
             }).toList(),
           ),

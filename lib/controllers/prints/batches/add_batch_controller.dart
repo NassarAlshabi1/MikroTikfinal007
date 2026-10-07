@@ -40,6 +40,8 @@ class BatchesFormController extends GetxController {
   RxString selectedProfile = "".obs;
   RxString selectedCustomer = "".obs; // العميل المختار
   String selectedPasswordType = "none";
+  /// نوع الرموز المستخدمة لاسم المستخدم: أرقام، حروف، أو خليط.
+  String selectedNamePattern = "numbers";
   DateTime dateTime = DateTime.now();
 
   // Progress Variables للـ Dialog
@@ -146,6 +148,7 @@ class BatchesFormController extends GetxController {
       length: uLen,
       prefix: prefix.text.trim(),
       suffix: suffix.text.trim(),
+      type: selectedNamePattern,
       users: existingUsers, 
     );
 
@@ -396,6 +399,7 @@ class BatchesFormController extends GetxController {
       "profile": selectedProfile.value,
       "template_id": selectedTemplate.value,
       "password_type": selectedPasswordType,
+      "name_pattern": selectedNamePattern,
       "card_prefix": prefix.text,
       "card_suffix": suffix.text,
       "username_length": usernameLength.text,
