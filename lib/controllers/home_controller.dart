@@ -18,6 +18,9 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   // 🔹 متغيرات مساحة القرص الجديدة
   var diskSpacePercent = "0%".obs; 
   var diskSpaceDetails = "جاري الفحص...".obs; 
+  var routerAddress = "192.168.1.100".obs;
+  var version = "-".obs;
+  var isOnline = false.obs;
   
   var currentPage = 0.obs;
 
@@ -58,11 +61,14 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
 
   // ================= دالة جلب البيانات الحقيقية من السيرفر =================
   Future<void> fetchRealData() async {
-    var sysResponse = await ReportsApi.getSystemState();
-    if (sysResponse.status && sysResponse.data != null) {
+    try {
+      var sysResponse = await ReportsApi.getSystemState();
+      if (sysResponse.status && sysResponse.data != null) {
+        isOnline.value = true;
       var sys = sysResponse.data!;
       cpuPercent.value = "${sys.cpu}%";
       uptime.value = sys.uptime.formatUptime.split("\n").join(" "); 
+      version.value = sys.version.isEmpty ? "-" : sys.version;
 
       double totalRam = double.tryParse(sys.totalMemory.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
       double freeRam = double.tryParse(sys.freeMemory.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
@@ -83,11 +89,15 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
         // تنسيق النص ليعرض رقم واحد بعد الفاصلة (مثل: المستخدم 5.2 MB / الإجمالي 120.5 MB)
         diskSpaceDetails.value = "المستخدم: ${usedDisk.toStringAsFixed(1).toString().formatBytes} / الإجمالي: ${totalDisk.toStringAsFixed(1).toString().formatBytes} MB";
       }
-    }
+      }
 
-    var activeResponse = await ActiveUsersApi.getAllActive();
-    if (activeResponse.status && activeResponse.data != null) {
-      activeUsersCount.value = "${activeResponse.data!.length} متصل";
+      var activeResponse = await ActiveUsersApi.getAllActive();
+      if (activeResponse.status && activeResponse.data != null) {
+        activeUsersCount.value = "${activeResponse.data!.length} متصل";
+      }
+    } catch (_) {
+      // تبقى آخر بيانات ناجحة ظاهرة عند انقطاع الشبكة؛ لا تنهار الشاشة.
+      isOnline.value = false;
     }
   }
 
