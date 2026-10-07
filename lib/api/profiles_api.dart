@@ -64,16 +64,20 @@ class ProfilesApi {
 
     if(profileName!=""){
       List links = await _getLimitationsLinks(whereProfile: "?profile=$profileName");
-      Map link=links[0];
+      Map link = links.isNotEmpty ? links[0] : {};
 
-      List limits = await _getLimitations(whereNane: "?name=${link["limitation"]}");
-      Map limit=limits[0];
+      List limits = (link.isNotEmpty && link["limitation"] != null)
+          ? await _getLimitations(whereNane: "?name=${link["limitation"]}")
+          : [];
+      Map limit = limits.isNotEmpty ? limits[0] : {};
 
-      List hotspot = await _getHotspotProfiles(whereName: "?name=${limit["group-name"]}");
-      Map hots=hotspot[0];
+      List hotspot = (limit.isNotEmpty && limit["group-name"] != null)
+          ? await _getHotspotProfiles(whereName: "?name=${limit["group-name"]}")
+          : [];
+      Map hots = hotspot.isNotEmpty ? hotspot[0] : {};
 
       List profiles = await _getProfilesNames(whereName: "?name=$profileName");
-      Map profile=profiles[0];
+      Map profile = profiles.isNotEmpty ? profiles[0] : {};
 
       results.addAll([[hots],[limit],[profile],[link]]);
       return results;
@@ -187,7 +191,7 @@ class ProfilesApi {
       );
       return "done";
     } catch (e) {
-      return e.toString();
+      rethrow;
     }
   }
 
@@ -211,7 +215,7 @@ class ProfilesApi {
       );
       return "done";
     } catch (e) {
-      return e.toString();
+      rethrow;
     }
   }
 
@@ -235,7 +239,7 @@ class ProfilesApi {
       );
       return "done";
     } catch (e) {
-      return e.toString();
+      rethrow;
     }
   }
 
@@ -253,7 +257,7 @@ class ProfilesApi {
       );
       return "done";
     } catch (e) {
-      return e.toString();
+      rethrow;
     }
   }
   

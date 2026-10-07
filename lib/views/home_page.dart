@@ -129,6 +129,11 @@ class HomePage extends GetView<HomeController> {
         "onTap": controller.goToUsers
       },
       {
+        "title": "الموزعين ونقاط البيع",
+        "icon": Icons.storefront_rounded,
+        "onTap": controller.goToDistributors
+      },
+      {
         "title": "ادارة عملية الطباعة",
         "icon": Icons.print_rounded,
         "onTap": controller.goToPrint
@@ -139,7 +144,7 @@ class HomePage extends GetView<HomeController> {
         "onTap": controller.goToSites
       },
       {
-        "title": "التقارير",
+        "title": "التقارير والمبيعات",
         "icon": Icons.analytics_rounded,
         "onTap": controller.goToReports
       },

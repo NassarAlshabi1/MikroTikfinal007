@@ -103,12 +103,12 @@ class ProfilesListController extends GetxController {
 
     final data = {
       "name": nameCtrl.text, 
-      "price": priceCtrl.text.isEmpty?'0':priceCtrl.text,
+      "price": priceCtrl.text.isEmpty ? '0' : priceCtrl.text,
       "validity": validity, 
       "uptime": uptime,
       "palance": palance, 
-      "speed": speedCtrl.text.trim().isEmpty?'0/0':speedCtrl.text.toUpperCase().trim().toUpperCase(),
-      "customer": customers.first.name, 
+      "speed": speedCtrl.text.trim().isEmpty ? '0/0' : speedCtrl.text.toUpperCase().trim(),
+      "customer": customers.isNotEmpty ? customers.first.name : "admin", 
       "users": "1",
     };
     // print('\n');print('\n');print('\n');print('\n');print('\n');

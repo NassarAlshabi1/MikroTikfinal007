@@ -337,12 +337,25 @@ class CardsApi7 {
           tag: 'cards'
         );
       
-      List result=[];
+      // بناء جدول مطابقة O(1) لتسريع المزامنة بشكل هائل
+      final Map<String, Map> profilesByUser = {};
+      for (var profile in myCardsProfiles) {
+        if (profile is Map) {
+          final user = profile['user']?.toString();
+          if (user != null && user.isNotEmpty) {
+            profilesByUser[user] = profile;
+          }
+        }
+      }
+
+      List result = [];
       for (var card in myCards) {
-        var link=myCardsProfiles.where((profile)=>profile['user']==card['name']).toList();
-        Map temp=Map.from(card);
-        temp['profile']=link.isNotEmpty?link.last:{};
-        result.add(temp);  
+        if (card is Map) {
+          final name = card['name']?.toString() ?? '';
+          Map temp = Map.from(card);
+          temp['profile'] = profilesByUser[name] ?? {};
+          result.add(temp);
+        }
       }
       return result;
     } catch (e) {
