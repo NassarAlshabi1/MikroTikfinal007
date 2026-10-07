@@ -85,6 +85,7 @@ class BatchesFormController extends GetxController {
           !allTemplates.any((t) => t.id == selectedTemplate.value)) {
         selectedTemplate.value = allTemplates.first.id;
       }
+      _normalizePasswordTypeForTemplate();
 
       update();
     } catch (e) {
@@ -102,6 +103,21 @@ class BatchesFormController extends GetxController {
   /// إعادة تحميل القوالب (زر التحديث في الشاشة).
   Future<void> reloadTemplates() => getAllTemplates(showError: false);
 
+  void selectTemplate(int id) {
+    selectedTemplate.value = id;
+    _normalizePasswordTypeForTemplate();
+    update();
+  }
+
+  void _normalizePasswordTypeForTemplate() {
+    final template = allTemplates.firstWhereOrNull((item) => item.id == selectedTemplate.value);
+    if (template == null) return;
+    if (template.withPassword && selectedPasswordType != 'diff') {
+      selectedPasswordType = 'diff';
+    } else if (!template.withPassword && selectedPasswordType == 'diff') {
+      selectedPasswordType = 'none';
+    }
+  }
 
   Future<void> getallProfiles() async {
     try {

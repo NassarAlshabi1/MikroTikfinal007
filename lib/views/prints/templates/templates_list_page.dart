@@ -1,17 +1,11 @@
-// import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/app_pages.dart';
-import 'package:mikronet/views/widgets/shared/layouts/floating_button.dart';
-import 'package:mikronet/views/widgets/shared/layouts/main_gate_header.dart';
+import 'package:mikronet/core/app_theme.dart';
+import 'package:mikronet/controllers/helpers/confirm_dialog.dart';
 import '../../../controllers/prints/templates/templates_list_controller.dart';
 import '/models/print_model.dart';
-
-
-// import '/views/helpers/dialogs.dart';
-// import 'templates_form.dart';
-// import '../print/page_preview.dart';
+import '../../widgets/shared/layouts/sub_page_header.dart';
 
 class TemplatesListPage extends GetView<TemplatesListController> {
   const TemplatesListPage({super.key});
@@ -21,166 +15,272 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
-            const MainGateHeader(title: "مكتبة القوالب المحفوظة", subtitle: "", icon: Icons.bookmarks_rounded), // نفس الهيدر المعتمد
-            GetBuilder<TemplatesListController>(
-              init: controller,
-              builder: (controller) {
-                return Expanded(
-                  child: AnimatedBuilder(
-                    animation: controller,
-                    builder: (_, __) {
-                      if (controller.allTemplates.isEmpty) {
-                        return _buildEmptyState();
-                      }
-                
-                      return Container(
-                        margin:const EdgeInsets.only(bottom: 50),
-                        child: 
-                       ListView.builder(
-                        
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                        itemCount: controller.allTemplates.length,
-                        itemBuilder: (_, i) {
-                          final t = controller.allTemplates[i];
-                          final rows = t.numOfRows ;
-                          final cols = t.numOfColumns ;
-                          final total = rows * cols;
-                          final templateName = t.name; // ?? "قالب بدون اسم";
-                
-                          return _buildTemplateCard(
-                            context, 
-                            t, i, 
-                            templateName, 
-                            total, rows, cols,
-                            // controller.preview,
-                            // controller.delete,
-                            // controller.openEditForm 
-                          );
-                        },
-                      ));
-                    },
-                  ),
-                );
-              }
+            const PremiumHeader(
+              title: 'تصميم الكروت',
+              subtitle: 'مكتبة قوالب الطباعة المحفوظة',
+              icon: Icons.palette_rounded,
             ),
-            //_footer(), // نفس الفوتر المعتمد
+            Expanded(
+              child: GetBuilder<TemplatesListController>(
+                init: controller,
+                builder: (ctrl) {
+                  if (ctrl.isLoading) return _loadingState();
+                  if (ctrl.loadError.isNotEmpty) return _errorState(ctrl);
+                  if (ctrl.allTemplates.isEmpty) return _emptyState();
+
+                  final width = MediaQuery.sizeOf(context).width;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: width > 820 ? 760 : double.infinity),
+                      child: RefreshIndicator(
+                        onRefresh: ctrl.getAll,
+                        color: AppColors.info,
+                        backgroundColor: AppColors.card,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 96),
+                          children: [
+                            _librarySummary(ctrl),
+                            if (ctrl.skippedTemplates > 0) ...[
+                              const SizedBox(height: 10),
+                              _notice('تم استبعاد ${ctrl.skippedTemplates} سجل قالب غير صالح.', AppColors.warning),
+                            ],
+                            const SizedBox(height: 13),
+                            for (final template in ctrl.allTemplates)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 13),
+                                child: _templateCard(context, ctrl, template),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
-        floatingActionButton: FloatingButton(
-          text: "اضافة قالب",
-          onPressed: ()
-          {
-            Get.toNamed(AppRoutes.addTemplate)?.then((r){
-             controller.getAll();
-            });
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            await Get.toNamed(AppRoutes.addTemplate);
+            await controller.getAll();
           },
-          // onPressed: controller.openAddForm,
-          iconBtn: Icons.add_circle_outline_outlined,
-          )
-       
+          backgroundColor: AppColors.info,
+          foregroundColor: const Color(0xFF07111E),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('إنشاء تصميم'),
+        ),
       ),
     );
   }
 
- 
-  Widget _buildTemplateCard(
-    BuildContext context, 
-    PrintTemplatesModel t, 
-    int index, 
-    String name, 
-    int total, 
-    int rows, 
-    int cols,
-    // Function(int id) onPreview ,
-    // Function(int id) onDelete,
-    // Function(int index) onEdit
-  ) {
+  Widget _loadingState() {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: AppColors.info),
+          SizedBox(height: 12),
+          Text('جارٍ تحميل التصاميم المحفوظة…',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _errorState(TemplatesListController ctrl) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: AppColors.warning, size: 42),
+            const SizedBox(height: 12),
+            const Text('تعذّر تحميل التصاميم',
+                style: TextStyle(color: AppColors.text, fontSize: 15, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 7),
+            Text(ctrl.loadError,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5, height: 1.5)),
+            const SizedBox(height: 15),
+            FilledButton.icon(
+              onPressed: ctrl.getAll,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Container(
+          width: 460,
+          padding: const EdgeInsets.fromLTRB(20, 26, 20, 22),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(color: AppColors.info.withOpacity(0.12), shape: BoxShape.circle),
+                child: const Icon(Icons.style_outlined, color: AppColors.info, size: 31),
+              ),
+              const SizedBox(height: 13),
+              const Text('مكتبة التصاميم فارغة',
+                  style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 15)),
+              const SizedBox(height: 6),
+              const Text('أنشئ قالب طباعة جديدًا لتستخدمه عند توليد دفعة كروت.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11, height: 1.45)),
+              const SizedBox(height: 15),
+              FilledButton.icon(
+                onPressed: () => Get.toNamed(AppRoutes.addTemplate),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('إنشاء أول تصميم'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _librarySummary(TemplatesListController ctrl) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
-        border: Border.all(color: const Color(0xFF1E3A5F)),
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          _iconBadge(Icons.collections_bookmark_rounded, AppColors.info),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('قوالب الطباعة', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 13)),
+                SizedBox(height: 3),
+                Text('قوالبك المحفوظة محليًا وجاهزة للدفعات',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 9.5)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(color: AppColors.info.withOpacity(0.12), borderRadius: BorderRadius.circular(11)),
+            child: Text('${ctrl.allTemplates.length}',
+                style: const TextStyle(color: AppColors.info, fontWeight: FontWeight.w900, fontSize: 13)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _templateCard(BuildContext context, TemplatesListController ctrl, PrintTemplatesModel template) {
+    final cardsPerPage = template.numOfRows * template.numOfColumns;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // خلفية مصغرة للكرت
-            Container(
-              height: 80,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [Colors.blue.shade900, Colors.blue.shade600]),
-                image: t.image.isNotEmpty
-                    ? DecorationImage(
-                        image: MemoryImage(t.image),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: Container(color: Colors.black.withOpacity(0.2)),
-            ),
+            _templatePreview(template),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(13, 12, 13, 13),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xff0F172A))),
-                      _infoBadge("$total كرت", const Color(0xff2563EB)),
+                      Expanded(
+                        child: Text(template.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: AppColors.text, fontSize: 15, fontWeight: FontWeight.w900)),
+                      ),
+                      const SizedBox(width: 8),
+                      _pill(
+                        template.withPassword ? 'مع كلمة مرور' : 'بدون كلمة مرور',
+                        template.withPassword ? AppColors.purple : AppColors.success,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
                     children: [
-                      _gridDetail(Icons.table_rows_rounded, "صفوف: $rows"),
-                      const SizedBox(width: 11),
-                      _gridDetail(Icons.view_column_rounded, "أعمدة: $cols"),
-                      const Spacer(),
-                       Text("${t.withPassword ? "مع":"بدون"} كلمة مرور", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      _detailPill(Icons.grid_view_rounded, '${template.numOfRows} × ${template.numOfColumns}'),
+                      _detailPill(Icons.credit_card_rounded, '$cardsPerPage كرت في الصفحة'),
                     ],
                   ),
-                  const Padding(padding: EdgeInsets.symmetric(vertical: 9), child: Divider(height: 1, thickness: 0.5)),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: _actionButton(
-                          label: "فتح المعاينة",
-                          icon: Icons.remove_red_eye_rounded,
-                          color: const Color(0xff1E3C72),
-                          onTap: () {
-                            // final dummyBatchData = {'total': total, 'prefix': 'USR-', 'suffix': '', 'name': name};
-                            // onPreview(t.id);
-                            controller.preview(t.id);
-                            // Navigator.push(context, MaterialPageRoute(builder: (_) => TemplatePreviewPage(
-                            //   controller: c, templateIndex: index, batchData: dummyBatchData,
-                            // )));
-                          },
+                        child: OutlinedButton.icon(
+                          onPressed: () => ctrl.preview(template.id),
+                          icon: const Icon(Icons.visibility_outlined, size: 18),
+                          label: const Text('معاينة التصميم'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.info,
+                            side: BorderSide(color: AppColors.info.withOpacity(0.5)),
+                            minimumSize: const Size.fromHeight(43),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-
-                      _editButton(() {
-                        // showErrorDialog(content: t.name);
-                        // onEdit(index);
-                        //controller.openEditForm(index);
-                        Get.toNamed(AppRoutes.editTemplate, arguments: controller.allTemplates[index])?.then((r)=>controller.getAll());
-                        // Get.to(PrintTemplatesDesignView(
-                        //   designerController: TemplatesController(),
-                        //   isEdit: false,
-                        // ));
-                      }),
-
-                      const SizedBox(width: 10),
-                      
-                      _deleteButton(() => _confirmDelete(context,t.id,controller.delete)),
+                      const SizedBox(width: 7),
+                      IconButton.filledTonal(
+                        tooltip: 'تعديل التصميم',
+                        onPressed: () async {
+                          await Get.toNamed(AppRoutes.editTemplate, arguments: template);
+                          await ctrl.getAll();
+                        },
+                        style: IconButton.styleFrom(
+                          foregroundColor: AppColors.info,
+                          backgroundColor: AppColors.info.withOpacity(0.12),
+                          minimumSize: const Size(43, 43),
+                        ),
+                        icon: const Icon(Icons.edit_outlined, size: 19),
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton.filledTonal(
+                        tooltip: 'حذف التصميم',
+                        onPressed: () => _confirmDelete(template),
+                        style: IconButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                          backgroundColor: AppColors.danger.withOpacity(0.11),
+                          minimumSize: const Size(43, 43),
+                        ),
+                        icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                      ),
                     ],
                   ),
                 ],
@@ -192,86 +292,102 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     );
   }
 
-  /* ================= المكونات الصغيرة ================= */
-  Widget _gridDetail(IconData icon, String txt) => Row(
-    children: [
-      Icon(icon, size: 14, color: const Color(0xFF94A3B8)),
-      const SizedBox(width: 4),
-      Text(txt, style: const TextStyle(fontSize: 12, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
-    ],
-  );
-
-  Widget _infoBadge(String txt, Color col) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(color: col.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-    child: Text(txt, style: TextStyle(color: col, fontSize: 12, fontWeight: FontWeight.bold)),
-  );
-
-  Widget _actionButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(12),
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 18, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-        ],
+  Widget _templatePreview(PrintTemplatesModel template) {
+    return Container(
+      height: 142,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF123A5A), Color(0xFF1D4ED8)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        image: template.image.isNotEmpty
+            ? DecorationImage(image: MemoryImage(template.image), fit: BoxFit.cover)
+            : null,
       ),
-    ),
-  );
-
-  Widget _deleteButton(VoidCallback onTap) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(12),
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF3B1D24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
-      child: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 22),
-    ),
-  );
-
-  Widget _editButton(VoidCallback onTap) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(12),
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF3B1D24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
-      child: const Icon(Icons.mode_edit_outline_outlined, color: Colors.purple, size: 22),
-    ),
-  );
-
-  Widget _buildEmptyState() => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.folder_open_rounded, size: 70, color: const Color(0xFF243352)),
-        const SizedBox(height: 11),
-        const Text("لا توجد قوالب محفوظة", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
-      ],
-    ),
-  );
-
-  Widget _footer() => Container(height: 30, width: double.infinity, color: const Color(0xff0F172A), child: const Center(child: Text("Micronet Professional Edition v4.5", style: TextStyle(color: const Color(0x61E8EEF9), fontSize: 10, fontWeight: FontWeight.bold))));
-
-  void _confirmDelete(BuildContext context, int id,Function(int) onDelete) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("حذف القالب؟"),
-        content: const Text("سيتم حذف تصميم القالب نهائياً من الذاكرة."),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("تراجع")),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("حذف", style: TextStyle(color: Colors.red))),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black.withOpacity(0.03), Colors.black.withOpacity(0.6)],
+              ),
+            ),
+          ),
+          if (template.image.isEmpty)
+            const Center(child: Icon(Icons.style_rounded, color: Colors.white70, size: 40)),
+          Positioned(
+            right: 12,
+            bottom: 10,
+            child: Row(
+              children: [
+                const Icon(Icons.image_search_rounded, color: Colors.white70, size: 15),
+                const SizedBox(width: 5),
+                Text(template.image.isEmpty ? 'لا توجد صورة خلفية' : 'معاينة صورة القالب',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
         ],
       ),
     );
-    if (confirm == true) {
-      onDelete(id);
-    }
+  }
+
+  Widget _iconBadge(IconData icon, Color color) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(13)),
+      child: Icon(icon, color: color, size: 20),
+    );
+  }
+
+  Widget _detailPill(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(color: AppColors.soft, borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: AppColors.textMuted, size: 14),
+          const SizedBox(width: 5),
+          Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 9.5, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+
+  Widget _pill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(9)),
+      child: Text(label, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w800)),
+    );
+  }
+
+  Widget _notice(String message, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.09),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.28)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: color, size: 17),
+          const SizedBox(width: 7),
+          Expanded(child: Text(message, style: TextStyle(color: color, fontSize: 10.5))),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(PrintTemplatesModel template) async {
+    final confirmed = await confirmAction('حذف تصميم «${template.name}» نهائيًا من مكتبة القوالب؟');
+    if (confirmed) await controller.delete(template.id);
   }
 }

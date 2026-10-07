@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mikronet/core/app_theme.dart';
 import '../../../controllers/cards/profiles/profiles_list_controller.dart';
 import '/models/profiles_model.dart';
-import '../../../core/string_extensions.dart';
+import '../../widgets/shared/layouts/sub_page_header.dart';
 
 class ProfilesListPage extends GetView<ProfilesListController> {
   const ProfilesListPage({super.key});
@@ -16,212 +17,104 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF070F1E),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // 1. شريط التطبيق العلوي (MkCards)
-              _buildTopAppBar(),
+        backgroundColor: AppColors.page,
+        body: Column(
+          children: [
+            const PremiumHeader(
+              title: 'الباقات',
+              subtitle: 'إدارة باقات User Manager',
+              icon: Icons.layers_rounded,
+            ),
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: AppColors.info),
+                        SizedBox(height: 12),
+                        Text('جارٍ تحميل الباقات من الراوتر',
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                      ],
+                    ),
+                  );
+                }
 
-              // 2. المحتوى الرئيسي القابل للتمرير
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
+                if (controller.loadError.value.isNotEmpty) {
+                  return _errorState(controller.loadError.value);
+                }
+
+                return RefreshIndicator(
+                  onRefresh: controller.fetchPackages,
+                  color: AppColors.info,
+                  backgroundColor: AppColors.card,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
                     children: [
-                      // كارد عنوان الباقات
-                      _buildHeaderCard(),
+                      _buildSummaryHeader(),
                       const SizedBox(height: 12),
-
-                      // الأزرار الثلاثة العلوية باللون الأزرق الفاتح / Cyan
-                      _buildActionButtons(controller),
+                      _buildActionButtons(),
+                      if (controller.cardCountError.value.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        _warningBanner(controller.cardCountError.value),
+                      ],
                       const SizedBox(height: 14),
-
-                      // قائمة كروت الباقات
-                      Obx(() {
-                        if (controller.isLoading.value) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(40.0),
-                              child: CircularProgressIndicator(color: Color(0xFF38E5FF)),
-                            ),
-                          );
-                        }
-
-                        if (controller.packages.isEmpty) {
-                          // عرض باقات تجريبية نموذجية متطابقة مع الصورة
-                          return Column(
-                            children: [
-                              _buildProfileCard(
-                                name: "250",
-                                price: "250",
-                                template: "250",
-                                linkedCards: "2550",
-                                downloadLimit: "1100 ميجابايت",
-                                validity: "11 ايام",
-                                timeLimit: "13 ساعات",
-                                onEdit: () {},
-                                onDelete: () {},
-                              ),
-                              const SizedBox(height: 12),
-                              _buildProfileCard(
-                                name: "2000",
-                                price: "2500",
-                                template: "2000",
-                                linkedCards: "1",
-                                downloadLimit: "11 جيجابايت",
-                                validity: "1 شهر",
-                                timeLimit: "720 ساعات",
-                                onEdit: () {},
-                                onDelete: () {},
-                              ),
-                              const SizedBox(height: 12),
-                              _buildProfileCard(
-                                name: "200",
-                                price: "200",
-                                template: "200",
-                                linkedCards: "2550",
-                                downloadLimit: "900 ميجابايت",
-                                validity: "9 ايام",
-                                timeLimit: "11 ساعات",
-                                onEdit: () {},
-                                onDelete: () {},
-                              ),
-                            ],
-                          );
-                        }
-
-                        return Column(
-                          children: controller.packages.asMap().entries.map((entry) {
-                            final idx = entry.key;
-                            final p = entry.value;
-
-                            final download = _formatDownloadLimit(p.palance);
-                            final valid = _formatValidity(p.validity);
-                            final uptime = _formatUptime(p.uptime);
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildProfileCard(
-                                name: p.name,
-                                price: p.price,
-                                template: p.name,
-                                linkedCards: "1",
-                                downloadLimit: download,
-                                validity: valid,
-                                timeLimit: uptime,
-                                onEdit: () => controller.goToEditProfile(p),
-                                onDelete: () => controller.confirmDelete(idx),
-                              ),
-                            );
-                          }).toList(),
-                        );
-                      }),
-                      const SizedBox(height: 20),
+                      if (controller.packages.isEmpty)
+                        _emptyState()
+                      else ...[
+                        for (var index = 0; index < controller.packages.length; index++)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildProfileCard(controller.packages[index], index),
+                          ),
+                      ],
                     ],
                   ),
-                ),
-              ),
-            ],
-          ),
+                );
+              }),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /* ================= 1. شريط التطبيق العلوي ================= */
-  Widget _buildTopAppBar() {
+  Widget _buildSummaryHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFF070F1E),
-        border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              _topIconBtn(Icons.language_rounded, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.wb_sunny_outlined, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.logout_rounded, () {}),
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "MkCards",
-                style: TextStyle(
-                  color: Color(0xFFE2E8F0),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-          _topIconBtn(Icons.arrow_forward_rounded, () => Get.back()),
-        ],
-      ),
-    );
-  }
-
-  Widget _topIconBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1),
-        ),
-        child: Icon(icon, color: const Color(0xFF38BDF8), size: 18),
-      ),
-    );
-  }
-
-  /* ================= 2. كارد عنوان الباقات ================= */
-  Widget _buildHeaderCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F3B4C),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.layers_rounded, color: Color(0xFF38E5FF), size: 22),
-          ),
+          _iconBadge(Icons.layers_rounded, AppColors.info),
           const SizedBox(width: 10),
-          const Text(
-            "الباقات",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('باقات الراوتر', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 14)),
+                SizedBox(height: 3),
+                Text('البيانات والأعداد معروضة من الراوتر مباشرة',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 10)),
+              ],
+            ),
+          ),
+          Obx(
+            () => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${controller.packages.length}',
+                style: const TextStyle(color: AppColors.info, fontWeight: FontWeight.w900, fontSize: 14),
+              ),
             ),
           ),
         ],
@@ -229,223 +122,203 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     );
   }
 
-  /* ================= 3. الأزرار الثلاثة العلوية ================= */
-  Widget _buildActionButtons(ProfilesListController controller) {
+  Widget _buildActionButtons() {
     return Column(
       children: [
-        // زر استيراد باقات اليوزgroup/اليوزمنجر
-        _cyanButton(
-          title: "استيراد باقات اليوزgroup/اليوزمنجر",
-          icon: Icons.download_rounded,
-          onTap: () {
-            controller.fetchPackages();
-            Get.snackbar(
-              "استيراد الباقات",
-              "تم جلب ومزامنة باقات اليوزر مانجر من الراوتر بنجاح",
-              backgroundColor: const Color(0xFF38E5FF),
-              colorText: const Color(0xFF070F1E),
-              snackPosition: SnackPosition.BOTTOM,
-            );
-          },
+        Row(
+          children: [
+            Expanded(
+              child: _actionButton(
+                title: 'استيراد الباقات',
+                icon: Icons.download_rounded,
+                color: AppColors.info,
+                onTap: _importPackages,
+              ),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: _actionButton(
+                title: 'تحديث',
+                icon: Icons.refresh_rounded,
+                color: AppColors.textMuted,
+                onTap: controller.fetchPackages,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-
-        // زر تحديث
-        _cyanButton(
-          title: "تحديث",
-          icon: Icons.refresh_rounded,
-          onTap: () => controller.fetchPackages(),
-        ),
-        const SizedBox(height: 8),
-
-        // زر إضافة باقة
-        _cyanButton(
-          title: "إضافة باقة",
-          icon: Icons.add_rounded,
-          onTap: () => controller.goToAddProfile(),
+        const SizedBox(height: 9),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: controller.goToAddProfile,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('إضافة باقة'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.info,
+              foregroundColor: const Color(0xFF07111E),
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _cyanButton({
+  Future<void> _importPackages() async {
+    await controller.fetchPackages();
+    if (controller.loadError.value.isEmpty) {
+      Get.snackbar(
+        'تم التحديث',
+        'تم جلب ${controller.packages.length} باقة من الراوتر',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.card,
+        colorText: AppColors.text,
+      );
+    }
+  }
+
+  Widget _actionButton({
     required String title,
     required IconData icon,
+    required Color color,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        decoration: BoxDecoration(
-          color: const Color(0xFF38E5FF),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF38E5FF).withOpacity(0.25),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFF070F1E),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 47),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withOpacity(0.4)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 11)),
               ),
-            ),
-            const SizedBox(width: 8),
-            Icon(icon, color: const Color(0xFF070F1E), size: 18),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /* ================= 4. كارد تفاصيل الباقة ================= */
-  Widget _buildProfileCard({
-    required String name,
-    required String price,
-    required String template,
-    required String linkedCards,
-    required String downloadLimit,
-    required String validity,
-    required String timeLimit,
-    required VoidCallback onEdit,
-    required VoidCallback onDelete,
-  }) {
+  Widget _buildProfileCard(ProfilesModel profile, int index) {
+    final linkedCards = controller.linkedCardCountFor(profile.name);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
-          // رأس كارد الباقة (اسم الباقة + User Manager + أيقونات التعديل والحذف)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // الأيقونات في اليسار (حذف + تعديل)
-              Row(
-                children: [
-                  InkWell(
-                    onTap: onDelete,
-                    child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 20),
-                  ),
-                  const SizedBox(width: 14),
-                  InkWell(
-                    onTap: onEdit,
-                    child: const Icon(Icons.edit_outlined, color: Color(0xFF38BDF8), size: 20),
-                  ),
-                ],
-              ),
-              // معلومات الباقة في اليمين
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        "User Manager",
-                        style: TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F3B4C),
-                      borderRadius: BorderRadius.circular(10),
+              _iconBadge(Icons.wifi_tethering_rounded, AppColors.info),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(profile.name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppColors.text, fontSize: 16, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 2),
+                    Text(
+                      profile.customer.trim().isEmpty ? 'User Manager' : 'User Manager • ${profile.customer}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 10.5),
                     ),
-                    child: const Icon(Icons.wifi_tethering_rounded, color: Color(0xFF38E5FF), size: 20),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'تعديل الباقة',
+                onPressed: () => controller.goToEditProfile(profile),
+                icon: const Icon(Icons.edit_outlined, color: AppColors.info),
+              ),
+              IconButton(
+                tooltip: 'حذف الباقة',
+                onPressed: () => controller.confirmDelete(index),
+                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
               ),
             ],
           ),
           const SizedBox(height: 12),
-
-          // الصف 1: قالب الطباعة | عدد الكروت المرتبطة
           Row(
             children: [
               Expanded(
                 child: _profileTile(
-                  text: "$template قالب الطباعة",
-                  icon: Icons.palette_outlined,
-                  iconColor: const Color(0xFF38BDF8),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _profileTile(
-                  text: "$linkedCards عدد الكروت المرتبطة",
+                  title: 'عدد الكروت المرتبطة',
+                  value: linkedCards?.toString() ?? '—',
                   icon: Icons.confirmation_number_outlined,
-                  iconColor: const Color(0xFF38E5FF),
+                  color: AppColors.info,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _profileTile(
+                  title: 'السرعة',
+                  value: profile.speed.trim().isEmpty ? 'غير محددة' : profile.speed,
+                  icon: Icons.speed_rounded,
+                  color: AppColors.purple,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-
-          // الصف 2: السعر | التحميل
           Row(
             children: [
               Expanded(
                 child: _profileTile(
-                  text: "$price السعر",
-                  icon: Icons.monetization_on_outlined,
-                  iconColor: const Color(0xFFF59E0B),
+                  title: 'السعر',
+                  value: profile.price.trim().isEmpty ? 'غير محدد' : profile.price,
+                  icon: Icons.payments_outlined,
+                  color: AppColors.warning,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _profileTile(
-                  text: "$downloadLimit التحميل",
+                  title: 'حد البيانات',
+                  value: _formatDownloadLimit(profile.palance),
                   icon: Icons.download_rounded,
-                  iconColor: const Color(0xFF22C55E),
+                  color: AppColors.success,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-
-          // الصف 3: الصلاحية | الوقت
           Row(
             children: [
               Expanded(
                 child: _profileTile(
-                  text: "$validity الصلاحية",
-                  icon: Icons.calendar_today_outlined,
-                  iconColor: const Color(0xFF38BDF8),
+                  title: 'الصلاحية',
+                  value: _formatValidity(profile.validity),
+                  icon: Icons.event_available_rounded,
+                  color: AppColors.info,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _profileTile(
-                  text: "$timeLimit الوقت",
+                  title: 'وقت الاستخدام',
+                  value: _formatUptime(profile.uptime),
                   icon: Icons.access_time_rounded,
-                  iconColor: const Color(0xFF38E5FF),
+                  color: AppColors.success,
                 ),
               ),
             ],
@@ -456,32 +329,34 @@ class ProfilesListPage extends GetView<ProfilesListController> {
   }
 
   Widget _profileTile({
-    required String text,
+    required String title,
+    required String value,
     required IconData icon,
-    required Color iconColor,
+    required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF131D2E),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 0.8),
+        color: AppColors.soft,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border.withOpacity(0.8)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, color: iconColor, size: 16),
+          Icon(icon, color: color, size: 17),
+          const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              text,
-              textAlign: TextAlign.right,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 9.5)),
+                const SizedBox(height: 3),
+                Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.text, fontSize: 11.5, fontWeight: FontWeight.w800)),
+              ],
             ),
           ),
         ],
@@ -489,31 +364,108 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     );
   }
 
+  Widget _iconBadge(IconData icon, Color color) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(color: color.withOpacity(0.13), borderRadius: BorderRadius.circular(13)),
+      child: Icon(icon, color: color, size: 20),
+    );
+  }
+
+  Widget _warningBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withOpacity(0.35)),
+      ),
+      child: Text(message, style: const TextStyle(color: AppColors.warning, fontSize: 11), textAlign: TextAlign.center),
+    );
+  }
+
+  Widget _emptyState() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 28, 18, 24),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _iconBadge(Icons.inventory_2_outlined, AppColors.textMuted),
+          const SizedBox(height: 12),
+          const Text('لا توجد باقات محفوظة على هذا الراوتر',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w800, fontSize: 13)),
+          const SizedBox(height: 5),
+          const Text('استورد الباقات أو أنشئ باقة جديدة للبدء.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+          const SizedBox(height: 15),
+          FilledButton.icon(
+            onPressed: controller.goToAddProfile,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('إنشاء باقة'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _errorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, size: 42, color: AppColors.warning),
+            const SizedBox(height: 12),
+            const Text('تعذّر تحميل الباقات',
+                style: TextStyle(color: AppColors.text, fontSize: 16, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 7),
+            Text(message, textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 12, height: 1.45)),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: controller.fetchPackages,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _formatDownloadLimit(String raw) {
-    if (raw.isEmpty || raw == "0") return "غير محدود";
-    final data = MikrotikDataHelper.fromString(raw);
-    if (data.gigas > 0) return "${data.gigas} جيجابايت";
-    if (data.megas > 0) return "${data.megas} ميجابايت";
+    if (raw.trim().isEmpty || raw == '0') return 'غير محدود';
+    try {
+      final data = MikrotikDataHelper.fromString(raw);
+      if (data.gigas > 0) return '${data.gigas} جيجابايت';
+      if (data.megas > 0) return '${data.megas} ميجابايت';
+    } catch (_) {}
     return raw;
   }
 
   String _formatValidity(String raw) {
-    if (raw.isEmpty || raw == "0") return "غير محدد";
-    final t = MikrotikTimeHelper.fromString(raw);
-    if (t.days >= 30) {
-      final months = (t.days / 30).round();
-      return "$months شهر";
-    }
-    if (t.days > 0) return "${t.days} ايام";
-    if (t.hours > 0) return "${t.hours} ساعات";
+    if (raw.trim().isEmpty || raw == '0') return 'غير محدد';
+    final time = MikrotikTimeHelper.fromString(raw);
+    if (time.days >= 30) return '${(time.days / 30).round()} شهر';
+    if (time.days > 0) return '${time.days} يوم';
+    if (time.hours > 0) return '${time.hours} ساعة';
     return raw;
   }
 
   String _formatUptime(String raw) {
-    if (raw.isEmpty || raw == "0") return "غير محدد";
-    final t = MikrotikTimeHelper.fromString(raw);
-    int totalHours = (t.days * 24) + t.hours;
-    if (totalHours > 0) return "$totalHours ساعات";
+    if (raw.trim().isEmpty || raw == '0') return 'غير محدد';
+    final time = MikrotikTimeHelper.fromString(raw);
+    final totalHours = (time.days * 24) + time.hours;
+    if (totalHours > 0) return '$totalHours ساعة';
     return raw;
   }
 }

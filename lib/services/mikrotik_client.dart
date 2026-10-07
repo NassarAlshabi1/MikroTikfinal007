@@ -9,6 +9,9 @@ class MikrotikClient {
   // static RouterOSClient? _heavyClient; // القناة الثقيلة (لجلب الكروت والجلسات فقط)
   static int version=0;
 
+  /// عنوان الراوتر الحالي، ويُستخدم للعرض في لوحة التحكم فقط.
+  static String get address => _address;
+
   // حفظ الإعدادات لإعادة الاتصال التلقائي الصامت في حال فصل الراوتر إحدى القنوات
   static String _address = "";
   static String _user = "";
