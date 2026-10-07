@@ -7,6 +7,8 @@ import '../../../core/app_pages.dart';
 import '../../../models/cards_model.dart';
 import '../../../models/response.dart';
 import '../../../api/cards_api.dart';
+import '../../prints/batches/add_batch_controller.dart';
+import '../../../views/prints/batches/add_batch_page.dart';
 
 class CardsListController extends GetxController {
   final RxString filter = "الكل".obs;
@@ -199,10 +201,17 @@ class CardsListController extends GetxController {
   }
 
   void goToAddSingleCard() async {
-    var res = await Get.toNamed(AppRoutes.addSingleCard);
-    if (res == true) {
-      refreshCards();
+    final result = await Get.toNamed(AppRoutes.addSingleCard);
+    if (result == true) {
+      await refreshCards();
     }
+  }
+
+  Future<void> goToGenerateBatch() async {
+    await Get.to(
+      () => AddBatchView(controller: BatchesFormController()),
+    );
+    await refreshCards();
   }
 }
 

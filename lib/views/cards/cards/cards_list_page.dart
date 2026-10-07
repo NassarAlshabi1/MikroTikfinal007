@@ -91,6 +91,24 @@ class CardsListPage extends GetView<CardsListController> {
               _addButton(),
             ],
           ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: controller.goToGenerateBatch,
+              icon: const Icon(Icons.playlist_add_rounded),
+              label: const Text("توليد عدة كروت"),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                foregroundColor: const Color(0xFF38BDF8),
+                backgroundColor: const Color(0xFF16213A),
+                side: const BorderSide(color: Color(0xFF243352)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 11),
           _buildFilterChips(),
           const SizedBox(height: 10),

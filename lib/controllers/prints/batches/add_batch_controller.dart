@@ -307,7 +307,12 @@ class BatchesFormController extends GetxController {
           throw Exception("خطأ أثناء إضافة الكرت ${card.username}: ${addRes.message}");
         }
 
-        generatedCards[i].isAdd = true; 
+        await PrintBatchesApi.setCardAddedStatus(
+          batchId,
+          username: card.username,
+          isAdded: true,
+        );
+        generatedCards[i].isAdd = true;
         generationProgress.value = (i + 1) / totalCards;
       }
 
@@ -414,11 +419,23 @@ class BatchesFormController extends GetxController {
 
   @override
   void onInit() {
+    super.onInit();
     init();
     _getDataFromMikrotik();
-    super.onInit();
   }
-  void _getDataFromMikrotik()async{
+
+  @override
+  void onClose() {
+    batchName.dispose();
+    numOfCards.dispose();
+    prefix.dispose();
+    suffix.dispose();
+    usernameLength.dispose();
+    passwordLength.dispose();
+    super.onClose();
+  }
+
+  void _getDataFromMikrotik() async {
     await getRouterSerial();
     await getAllCustomers(); // استدعاء دالة جلب العملاء
     await getAllTemplates();

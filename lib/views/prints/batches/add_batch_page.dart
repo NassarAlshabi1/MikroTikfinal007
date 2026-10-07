@@ -43,7 +43,7 @@ class _AddBatchViewState extends State<AddBatchView> {
       child: Scaffold(
         backgroundColor: const Color(0xFF0B1220),
         body: GetBuilder<BatchesFormController>(
-          init: BatchesFormController(),
+          init: widget.controller,
           builder: (controller) {
             return Column(
               children: [
