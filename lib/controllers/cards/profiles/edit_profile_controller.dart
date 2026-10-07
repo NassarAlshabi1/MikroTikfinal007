@@ -92,7 +92,7 @@ class EditProfileController extends GetxController {
       "uptime": uptime,
       "palance": palance, 
       "speed": speedCtrl.text.trim().isEmpty ? '0/0' : speedCtrl.text.toUpperCase().trim(),
-      "customer": customers.isNotEmpty ? customers.first.name : (profile.customer.isNotEmpty ? profile.customer : "admin"), 
+      "customer": customers.first.name , 
       "users": "1",
     };
     

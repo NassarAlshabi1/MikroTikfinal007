@@ -176,15 +176,12 @@ class BatchesFormController extends GetxController {
   }
 
   Future<int> addBatchToDB() async {
-    final profileObj = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString()) ?? 
-        (allProfiles.isNotEmpty ? allProfiles.first : null);
-
     Map<String, dynamic> data = {
       'name': batchName.text.trim(),
       'created_at': dateTime.microsecondsSinceEpoch,
       'template_id': selectedTemplate.value,
       'generated_cards': generatedUsernames.join(","),
-      'cards_profile': profileObj != null ? profileObj.name : selectedProfile.value,
+      'cards_profile': allProfiles.where((p)=>p.id==selectedProfile.value).toList().first.name,
       'card_prefix': prefix.text.trim(),
       'card_suffix': suffix.text.trim(),
       'customer': selectedCustomer.value, // إضافة العميل للحفظ في قاعدة البيانات
@@ -241,25 +238,8 @@ class BatchesFormController extends GetxController {
       return;
     }
 
-    PrintTemplatesModel? template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
-    if (template == null) {
-      if (allTemplates.isNotEmpty) {
-        template = allTemplates.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة", type: MsgType.error);
-        return;
-      }
-    }
-
-    var profile = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString());
-    if (profile == null) {
-      if (allProfiles.isNotEmpty) {
-        profile = allProfiles.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء باقة أولاً من قسم الباقات", type: MsgType.error);
-        return;
-      }
-    }
+    PrintTemplatesModel template = allTemplates.firstWhere((t) => t.id == selectedTemplate.value);
+    var profile = allProfiles.firstWhere((p) => p.id == selectedProfile.value);
 
     if (!template.withPassword && selectedPasswordType == "same") {
       bool confirm = await showConfirmDialog(
@@ -329,16 +309,7 @@ class BatchesFormController extends GetxController {
       return;
     }
 
-    PrintTemplatesModel? template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
-    if (template == null) {
-      if (allTemplates.isNotEmpty) {
-        template = allTemplates.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة", type: MsgType.error);
-        return;
-      }
-    }
-
+    PrintTemplatesModel template = allTemplates.firstWhere((t) => t.id == selectedTemplate.value);
     if (!template.withPassword && selectedPasswordType == "same") {
       bool confirm = await showConfirmDialog(
         message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
@@ -347,16 +318,7 @@ class BatchesFormController extends GetxController {
       if (!confirm) return;
     }
     
-    var profile = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString());
-    if (profile == null) {
-      if (allProfiles.isNotEmpty) {
-        profile = allProfiles.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء باقة أولاً من قسم الباقات", type: MsgType.error);
-        return;
-      }
-    }
-
+    var profile = allProfiles.firstWhere((p) => p.id == selectedProfile.value);
     prepareCardsData(profile);
     
     Get.to(

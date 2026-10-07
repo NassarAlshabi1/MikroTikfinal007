@@ -60,7 +60,12 @@ class GeneratedCardsController extends GetxController {
   
   Future<bool> createCard(int index, GeneratedCardsModel card) async {
     try {
-      String customerName = customers.isNotEmpty ? customers[0].name : "admin";
+      if (customers.isEmpty) {
+        throw "قائمة العملاء فارغة. يرجى التحقق من الاتصال.";
+      }
+
+      // أخذ اسم أول عميل متوفر في الميكروتك (تقدر تعدلها لاختيار عميل معين إذا أردت)
+      String customerName = customers[0].name;
 
       AppResponse response = await CardsApi.addOneCard(
         customer: customerName, 
@@ -88,6 +93,11 @@ class GeneratedCardsController extends GetxController {
   // دوال التحكم بالرفع للسيرفر
   // ==========================================
   Future<void> startUploadingToServer() async {
+    if (customers.isEmpty) {
+       showErrorDialog(content: "لا يمكن بدء الإرسال، لم يتم التعرف على العملاء من المايكروتك بعد.");
+       return;
+    }
+
     if (isUploading) return;
     isUploading = true;
     update();

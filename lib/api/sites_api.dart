@@ -40,26 +40,6 @@ class SitesApi {
     }
   }
 
-  /// مسح التخزين المؤقت لـ DNS فعلياً على راوتر المايكروتك
-  static Future<AppResponse> flushDnsCache() async {
-    try {
-      await MikrotikClient.fetch(command: ["/ip/dns/cache/flush"], customTag: "flush_dns_cache");
-      return AppResponse(status: true, message: "تم مسح التخزين المؤقت بنجاح من الراوتر");
-    } catch (e) {
-      return AppResponse(status: false, message: e.toString());
-    }
-  }
-
-  /// حذف سجل DNS محدد من راوتر المايكروتك
-  static Future<AppResponse> removeDnsCache(String id) async {
-    try {
-      await MikrotikClient.removeById(command: "/ip/dns/cache/remove", id: id, tag: "remove_dns_cache");
-      return AppResponse(status: true, message: "تم حذف السجل بنجاح");
-    } catch (e) {
-      return AppResponse(status: false, message: e.toString());
-    }
-  }
-
   // ==========================================
   // Layer7 Methods
   // ==========================================

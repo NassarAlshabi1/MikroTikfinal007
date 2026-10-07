@@ -255,9 +255,8 @@ class RouterOSClient {
     List<String> sentence = ['/cancel', '=tag=$tagToCancel'];
     
     for (var word in sentence) {
-      var encodedWord = windows1256.encode(word);
-      _sendLength(_socket!, encodedWord.length); // استخدام طول البايتات المشفرة
-      _socket!.add(encodedWord);
+      _sendLength(_socket!, word.length);
+      _socket!.add(windows1256.encode(word)); // استخدام windows1256
     }
     _sendLength(_socket!, 0);
   }

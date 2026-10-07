@@ -80,14 +80,9 @@ class PdfViewController extends GetxController {
     final pdfWidth = format.width;
     final pdfHiegth = format.height;
     
-    Uint8List myImg = template.image;
-    pw.MemoryImage? cachedImage;
-    if (myImg.isNotEmpty) {
-      final compressed = _compressImageBytes(myImg);
-      if (compressed.isNotEmpty) {
-        cachedImage = pw.MemoryImage(compressed);
-      }
-    }
+    Uint8List? myImg = template.image; // base64Decode(template.image.toString());
+    myImg = _compressImageBytes(myImg);
+    final pw.MemoryImage cachedImage = pw.MemoryImage(myImg);
 
     int numOfCardsToPrint = usernames.length;
 
@@ -154,11 +149,9 @@ class PdfViewController extends GetxController {
                                       height: itemHeight,
                                       decoration: pw.BoxDecoration(
                                           border: pw.Border.all(),
-                                          image: cachedImage != null
-                                              ? pw.DecorationImage(
-                                                  image: cachedImage,
-                                                  fit: pw.BoxFit.fill)
-                                              : null),
+                                          image: pw.DecorationImage(
+                                              image: cachedImage, //pw.MemoryImage(myImg!),
+                                              fit: pw.BoxFit.fill)),
                                       child: pw.Stack(children: [
                                         true
                                             ? pw.Positioned(

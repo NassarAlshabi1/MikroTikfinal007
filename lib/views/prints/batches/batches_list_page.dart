@@ -1,603 +1,562 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:mikronet/controllers/prints/batches/add_batch_controller.dart';
+import 'package:mikronet/models/print_model.dart';
 import '../../../controllers/prints/batches/batches_list_controller.dart';
-import '../../../controllers/prints/batches/add_batch_controller.dart';
 import 'add_batch_page.dart';
 
 class BatchesView extends GetView<BatchesListController> {
-  const BatchesView({super.key});
+  BatchesView({super.key});
+  final TextEditingController searchCtrl = TextEditingController();
+  final RxString searchQuery = "".obs;
+  final RxString filterType = "ALL".obs;
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<BatchesListController>()) {
-      Get.put(BatchesListController());
-    }
+    // التأكد من تهيئة الكنترولر (في حال لم يتم تهيئته في الـ Binding)
+    Get.put(BatchesListController());
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF070F1E),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // 1. شريط التطبيق العلوي (MkCards مع الأيقونات والنقطة الخضراء)
-              _buildTopAppBar(),
+        backgroundColor: const Color(0xFF0B1220),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: const Color(0xFF3B82F6),
+          onPressed: () {
+            Get.to(() => AddBatchView(controller: BatchesFormController()))?.then((_) {
+             controller.update(); // لتحديث القائمة بعد العودة من الإضافة
+               });
+          },
+          label: const Text("إضافة دفعة", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
+        ),
+        body: Column(
+          children: [
+            _buildBalancedHeader(),
+            
+            // استخدام GetBuilder للبيانات + Obx للفلترة والبحث
+            Expanded(
+              child: GetBuilder<BatchesListController>(
+                builder: (ctrl) {
+                  if (ctrl.isLoading) { // افتراض وجود isLoading في الكنترولر الفعلي
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  return Obx(() {
+                    // 1. جلب البيانات الأساسية
+                    List<PrintBatchesModel> filteredBatches = ctrl.allBatches;
 
-              // 2. المحتوى الرئيسي
-              Expanded(
-                child: GetBuilder<BatchesListController>(
-                  builder: (ctrl) {
-                    if (ctrl.isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(color: Color(0xFF38E5FF)),
-                      );
+                    // 2. تطبيق البحث
+                    if (searchQuery.value.isNotEmpty) {
+                      filteredBatches = filteredBatches
+                          .where((b) => b.cardsProfile.toLowerCase().contains(searchQuery.value.toLowerCase()))
+                          .toList();
                     }
 
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // بطاقات الإحصائيات العلوية (2 في 2)
-                          _buildTopKpiGrid(ctrl),
-                          const SizedBox(height: 16),
+                    // 3. تطبيق الفلترة
+                    filteredBatches = filteredBatches.where((b) {
+                      const sold = 1; // القيم الافتراضية من كودك
+                      const remaining = 0; 
+                      
+                      if (filterType.value == "FULL") return sold == 0;
+                      if (filterType.value == "USING") return remaining > 0 && sold > 0;
+                      if (filterType.value == "ENDED") return remaining == 0;
+                      return true;
+                    }).toList();
 
-                          // قسم آخر الدفعات
-                          _buildRecentBatchesSection(ctrl),
-                          const SizedBox(height: 16),
-
-                          // قسم الباقات
-                          _buildProfilesSection(ctrl),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
+                    return Column(
+                      children: [
+                        _buildSmallStats(ctrl.allBatches.length),
+                        _buildSearchRow(),
+                        //_buildFilterTabs(),
+                        Expanded(child: _buildBatchesList(filteredBatches)),
+                      ],
                     );
-                  },
-                ),
+                  });
+                },
               ),
-            ],
-          ),
+            ),
+            //_buildFooter(),
+          ],
         ),
       ),
     );
   }
 
-  /* ================= 1. شريط التطبيق العلوي ================= */
-  Widget _buildTopAppBar() {
+  /* ================= الهيدر ================= */
+  Widget _buildBalancedHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.only(bottom: 20),
       decoration: const BoxDecoration(
-        color: Color(0xFF070F1E),
-        border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 0.5)),
+        gradient: LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)]),
+        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(25), bottomRight: Radius.circular(25)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              _topIconBtn(Icons.language_rounded, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.wb_sunny_outlined, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.logout_rounded, () {}),
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "MkCards",
-                style: TextStyle(
-                  color: Color(0xFFE2E8F0),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-          _topIconBtn(Icons.arrow_forward_rounded, () => Get.back()),
-        ],
-      ),
-    );
-  }
-
-  Widget _topIconBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1),
-        ),
-        child: Icon(icon, color: const Color(0xFF38BDF8), size: 18),
-      ),
-    );
-  }
-
-  /* ================= 2. بطاقات الإحصائيات العلوية (2 في 2) ================= */
-  Widget _buildTopKpiGrid(BatchesListController ctrl) {
-    return Column(
-      children: [
-        Row(
+      child: SafeArea(
+        child: Column(
           children: [
-            // الباقات
-            Expanded(
-              child: _overviewCard(
-                title: "الباقات",
-                value: "${ctrl.profilesCount}",
-                icon: Icons.grid_view_rounded,
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                onPressed: () => Get.back(),
               ),
             ),
-            const SizedBox(width: 10),
-            // الراوترات
-            Expanded(
-              child: _overviewCard(
-                title: "الراوترات",
-                value: "${ctrl.routersCount}",
-                icon: Icons.router_rounded,
-              ),
+            const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 35),
+            const SizedBox(height: 8),
+            const Text(
+              "دفعات الكروت والاستهلاك",
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            // الكروت المولدة
-            Expanded(
-              child: _overviewCard(
-                title: "الكروت المولدة",
-                value: "${ctrl.generatedCardsCount}",
-                icon: Icons.style_rounded,
-              ),
-            ),
-            const SizedBox(width: 10),
-            // الدفعات
-            Expanded(
-              child: _overviewCard(
-                title: "الدفوعات",
-                value: "${ctrl.batchesCount}",
-                icon: Icons.history_rounded,
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _overviewCard({
-    required String title,
-    required String value,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+  /* ================= العداد العلوي ================= */
+  Widget _buildSmallStats(int count) {
+    return Transform.translate(
+      offset: const Offset(0, -15),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF16213A),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
+        ),
+        child: Text(
+          "إجمالي الدفعات: $count",
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF3B82F6)),
+        ),
       ),
+    );
+  }
+
+  /* ================= البحث والإضافة ================= */
+  Widget _buildSearchRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F3B4C),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: const Color(0xFF38E5FF), size: 20),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /* ================= 3. قسم آخر الدفعات مع الجدول والصفحات ================= */
-  Widget _buildRecentBatchesSection(BatchesListController ctrl) {
-    // قائمة تجريبية متطابقة مع الصورة في حال كانت القائمة فارغة
-    final List<Map<String, dynamic>> mockBatches = [
-      {'id': 40, 'count': 51, 'date': '00:00 2026-07-16', 'profile': '100c', 'status': 'استكمال آمن', 'statusColor': const Color(0xFFEF4444)},
-      {'id': 39, 'count': 51, 'date': '23:59 2026-07-15', 'profile': '100c', 'status': 'مؤجلة', 'statusColor': const Color(0xFFF59E0B)},
-      {'id': 38, 'count': 1, 'date': '17:57 2026-07-15', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 37, 'count': 1, 'date': '00:59 2026-07-15', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 33, 'count': 510, 'date': '22:36 2026-07-13', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 32, 'count': 51, 'date': '16:39 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 31, 'count': 1, 'date': '15:54 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 30, 'count': 1, 'date': '14:28 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 29, 'count': 51, 'date': '02:23 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 28, 'count': 51, 'date': '02:15 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-    ];
-
-    final displayItems = ctrl.allBatches.isNotEmpty
-        ? ctrl.currentPageBatches.map((b) {
-            final dt = b.createdAt != null ? DateFormat('HH:mm yyyy-MM-dd').format(b.createdAt!) : '00:00 2026-07-16';
-            return {
-              'id': b.id,
-              'count': b.cards.length,
-              'date': dt,
-              'profile': b.cardsProfile.isNotEmpty ? b.cardsProfile : '100c',
-              'status': 'مكتملة',
-              'statusColor': const Color(0xFF22C55E),
-            };
-          }).toList()
-        : mockBatches;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // عنوان القسم
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const SizedBox.shrink(),
-                Row(
-                  children: [
-                    const Text(
-                      "آخر الدفعات",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0F3B4C),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(Icons.history_rounded, color: Color(0xFF38E5FF), size: 16),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // رأس جدول الدفعات
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: const BoxDecoration(
-              color: Color(0xFF131D2E),
-              border: Border.symmetric(horizontal: BorderSide(color: Color(0xFF1E2E44), width: 1)),
-            ),
-            child: const Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    "الحالة",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    "الباقة",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: Text(
-                    "التاريخ",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    "العدد",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    "الدف...",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // صفوف جدول الدفعات
-          ...displayItems.map((item) {
-            return InkWell(
-              onTap: () {
-                if (ctrl.allBatches.isNotEmpty) {
-                  ctrl.getBatchCards(item['id'] as int);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFF131D2E), width: 1)),
-                ),
-                child: Row(
-                  children: [
-                    // الحالة مع النقطة الملونة
-                    Expanded(
-                      flex: 3,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: item['statusColor'] as Color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item['status'].toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // الباقة
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item['profile'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    ),
-                    // التاريخ
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        item['date'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 10),
-                      ),
-                    ),
-                    // العدد
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item['count'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    ),
-                    // رقم الدفعة
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item['id'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-
-          // شريط أزرار التنقل بين الصفحات (Pagination)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _pageBtn(
-                  label: "السابق >",
-                  onTap: () => ctrl.prevPage(),
-                  isActive: false,
-                ),
-                const SizedBox(width: 6),
-                for (int i = ctrl.totalPages; i >= 1; i--) ...[
-                  _pageNumberBtn(
-                    number: i,
-                    isActive: ctrl.currentPage == i,
-                    onTap: () => ctrl.setPage(i),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                _pageBtn(
-                  label: "< التالي",
-                  onTap: () => ctrl.nextPage(),
-                  isActive: false,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _pageBtn({required String label, required VoidCallback onTap, required bool isActive}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E2E44), width: 1),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  Widget _pageNumberBtn({required int number, required bool isActive, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF38E5FF) : const Color(0xFF131D2E),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isActive ? const Color(0xFF38E5FF) : const Color(0xFF1E2E44), width: 1),
-        ),
-        child: Text(
-          "$number",
-          style: TextStyle(
-            color: isActive ? const Color(0xFF070F1E) : Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /* ================= 4. قسم الباقات ================= */
-  Widget _buildProfilesSection(BatchesListController ctrl) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
-      ),
-      child: Column(
-        children: [
-          // عنوان قسم الباقات
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const SizedBox.shrink(),
-                Row(
-                  children: [
-                    const Text(
-                      "الباقات",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0F3B4C),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(Icons.grid_view_rounded, color: Color(0xFF38E5FF), size: 16),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // عناصر الباقات
-          ...ctrl.profilesSummary.map((prof) {
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          Expanded(
+            child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF131D2E),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF1E2E44), width: 0.8),
+                color: const Color(0xFF16213A),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: const Color(0xFF243352)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Icon(Icons.chevron_left_rounded, color: Color(0xFF94A3B8), size: 20),
-                  Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            prof['name'].toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "الدفعات: ${prof['batches']} | الكروت المولدة: ${prof['cards']}",
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F3B4C),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.grid_view_rounded, color: Color(0xFF38E5FF), size: 18),
-                      ),
-                    ],
-                  ),
-                ],
+              child: TextField(
+                controller: searchCtrl,
+                onChanged: (val) => searchQuery.value = val, // تحديث البحث تفاعلياً
+                decoration: const InputDecoration(
+                  hintText: "بحث عن دفعة...",
+                  prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF3B82F6)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 9),
+                ),
               ),
-            );
-          }),
-          const SizedBox(height: 6),
+            ),
+          ),
+          // const SizedBox(width: 10),
+          
+          // InkWell(
+          //   onTap: () {
+          //     Get.to(() => AddBatchView(controller: BatchesFormController()))?.then((_) {
+          //       controller.update(); // لتحديث القائمة بعد العودة من الإضافة
+          //     });
+          //   },
+          //   child: Container(
+          //     padding: const EdgeInsets.all(12),
+          //     decoration: BoxDecoration(
+          //       color: const Color(0xFF3B82F6),
+          //       borderRadius: BorderRadius.circular(15),
+          //     ),
+          //     child: const Icon(Icons.add_rounded, color: Colors.white),
+          //   ),
+          // ),
         ],
       ),
     );
   }
+
+  /* ================= الفلاتر ================= */
+  Widget _buildFilterTabs() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      child: Row(
+        children: [
+          _filterItem("ALL", "الكل"),
+          _filterItem("FULL", "ممتلئة"),
+          _filterItem("USING", "قيد الاستهلاك"),
+          _filterItem("ENDED", "منتهية"),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterItem(String key, String title) {
+    return Obx(() {
+      final active = filterType.value == key;
+      return GestureDetector(
+        onTap: () => filterType.value = key, // تحديث الفلتر تفاعلياً
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF3B82F6) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: active ? Colors.transparent : const Color(0xFF243352)),
+          ),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: active ? Colors.white : const Color(0xFF94A3B8),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  /* ================= قائمة الدفعات ================= */
+  Widget _buildBatchesList(List<PrintBatchesModel> batches) {
+    if (batches.isEmpty) return const Center(child: Text("لا توجد دفعات حالياً"));
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(15, 5, 15, 20),
+      itemCount: batches.length,
+      itemBuilder: (_, i) {
+        final b = batches[i];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 15),
+          decoration: BoxDecoration(
+            color: const Color(0xFF16213A),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF243352), width: 1.5),
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                title: Text(b.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                subtitle: Text("الانشاء : ${b.createdAt.toString().split(" ").first} ", style: const TextStyle(fontSize: 11)),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                        icon: const Icon(Icons.edit_note_rounded, color: Colors.blue),
+                        onPressed: () {
+                          _showEditBatchDialog(Get.context!, b);
+                        }),
+                    IconButton(
+                        icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+                        onPressed: () {
+                          _showDeleteBatchDialog(b);
+                        }),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(11),
+                child: Wrap(
+                  spacing: 20,
+                  runSpacing: 10,
+                  children: [
+                    _buildStatMini(Icons.confirmation_number_outlined, "عدد الكروت", b.generatedCards.length),
+                    _buildStatMini(Icons.sell_outlined, "الباقة", b.cardsProfile),
+                    _buildStatMini(Icons.login_rounded, "البادئة", b.cardPrefix),
+                    _buildStatMini(Icons.logout_rounded, "اللاحقة", b.cardSuffix),
+                  ],
+                ),
+              ),
+              _buildPrintAction(
+                b.toDatabase(),
+                onTap: () {
+                  controller.getBatchPreview(b.id);
+                },
+              ),
+              const Divider(height: 5),
+              _buildPrintAction(
+                b.toDatabase(),
+                text: "عرض الكروت",
+                textColor: Colors.orange,
+                btnIcon: const Icon(Icons.view_agenda_outlined, size: 18, color: Colors.orange),
+                onTap: () {
+                  controller.getBatchCards(b.id);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /* ================= نافذة خيارات الحذف (محدثة لـ GetX) ================= */
+  void _showDeleteBatchDialog(PrintBatchesModel batch) {
+    RxInt selectedOption = 2.obs; // تحويله لمتغير تفاعلي بدلاً من StatefulBuilder
+
+    Get.dialog(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+              SizedBox(width: 10),
+              Text("تأكيد الحذف", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: Obx(() => Column( // استخدام Obx هنا لتحديث الخيارات فورا
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "هل أنت متأكد من رغبتك في حذف الدفعة '${batch.name}'؟\nالرجاء تحديد نطاق الحذف المناسب:",
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF8FA3C0), height: 1.5, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 11),
+                  _buildDeleteOptionCard(
+                    title: "من السيرفر (المايكروتك) فقط",
+                    value: 1,
+                    groupValue: selectedOption.value,
+                    onChanged: (val) => selectedOption.value = val!,
+                  ),
+                  _buildDeleteOptionCard(
+                    title: "من قاعدة البيانات (التطبيق) فقط",
+                    value: 2,
+                    groupValue: selectedOption.value,
+                    onChanged: (val) => selectedOption.value = val!,
+                  ),
+                  _buildDeleteOptionCard(
+                    title: "من السيرفر وقاعدة البيانات معاً",
+                    value: 3,
+                    groupValue: selectedOption.value,
+                    isDestructive: true,
+                    onChanged: (val) => selectedOption.value = val!,
+                  ),
+                ],
+              )),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text("إلغاء", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            GetBuilder<BatchesListController>(
+              builder: (ctrl) {
+                if (ctrl.isDeleteLoading ?? false) {
+                   return const CircularProgressIndicator();
+                }
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    // استدعاء دالة الحذف من الكنترولر وتمرير الخيار
+                    await ctrl.deleteBatch(batch, selectedOption.value);
+                    Get.back(); // إغلاق النافذة بعد الانتهاء
+                  },
+                  child: const Text("تأكيد الحذف", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                );
+              }
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /* ================= تصميم خيار الحذف ================= */
+  Widget _buildDeleteOptionCard({
+    required String title,
+    required int value,
+    required int groupValue,
+    required ValueChanged<int?> onChanged,
+    bool isDestructive = false,
+  }) {
+    bool isSelected = value == groupValue;
+    Color activeColor = isDestructive ? Colors.redAccent : const Color(0xFF2563EB);
+    Color bgColor = isSelected ? activeColor.withOpacity(0.08) : Colors.transparent;
+    Color borderColor = isSelected ? activeColor : Colors.grey.withOpacity(0.3);
+
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border.all(color: borderColor, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? activeColor : Colors.grey,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? activeColor : const Color(0xFF94A3B8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /* ================= نافذة تعديل بيانات الدفعة (محدثة لـ GetX) ================= */
+  void _showEditBatchDialog(BuildContext context, PrintBatchesModel batch) {
+    TextEditingController nameController = TextEditingController(text: batch.name);
+    Rx<DateTime> selectedDate = batch.createdAt.obs; // تحويل التاريخ لتفاعلي
+
+    Get.dialog(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.edit_square, color: Color(0xFF3B82F6)),
+              SizedBox(width: 10),
+              Text("تعديل بيانات الدفعة", style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: Obx(() => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: "اسم الدفعة",
+                      labelStyle: const TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      prefixIcon: const Icon(Icons.title, color: const Color(0xFF94A3B8), size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 11),
+                  InkWell(
+                    onTap: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate.value,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.dark(primary: Color(0xFF3B82F6), onPrimary: Colors.white),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        selectedDate.value = picked; // التحديث التلقائي عبر Rx
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: "تاريخ الإنشاء",
+                        labelStyle: const TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
+                        prefixIcon: const Icon(Icons.calendar_month_rounded, color: const Color(0xFF94A3B8), size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        "${selectedDate.value.year}-${selectedDate.value.month.toString().padLeft(2, '0')}-${selectedDate.value.day.toString().padLeft(2, '0')}",
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              )),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text("إلغاء", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+              onPressed: () async {
+                await controller.editBatch(batch, nameController.text, selectedDate.value);
+                Get.back();
+              },
+              child: const Text("حفظ التعديلات", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatMini(IconData icon, String label, dynamic val) {
+    return SizedBox(
+      width: 130,
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF94A3B8)),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              Text("$val", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8FA3C0))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrintAction(Map b, {
+    String text = "معاينة وطباعة الدفعة",
+    Color textColor = Colors.green,
+    Icon btnIcon = const Icon(Icons.print_rounded, size: 18, color: Colors.green),
+    void Function()? onTap
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: const BoxDecoration(
+          color: Color(0xFF0B1220),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            btnIcon,
+            const SizedBox(width: 10),
+            Text(text, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 13)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  
 }

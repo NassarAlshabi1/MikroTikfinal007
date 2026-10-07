@@ -1,293 +1,199 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/maintenance/maintenance_hub_controller.dart';
 
+import '../../controllers/maintenance/maintenance_hub_controller.dart';
+import '../../models/maintenance_tools.dart';
+import '../widgets/shared/layouts/sub_page_header.dart';
+
+/// لوحة "أدوات الصيانة" — تجمع أدوات التشخيص ومراقبة الأداء وإعدادات الشبكة
+/// وجدار الحماية وإدارة النطاق الترددي.
 class MaintenanceHubPage extends GetView<MaintenanceHubController> {
   const MaintenanceHubPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<MaintenanceHubController>()) {
-      Get.put(MaintenanceHubController());
-    }
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF070F1E),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // 1. شريط التطبيق العلوي (MkCards)
-              _buildTopAppBar(),
+        backgroundColor: const Color(0xFF0B1220),
+        body: Column(
+          children: [
+            PremiumHeader(
+              title: "لوحة تحكم الميكروتيك",
+              subtitle: "جميع أدوات الصيانة والتشخيص بالجهاز",
+              icon: Icons.build_circle_rounded,
+              goBack: Get.back,
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: controller.load,
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-              // 2. المحتوى الرئيسي لخطوات صيانة اليوزر مانجر
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
+                  return ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     children: [
-                      // الخطوة 1: إغلاق وحذف الجلسات
-                      _buildStepCard(
-                        stepNumber: 1,
-                        title: "إغلاق وحذف الجلسات (اختياري)",
-                        subtitle: "يغلق جميع جلسات User Manager، ينتظر 20 ثانية، يحذفها، ثم ينتظر 20 ثانية أخرى. يمكن تجاوز هذه الخطوة.",
-                        icon: Icons.logout_rounded,
-                        accentColor: const Color(0xFFF59E0B),
-                        buttonColor: const Color(0xFFF59E0B),
-                        controller: controller,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // الخطوة 2: تنظيف سجلات User Manager
-                      _buildStepCard(
-                        stepNumber: 2,
-                        title: "تنظيف سجلات User Manager",
-                        subtitle: "ينظف سجلات User Manager القديمة من الراوتر.",
-                        icon: Icons.cleaning_services_rounded,
-                        accentColor: const Color(0xFF38E5FF),
-                        buttonColor: const Color(0xFF38E5FF),
-                        controller: controller,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // الخطوة 3: إعادة بناء قاعدة User Manager
-                      _buildStepCard(
-                        stepNumber: 3,
-                        title: "إعادة بناء قاعدة User Manager",
-                        subtitle: "يعيد بناء قاعدة User Manager بعد الحذف.",
-                        icon: Icons.dns_rounded,
-                        accentColor: const Color(0xFF38BDF8),
-                        buttonColor: const Color(0xFF38BDF8),
-                        controller: controller,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // الخطوة 4: إعادة بناء سجلات User Manager
-                      _buildStepCard(
-                        stepNumber: 4,
-                        title: "إعادة بناء سجلات User Manager",
-                        subtitle: "يعيد بناء مخزن سجلات User Manager.",
-                        icon: Icons.fact_check_rounded,
-                        accentColor: const Color(0xFF34D399),
-                        buttonColor: const Color(0xFF34D399),
-                        controller: controller,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // الخطوة 5: تفعيل الهوتسبوت
-                      _buildStepCard(
-                        stepNumber: 5,
-                        title: "تفعيل الهوتسبوت",
-                        subtitle: "يعيد تفعيل الهوتسبوت بعد أوامر الصيانة.",
-                        icon: Icons.wifi_rounded,
-                        accentColor: const Color(0xFF0EA5E9),
-                        buttonColor: const Color(0xFF0EA5E9),
-                        controller: controller,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // الخطوة 6: إعادة تشغيل الراوتر
-                      _buildStepCard(
-                        stepNumber: 6,
-                        title: "إعادة تشغيل الراوتر",
-                        subtitle: "يفتح الهوتسبوت ويتحقق من حالته أولاً، ثم يرسل أمر إعادة تشغيل الراوتر النهائي.",
-                        icon: Icons.restart_alt_rounded,
-                        accentColor: const Color(0xFFEF4444),
-                        buttonColor: const Color(0xFFEF4444),
-                        controller: controller,
-                      ),
-                      const SizedBox(height: 20),
+                      _resourcesBar(),
+                      ...controller.sections.map((section) => _sectionCard(section)),
+                      const SizedBox(height: 14),
                     ],
-                  ),
-                ),
+                  );
+                }),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /* ================= 1. شريط التطبيق العلوي ================= */
-  Widget _buildTopAppBar() {
+  // =============== شريط الموارد السريع ===============
+  Widget _resourcesBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFF070F1E),
-        border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 0.5)),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(22),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              _topIconBtn(Icons.language_rounded, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.wb_sunny_outlined, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.logout_rounded, () {}),
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "MkCards",
-                style: TextStyle(
-                  color: Color(0xFFE2E8F0),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-          _topIconBtn(Icons.arrow_forward_rounded, () => Get.back()),
+          _resourceItem("المعالج", controller.resources["cpu"] ?? "-"),
+          _resourceItem("ذاكرة حرة", controller.resources["memory"] ?? "-"),
+          _resourceItem("مدة التشغيل", controller.resources["uptime"] ?? "-"),
+          _resourceItem("الإصدار", controller.resources["version"] ?? "-"),
         ],
       ),
     );
   }
 
-  Widget _topIconBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1),
-        ),
-        child: Icon(icon, color: const Color(0xFF38BDF8), size: 18),
+  Widget _resourceItem(String label, String value) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(label, style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+        ],
       ),
     );
   }
 
-  /* ================= 2. بطاقة خطوة الصيانة ================= */
-  Widget _buildStepCard({
-    required int stepNumber,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color accentColor,
-    required Color buttonColor,
-    required MaintenanceHubController controller,
-  }) {
+  // =============== بطاقة قسم ===============
+  Widget _sectionCard(MaintenanceSection section) {
+    final count = controller.sectionCount(section);
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        color: const Color(0xFF16213A),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // رأس البطاقة مع الأيقونة والنص
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(width: 4, height: 26, decoration: BoxDecoration(color: section.color, borderRadius: BorderRadius.circular(4))),
+              const SizedBox(width: 10),
+              Icon(section.icon, color: section.color, size: 22),
+              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 11,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  section.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    color: Color(0xFFE8EEF9),
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
+              if (count >= 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: section.color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    "$count",
+                    style: TextStyle(color: section.color, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                 ),
-                child: Icon(icon, color: accentColor, size: 22),
-              ),
             ],
           ),
-          const SizedBox(height: 14),
-
-          // صف الزر وحالة التنفيذ
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // زر تنفيذ الخطوة
-              Obx(() {
-                final isExecuting = controller.stepLoading[stepNumber] ?? false;
-                return InkWell(
-                  onTap: isExecuting ? null : () => controller.executeStep(stepNumber),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: buttonColor,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: buttonColor.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: isExecuting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(color: Color(0xFF070F1E), strokeWidth: 2),
-                          )
-                        : const Text(
-                            "تنفيذ الخطوة",
-                            style: TextStyle(
-                              color: Color(0xFF070F1E),
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                );
-              }),
-
-              // نص حالة التنفيذ
-              Obx(() => Text(
-                controller.stepStatus[stepNumber] ?? "بانتظار التنفيذ",
-                style: const TextStyle(
-                  color: Color(0xFF94A3B8),
-                  fontSize: 12,
-                ),
-              )),
-            ],
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.35,
+            children: section.tools.map((tool) => _toolTile(tool)).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _toolTile(MaintenanceTool tool) {
+    final count = controller.toolCount(tool);
+
+    return Material(
+      color: tool.color.withOpacity(0.07),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => controller.openTool(tool),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(tool.icon, color: tool.color, size: 26),
+              const SizedBox(height: 8),
+              Text(
+                tool.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Color(0xFFE8EEF9),
+                ),
+              ),
+              if (count >= 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  "$count عنصر",
+                  style: TextStyle(fontSize: 10, color: tool.color, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

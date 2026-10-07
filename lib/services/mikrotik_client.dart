@@ -240,20 +240,14 @@ class MikrotikClient {
 
   static Future<int> getVersion() async {
     _checkConnection();
+    List result = await _client!.talk(
+      "/system/resource/print",
+      // customTag: 'get_version'
+    );
     try {
-      List result = await _client!.talk(
-        "/system/resource/print",
-      );
-      if (result.isNotEmpty && result[0]["version"] != null) {
-        String vStr = result[0]["version"].toString().trim();
-        final match = RegExp(r'^(\d+)').firstMatch(vStr);
-        if (match != null) {
-          return int.parse(match.group(1)!);
-        }
-      }
-      return 6; // الافتراضي RouterOS v6
+      return int.parse(result[0]["version"].split('.')[0]);
     } catch (e) {
-      return 6; // الافتراضي RouterOS v6
+      return 0;
     }
   }
 
@@ -305,10 +299,8 @@ class MikrotikClient {
     );
   }
 
-  static Future<void> cancelCommand(String tag) async {
-    try {
-      await _client?.cancelCommand(tag);
-    } catch (_) {}
+  static Future<void> cancelCommand(String tag)async{
+    // await _client!.cancelCommand(tag);
   }
 
   static Future<void> cancel()async{

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/services/mikrotik_client.dart';
@@ -9,26 +8,23 @@ import '../../../models/response.dart';
 import '../../../api/cards_api.dart';
 
 class CardsListController extends GetxController {
-  final RxString filter = "الكل".obs;
-  final RxString searchQuery = "".obs;
+  RxString filter = "الكل".obs;
+  RxString searchQuery = "".obs;
   
-  final RxList<CardModel> allCards = <CardModel>[].obs;
-  final RxList<CardModel> filteredCards = <CardModel>[].obs;
+  RxList<CardModel> allCards = <CardModel>[].obs;
+  RxList<CardModel> filteredCards = <CardModel>[].obs;
 
-  final cardCounts = {
-    "الكل": 0.obs,
-    "جديدة": 0.obs,
-    "نشطة": 0.obs,
-    "منتهية": 0.obs,
+  var cardCounts = {
+        "الكل": 0.obs,
+        "جديدة":0.obs,
+        "نشطة":0.obs,
+        "منتهية":0.obs
   };
   
-  final RxBool isLoading = true.obs;
-  final RxBool isRefreshing = false.obs;
+  RxBool isLoading = true.obs;
   int _requestCounter = 0;
-  Timer? _debounceTimer;
 
-  // متحكمات الحقول
-  final searchCtrl = TextEditingController();
+  // متحكمات الحقول لإضافة كرت جديد
   final userCtrl = TextEditingController();
   final passCtrl = TextEditingController();
   final pkgCtrl = TextEditingController();
@@ -41,20 +37,24 @@ class CardsListController extends GetxController {
 
   @override
   void onClose() {
-    _debounceTimer?.cancel();
-    searchCtrl.dispose();
+    close();
     userCtrl.dispose();
     passCtrl.dispose();
     pkgCtrl.dispose();
-    close();
     super.onClose();
   }
 
-  Future<void> close() async {
-    if (isLoading.value) {
+  Future<void> close()async{
+    // await MikrotikClient.cancel();
+    if(isLoading.value){
       MikrotikClient.cancelCommand('users_profiles');
+      print('\n \n \n \n \n \n \n \n \n \n');
+      print('users_profiles');
+      print('\n \n \n \n \n \n \n \n \n \n');
       MikrotikClient.cancelCommand('users');
-      MikrotikClient.cancelCommand('cards');
+      print('\n \n \n \n \n \n \n \n \n \n');
+      print('users');
+      print('\n \n \n \n \n \n \n \n \n \n');
     }
   }
 
@@ -63,90 +63,72 @@ class CardsListController extends GetxController {
   }
 
   void setFilter(String newFilter) {
-    if (filter.value == newFilter) return;
     filter.value = newFilter;
     _applyFilters();
   }
 
   void setSearch(String query) {
-    _debounceTimer?.cancel();
-    if (query.isEmpty) {
-      searchQuery.value = "";
-      _applyFilters();
-    } else {
-      _debounceTimer = Timer(const Duration(milliseconds: 150), () {
-        searchQuery.value = query;
-        _applyFilters();
-      });
-    }
-  }
-
-  void clearSearch() {
-    searchCtrl.clear();
-    searchQuery.value = "";
-    _debounceTimer?.cancel();
+    searchQuery.value = query;
     _applyFilters();
   }
 
-  /// حساب الإحصائيات في دورة واحدة O(N) فائقة السرعة
-  void _updateCardCounts() {
-    int total = allCards.length;
-    int countNew = 0;
-    int countActive = 0;
-    int countExpired = 0;
-
-    for (int i = 0; i < total; i++) {
-      final status = allCards[i].status;
-      if (status == "active") {
-        countActive++;
-      } else if (status == "normal") {
-        countNew++;
-      } else {
-        countExpired++;
-      }
-    }
-
-    cardCounts["الكل"]!.value = total;
-    cardCounts["جديدة"]!.value = countNew;
-    cardCounts["نشطة"]!.value = countActive;
-    cardCounts["منتهية"]!.value = countExpired;
-  }
-
-  /// تطبيق الفلاتر والبحث بسرعة قياسية باستخدام مفاتيح البحث المحسوبة مسبقاً
+  // التعديل الرئيسي لفصل الحالات
   void _applyFilters() {
-    final currentFilter = filter.value;
-    final query = searchQuery.value.trim().toLowerCase();
-
-    List<CardModel> result = allCards.toList();
-
-    if (currentFilter != "الكل") {
-      if (currentFilter == "نشطة") {
-        result = result.where((c) => c.status == "active").toList();
-      } else if (currentFilter == "جديدة") {
-        result = result.where((c) => c.status == "normal").toList();
-      } else if (currentFilter == "منتهية") {
-        result = result.where((c) => c.status != "active" && c.status != "normal").toList();
-      }
+    var result = allCards.toList();
+    cardCounts["جديدة"]!.value = allCards.where((c)=>c.status=="normal").length;
+    cardCounts["نشطة"]!.value = allCards.where((c)=>c.status=="active").length;
+    cardCounts["منتهية"]!.value = allCards.where((c)=>c.status != "active" && c.status != "normal").length;
+    cardCounts["الكل"]!.value = allCards.length;
+    if (filter.value != "الكل") {
+      result = result.where((c) {
+        if (filter.value == "نشطة") return c.status == "active";
+        if (filter.value == "جديدة") return c.status == "normal";
+        // افتراض أن أي حالة غير active أو normal تعتبر منتهية
+        if (filter.value == "منتهية") return c.status != "active" && c.status != "normal"; 
+        return false;
+      }).toList();
     }
 
-    if (query.isNotEmpty) {
-      result = result.where((c) => c.searchKey.contains(query)).toList();
+    if (searchQuery.value.isNotEmpty) {
+      String query = searchQuery.value.toLowerCase();
+      result = result.where((c) => 
+        c.username.toLowerCase().contains(query) || 
+        c.profile.toLowerCase().contains(query)
+      ).toList();
     }
 
     filteredCards.assignAll(result);
   }
 
-  Future<void> refreshCards() async {
-    isRefreshing.value = true;
-    await _fetchCards(isPullRefresh: true);
-    isRefreshing.value = false;
+  void goToCardDetails(CardModel card)async {
+   
+    var res = await Get.toNamed(AppRoutes.cardDetails, arguments: card);
+    if(res != null && res is AppResponse && res.status){
+      var updatedCard = res.data as CardModel;
+      var i = allCards.indexWhere((c)=> c.id == card.id);
+      if(res.message == "delete") {
+        allCards.removeAt(i);
+      } else {
+        allCards[i]= updatedCard;
+      }
+      _applyFilters();
+        
+    }
   }
 
-  Future<void> _fetchCards({bool isPullRefresh = false}) async {
-    final currentId = ++_requestCounter;
-    if (!isPullRefresh) {
-      isLoading.value = true;
+  void goToCardSessions(CardModel card) {
+     if(card.status == "normal"){
+      showMsgDialog(message: "لا توجد جلسات لم يتم استخدام الكرت",type: MsgType.info);
+      return;
     }
+    Get.toNamed(AppRoutes.cardSessions, arguments: card.username);
+  }
+
+  
+
+  Future<void> _fetchCards() async {
+    final currentId = ++_requestCounter;
+    isLoading.value = true;
     
     try {
       AppResponse<List<CardModel>> response = await CardsApi.getAllCards();
@@ -155,14 +137,13 @@ class CardsListController extends GetxController {
 
       if (response.status && response.data != null) {
         allCards.assignAll(response.data!);
-        _updateCardCounts();
         _applyFilters();
       } else {
-        showMsgDialog(message: response.message, type: MsgType.error);
+        showMsgDialog(message: response.message);
       }
     } catch (e) {
       if (currentId == _requestCounter) {
-        showMsgDialog(message: "خطأ في مزامنة الكروت: $e", type: MsgType.error);
+        showMsgDialog(message: "Error fetching cards: $e");
       }
     } finally {
       if (currentId == _requestCounter) {
@@ -171,44 +152,43 @@ class CardsListController extends GetxController {
     }
   }
 
-  void goToCardDetails(CardModel card) async {
-    var res = await Get.toNamed(AppRoutes.cardDetails, arguments: card);
-    if (res != null && res is AppResponse && res.status) {
-      var updatedCard = res.data as CardModel;
-      var i = allCards.indexWhere((c) => c.id == card.id);
-      if (res.message == "delete") {
-        if (i != -1) allCards.removeAt(i);
-      } else {
-        if (i != -1) {
-          allCards[i] = updatedCard;
-        } else {
-          allCards.add(updatedCard);
-        }
-      }
-      _updateCardCounts();
-      _applyFilters();
-    }
-  }
-
-  void goToCardSessions(CardModel card) {
-    if (card.status == "normal") {
-      showMsgDialog(message: "لا توجد جلسات، لم يتم استخدام الكرت بعد", type: MsgType.info);
+  Future<void> _addNewCard() async {
+    if (userCtrl.text.isEmpty || pkgCtrl.text.isEmpty) {
+      showMsgDialog(message: "يرجى تعبئة اسم المستخدم والباقة على الأقل");
       return;
     }
-    Get.toNamed(AppRoutes.cardSessions, arguments: card.username);
-  }
 
-  void goToAddSingleCard() async {
-    var res = await Get.toNamed(AppRoutes.addSingleCard);
-    if (res == true) {
-      refreshCards();
+    Get.back(); 
+    Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))), barrierDismissible: false);
+
+    try {
+      AppResponse<void> response = await CardsApi.addOneCard(
+        customer: "admin", 
+        username: userCtrl.text,
+        password: passCtrl.text,
+        profile: pkgCtrl.text,
+      );
+      
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      if (response.status) {
+        showMsgDialog(message: "تم إضافة الكرت بنجاح");
+        _fetchCards(); // إعادة جلب البيانات لتحديث القائمة
+      } else {
+        showMsgDialog(message: response.message);
+      }
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      showMsgDialog(message: "Error adding card: $e");
     }
   }
+  void goToAddSingleCard ()=> Get.toNamed(AppRoutes.addSingleCard);
 }
 
 extension CardModelExt on CardModel {
   String get package => profile;
   
+  // التعديل هنا ليعكس الحالات الثلاث
   String get statusDisplay {
     if (status == "active") return "نشطة";
     if (status == "normal") return "جديدة";

@@ -109,15 +109,19 @@ class BatchesController extends GetxController{
     }
     routerSerial = res.data.toString();
   }
-  Future<void> getallProfiles() async {
+  Future<void> getallProfiles()async{
     try {
-      AppResponse<List<ProfilesModel>> result = await ProfilesApi.getProfiles();
-      if (result.status && result.data != null) {
-        allProfiles = result.data!;
+      AppResponse result=await ProfilesApi.getProfiles();
+      List<ProfilesModel> temp=[];
+      if (result.status && result.data !=null ) {
+        for (var i in result.data) {
+          temp.add(ProfilesModel.fromMikrotik(i));
+        }
+        allProfiles=temp;
       }
       update();
     } catch (e) {
-      showMsgDialog(message: e.toString(), type: MsgType.error);
+      showMsgDialog(message: e.toString(),type: MsgType.error);
     }
   }
 

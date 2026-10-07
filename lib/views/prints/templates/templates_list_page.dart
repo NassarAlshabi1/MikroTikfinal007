@@ -116,12 +116,9 @@ class TemplatesListPage extends GetView<TemplatesListController> {
               width: double.infinity,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [Colors.blue.shade900, Colors.blue.shade600]),
-                image: t.image.isNotEmpty
-                    ? DecorationImage(
-                        image: MemoryImage(t.image),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+                image: DecorationImage(
+                  image: MemoryImage(t.image)
+                ),// != null ? DecorationImage(image: t.image, fit: BoxFit.cover) : null,
               ),
               child: Container(color: Colors.black.withOpacity(0.2)),
             ),

@@ -24,7 +24,6 @@ class CardModel {
   final String profile;
   final String status;
   final String customer;
-  final String searchKey;
 
   CardModel({
     required this.id,
@@ -33,7 +32,7 @@ class CardModel {
     required this.profile,
     required this.status,
     required this.customer,
-  }) : searchKey = "$username $password $profile $customer".toLowerCase();
+  });
 
   static CardModel fromMikrotik(Map card){
     String tempStatus="normal";
@@ -51,12 +50,12 @@ class CardModel {
       tempStatus="normal";
     }
     return CardModel(
-      id: card[".id"]?.toString() ?? "",
-      username: card["username"]?.toString() ?? "", 
-      password: card["password"]?.toString() ?? "", 
-      profile: card["actual-profile"]?.toString() ?? "unknown", 
+      id: card[".id"],
+      username: card["username"], 
+      password: card["password"], 
+      profile: card["actual-profile"]??"unknown", 
       status: tempStatus, 
-      customer: card["customer"]?.toString() ?? "",
+      customer: card["customer"],
     );
   }
 
