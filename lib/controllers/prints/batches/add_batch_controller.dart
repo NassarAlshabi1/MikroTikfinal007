@@ -16,9 +16,9 @@ import 'package:mikronet/views/prints/templates/pdf_view.dart';
 
 class BatchesFormController extends GetxController {
   List<Map<String, dynamic>> passwordTypes = [
-    {"id": "none", "label": "بدون \n", "icon": Icons.minimize_outlined},
-    {"id": "diff", "label": "ارقام مختلفة \n", "icon": Icons.pin_outlined},
-    {"id": "same", "label": "مطابقة اسم المستخدم", "icon": Icons.abc_rounded},
+    {"id": "none", "label": "اسم فقط\nبدون كلمة مرور", "icon": Icons.person_outline_rounded},
+    {"id": "diff", "label": "بكلمة مرور\nمختلفة", "icon": Icons.password_rounded},
+    {"id": "same", "label": "مطابقة اسم\nالمستخدم", "icon": Icons.abc_rounded},
   ];
   Map dataInsert = {};
   List<PrintTemplatesModel> allTemplates = [];
@@ -315,7 +315,7 @@ class BatchesFormController extends GetxController {
     PrintTemplatesModel template = allTemplates.firstWhere((t) => t.id == selectedTemplate.value);
     if (!template.withPassword && selectedPasswordType == "same") {
       bool confirm = await showConfirmDialog(
-        message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
+        message: "القالب بدون كلمة مرور، وسيتم توليد اسم المستخدم فقط. هل تريد المتابعة؟",
         onConfirm: (){}
       );
       if (!confirm) return;
@@ -354,9 +354,9 @@ class BatchesFormController extends GetxController {
     if (template.withPassword) {
       switch (selectedPasswordType) {
         case "none":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور بلا ";
+          throw "القالب المحدد يطبع كلمة مرور؛ اختر قالباً بدون كلمة مرور أو اختر (بكلمة مرور مختلفة)";
         case "same":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم ";
+          throw "القالب المحدد يحتاج كلمة مرور مستقلة؛ اختر (بكلمة مرور مختلفة) أو غيّر القالب";
         default:
           if (passwordLength.text.trim().isEmpty) {
             throw "ادخل طول كلمة المرور ";
@@ -365,7 +365,7 @@ class BatchesFormController extends GetxController {
     } else {
       switch (selectedPasswordType) {
         case "diff":
-          throw "لايمكن ان يكون نمط كلمة المرور مختلف بينما القالب بدون كلمة مرور";
+          throw "القالب المحدد بدون كلمة مرور؛ اختر (اسم فقط بدون كلمة مرور) أو اختر قالباً يطبع كلمة المرور";
         default:
       }
     }

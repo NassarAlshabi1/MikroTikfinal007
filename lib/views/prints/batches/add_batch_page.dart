@@ -353,9 +353,26 @@ class _AddBatchViewState extends State<AddBatchView> {
               );
             }).toList(),
           ),
+          const SizedBox(height: 5),
+          Text(
+            _passwordModeHint(controller.selectedPasswordType),
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+          ),
         ],
       ),
     );
+  }
+
+  String _passwordModeHint(String mode) {
+    switch (mode) {
+      case 'diff':
+        return 'سيتم توليد اسم مستخدم وكلمة مرور مختلفة لكل كرت.';
+      case 'same':
+        return 'سيتم استخدام اسم المستخدم نفسه ككلمة مرور.';
+      default:
+        return 'سيتم توليد اسم المستخدم فقط، وتُترك خانة كلمة المرور فارغة.';
+    }
   }
 
   Widget _buildLengthAndCount(BatchesFormController controller) {
