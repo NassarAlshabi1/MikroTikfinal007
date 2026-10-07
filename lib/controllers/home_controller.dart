@@ -28,6 +28,7 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   late PageController pageController;
   late AnimationController pulseController;
   Timer? dataRefreshTimer; 
+  bool _fetchInFlight = false;
 
   @override
   void onInit() {
@@ -54,13 +55,16 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
   
 
   void _startDataRefreshTimer() {
-    dataRefreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    // تحديث خفيف كل دقيقة بدلاً من الاستعلام المستمر؛ زر التحديث اليدوي يبقى متاحاً.
+    dataRefreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       fetchRealData();
     });
   }
 
   // ================= دالة جلب البيانات الحقيقية من السيرفر =================
   Future<void> fetchRealData() async {
+    if (_fetchInFlight) return;
+    _fetchInFlight = true;
     try {
       var sysResponse = await ReportsApi.getSystemState();
       if (sysResponse.status && sysResponse.data != null) {
@@ -98,6 +102,8 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
     } catch (_) {
       // تبقى آخر بيانات ناجحة ظاهرة عند انقطاع الشبكة؛ لا تنهار الشاشة.
       isOnline.value = false;
+    } finally {
+      _fetchInFlight = false;
     }
   }
 
