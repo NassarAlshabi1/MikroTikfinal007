@@ -101,6 +101,30 @@ class PrintBatchesApi {
   return await DBApi.update("cards", {'is_add':isAdd?1:0});
  }
 
+ static Future<int> setCardAddedStatus(
+   int batchId, {
+   required String username,
+   required bool isAdded,
+ }) async {
+  final safeUsername = username.replaceAll("'", "''");
+  return await DBApi.update(
+    "cards",
+    {'is_add': isAdded ? 1 : 0},
+    "batch_id=$batchId AND username='$safeUsername'",
+  );
+ }
+
+ static Future<int> setBatchCardsAddedStatus(
+   int batchId, {
+   required bool isAdded,
+ }) async {
+  return await DBApi.update(
+    "cards",
+    {'is_add': isAdded ? 1 : 0},
+    "batch_id=$batchId",
+  );
+ }
+
 //  static Future<int> addOneBatch2(Map<String, dynamic>  data,List<Map<String, dynamic>> ids)async{
 //   int batch=await DBApi.insert("batches", data);
 //   ids.map((i){

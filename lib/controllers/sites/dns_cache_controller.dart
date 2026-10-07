@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// تأكد من مسارات الاستيراد لمودل الـ DNS وملف الـ API
 import '/models/sites_model.dart'; 
 import '/api/sites_api.dart'; 
+import '../dialog_helper.dart';
 
 class DnsCacheController extends GetxController {
-  // قائمة تفاعلية (Reactive) لتخزين السجلات باستخدام المودل
-  RxList<DNSCacheModel> dnsCacheList = <DNSCacheModel>[].obs;
-  
-  // متغير لمتابعة حالة التحميل
-  RxBool isLoading = true.obs;
+  final RxList<DNSCacheModel> dnsCacheList = <DNSCacheModel>[].obs;
+  final RxBool isLoading = true.obs;
+  final RxBool isFlushing = false.obs;
 
   @override
   void onInit() {
@@ -20,38 +18,73 @@ class DnsCacheController extends GetxController {
   // دالة جلب البيانات من المايكروتك
   Future<void> fetchDnsCache() async {
     isLoading.value = true;
-    var response = await SitesApi.getDnsCache();
-    
-    if (response.status && response.data != null) {
-      dnsCacheList.value = response.data!;
-    } else {
-      Get.snackbar(
-        "تنبيه", 
-        response.message ?? "حدث خطأ أثناء جلب السجلات",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+    try {
+      var response = await SitesApi.getDnsCache();
+      if (response.status && response.data != null) {
+        dnsCacheList.assignAll(response.data!);
+      } else {
+        showMsgDialog(message: response.message, type: MsgType.error);
+      }
+    } catch (e) {
+      showMsgDialog(message: "خطأ في جلب سجلات DNS: $e", type: MsgType.error);
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 
-  // دالة مسح كل التخزين المؤقت
-  void clearCache() {
-    // ملاحظة: هنا يجب استدعاء API لعمل Flush للمايكروتك
-    // await MikrotikClient.printData(commands: ["/ip/dns/cache/flush"]);
-    
-    dnsCacheList.clear();
-    Get.snackbar(
-      "نجاح", 
-      "تم مسح التخزين المؤقت بنجاح", 
-      backgroundColor: Colors.green.shade600, 
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
+  // دالة مسح كل التخزين المؤقت مع التأكيد
+  void confirmClearCache() {
+    showConfirmDialog(
+      message: "هل أنت متأكد من مسح كافة سجلات DNS المؤقتة (DNS Cache Flush) من الراوتر؟",
+      onConfirm: _executeClearCache,
     );
   }
 
-  // دالة حذف سجل محدد
-  void deleteSite(String id) {
-    // ملاحظة: هنا يجب استدعاء API لحذف السجل من المايكروتك إذا كان مدعوماً
-    dnsCacheList.removeWhere((item) => item.id == id);
+  Future<void> _executeClearCache() async {
+    showLoadingDialog(message: "جاري مسح الذاكرة المؤقتة للراوتر...");
+    isFlushing.value = true;
+
+    try {
+      var response = await SitesApi.flushDnsCache();
+      hideDialog();
+
+      if (response.status) {
+        dnsCacheList.clear();
+        showMsgDialog(message: response.message, type: MsgType.success);
+      } else {
+        showMsgDialog(message: response.message, type: MsgType.error);
+      }
+    } catch (e) {
+      hideDialog();
+      showMsgDialog(message: "حدث خطأ: $e", type: MsgType.error);
+    } finally {
+      isFlushing.value = false;
+    }
+  }
+
+  // دالة حذف سجل محدد مع التأكيد
+  void confirmDeleteSite(DNSCacheModel site) {
+    showConfirmDialog(
+      message: "هل تريد حذف السجل «${site.name}» من ذاكرة الراوتر؟",
+      onConfirm: () => _executeDeleteSite(site),
+    );
+  }
+
+  Future<void> _executeDeleteSite(DNSCacheModel site) async {
+    showLoadingDialog(message: "جاري حذف السجل...");
+    try {
+      var response = await SitesApi.removeDnsCache(site.id);
+      hideDialog();
+
+      if (response.status) {
+        dnsCacheList.removeWhere((item) => item.id == site.id);
+        showMsgDialog(message: response.message, type: MsgType.success);
+      } else {
+        showMsgDialog(message: response.message, type: MsgType.error);
+      }
+    } catch (e) {
+      hideDialog();
+      showMsgDialog(message: "حدث خطأ: $e", type: MsgType.error);
+    }
   }
 }

@@ -204,6 +204,15 @@ class MikrotikClient {
     return await fetch(command: commands, params: params,customTag: tag);
   }
 
+  /// Sends a pre-built RouterOS command with its raw command words/attributes.
+  ///
+  /// Unlike [addData], this does not turn the command into a key/value map;
+  /// it is useful for commands such as `['/system/reboot']` or
+  /// `['/ip/hotspot/enable', '=.id=all']`.
+  static Future<List> sendRaw(List<String> command) {
+    return fetch(command: command);
+  }
+
   static Future<List> addData({
     required String command, 
     required Map<String, String> data,
@@ -240,14 +249,20 @@ class MikrotikClient {
 
   static Future<int> getVersion() async {
     _checkConnection();
-    List result = await _client!.talk(
-      "/system/resource/print",
-      // customTag: 'get_version'
-    );
     try {
-      return int.parse(result[0]["version"].split('.')[0]);
+      List result = await _client!.talk(
+        "/system/resource/print",
+      );
+      if (result.isNotEmpty && result[0]["version"] != null) {
+        String vStr = result[0]["version"].toString().trim();
+        final match = RegExp(r'^(\d+)').firstMatch(vStr);
+        if (match != null) {
+          return int.parse(match.group(1)!);
+        }
+      }
+      return 6; // الافتراضي RouterOS v6
     } catch (e) {
-      return 0;
+      return 6; // الافتراضي RouterOS v6
     }
   }
 
@@ -299,8 +314,10 @@ class MikrotikClient {
     );
   }
 
-  static Future<void> cancelCommand(String tag)async{
-    // await _client!.cancelCommand(tag);
+  static Future<void> cancelCommand(String tag) async {
+    try {
+      await _client?.cancelCommand(tag);
+    } catch (_) {}
   }
 
   static Future<void> cancel()async{

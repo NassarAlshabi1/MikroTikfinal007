@@ -1,148 +1,290 @@
+import 'package:mikronet/api/database_api.dart';
+import 'package:mikronet/api/router_api.dart';
 import 'package:mikronet/services/mikrotik_client.dart';
 import 'package:mikronet/models/response.dart';
-
-// تأكد من استيراد ملفات الموديل حسب مسارها في مشروعك
- import 'package:mikronet/models/selles_model.dart'; 
+import 'package:mikronet/models/selles_model.dart';
 
 class ReportsApi {
 
-  // دالة مساعدة: لتحويل صيغة تاريخ الدفع (MMM/DD/YYYY HH:mm:ss) إلى DateTime
-  static DateTime? _parsePaymentDate(String dateStr) {
+  // دالة مساعدة لتحويل أي صيغة لتاريخ الدفع من RouterOS إلى DateTime بدقة متناهية
+  static DateTime? parsePaymentDate(String dateStr) {
+    if (dateStr.trim().isEmpty) return null;
+
     try {
-      // مثال للنص القادم: "jul/16/2025 11:32:32"
-      var parts = dateStr.trim().split(' ');
-      if (parts.length != 2) return null;
+      final clean = dateStr.trim();
 
-      // تفكيك التاريخ
-      var dateParts = parts[0].split('/');
-      if (dateParts.length != 3) return null;
+      // صيغة ISO أو YYYY-MM-DD أو YYYY/MM/DD
+      if (clean.contains('-') || (clean.contains('/') && RegExp(r'^\d{4}').hasMatch(clean))) {
+        final normalized = clean.replaceAll('/', '-');
+        final dt = DateTime.tryParse(normalized);
+        if (dt != null) return dt;
+      }
 
-      // خريطة لتحويل اسم الشهر المختصر إلى رقم
-      const months = {
-        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
-      };
+      // صيغة RouterOS الافتراضية: "jul/16/2025 11:32:32" أو "jul/16/2025"
+      final parts = clean.split(' ');
+      final dateParts = parts[0].split('/');
+      if (dateParts.length == 3) {
+        const months = {
+          'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+          'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+        };
 
-      // استخراج الشهر كـ int باستخدام الخريطة (افتراضي 1 إذا لم يتطابق)
-      int month = months[dateParts[0].toLowerCase()] ?? 1; 
-      int day = int.parse(dateParts[1]);   // 16
-      int year = int.parse(dateParts[2]);  // 2025
+        int? month;
+        int? day;
+        int? year;
 
-      // تفكيك الوقت
-      var timeParts = parts[1].split(':');
-      if (timeParts.length != 3) return null;
+        // إذا كان الشهر نصاً (jul)
+        final monthStr = dateParts[0].toLowerCase();
+        if (months.containsKey(monthStr)) {
+          month = months[monthStr];
+          day = int.tryParse(dateParts[1]);
+          year = int.tryParse(dateParts[2]);
+        } else {
+          // إذا كان اليوم أو السنة أولاً
+          if (dateParts[0].length == 4) {
+            year = int.tryParse(dateParts[0]);
+            month = int.tryParse(dateParts[1]);
+            day = int.tryParse(dateParts[2]);
+          } else {
+            month = int.tryParse(dateParts[0]);
+            day = int.tryParse(dateParts[1]);
+            year = int.tryParse(dateParts[2]);
+          }
+        }
 
-      int hour = int.parse(timeParts[0]);
-      int minute = int.parse(timeParts[1]);
-      int second = int.parse(timeParts[2]);
+        if (year != null && month != null && day != null) {
+          int hour = 0;
+          int minute = 0;
+          int second = 0;
 
-      return DateTime(year, month, day, hour, minute, second);
+          if (parts.length > 1) {
+            final timeParts = parts[1].split(':');
+            if (timeParts.isNotEmpty) hour = int.tryParse(timeParts[0]) ?? 0;
+            if (timeParts.length > 1) minute = int.tryParse(timeParts[1]) ?? 0;
+            if (timeParts.length > 2) second = int.tryParse(timeParts[2]) ?? 0;
+          }
+
+          return DateTime(year, month, day, hour, minute, second);
+        }
+      }
+      return null;
     } catch (e) {
-      print('خطأ في تحويل تاريخ الدفع: $dateStr -> $e');
       return null;
     }
   }
 
   static Future<List> getPayments() async {
-    return await MikrotikClient.printData(
+    try {
+      if (MikrotikClient.version == 7) {
+        // في v7 يتم فحص جلسات أو مدفوعات v7
+        return await MikrotikClient.printData(
+          commands: ["/user-manager/payment/print"],
+          fields: "user,trans-start,price",
+          tag: "v7_payments",
+        );
+      }
+      return await MikrotikClient.printData(
         commands: ["/tool/user-manager/payment/print"],
-        fields: "user,trans-start,price" 
+        fields: "user,trans-start,price",
+        tag: "v6_payments",
       );
+    } catch (_) {
+      return [];
+    }
   }
 
   static Future<List> getProfiles() async {
-    return await MikrotikClient.printData(
-        commands: ["/tool/user-manager/profile/print"],
-      );
-  }
-
-  // الدالة الرئيسية: جلب المدفوعات وتصفيتها بين تاريخين
-  static Future<List<Map<String, dynamic>>> getPaymentsBetweenDates(DateTime startDate, DateTime endDate) async {
     try {
-      // تمديد تاريخ النهاية ليشمل آخر ثانية في اليوم
-      DateTime adjustedEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
-      
-      // 1. جلب البيانات من المايكروتيك
-      var allPayments = await getPayments();
-      
-      // 2. فلترة البيانات
-      var matchedPayments = allPayments.where((payment) {
-        String? paymentTimeStr = payment['trans-start']; 
-        if (paymentTimeStr == null || paymentTimeStr.isEmpty) return false;
-        
-        // تحويل النص إلى DateTime
-        DateTime? paymentDate = _parsePaymentDate(paymentTimeStr);
-        if (paymentDate == null) return false;
-        
-        // التحقق من النطاق الزمني
-        bool isAfterStart = paymentDate.compareTo(startDate) >= 0;
-        bool isBeforeEnd = paymentDate.compareTo(adjustedEndDate) <= 0;
-        return isAfterStart && isBeforeEnd;
-      }).toList();    
-      
-      return List<Map<String, dynamic>>.from(matchedPayments);
-
-    } catch (e) {
-      throw('حدث خطأ أثناء جلب أو فلترة المدفوعات: $e');
-    }
-  }
-
-  // تم التعديل: إرجاع AppResponse محدد النوع <List<SellesReportModel>>
-  static Future<AppResponse<List<SellesReportModel>>> getSallesReport({DateTime? from, DateTime? to}) async {
-    try {
-      var result = await getPaymentsBetweenDates(from ?? DateTime(1900), to ?? DateTime(2200));
-      var allProfiles = await getProfiles();
-      
-      List<SellesReportModel> reportList = [];
-      
-      for (var i in result) {
-        // إضافة orElse لتجنب انهيار التطبيق إذا تم مسح باقة معينة
-        Map? profile = allProfiles.cast<Map?>().firstWhere(
-          (p) => p != null && p["price"] != null && (int.parse(i["price"].toString()) / 100) == (int.parse(p["price"].toString())),
-          orElse: () => null,
-        );
-
-        double calculatedPrice = (int.parse(i["price"].toString()) / 100);
-        String profileName = profile != null ? profile["name"].toString() : "غير معروف";
-
-        // إنشاء المودل مباشرة وإضافته للقائمة
-        reportList.add(
-          SellesReportModel(
-            card: i["user"]?.toString() ?? "",
-            profile: profileName,
-            price: calculatedPrice,
-            date: i["trans-start"]?.toString() ?? "",
-          )
+      if (MikrotikClient.version == 7) {
+        return await MikrotikClient.printData(
+          commands: ["/user-manager/profile/print"],
+          fields: "name,price",
         );
       }
-      return AppResponse<List<SellesReportModel>>(status: true, message: "done", data: reportList);
-      
-    } catch (e) {
-      return AppResponse<List<SellesReportModel>>(status: false, message: e.toString());
+      return await MikrotikClient.printData(
+        commands: ["/tool/user-manager/profile/print"],
+        fields: "name,price",
+      );
+    } catch (_) {
+      return [];
     }
   }
-  
+
+  /// مزامنة سجلات المبيعات من المايكروتك وتخزينها محلياً في SQLite دون أي تكرار
+  /// المبيعات المحفوظة تبقى دائمة ولا تتأثر بحذف الكروت المنتهية أو الجلسات
+  static Future<AppResponse<int>> syncSalesFromMikrotik() async {
+    try {
+      final payments = await getPayments();
+      final profiles = await getProfiles();
+
+      String routerSerial = "";
+      try {
+        final serialRes = await RouterApi.getRouterSerial();
+        if (serialRes.status && serialRes.data != null) {
+          routerSerial = serialRes.data!;
+        }
+      } catch (_) {}
+
+      int newInserted = 0;
+
+      if (payments.isNotEmpty) {
+        final List<Map<String, dynamic>> rowsToInsert = [];
+
+        for (final p in payments) {
+          final user = p['user']?.toString() ?? '';
+          if (user.isEmpty) continue;
+
+          final dateStr = p['trans-start']?.toString() ?? '';
+          final dt = parsePaymentDate(dateStr) ?? DateTime.now();
+
+          double rawPrice = double.tryParse(p['price']?.toString() ?? '0') ?? 0.0;
+          double calculatedPrice = rawPrice > 1000 ? (rawPrice / 100.0) : rawPrice;
+
+          // البحث عن اسم الباقة
+          Map? matchedProfile = profiles.cast<Map?>().firstWhere(
+            (pr) {
+              if (pr == null || pr['price'] == null) return false;
+              double pPrice = double.tryParse(pr['price'].toString()) ?? -1;
+              return calculatedPrice == pPrice || rawPrice == pPrice;
+            },
+            orElse: () => null,
+          );
+
+          String profileName = matchedProfile != null ? (matchedProfile['name']?.toString() ?? 'افتراضي') : 'افتراضي';
+
+          rowsToInsert.add({
+            'card_username': user,
+            'profile_name': profileName,
+            'price': calculatedPrice,
+            'sale_date': dateStr.isNotEmpty ? dateStr : "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}",
+            'timestamp': dt.millisecondsSinceEpoch,
+            'router_serial': routerSerial,
+            'source': 'usermanager',
+          });
+        }
+
+        if (rowsToInsert.isNotEmpty) {
+          for (final row in rowsToInsert) {
+            try {
+              final userEscaped = row['card_username'].toString().replaceAll("'", "''");
+              final profEscaped = row['profile_name'].toString().replaceAll("'", "''");
+              final dateEscaped = row['sale_date'].toString().replaceAll("'", "''");
+              final serialEscaped = row['router_serial'].toString().replaceAll("'", "''");
+              final priceVal = row['price'];
+              final tsVal = row['timestamp'];
+
+              final sql = '''
+                INSERT OR IGNORE INTO sales_records 
+                (card_username, profile_name, price, sale_date, timestamp, router_serial, source)
+                VALUES ('$userEscaped', '$profEscaped', $priceVal, '$dateEscaped', $tsVal, '$serialEscaped', 'usermanager')
+              ''';
+              final res = await DBApi.insert("sales_records", row);
+              if (res > 0) newInserted++;
+            } catch (_) {}
+          }
+        }
+      }
+
+      return AppResponse<int>(
+        status: true,
+        message: "تمت المزامنة بنجاح",
+        data: newInserted,
+      );
+    } catch (e) {
+      return AppResponse<int>(
+        status: false,
+        message: "خطأ أثناء المزامنة: $e",
+      );
+    }
+  }
+
+  /// جلب تقرير المبيعات المفلتر من قاعدة البيانات المحلية الدائمة
+  static Future<AppResponse<List<SellesReportModel>>> getStoredSalesReport({
+    DateTime? from,
+    DateTime? to,
+    String? profileFilter,
+    String? searchQuery,
+  }) async {
+    try {
+      final List<String> conditions = [];
+
+      if (from != null) {
+        final startOfDay = DateTime(from.year, from.month, from.day, 0, 0, 0);
+        conditions.add("timestamp >= ${startOfDay.millisecondsSinceEpoch}");
+      }
+
+      if (to != null) {
+        final endOfDay = DateTime(to.year, to.month, to.day, 23, 59, 59, 999);
+        conditions.add("timestamp <= ${endOfDay.millisecondsSinceEpoch}");
+      }
+
+      if (profileFilter != null && profileFilter.isNotEmpty && profileFilter != "الكل") {
+        final escapedProfile = profileFilter.replaceAll("'", "''");
+        conditions.add("profile_name = '$escapedProfile'");
+      }
+
+      if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+        final cleanSearch = searchQuery.trim().replaceAll("'", "''");
+        conditions.add("(card_username LIKE '%$cleanSearch%' OR profile_name LIKE '%$cleanSearch%')");
+      }
+
+      final whereClause = conditions.isNotEmpty ? conditions.join(" AND ") : null;
+      final rows = await DBApi.select("sales_records", whereClause, "*", "timestamp DESC");
+
+      final List<SellesReportModel> result = rows.map((r) => SellesReportModel.fromDatabase(r)).toList();
+
+      return AppResponse<List<SellesReportModel>>(
+        status: true,
+        message: "done",
+        data: result,
+      );
+    } catch (e) {
+      return AppResponse<List<SellesReportModel>>(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /// جلب قائمة جميع الباقات المتاحة (من المبيعات والراوتر) للفلترة بها
+  static Future<List<String>> getAvailableProfileNames() async {
+    final Set<String> profilesSet = {};
+    try {
+      final rows = await DBApi.select("sales_records", null, "DISTINCT profile_name as prof");
+      for (final r in rows) {
+        final name = r['prof']?.toString();
+        if (name != null && name.isNotEmpty) profilesSet.add(name);
+      }
+    } catch (_) {}
+
+    try {
+      final routerProfiles = await getProfiles();
+      for (final p in routerProfiles) {
+        final name = p['name']?.toString();
+        if (name != null && name.isNotEmpty) profilesSet.add(name);
+      }
+    } catch (_) {}
+
+    final list = profilesSet.toList()..sort();
+    return ["الكل", ...list];
+  }
+
   // تم التعديل: إرجاع AppResponse محدد النوع <SystemStateModel>
   static Future<AppResponse<SystemStateModel>> getSystemState() async {
     try {
       var response = await MikrotikClient.printData(
-        commands: ["/system/resource/print"]
+        commands: ["/system/resource/print"],
       );
 
-      // التأكد من أن المايكروتيك أرجع بيانات قبل تحويلها
       if (response.isNotEmpty) {
-        // عادةً أوامر المايكروتيك ترجع List تحتوي على Map، فنأخذ العنصر الأول
         var systemDataMap = response.first as Map;
         SystemStateModel model = SystemStateModel.fromMikrotik(systemDataMap);
-        
         return AppResponse<SystemStateModel>(status: true, message: "done", data: model);
       } else {
         return AppResponse<SystemStateModel>(status: false, message: "لا توجد بيانات متاحة لحالة النظام");
       }
-      
     } catch (e) {
       return AppResponse<SystemStateModel>(status: false, message: e.toString());
     }
   }
-
 }

@@ -111,9 +111,36 @@ class SqlDb {
     );
   """;
 
+  // ================= جدول سجلات المبيعات الدائمة (إصدار 3) =================
+  String salesRecords = """
+    CREATE TABLE IF NOT EXISTS sales_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      card_username TEXT NOT NULL,
+      profile_name TEXT NOT NULL,
+      price REAL NOT NULL DEFAULT 0.0,
+      sale_date TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      router_serial TEXT DEFAULT '',
+      source TEXT DEFAULT 'usermanager',
+      UNIQUE(card_username, sale_date, router_serial) ON CONFLICT IGNORE
+    );
+  """;
+
+  String salesIndexTimestamp = """
+    CREATE INDEX IF NOT EXISTS idx_sales_timestamp ON sales_records(timestamp);
+  """;
+
+  String salesIndexProfile = """
+    CREATE INDEX IF NOT EXISTS idx_sales_profile ON sales_records(profile_name);
+  """;
+
   /// جداول إصدار 2 (تُنشأ عند ترقية قاعدة بيانات قديمة).
   List<String> get versionTwoTables =>
       [distributors, distributorTransactions, appSettings];
+
+  /// جداول إصدار 3 (المبيعات الدائمة التزامنية غير القابلة للتكرار ولا تتأثر بالحذف).
+  List<String> get versionThreeTables =>
+      [salesRecords, salesIndexTimestamp, salesIndexProfile];
 
   
 
@@ -131,7 +158,7 @@ class SqlDb {
     String path = join(databasePath, "mikrotik.db");
     Database database = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -147,6 +174,11 @@ class SqlDb {
         await db.execute(statement);
       }
     }
+    if (oldVersion < 3) {
+      for (final statement in versionThreeTables) {
+        await db.execute(statement);
+      }
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -159,11 +191,11 @@ class SqlDb {
     mybatch.execute(distributors);
     mybatch.execute(distributorTransactions);
     mybatch.execute(appSettings);
-    // mybatch.execute(inss);
+    mybatch.execute(salesRecords);
+    mybatch.execute(salesIndexTimestamp);
+    mybatch.execute(salesIndexProfile);
 
     await mybatch.commit();
-
-    // ????? ????? ???? ??????? ???.
   }
   // @protected
   Future<List<Map>> readData(String sql) async {

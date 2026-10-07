@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/api/cards_api.dart';
+import 'package:mikronet/api/print_api.dart';
 import 'package:mikronet/models/print_model.dart';
 import 'package:mikronet/models/cards_model.dart'; // ضروري للتعامل مع CustomerModel و CardModel
 import 'package:mikronet/models/response.dart';
@@ -33,20 +34,19 @@ class GeneratedCardsController extends GetxController {
       }
 
       // 2. جلب جميع الكروت الموجودة في الميكروتك
-      AppResponse<List<CardModel>> mikrotikCardsRes = await CardsApi.getAllCards();
-      Set<String> mikrotikUsernames = {};
-      
-      if (mikrotikCardsRes.status && mikrotikCardsRes.data != null) {
-        // تخزين أسماء المستخدمين في Set لسرعة البحث والمقارنة
-        mikrotikUsernames = mikrotikCardsRes.data!.map((e) => e.username).toSet();
+      final mikrotikCardsRes = await CardsApi.getAllCards();
+      if (!mikrotikCardsRes.status || mikrotikCardsRes.data == null) {
+        throw Exception(mikrotikCardsRes.message);
       }
+      final mikrotikUsernames =
+          mikrotikCardsRes.data!.map((card) => card.username).toSet();
 
-      // 3. مقارنة الكروت المولدة مع كروت الميكروتك وتحديث حالتها
-      for (int i = 0; i < generatedCards.length; i++) {
-        if (mikrotikUsernames.contains(generatedCards[i].username)) {
-          generatedCards[i].isAdd = true; // موجودة مسبقاً (جاهزة)
-        } else {
-          generatedCards[i].isAdd = false; // غير موجودة (قيد الانتظار)
+      // 3. مقارنة الكروت المولدة مع كروت الميكروتك وتخزين الحالة الفعلية.
+      for (final card in generatedCards) {
+        final isAdded = mikrotikUsernames.contains(card.username);
+        if (card.isAdd != isAdded) {
+          card.isAdd = isAdded;
+          await _persistCardStatus(card, isAdded);
         }
       }
 
@@ -60,12 +60,7 @@ class GeneratedCardsController extends GetxController {
   
   Future<bool> createCard(int index, GeneratedCardsModel card) async {
     try {
-      if (customers.isEmpty) {
-        throw "قائمة العملاء فارغة. يرجى التحقق من الاتصال.";
-      }
-
-      // أخذ اسم أول عميل متوفر في الميكروتك (تقدر تعدلها لاختيار عميل معين إذا أردت)
-      String customerName = customers[0].name;
+      String customerName = customers.isNotEmpty ? customers[0].name : "admin";
 
       AppResponse response = await CardsApi.addOneCard(
         customer: customerName, 
@@ -75,9 +70,10 @@ class GeneratedCardsController extends GetxController {
       );
 
       if (response.status) {
-        // تحديث حالة الكرت في واجهة المستخدم
+        // تحديث حالة الكرت في الواجهة وقاعدة بيانات الدفعة.
         generatedCards[index].isAdd = true;
-        update(); 
+        await _persistCardStatus(card, true);
+        update();
         return true;
       } else {
         print("خطأ في الكرت ${card.username}: ${response.message}");
@@ -89,15 +85,26 @@ class GeneratedCardsController extends GetxController {
     }
   }
 
+  Future<void> _persistCardStatus(
+    GeneratedCardsModel card,
+    bool isAdded,
+  ) async {
+    if (card.batchId <= 0) return;
+    try {
+      await PrintBatchesApi.setCardAddedStatus(
+        card.batchId,
+        username: card.username,
+        isAdded: isAdded,
+      );
+    } catch (e) {
+      print("تعذّر حفظ حالة الكرت ${card.username}: $e");
+    }
+  }
+
   // ==========================================
   // دوال التحكم بالرفع للسيرفر
   // ==========================================
   Future<void> startUploadingToServer() async {
-    if (customers.isEmpty) {
-       showErrorDialog(content: "لا يمكن بدء الإرسال، لم يتم التعرف على العملاء من المايكروتك بعد.");
-       return;
-    }
-
     if (isUploading) return;
     isUploading = true;
     update();
