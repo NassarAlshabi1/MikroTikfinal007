@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '/controllers/sites/dns_cache_controller.dart'; 
 import '/models/sites_model.dart'; 
 
-// استيراد الويجيت الموحدة v4.5 لضمان تناسق الهوية
 import '../widgets/shared/layouts/sub_page_header.dart';
 import '../widgets/shared/layouts/app_mini_footer.dart';
 import '../widgets/shared/typography/section_title.dart';
@@ -19,24 +18,26 @@ class DnsCachePage extends GetView<DnsCacheController> {
       child: Scaffold(
         backgroundColor: const Color(0xFF1B2740),
 
-        // 1. الزر العائم
-        /*floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 90),
-          child: FloatingActionButton.extended(
-            onPressed: controller.clearCache,
-            backgroundColor: const Color(0xFF3B82F6),
-            elevation: 8,
-            icon: const Icon(Icons.delete_sweep_rounded, color: Colors.white),
-            label: const Text(
-              "مسح التخزين المؤقت",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        floatingActionButton: Obx(() {
+          if (controller.dnsCacheList.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: FloatingActionButton.extended(
+              onPressed: controller.confirmClearCache,
+              backgroundColor: const Color(0xFFEF4444),
+              elevation: 8,
+              icon: const Icon(Icons.delete_sweep_rounded, color: Colors.white),
+              label: const Text(
+                "مسح التخزين المؤقت للراوتر",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
             ),
-          ),
-        ),
-      */
+          );
+        }),
+
         body: Column(
           children: [
-            // 2. الهيدر الموحد
+            // الهيدر الموحد
             const PremiumHeader(
               title: "سجلات DNS",
               subtitle: "مراقبة وإدارة التخزين المؤقت لـ MikroTik",
@@ -50,7 +51,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Column(
                   children: [
-                    // بطاقة الإحصائية بتصميم v4.5 المطور
+                    // بطاقة الإحصائية
                     Obx(() => _buildStatCard(controller.dnsCacheList.length)),
 
                     const SizedBox(height: 10),
@@ -59,22 +60,26 @@ class DnsCachePage extends GetView<DnsCacheController> {
                     Expanded(
                       child: Obx(() {
                         if (controller.isLoading.value) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
                         }
 
                         if (controller.dnsCacheList.isEmpty) {
                           return _buildEmptyState();
                         }
 
-                        return ListView.builder(
-                          // تم زيادة البادينغ السفلي لتوفير مساحة للزر العائم والفوتر
-                          padding: const EdgeInsets.only(bottom: 180, top: 10),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: controller.dnsCacheList.length,
-                          itemBuilder: (context, i) {
-                            final site = controller.dnsCacheList[i];
-                            return _buildDnsItemCard(site);
-                          },
+                        return RefreshIndicator(
+                          onRefresh: controller.fetchDnsCache,
+                          color: const Color(0xFF3B82F6),
+                          backgroundColor: const Color(0xFF16213A),
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 90, top: 6),
+                            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                            itemCount: controller.dnsCacheList.length,
+                            itemBuilder: (context, i) {
+                              final site = controller.dnsCacheList[i];
+                              return _buildDnsItemCard(site);
+                            },
+                          ),
                         );
                       }),
                     ),
@@ -83,7 +88,6 @@ class DnsCachePage extends GetView<DnsCacheController> {
               ),
             ),
 
-            // 3. الفوتر الموحد v4.5
             const AppMiniFooter(title: Text("DNS Monitor Engine")),
           ],
         ),
@@ -94,14 +98,14 @@ class DnsCachePage extends GetView<DnsCacheController> {
   /* ================= بطاقة الإحصائيات ================= */
   Widget _buildStatCard(int count) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xff1E3A8A), Color(0xff3B82F6)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: const Color(0xff1E3A8A).withOpacity(0.3),
@@ -113,117 +117,115 @@ class DnsCachePage extends GetView<DnsCacheController> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF16213A).withOpacity(0.2),
+              color: const Color(0xFF16213A).withOpacity(0.3),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.speed_rounded, color: Colors.white, size: 30),
+            child: const Icon(Icons.speed_rounded, color: Colors.white, size: 28),
           ),
-          const SizedBox(width: 11),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("إجمالي السجلات",
-                  style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 13)),
+              const Text(
+                "إجمالي السجلات في الذاكرة",
+                style: TextStyle(color: Color(0xB3E8EEF9), fontSize: 12),
+              ),
+              const SizedBox(height: 2),
               Text(
-                "$count سجل نشط",
+                "$count سجل مخزن",
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.sync_rounded, color: Colors.white),
+            tooltip: "تحديث السجلات",
+            onPressed: controller.fetchDnsCache,
           ),
         ],
       ),
     );
   }
 
-  /* =================*** التعديل هنا: كرت سجل DNS الفردي المطور ***================= */
+  /* ================= كرت سجل DNS الفردي ================= */
   Widget _buildDnsItemCard(DNSCacheModel site) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF16213A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF243352)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          )
         ],
       ),
       child: ListTile(
-        // تم زيادة البادينغ العمودي لاستيعاب السطور الإضافية في الـ subtitle
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xffF0F7FF),
-            borderRadius: BorderRadius.circular(14),
+            color: const Color(0xff1E3A8A).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
           ),
-          // يمكنك تغيير الأيقونة بناءً على النوع لاحقاً إذا أردت (شرطية)
-          child: const Icon(Icons.language_rounded,
-              color: Color(0xff1E3A8A), size: 24),
+          child: const Icon(Icons.language_rounded, color: Color(0xFF60A5FA), size: 22),
         ),
-        
-        // 1. العنوان (اسم النطاق)
         title: Text(
           site.name.isNotEmpty ? site.name : "Unknown Host",
           style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: Color(0xFFE8EEF9)),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: Color(0xFFE8EEF9),
+          ),
         ),
-        
-        // 2. التعديل هنا: استخدام Column لعرض البيانات، النوع، والوقت
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            // سطر البيانات (IP)
             Text(
               site.data.isNotEmpty ? site.data : "0.0.0.0", 
-              style: TextStyle(
-                  color: const Color(0xFF94A3B8), 
-                  fontSize: 12, 
-                  letterSpacing: 0.5,
-                  fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Color(0xFF94A3B8), 
+                fontSize: 12, 
+                letterSpacing: 0.5,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            
             const SizedBox(height: 6),
-            
-            // سطر التفاصيل الجديدة (Type & TTL)
             Row(
               children: [
-                // النوع (Type)
-                Icon(Icons.category_outlined, size: 12, color: const Color(0xFF94A3B8)),
+                const Icon(Icons.category_outlined, size: 12, color: Color(0xFF94A3B8)),
                 const SizedBox(width: 3),
                 Text(
-                  site.type.isNotEmpty ? site.type : "N/A",
-                  style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 11),
+                  site.type.isNotEmpty ? site.type : "A",
+                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                 ),
-                
-                const SizedBox(width: 12), // مسافة بين النوع والوقت
-                
-                // الوقت المتبقي (TTL)
-                Icon(Icons.history_toggle_off_rounded, size: 12, color: const Color(0xFF94A3B8)),
+                const SizedBox(width: 14),
+                const Icon(Icons.history_toggle_off_rounded, size: 12, color: Color(0xFF94A3B8)),
                 const SizedBox(width: 3),
                 Text(
                   site.ttl.isNotEmpty ? site.ttl : "00:00:00",
-                  style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 11),
+                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                 ),
               ],
             ),
           ],
         ),
-        
-        /*trailing: IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-          onPressed: () => controller.deleteSite(site.id),
-        ),*/
+        trailing: IconButton(
+          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+          tooltip: "حذف السجل",
+          onPressed: () => controller.confirmDeleteSite(site),
+        ),
       ),
     );
   }
@@ -233,11 +235,23 @@ class DnsCachePage extends GetView<DnsCacheController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.auto_awesome_rounded,
-              size: 60, color: Colors.blue.withOpacity(0.2)),
-          const SizedBox(height: 11),
-          const Text("الذاكرة نظيفة تماماً",
-              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          Icon(Icons.auto_awesome_rounded, size: 56, color: Colors.blue.withOpacity(0.3)),
+          const SizedBox(height: 12),
+          const Text(
+            "ذاكرة DNS المؤقتة فارغة تماماً",
+            style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: controller.fetchDnsCache,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text("تحديث السجلات"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E293B),
+              foregroundColor: const Color(0xFF60A5FA),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
         ],
       ),
     );

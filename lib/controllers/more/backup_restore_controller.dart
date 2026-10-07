@@ -77,7 +77,7 @@ class BackupRestoreController extends GetxController {
       }
     } catch (e) {
       hideDialog();
-      showMsgDialog(message: "حدث خطأ أثناء استعادة الملف:\n${e.toString()}",type: MsgType.success);
+      showMsgDialog(message: "حدث خطأ أثناء استعادة الملف:\n${e.toString()}", type: MsgType.error);
     }
   }
 
