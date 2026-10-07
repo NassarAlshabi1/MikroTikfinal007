@@ -152,12 +152,12 @@ class BatchesFormController extends GetxController {
       users: existingUsers, 
     );
 
-    if (dataInsert["password_type"] == "diff") {
+    if (selectedPasswordType == "diff") {
       generatedPasswords = generateUniqueRandomStrings(
         count: count,
         length: pLen,
       );
-    } else if (dataInsert["password_type"] == "same") {
+    } else if (selectedPasswordType == "same") {
       generatedPasswords = List.from(generatedUsernames);
     } else {
       generatedPasswords = List.generate(count, (i) => "");
