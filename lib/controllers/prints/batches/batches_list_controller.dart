@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:mikronet/api/profiles_api.dart';
 import 'package:mikronet/views/prints/batches/batch_cards_page.dart';
 import 'package:mikronet/views/prints/templates/pdf_view.dart';
 import '../../../api/router_api.dart';
@@ -16,11 +14,12 @@ class BatchesListController extends GetxController {
   bool isDeleteLoading = false;
   var routerSerial = "";
 
-  // إحصائيات علوية (2x2 Grid)
-  int routersCount = 1;
-  int profilesCount = 12;
-  int batchesCount = 37;
-  int generatedCardsCount = 16141;
+  // إحصائيات محسوبة من الدفعات المحفوظة، ولا تُعرض بيانات افتراضية.
+  int routersCount = 0;
+  int profilesCount = 0;
+  int batchesCount = 0;
+  int generatedCardsCount = 0;
+  String loadError = "";
 
   // الباقات وملخصها
   List<Map<String, dynamic>> profilesSummary = [];
@@ -28,7 +27,7 @@ class BatchesListController extends GetxController {
   // الصفحات
   int currentPage = 1;
   final int itemsPerPage = 10;
-  int totalPages = 4;
+  int totalPages = 1;
 
   @override
   void onInit() {
@@ -69,9 +68,42 @@ class BatchesListController extends GetxController {
   List<PrintBatchesModel> get currentPageBatches {
     if (allBatches.isEmpty) return [];
     final start = (currentPage - 1) * itemsPerPage;
-    final end = (start + itemsPerPage > allBatches.length) ? allBatches.length : start + itemsPerPage;
+    final end = (start + itemsPerPage > allBatches.length)
+        ? allBatches.length
+        : start + itemsPerPage;
     if (start >= allBatches.length) return [];
     return allBatches.sublist(start, end);
+  }
+
+  int cardCountForBatch(PrintBatchesModel batch) {
+    return batch.generatedCards.isNotEmpty
+        ? batch.generatedCards.length
+        : batch.cards.length;
+  }
+
+  int uploadedCardCountForBatch(PrintBatchesModel batch) {
+    return batch.cards.where((card) {
+      if (card is! Map) return false;
+      final value = card['is_add'];
+      return value == true || value?.toString() == '1';
+    }).length;
+  }
+
+  String statusForBatch(PrintBatchesModel batch) {
+    final total = cardCountForBatch(batch);
+    final uploaded = uploadedCardCountForBatch(batch);
+    if (total == 0) return "لا توجد كروت";
+    if (uploaded >= total) return "مكتملة";
+    if (uploaded > 0) return "مكتملة جزئيًا";
+    return "بانتظار الإضافة";
+  }
+
+  Color statusColorForBatch(PrintBatchesModel batch) {
+    final total = cardCountForBatch(batch);
+    final uploaded = uploadedCardCountForBatch(batch);
+    if (total > 0 && uploaded >= total) return const Color(0xFF22C55E);
+    if (uploaded > 0) return const Color(0xFFF59E0B);
+    return const Color(0xFF94A3B8);
   }
 
   Future<void> deleteBatch(PrintBatchesModel batch, int deleteOption) async {
@@ -87,10 +119,21 @@ class BatchesListController extends GetxController {
         response = (await PrintBatchesApi.deleteBatch(batch.id)) == "done" ? "3" : "0";
       }
       if (response == "1") {
+        try {
+          await PrintBatchesApi.setBatchCardsAddedStatus(
+            batch.id,
+            isAdded: false,
+          );
+        } catch (_) {}
+        for (final card in batch.cards) {
+          if (card is Map) card['is_add'] = 0;
+        }
+        _computeStats();
         Get.back();
         update();
       } else if (response == "2" || response == "3") {
-        allBatches.remove(batch);
+        allBatches.removeWhere((item) => item.id == batch.id);
+        _computeStats();
         Get.back();
         update();
       }
@@ -131,7 +174,8 @@ class BatchesListController extends GetxController {
       var cards = List.generate(r.cards.length, (i) {
         return GeneratedCardsModel.fromDatabase(r.cards[i]);
       });
-      Get.to(GeneratedCardsView(cards));
+      await Get.to(GeneratedCardsView(cards, batchName: r.name));
+      await getAllBatches2();
     } catch (e) {
       showErrorDialog(content: e.toString());
     }
@@ -161,65 +205,74 @@ class BatchesListController extends GetxController {
 
   Future<void> getAllBatches2() async {
     isLoading = true;
+    loadError = "";
     update();
     try {
-      var serial = await RouterApi.getRouterSerial();
-      List result = await PrintBatchesApi.getAllBatchesByRouter(serial.data.toString());
-      List<PrintBatchesModel> temp = [];
-      if (result.isNotEmpty) {
-        for (var i in result) {
-          temp.add(PrintBatchesModel.fromDatabase(i)); 
-        }
+      final serialResponse = await RouterApi.getRouterSerial();
+      final serial = serialResponse.data?.trim() ?? "";
+      if (!serialResponse.status || serial.isEmpty) {
+        throw Exception(
+          serialResponse.message.isNotEmpty
+              ? serialResponse.message
+              : "تعذّر قراءة الرقم التسلسلي للراوتر",
+        );
       }
-      allBatches = temp;
 
-      // حساب الإحصائيات
-      _computeStats();
+      routerSerial = serial;
+      final result = await PrintBatchesApi.getAllBatchesByRouter(serial);
+      final batches = <PrintBatchesModel>[];
+      for (final row in result) {
+        if (row is! Map) {
+          throw const FormatException("صيغة سجل دفعة غير صالحة");
+        }
+        batches.add(PrintBatchesModel.fromDatabase(row));
+      }
+      batches.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      allBatches = batches;
     } catch (e) {
-      // في حالة وجود خطأ نستخدم الإحصائيات الافتراضية
-      _computeStats();
+      allBatches = [];
+      currentPage = 1;
+      loadError = "تعذّر تحميل دفعات الكروت: $e";
     } finally {
+      _computeStats();
       isLoading = false;
       update();
     }
   }
 
   void _computeStats() {
-    if (allBatches.isNotEmpty) {
-      batchesCount = allBatches.length;
-      int tCards = 0;
-      final Map<String, Map<String, dynamic>> profMap = {};
+    batchesCount = allBatches.length;
+    generatedCardsCount = 0;
 
-      for (var b in allBatches) {
-        tCards += b.cards.length;
-        final prof = b.cardsProfile.isNotEmpty ? b.cardsProfile : "100c";
-        if (!profMap.containsKey(prof)) {
-          profMap[prof] = {'name': prof, 'batches': 0, 'cards': 0};
-        }
-        profMap[prof]!['batches'] = (profMap[prof]!['batches'] as int) + 1;
-        profMap[prof]!['cards'] = (profMap[prof]!['cards'] as int) + b.cards.length;
-      }
+    final routerSerials = <String>{};
+    final profiles = <String, Map<String, dynamic>>{};
 
-      generatedCardsCount = tCards > 0 ? tCards : 16141;
-      profilesCount = profMap.isNotEmpty ? profMap.length : 12;
-      routersCount = 1;
+    for (final batch in allBatches) {
+      final serial = batch.routerSerial.trim();
+      if (serial.isNotEmpty) routerSerials.add(serial);
 
-      profilesSummary = profMap.values.toList();
-      totalPages = (allBatches.length / itemsPerPage).ceil();
-      if (totalPages < 1) totalPages = 1;
-    } else {
-      // القيم الافتراضية المتطابقة مع الصورة
-      routersCount = 1;
-      profilesCount = 12;
-      batchesCount = 37;
-      generatedCardsCount = 16141;
-      totalPages = 4;
+      final profile = batch.cardsProfile.trim().isEmpty
+          ? "غير محددة"
+          : batch.cardsProfile.trim();
+      final cardCount = cardCountForBatch(batch);
+      generatedCardsCount += cardCount;
 
-      profilesSummary = [
-        {'name': '100c', 'batches': 19, 'cards': 11024},
-        {'name': '200', 'batches': 1, 'cards': 2550},
-        {'name': '250', 'batches': 1, 'cards': 2550},
-      ];
+      final summary = profiles.putIfAbsent(
+        profile,
+        () => {'name': profile, 'batches': 0, 'cards': 0},
+      );
+      summary['batches'] = (summary['batches'] as int) + 1;
+      summary['cards'] = (summary['cards'] as int) + cardCount;
     }
+
+    routersCount = routerSerials.length;
+    profilesCount = profiles.length;
+    profilesSummary = profiles.values.toList()
+      ..sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+
+    totalPages = (allBatches.length / itemsPerPage).ceil();
+    if (totalPages < 1) totalPages = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
   }
 }

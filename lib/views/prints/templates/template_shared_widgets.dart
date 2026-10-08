@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mikronet/core/app_theme.dart';
 
 import '../../../controllers/prints/templates/base_template_controller.dart';
 import '../../widgets/shared/layouts/gradient_button.dart';
@@ -25,7 +26,8 @@ Widget buildFieldPosition(
               style: TextStyle(
                   fontFamily: "Cairo",
                   fontSize: fontSize,
-                  fontWeight:FontWeight.bold
+                  fontWeight:FontWeight.bold,
+                  color: Colors.white,
               )
             ),
         ),
@@ -41,7 +43,7 @@ Widget buildFieldPosition(
 Widget buildCanvasArea(BaseTemplateController controller) {
   return Container(
     padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
+    decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.border)),
     height: 200,
     alignment: Alignment.center,
     child: SingleChildScrollView(
@@ -52,15 +54,15 @@ Widget buildCanvasArea(BaseTemplateController controller) {
           width: (controller.itemWidth * 2),
           height: (controller.itemHeight * 2),
           decoration: BoxDecoration(
-            border: Border.all(),
+            border: Border.all(color: AppColors.border),
             image: DecorationImage(image: controller.templateImage, fit: BoxFit.fill),
           ),
           child: Stack(
             children: [
               buildFieldPosition(
-                controller.x.value, controller.y.value, controller.itemWidth, controller.itemHeight, 
-                controller.username, controller.usernameText.text, controller.usernameFontSize.toDouble(), 
-                const Color.fromARGB(86, 33, 149, 243), 
+                controller.x.value, controller.y.value, controller.itemWidth, controller.itemHeight,
+                controller.username, controller.usernameText.text, controller.usernameFontSize.toDouble(),
+                const Color.fromARGB(86, 33, 149, 243),
                 (details) {
                   controller.x.value = (controller.x.value + details.delta.dx).clamp(0.0, (controller.itemWidth * 2) - 30);
                   controller.y.value = (controller.y.value + details.delta.dy).clamp(0.0, (controller.itemHeight * 2) - 20);
@@ -68,9 +70,9 @@ Widget buildCanvasArea(BaseTemplateController controller) {
                 },
               ),
               buildFieldPosition(
-                controller.x2.value, controller.y2.value, controller.itemWidth, controller.itemHeight, 
-                controller.password, controller.passwordText.text, controller.passwordFontSize.toDouble(), 
-                const Color.fromARGB(86, 244, 67, 54), 
+                controller.x2.value, controller.y2.value, controller.itemWidth, controller.itemHeight,
+                controller.password, controller.passwordText.text, controller.passwordFontSize.toDouble(),
+                const Color.fromARGB(86, 244, 67, 54),
                 (details) {
                   controller.x2.value = (controller.x2.value + details.delta.dx).clamp(0.0, (controller.itemWidth * 2) - 30);
                   controller.y2.value = (controller.y2.value + details.delta.dy).clamp(0.0, (controller.itemHeight * 2) - 20);
@@ -94,18 +96,19 @@ Widget textFieldWithOutButton(
 ) => Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A), 
-        borderRadius: BorderRadius.circular(((padding/4)+1)*4), 
-        border: Border.all(color: const Color(0xFF1E3A5F))
+        color: AppColors.soft,
+        borderRadius: BorderRadius.circular(((padding/4)+1)*4),
+        border: Border.all(color: AppColors.border),
       ),
       child: TextField(
-        controller: controller, 
+        controller: controller,
         textDirection: TextDirection.ltr,
         textAlign: TextAlign.center,
+        style: const TextStyle(color: AppColors.text, fontSize: 12),
         decoration: InputDecoration(
-          hintText: hint, 
-          border: InputBorder.none, 
-          // hintStyle: TextStyle(fontSize: ((padding/4)-1)*4)
+          hintText: hint,
+          hintStyle: const TextStyle(color: AppColors.textMuted),
+          border: InputBorder.none,
         ),
         onChanged: onChanged,
       )
@@ -114,7 +117,7 @@ Widget textFieldWithOutButton(
 Widget whiteContainer(Widget child) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.border)),
       child: child
     );
   }
@@ -159,7 +162,7 @@ Widget buildSettingsArea(BaseTemplateController controller, double screenWidth) 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.pickImage, icon: Icons.image_outlined, label: 'اختيار صورة', colors: [const Color(0xFF94A3B8), const Color(0xFFE8EEF9)]),
+            GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.pickImage, icon: Icons.image_outlined, label: 'اختيار صورة', colors: [const Color(0xFF475569), const Color(0xFF64748B)]),
             GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.preview, icon: Icons.remove_red_eye_rounded, label: 'معاينة', colors: [Colors.lightGreen.shade700, Colors.lime.shade900]),
           ],
         ),
@@ -177,7 +180,7 @@ Widget buildSettingsArea(BaseTemplateController controller, double screenWidth) 
   );
 }
 
- 
+
 
 
 class ContinuousButton extends StatefulWidget {
@@ -207,14 +210,14 @@ class _ContinuousButtonState extends State<ContinuousButton> {
   void _startHolding() {
     _isHolding = true;
     // تنفيذ الدالة مرة واحدة فور الضغط (للنقرات السريعة)
-    widget.onPressed(); 
-    
+    widget.onPressed();
+
     // الانتظار قليلاً قبل بدء التكرار السريع (لتجنب التداخل مع النقرة العادية)
     Future.delayed(const Duration(milliseconds: 300), () {
       if (_isHolding) {
         // إذا استمر الضغط، كرر العملية كل 100 ملي ثانية
         _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-          widget.onPressed(); 
+          widget.onPressed();
         });
       }
     });
@@ -256,17 +259,17 @@ Widget gridControl(String title, RxInt val, IconData icon, {int min=1, int max=2
     child: Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.center, 
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 14, color: Colors.grey), 
-            const SizedBox(width: 4), 
-            Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold))
+            Icon(icon, size: 14, color: AppColors.textMuted),
+            const SizedBox(width: 4),
+            Text(title, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.bold))
           ]
         ),
         const SizedBox(height: 8),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 5),
-          decoration: BoxDecoration(color: const Color(0xffF1F5F9), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: AppColors.soft, borderRadius: BorderRadius.circular(12)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -274,22 +277,22 @@ Widget gridControl(String title, RxInt val, IconData icon, {int min=1, int max=2
               ContinuousButton(
                 icon: Icons.add_circle,
                 color: Colors.blue,
-                onPressed: () { 
+                onPressed: () {
                   if (val.value < max) {
                     val.value+=1;
-                    if(func!=null)func(val.value); 
+                    if(func!=null)func(val.value);
                   }
                 },
               ),
-              Obx(()=>Text("$val", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),),
+              Obx(() => Text("${val.value}", style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.bold, fontSize: 15))),
               // استخدام الزر المخصص للنقصان
               ContinuousButton(
                 icon: Icons.remove_circle,
                 color: Colors.red,
-                onPressed: () { 
+                onPressed: () {
                   if (val.value > min) {
                     val.value-=1;
-                    if(func!=null)func(val.value); 
+                    if(func!=null)func(val.value);
                   }
                 },
               ),
@@ -301,15 +304,15 @@ Widget gridControl(String title, RxInt val, IconData icon, {int min=1, int max=2
   );
 
 Widget locationControl(
-  String title, 
-  RxDouble x, 
-  RxDouble y, 
-  IconData icon, 
+  String title,
+  RxDouble x,
+  RxDouble y,
+  IconData icon,
   {
     double top = 0,
-    double left = 0, 
-    double bottom = 20, 
-    double right = 20, 
+    double left = 0,
+    double bottom = 20,
+    double right = 20,
     Function(double)? func,
     Color color=Colors.blue
   }
@@ -318,19 +321,19 @@ Widget locationControl(
       children: [
         // العنوان والأيقونة
         Row(
-          mainAxisAlignment: MainAxisAlignment.center, 
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 14, color: Colors.grey), 
-            const SizedBox(width: 4), 
-            Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold))
+            Icon(icon, size: 14, color: AppColors.textMuted),
+            const SizedBox(width: 4),
+            Text(title, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.bold))
           ]
         ),
         const SizedBox(height: 8),
-        
+
         // لوحة التحكم بالاتجاهات
         Container(
           padding: const EdgeInsets.all(8), // إضافة بادينج بسيط لجمالية الشكل
-          decoration: BoxDecoration(color: const Color(0xffF1F5F9), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: AppColors.soft, borderRadius: BorderRadius.circular(12)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -342,16 +345,16 @@ Widget locationControl(
                     icon: Icons.keyboard_arrow_up,
                     padding: 1,
                     color: color,
-                    onPressed: () { 
+                    onPressed: () {
                       if (y.value > top) {
                         y.value -= 1;
-                        if(func != null) func(y.value); 
+                        if(func != null) func(y.value);
                       }
                     },
                   ),
                 ],
               ),
-              
+
               // الصف الثاني: أزرار اليمين واليسار (Left & Right)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -361,31 +364,31 @@ Widget locationControl(
                     icon: Icons.keyboard_arrow_right,
                     padding: 1,
                     color: color,
-                    onPressed: () { 
+                    onPressed: () {
                       if (x.value < right) {
                         x.value += 1;
-                        if(func != null) func(x.value); 
+                        if(func != null) func(x.value);
                       }
                     },
                   ),
-                  
+
                   const SizedBox(width: 30), // مسافة فارغة في المنتصف لتبدو كلوحة تحكم
-                  
+
                   // زر اليسار
                   ContinuousButton(
                     icon: Icons.keyboard_arrow_left,
                     padding: 1,
                     color: color,
-                    onPressed: () { 
+                    onPressed: () {
                       if (x.value > left) {
                         x.value -= 1;
-                        if(func != null) func(x.value); 
+                        if(func != null) func(x.value);
                       }
                     },
                   ),
                 ],
               ),
-              
+
               // الصف الثالث: زر الأسفل (Down)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -394,10 +397,10 @@ Widget locationControl(
                     icon: Icons.keyboard_arrow_down,
                     padding: 1,
                     color: color,
-                    onPressed: () { 
+                    onPressed: () {
                       if (y.value < bottom) {
                         y.value += 1;
-                        if(func != null) func(y.value); 
+                        if(func != null) func(y.value);
                       }
                     },
                   ),
@@ -421,9 +424,9 @@ Widget modernSwitch(
   {String text="عرض كلمة السر في المعاينة"}
 ) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10),
-    decoration: BoxDecoration(color: const Color(0xffF1F5F9), borderRadius: BorderRadius.circular(12)),
+    decoration: BoxDecoration(color: AppColors.soft, borderRadius: BorderRadius.circular(12)),
     child: SwitchListTile(
-      title: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      title: Text(text, style: const TextStyle(color: AppColors.text, fontSize: 12, fontWeight: FontWeight.bold)),
       value: showPassword,
       onChanged: (v) => togglePass(v),
       activeColor: const Color(0xff2563EB),

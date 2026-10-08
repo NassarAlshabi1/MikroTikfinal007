@@ -9,6 +9,9 @@ class MikrotikClient {
   // static RouterOSClient? _heavyClient; // القناة الثقيلة (لجلب الكروت والجلسات فقط)
   static int version=0;
 
+  /// عنوان الراوتر الحالي، ويُستخدم للعرض في لوحة التحكم فقط.
+  static String get address => _address;
+
   // حفظ الإعدادات لإعادة الاتصال التلقائي الصامت في حال فصل الراوتر إحدى القنوات
   static String _address = "";
   static String _user = "";
@@ -202,6 +205,15 @@ class MikrotikClient {
       params = {".proplist": fields};
     }
     return await fetch(command: commands, params: params,customTag: tag);
+  }
+
+  /// Sends a pre-built RouterOS command with its raw command words/attributes.
+  ///
+  /// Unlike [addData], this does not turn the command into a key/value map;
+  /// it is useful for commands such as `['/system/reboot']` or
+  /// `['/ip/hotspot/enable', '=.id=all']`.
+  static Future<List> sendRaw(List<String> command) {
+    return fetch(command: command);
   }
 
   static Future<List> addData({

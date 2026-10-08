@@ -19,7 +19,7 @@ abstract class BaseTemplateController extends GetxController {
   RxInt usernameFontSize = 14.obs;
   RxInt passwordFontSize = 14.obs;
   
-  late ImageProvider<Object> templateImage;
+  ImageProvider<Object> templateImage = const AssetImage('images/100.jpg');
   bool password = false;
   bool username = true;
 
@@ -123,8 +123,9 @@ abstract class BaseTemplateController extends GetxController {
         model = modelFromApi;
       }
 
-      List myUsers = List.generate(73, (i) => usernameText.text);
-      List myPasswords = List.generate(73, (i) => passwordText.text);
+      final cardsPerPage = model.numOfRows * model.numOfColumns;
+      List myUsers = List.generate(cardsPerPage, (i) => usernameText.text);
+      List myPasswords = List.generate(cardsPerPage, (i) => passwordText.text);
       
       Get.to(() => PdfView(
         usernames: myUsers,

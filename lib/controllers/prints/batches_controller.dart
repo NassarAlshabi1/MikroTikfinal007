@@ -17,9 +17,8 @@ import '/models/print_model.dart';
 
 class BatchesController extends GetxController{
   List<Map<String, dynamic>> passwordTypes=[
-    {"id": "none", "label": "بدون \n", "icon": Icons.minimize_outlined},
-    {"id": "diff", "label": "ارقام مختلفة \n", "icon": Icons.pin_outlined},
-    {"id": "same", "label": "مطابقة اسم المستخدم", "icon": Icons.abc_rounded},
+    {"id": "none", "label": "اسم مستخدم فقط", "icon": Icons.person_outline_rounded},
+    {"id": "diff", "label": "اسم مستخدم + كلمة مرور", "icon": Icons.password_rounded},
   ];
   Map dataInsert={};
   List<PrintBatchesModel> allBatches=[];
@@ -135,9 +134,6 @@ class BatchesController extends GetxController{
         length: int.tryParse(passwordLength.text)??5,
       );
     }
-    else if(dataInsert["password_type"]=="same"){
-      generatedPasswords=generatedUsernames;
-    }
     else{
       generatedPasswords=List.generate(int.parse(numOfCards.text), (i)=>"");
     }
@@ -244,18 +240,6 @@ class BatchesController extends GetxController{
       return;
     }
 
-    PrintTemplatesModel template=allTemplates.firstWhere(
-      (t)=>t.id==selectedTemplate.value
-    );
-    if(!template.withPassword && selectedPasswordType=="same"){
-      bool confirm=await showConfirmDialog(
-        message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
-        onConfirm: () {
-          
-        }
-      );
-      if(!confirm){return;}
-    }
     preview();
   }
   
@@ -267,19 +251,6 @@ class BatchesController extends GetxController{
       return;
     }
 
-    PrintTemplatesModel template=allTemplates.firstWhere(
-      (t)=>t.id==selectedTemplate.value
-    );
-    // var profile=allProfiles.firstWhere((p)=>p.id==selectedProfile.value);
-    if(!template.withPassword && selectedPasswordType=="same"){
-      bool confirm=await showConfirmDialog(
-        message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
-        onConfirm :() {
-          
-        },
-      );
-      if(!confirm){return;}
-    }
     generateCards();
     // List<Map<String, dynamic>> generatedCards=List.generate(
     //   generatedUsernames.length, 
@@ -306,37 +277,35 @@ class BatchesController extends GetxController{
 
   void validation(){
     if(selectedTemplate.value==0){
-      throw "please select template";
+      throw "يرجى اختيار قالب صالح";
     }
-    if(selectedProfile.value==""){throw "please select profile";}
-
+    if(selectedProfile.value==""){
+      throw "يرجى اختيار باقة";
+    }
     if(batchName.text.trim().isEmpty ||
-    numOfCards.text.trim().isEmpty ||
-    usernameLength.text.trim().isEmpty){
-      throw "fill all fields";
+        numOfCards.text.trim().isEmpty ||
+        usernameLength.text.trim().isEmpty){
+      throw "يرجى استكمال اسم الدفعة والعدد وطول اسم المستخدم";
     }
-    var template=allTemplates.firstWhere((t)=>t.id==selectedTemplate.value);
+
+    final count = int.tryParse(numOfCards.text.trim());
+    final usernameSize = int.tryParse(usernameLength.text.trim());
+    if(count == null || count <= 0 || usernameSize == null || usernameSize <= 0){
+      throw "العدد وطول اسم المستخدم يجب أن يكونا رقمين أكبر من صفر";
+    }
+
+    final template = allTemplates.firstWhere((t)=>t.id==selectedTemplate.value);
     if(template.withPassword){
-      switch (selectedPasswordType) {
-        case "none":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور بلا ";
-        case "same":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم ";
-        default:
-        if(passwordLength.text.trim().isEmpty){
-          throw "ادخل طول كلمة المرور ";
-        }
+      if(selectedPasswordType != "diff"){
+        throw "القالب المحدد يتطلب نمط اسم مستخدم مع كلمة مرور";
       }
-    }else{
-      switch (selectedPasswordType) {
-        // case "same":
-        //   throw "";
-        case "diff":
-          throw "لايمكن ان يكون نمط كلمة المرور مختلف بينما القالب بدون كلمة مرور";
-        default:
+      final passwordSize = int.tryParse(passwordLength.text.trim());
+      if(passwordSize == null || passwordSize <= 0){
+        throw "أدخل طولًا صالحًا لكلمة المرور";
       }
+    }else if(selectedPasswordType != "none"){
+      throw "القالب المحدد لا يطبع كلمة مرور؛ اختر نمط اسم مستخدم فقط";
     }
-    
   }
 
 

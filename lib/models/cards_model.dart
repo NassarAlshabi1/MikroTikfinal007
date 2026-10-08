@@ -13,7 +13,7 @@ enum CardStatus{
       'normal' => CardStatus.normal,
       'active' => CardStatus.active,
       _ => CardStatus.expired,
-      
+
     };
   }
 }
@@ -52,10 +52,10 @@ class CardModel {
     }
     return CardModel(
       id: card[".id"]?.toString() ?? "",
-      username: card["username"]?.toString() ?? "", 
-      password: card["password"]?.toString() ?? "", 
-      profile: card["actual-profile"]?.toString() ?? "unknown", 
-      status: tempStatus, 
+      username: card["username"]?.toString() ?? "",
+      password: card["password"]?.toString() ?? "",
+      profile: card["actual-profile"]?.toString().trim() ?? "",
+      status: tempStatus,
       customer: card["customer"]?.toString() ?? "",
     );
   }
@@ -74,12 +74,12 @@ class CardModel {
 }
 
 
-//  customer=admin user="issaka21802" 
+//  customer=admin user="issaka21802"
 //  nas-port-id="ether4"
 // calling-station-id="D4:53:83:66:3C:BF"
-// user-ip=9.9.9.16 
+// user-ip=9.9.9.16
 // from-time=jul/11/2025 07:27:24
-// till-time=jul/11/2025 07:55:47 
+// till-time=jul/11/2025 07:55:47
 // uptime=28m23s
 
 class CustomerModel {
@@ -90,8 +90,8 @@ class CustomerModel {
 
   static CustomerModel fromMikrotik(Map data) {
     return CustomerModel(
-      id: data[".id"] ?? "unknown",
-      name: data["login"] ?? "unknown",
+      id: data[".id"]?.toString() ?? "",
+      name: data["login"]?.toString() ?? "",
     );
   }
 

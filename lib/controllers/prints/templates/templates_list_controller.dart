@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mikronet/controllers/dialog_helper.dart';
 import '/api/print_api.dart';
 import '/models/print_model.dart';
 import '/views/helpers/dialogs.dart';
@@ -27,7 +28,7 @@ class TemplatesListController extends GetxController {
   // RxInt passwordLength = 5.obs;
   RxInt usernameFontSize = 14.obs;
   RxInt passwordFontSize = 14.obs;
-  late ImageProvider<Object> templateImage;
+  ImageProvider<Object> templateImage = const AssetImage('images/100.jpg');
   bool password = false;
   bool username = true;
 
@@ -56,30 +57,45 @@ class TemplatesListController extends GetxController {
 
   /// عدد الصفوف التي تعذّرت قراءتها (تُعرض ملاحظة ولا تُفرغ القائمة كلها).
   int skippedTemplates = 0;
+  bool isLoading = true;
+  String loadError = '';
+  int _requestCounter = 0;
 
-  Future<void> getAll()async{
+  Future<void> getAll() async {
+    final requestId = ++_requestCounter;
+    isLoading = true;
+    loadError = '';
+    update();
+
     try {
-      List result=await PrintTemplatesApi.getAllTemplates();
-      final temp=<PrintTemplatesModel>[];
+      final result = await PrintTemplatesApi.getAllTemplates();
+      if (requestId != _requestCounter) return;
+      final temp = <PrintTemplatesModel>[];
       skippedTemplates = 0;
 
-      for (final i in result) {
-        // كل صف داخل try مستقل: صف تالف واحد لا يُخفي باقي القوالب
+      for (final row in result) {
+        // صف تالف واحد لا يُخفي بقية القوالب.
         try {
-          if (i is! Map || !PrintTemplatesModel.isUsableRow(i)) {
+          if (row is! Map || !PrintTemplatesModel.isUsableRow(row)) {
             skippedTemplates++;
             continue;
           }
-          temp.add(PrintTemplatesModel.fromDatabase(i));
+          temp.add(PrintTemplatesModel.fromDatabase(row));
         } catch (_) {
           skippedTemplates++;
         }
       }
 
-      allTemplates=temp;
-      update();
+      allTemplates = temp;
     } catch (e) {
-      showErrorDialog(content: e.toString());
+      if (requestId == _requestCounter) {
+        loadError = 'تعذّر تحميل تصاميم الكروت: $e';
+      }
+    } finally {
+      if (requestId == _requestCounter) {
+        isLoading = false;
+        update();
+      }
     }
   }
 
@@ -93,13 +109,17 @@ class TemplatesListController extends GetxController {
   }
 
 
-  Future<void> delete(int id)async{
+  Future<void> delete(int id) async {
     try {
-      await PrintTemplatesApi.deleteTemplate(id);
-      getAll();
-      showErrorDialog(title: "done", content: "done",titleColor: Colors.green);
+      final result = await PrintTemplatesApi.deleteTemplate(id);
+      if (result <= 0) {
+        showMsgDialog(message: 'لم يتم حذف القالب. أعد المحاولة.', type: MsgType.error);
+        return;
+      }
+      await getAll();
+      await showMsgDialog(message: 'تم حذف تصميم الكرت بنجاح', type: MsgType.success);
     } catch (e) {
-      showErrorDialog(content: e.toString());
+      await showMsgDialog(message: 'تعذّر حذف التصميم: $e', type: MsgType.error);
     }
   }
 
@@ -150,8 +170,9 @@ class TemplatesListController extends GetxController {
         temp=await PrintTemplatesApi.getTemplateData(id);
         model=PrintTemplatesModel.fromDatabase(temp);
       }
-      List myUsers=List.generate(73, (i)=>usernameText.text);
-      List myPasswords=List.generate(73, (i)=>passwordText.text);
+      final cardsPerPage = model.numOfRows * model.numOfColumns;
+      List myUsers=List.generate(cardsPerPage, (i)=>usernameText.text);
+      List myPasswords=List.generate(cardsPerPage, (i)=>passwordText.text);
       
       
         Get.to(PdfView(
@@ -300,10 +321,13 @@ class TemplatesListController extends GetxController {
     update();
   }
 
-
-
-
-
+  @override
+  void onClose() {
+    profileName.dispose();
+    usernameText.dispose();
+    passwordText.dispose();
+    super.onClose();
+  }
 
   Future<void> pickImage() async {
     final ImagePicker picker = ImagePicker();

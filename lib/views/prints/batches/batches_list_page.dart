@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import '../../../controllers/prints/batches/batches_list_controller.dart';
 import '../../../controllers/prints/batches/add_batch_controller.dart';
 import 'add_batch_page.dart';
@@ -18,6 +18,18 @@ class BatchesView extends GetView<BatchesListController> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: const Color(0xFF070F1E),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: const Color(0xFF0EA5E9),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.playlist_add_rounded),
+          label: const Text("إنشاء دفعة"),
+          onPressed: () async {
+            await Get.to(
+              () => AddBatchView(controller: BatchesFormController()),
+            );
+            await controller.getAllBatches2();
+          },
+        ),
         body: SafeArea(
           child: Column(
             children: [
@@ -35,7 +47,7 @@ class BatchesView extends GetView<BatchesListController> {
                     }
 
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 96),
                       physics: const BouncingScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,7 +151,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الباقات",
-                value: "${ctrl.profilesCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.profilesCount}',
                 icon: Icons.grid_view_rounded,
               ),
             ),
@@ -148,7 +160,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الراوترات",
-                value: "${ctrl.routersCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.routersCount}',
                 icon: Icons.router_rounded,
               ),
             ),
@@ -161,7 +173,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الكروت المولدة",
-                value: "${ctrl.generatedCardsCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.generatedCardsCount}',
                 icon: Icons.style_rounded,
               ),
             ),
@@ -170,7 +182,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الدفوعات",
-                value: "${ctrl.batchesCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.batchesCount}',
                 icon: Icons.history_rounded,
               ),
             ),
@@ -228,33 +240,19 @@ class BatchesView extends GetView<BatchesListController> {
 
   /* ================= 3. قسم آخر الدفعات مع الجدول والصفحات ================= */
   Widget _buildRecentBatchesSection(BatchesListController ctrl) {
-    // قائمة تجريبية متطابقة مع الصورة في حال كانت القائمة فارغة
-    final List<Map<String, dynamic>> mockBatches = [
-      {'id': 40, 'count': 51, 'date': '00:00 2026-07-16', 'profile': '100c', 'status': 'استكمال آمن', 'statusColor': const Color(0xFFEF4444)},
-      {'id': 39, 'count': 51, 'date': '23:59 2026-07-15', 'profile': '100c', 'status': 'مؤجلة', 'statusColor': const Color(0xFFF59E0B)},
-      {'id': 38, 'count': 1, 'date': '17:57 2026-07-15', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 37, 'count': 1, 'date': '00:59 2026-07-15', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 33, 'count': 510, 'date': '22:36 2026-07-13', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 32, 'count': 51, 'date': '16:39 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 31, 'count': 1, 'date': '15:54 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 30, 'count': 1, 'date': '14:28 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 29, 'count': 51, 'date': '02:23 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 28, 'count': 51, 'date': '02:15 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-    ];
-
-    final displayItems = ctrl.allBatches.isNotEmpty
-        ? ctrl.currentPageBatches.map((b) {
-            final dt = b.createdAt != null ? DateFormat('HH:mm yyyy-MM-dd').format(b.createdAt!) : '00:00 2026-07-16';
-            return {
-              'id': b.id,
-              'count': b.cards.length,
-              'date': dt,
-              'profile': b.cardsProfile.isNotEmpty ? b.cardsProfile : '100c',
-              'status': 'مكتملة',
-              'statusColor': const Color(0xFF22C55E),
-            };
-          }).toList()
-        : mockBatches;
+    final displayItems = ctrl.currentPageBatches.map((batch) {
+      return {
+        'id': batch.id,
+        'name': batch.name.trim(),
+        'count': ctrl.cardCountForBatch(batch),
+        'date': DateFormat('HH:mm yyyy-MM-dd').format(batch.createdAt),
+        'profile': batch.cardsProfile.trim().isEmpty
+            ? 'غير محددة'
+            : batch.cardsProfile.trim(),
+        'status': ctrl.statusForBatch(batch),
+        'statusColor': ctrl.statusColorForBatch(batch),
+      };
+    }).toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -297,7 +295,7 @@ class BatchesView extends GetView<BatchesListController> {
             ),
           ),
 
-          // رأس جدول الدفعات
+          // عناوين ملخص الدفعات؛ يظهر اسم الدفعة والتاريخ في العمود الأول.
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: const BoxDecoration(
@@ -307,27 +305,27 @@ class BatchesView extends GetView<BatchesListController> {
             child: const Row(
               children: [
                 Expanded(
+                  flex: 4,
+                  child: Text(
+                    "اسم الدفعة / التاريخ",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Expanded(
                   flex: 3,
                   child: Text(
                     "الحالة",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: Text(
                     "الباقة",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: Text(
-                    "التاريخ",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -335,29 +333,60 @@ class BatchesView extends GetView<BatchesListController> {
                   child: Text(
                     "العدد",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    "الدف...",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
           ),
 
-          // صفوف جدول الدفعات
+          if (ctrl.loadError.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Color(0xFFF59E0B)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      ctrl.loadError,
+                      style: const TextStyle(color: Color(0xFFFCD34D), fontSize: 12),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: "إعادة المحاولة",
+                    onPressed: ctrl.getAllBatches2,
+                    icon: const Icon(Icons.refresh_rounded, color: Color(0xFF38BDF8)),
+                  ),
+                ],
+              ),
+            ),
+          if (displayItems.isEmpty && ctrl.loadError.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+              child: Column(
+                children: [
+                  Icon(Icons.inventory_2_outlined, color: Color(0xFF64748B), size: 32),
+                  SizedBox(height: 8),
+                  Text(
+                    "لا توجد دفعات محفوظة لهذا الراوتر بعد",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "أنشئ دفعة جديدة لتظهر بياناتها هنا",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+
+          // صفوف مبنية من سجلات الدفعات الفعلية فقط.
           ...displayItems.map((item) {
             return InkWell(
-              onTap: () {
-                if (ctrl.allBatches.isNotEmpty) {
-                  ctrl.getBatchCards(item['id'] as int);
-                }
-              },
+              onTap: () => ctrl.getBatchCards(item['id'] as int),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: const BoxDecoration(
@@ -365,7 +394,29 @@ class BatchesView extends GetView<BatchesListController> {
                 ),
                 child: Row(
                   children: [
-                    // الحالة مع النقطة الملونة
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (item['name'] as String).isNotEmpty
+                                ? item['name'].toString()
+                                : 'دفعة #${item['id']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            item['date'].toString(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9),
+                          ),
+                        ],
+                      ),
+                    ),
                     Expanded(
                       flex: 3,
                       child: Row(
@@ -380,32 +431,26 @@ class BatchesView extends GetView<BatchesListController> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            item['status'].toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 11),
+                          Flexible(
+                            child: Text(
+                              item['status'].toString(),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white, fontSize: 10),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    // الباقة
                     Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: Text(
                         item['profile'].toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 10),
                       ),
                     ),
-                    // التاريخ
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        item['date'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 10),
-                      ),
-                    ),
-                    // العدد
                     Expanded(
                       flex: 2,
                       child: Text(
@@ -414,49 +459,41 @@ class BatchesView extends GetView<BatchesListController> {
                         style: const TextStyle(color: Colors.white, fontSize: 11),
                       ),
                     ),
-                    // رقم الدفعة
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item['id'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                      ),
-                    ),
                   ],
                 ),
               ),
             );
           }),
 
-          // شريط أزرار التنقل بين الصفحات (Pagination)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _pageBtn(
-                  label: "السابق >",
-                  onTap: () => ctrl.prevPage(),
-                  isActive: false,
-                ),
-                const SizedBox(width: 6),
-                for (int i = ctrl.totalPages; i >= 1; i--) ...[
-                  _pageNumberBtn(
-                    number: i,
-                    isActive: ctrl.currentPage == i,
-                    onTap: () => ctrl.setPage(i),
+          // لا نظهر تنقل الصفحات إلا إذا وُجدت أكثر من صفحة فعلية.
+          if (displayItems.isNotEmpty && ctrl.totalPages > 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _pageBtn(
+                    label: "السابق >",
+                    onTap: () => ctrl.prevPage(),
+                    isActive: false,
                   ),
                   const SizedBox(width: 6),
+                  for (int i = ctrl.totalPages; i >= 1; i--) ...[
+                    _pageNumberBtn(
+                      number: i,
+                      isActive: ctrl.currentPage == i,
+                      onTap: () => ctrl.setPage(i),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  _pageBtn(
+                    label: "< التالي",
+                    onTap: () => ctrl.nextPage(),
+                    isActive: false,
+                  ),
                 ],
-                _pageBtn(
-                  label: "< التالي",
-                  onTap: () => ctrl.nextPage(),
-                  isActive: false,
-                ),
-              ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -546,55 +583,65 @@ class BatchesView extends GetView<BatchesListController> {
             ),
           ),
 
-          // عناصر الباقات
-          ...ctrl.profilesSummary.map((prof) {
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF131D2E),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF1E2E44), width: 0.8),
+          // عناصر الباقات الفعلية من الدفعات المحفوظة.
+          if (ctrl.profilesSummary.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+              child: Text(
+                "لا توجد باقات ضمن الدفعات المحفوظة",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Icon(Icons.chevron_left_rounded, color: Color(0xFF94A3B8), size: 20),
-                  Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            prof['name'].toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
+            )
+          else
+            ...ctrl.profilesSummary.map((prof) {
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF131D2E),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF1E2E44), width: 0.8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Icon(Icons.chevron_left_rounded, color: Color(0xFF94A3B8), size: 20),
+                    Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              prof['name'].toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "الدفعات: ${prof['batches']} | الكروت المولدة: ${prof['cards']}",
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F3B4C),
-                          borderRadius: BorderRadius.circular(10),
+                            const SizedBox(height: 4),
+                            Text(
+                              "الدفعات: ${prof['batches']} | الكروت المولدة: ${prof['cards']}",
+                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.grid_view_rounded, color: Color(0xFF38E5FF), size: 18),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F3B4C),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.grid_view_rounded, color: Color(0xFF38E5FF), size: 18),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
           const SizedBox(height: 6),
         ],
       ),

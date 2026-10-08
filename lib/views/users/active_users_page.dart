@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mikronet/core/app_theme.dart';
 import 'package:mikronet/core/string_extensions.dart';
 import '/controllers/users/active_users_controller.dart';
 import '/models/users_model.dart';
@@ -15,19 +16,56 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             Obx(() => PremiumHeader(
               title: "الجلسات النشطة",
-              subtitle: "المتصلين حالياً بالكروت: ${controller.actives.length}",
+              subtitle: controller.isLoading.value
+                  ? "جارٍ تحميل الجلسات من الراوتر"
+                  : controller.loadError.value.isNotEmpty
+                      ? "تعذّر جلب عدد الجلسات"
+                      : "المتصلون حاليًا: ${controller.actives.length}",
               icon: Icons.bolt_rounded,
             )),
             
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) return const Center(child: CircularProgressIndicator());
-                if (controller.actives.isEmpty) return const Center(child: Text("لا توجد جلسات نشطة"));
+                if (controller.loadError.value.isNotEmpty) {
+                  return _buildErrorState(controller.loadError.value);
+                }
+                if (controller.actives.isEmpty) {
+                  return RefreshIndicator(
+                    onRefresh: controller.fetchActiveSessions,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        SizedBox(
+                          height: 320,
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.people_outline_rounded, size: 52, color: Color(0xFF94A3B8)),
+                                SizedBox(height: 10),
+                                Text(
+                                  "لا توجد جلسات نشطة حاليًا",
+                                  style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  "اسحب للأسفل لإعادة التحقق من الراوتر",
+                                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
                 return RefreshIndicator(
                   onRefresh: controller.fetchActiveSessions,
@@ -40,6 +78,37 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
                 ));
               }),
 
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: Colors.orange, size: 52),
+            const SizedBox(height: 12),
+            const Text(
+              'تعذّر تحميل الجلسات النشطة',
+              style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              onPressed: controller.fetchActiveSessions,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('إعادة المحاولة'),
             ),
           ],
         ),

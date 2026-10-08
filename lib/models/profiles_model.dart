@@ -40,17 +40,28 @@ class ProfilesModel {
     }
   }
 
-  static ProfilesModel fromMikrotik(Map profile){
+  static ProfilesModel fromMikrotik(Map profile) {
+    final rawLimitations = profile["limitations"];
+    final limitation = rawLimitations is List &&
+            rawLimitations.isNotEmpty &&
+            rawLimitations.first is Map
+        ? rawLimitations.first as Map
+        : const <String, dynamic>{};
+    final rawHotspot = profile["hotspot_settings"];
+    final hotspot = rawHotspot is Map ? rawHotspot : const <String, dynamic>{};
+
+    String value(dynamic item) => item?.toString() ?? "";
+
     return ProfilesModel(
-      id: profile[".id"],
-      name: (profile["name"] ?? ""), 
-      price: profile["price"]??"", 
-      palance: profile["limitations"][0]["transfer-limit"]??"",
-      validity: profile["validity"]??"", 
-      speed: profile["hotspot_settings"]["rate-limit"]??"",
-      customer: profile["owner"], 
-      uptime: profile["limitations"][0]["uptime-limit"]??"",
-      users: profile["hotspot_settings"]["shared-users"]??"",
+      id: value(profile[".id"]),
+      name: value(profile["name"]),
+      price: value(profile["price"]),
+      palance: value(limitation["transfer-limit"]),
+      validity: value(profile["validity"]),
+      speed: value(hotspot["rate-limit"]),
+      customer: value(profile["owner"]),
+      uptime: value(limitation["uptime-limit"]),
+      users: value(hotspot["shared-users"]),
     );
   }
 

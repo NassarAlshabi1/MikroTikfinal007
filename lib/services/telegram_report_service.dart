@@ -146,7 +146,10 @@ class TelegramReportService {
     if (settings.isFeatureEnabled('sales')) {
       try {
         final startOfDay = DateTime(now.year, now.month, now.day);
-        final sales = await ReportsApi.getSallesReport(from: startOfDay, to: now);
+        final sales = await ReportsApi.getStoredSalesReport(
+          from: startOfDay,
+          to: now,
+        );
         if (sales.status && sales.data != null) {
           final total =
               sales.data!.fold<double>(0, (sum, item) => sum + item.price);
@@ -309,7 +312,10 @@ class TelegramReportService {
 
       var cardsCount = 0;
       double total = 0;
-      final sales = await ReportsApi.getSallesReport(from: startOfDay, to: now);
+      final sales = await ReportsApi.getStoredSalesReport(
+        from: startOfDay,
+        to: now,
+      );
       if (sales.status && sales.data != null) {
         cardsCount = sales.data!.length;
         total = sales.data!.fold<double>(0, (sum, item) => sum + item.price);

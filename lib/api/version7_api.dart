@@ -299,25 +299,28 @@ class ProfilesApi7 {
 
 class CardsApi7 {
 
-  static CardModel fromMikrotik7(Map card){
-    String tempStatus="normal";
+  static CardModel fromMikrotik7(Map card) {
+    final profileValue = card["profile"];
+    final profile = profileValue is Map ? profileValue : const <String, dynamic>{};
+    final state = profile["state"]?.toString() ?? '';
+    final profileName = profile["profile"]?.toString().trim() ?? '';
 
-    if(card["profile"].isNotEmpty && (card["profile"]["state"]=="used" || card["profile"]["state"]=="running")){
-      tempStatus="expired";
+    final String status;
+    if (state == "running-active") {
+      status = "active";
+    } else if (state == "used" || state == "running") {
+      status = "expired";
+    } else {
+      status = "normal";
     }
-    else if(card["profile"].isNotEmpty && card["profile"]["state"]=="running-active"){
-      tempStatus="active";
-    }
-    else{
-      tempStatus="normal";
-    }
+
     return CardModel(
-      id: card[".id"]??'0',
-      username: card["name"]??'name', 
-      password: card["password"]??'', 
-      profile: (card["profile"]["profile"]??"profile").toString(), 
-      status: tempStatus, 
-      customer: card["group"]??'default',
+      id: card[".id"]?.toString() ?? '',
+      username: card["name"]?.toString() ?? '',
+      password: card["password"]?.toString() ?? '',
+      profile: profileName,
+      status: status,
+      customer: card["group"]?.toString() ?? '',
     );
   }
 
@@ -454,8 +457,8 @@ class CardsApi7 {
       List<CustomerModel> result =
           myCustomers.map((e) => 
           CustomerModel(
-            id: e['attributes'],
-            name: e['name'],
+            id: (e['.id'] ?? e['attributes'] ?? '').toString(),
+            name: (e['name'] ?? '').toString(),
           )).toList();
           // CustomerModel.fromMikrotik(e)).toList();
       return AppResponse<List<CustomerModel>>(
