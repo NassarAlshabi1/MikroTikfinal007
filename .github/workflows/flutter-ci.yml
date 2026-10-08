@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart test/hotspot_logic_test.dart test/connection_errors_test.dart test/print_model_test.dart test/telegram_features_test.dart > test_output.txt 2>&1
+          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart test/hotspot_logic_test.dart test/connection_errors_test.dart test/print_model_test.dart test/telegram_features_test.dart test/cards_search_and_sync_test.dart test/batch_card_generation_test.dart > test_output.txt 2>&1
           status=$?
           echo "unit_tests exit=$status"
           tail -n 40 test_output.txt
