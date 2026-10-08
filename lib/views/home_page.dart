@@ -39,7 +39,14 @@ class HomePage extends GetView<HomeController> {
                       padding: const EdgeInsets.fromLTRB(14, 8, 14, 22),
                       children: [
                         _buildRouterPanel(),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
+                        _buildSectionHeading(
+                          'إحصاءات سريعة',
+                          'الكروت من الراوتر؛ المبيعات المحلية المرتبطة بهويته فقط',
+                        ),
+                        const SizedBox(height: 10),
+                        _buildQuickStatsGrid(),
+                        const SizedBox(height: 14),
                         _buildResourceGrid(),
                         const SizedBox(height: 14),
                         _buildMonitoringBanner(),
@@ -155,6 +162,7 @@ class HomePage extends GetView<HomeController> {
   Widget _buildRouterPanel() {
     return Obx(() {
       final connected = controller.isOnline.value;
+      final checkingConnection = !controller.hasCheckedConnection.value;
       final address = controller.routerAddress.value;
       final serial = controller.routerSerial.value;
 
@@ -196,7 +204,7 @@ class HomePage extends GetView<HomeController> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        address.isNotEmpty ? address : (serial.isNotEmpty ? serial : 'العنوان غير متاح'),
+                        address.isNotEmpty ? address : 'عنوان الراوتر غير متاح',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -205,6 +213,15 @@ class HomePage extends GetView<HomeController> {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
+                      if (serial.isNotEmpty && serial != 'غير متاح') ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          'الرقم التسلسلي: $serial',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white70, fontSize: 9.5),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -214,25 +231,33 @@ class HomePage extends GetView<HomeController> {
                   decoration: BoxDecoration(
                     color: connected
                         ? AppColors.success.withOpacity(0.2)
-                        : AppColors.danger.withOpacity(0.18),
+                        : (checkingConnection
+                            ? AppColors.warning.withOpacity(0.18)
+                            : AppColors.danger.withOpacity(0.18)),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: connected
                           ? AppColors.success.withOpacity(0.55)
-                          : AppColors.danger.withOpacity(0.45),
+                          : (checkingConnection
+                              ? AppColors.warning.withOpacity(0.45)
+                              : AppColors.danger.withOpacity(0.45)),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        connected ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+                        connected
+                            ? Icons.check_circle_rounded
+                            : (checkingConnection ? Icons.sync_rounded : Icons.error_outline_rounded),
                         size: 14,
-                        color: connected ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+                        color: connected
+                            ? const Color(0xFFBBF7D0)
+                            : (checkingConnection ? const Color(0xFFFDE68A) : const Color(0xFFFECACA)),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        connected ? 'متصل' : 'غير متصل',
+                        connected ? 'متصل' : (checkingConnection ? 'جارٍ التحقق' : 'غير متصل'),
                         style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -279,6 +304,38 @@ class HomePage extends GetView<HomeController> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.09),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.sync_rounded, color: Colors.white70, size: 17),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('آخر تحديث ناجح', style: TextStyle(color: Colors.white70, fontSize: 9.5)),
+                        const SizedBox(height: 2),
+                        Text(
+                          controller.lastSyncTime.value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (controller.isStaleData.value)
+                    const Text('محفوظ محليًا', style: TextStyle(color: Color(0xFFFDE68A), fontSize: 9)),
+                ],
+              ),
             ),
             if (controller.errorMessage.value.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -336,6 +393,94 @@ class HomePage extends GetView<HomeController> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildQuickStatsGrid() {
+    final metrics = [
+      _HomeMetric('إجمالي الكروت', controller.totalCardsCount, Icons.credit_card_rounded, AppColors.info),
+      _HomeMetric('مباعة (سجل محلي)', controller.soldCardsCount, Icons.point_of_sale_rounded, AppColors.success),
+      _HomeMetric('غير مستخدمة / متبقية', controller.remainingCardsCount, Icons.inventory_2_outlined, AppColors.purple),
+      _HomeMetric('منتهية', controller.expiredCardsCount, Icons.event_busy_rounded, AppColors.danger),
+      _HomeMetric('مبيعات اليوم (مسجلة)', controller.salesTodayCount, Icons.today_rounded, AppColors.warning),
+      _HomeMetric('مبيعات الشهر (مسجلة)', controller.salesMonthCount, Icons.calendar_month_rounded, AppColors.info),
+    ];
+
+    return Column(
+      children: [
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: metrics.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 9,
+            crossAxisSpacing: 9,
+            childAspectRatio: 1.95,
+          ),
+          itemBuilder: (context, index) {
+            final metric = metrics[index];
+            return Obx(
+              () => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: AppColors.border.withOpacity(0.85)),
+                ),
+                child: Row(
+                  children: [
+                    _iconBubble(metric.icon, metric.color.withOpacity(0.13), foreground: metric.color),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(metric.label, maxLines: 2, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppColors.textMuted, fontSize: 10)),
+                          const SizedBox(height: 3),
+                          Text(metric.value.value, maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppColors.text, fontSize: 15, fontWeight: FontWeight.w900)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 7),
+        Obx(() {
+          final messages = <String>[];
+          if (controller.areCardStatsStale.value) {
+            messages.add(controller.cardStatsUpdatedAt.value == 'غير متاح'
+                ? 'لم تُحدّث إحصاءات الكروت بعد.'
+                : 'إحصاءات الكروت من آخر قراءة: ${controller.cardStatsUpdatedAt.value}.');
+          }
+          if (controller.cardsStatsError.value.isNotEmpty) {
+            messages.add('تعذّر تحديث الكروت: ${controller.cardsStatsError.value}');
+          }
+          if (controller.salesStatsError.value.isNotEmpty) {
+            messages.add('تعذّر قراءة سجل المبيعات المحلي: ${controller.salesStatsError.value}');
+          }
+          if (messages.isEmpty) return const SizedBox.shrink();
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.warning.withOpacity(0.25)),
+            ),
+            child: Text(
+              messages.join(' '),
+              style: const TextStyle(color: AppColors.warning, fontSize: 9.5, height: 1.4),
+            ),
+          );
+        }),
+      ],
     );
   }
 

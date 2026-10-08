@@ -26,6 +26,7 @@ class CardsListController extends GetxController {
   
   final RxBool isLoading = true.obs;
   final RxBool isRefreshing = false.obs;
+  final RxString loadError = ''.obs;
   int _requestCounter = 0;
   Timer? _debounceTimer;
 
@@ -157,14 +158,19 @@ class CardsListController extends GetxController {
 
       if (response.status && response.data != null) {
         allCards.assignAll(response.data!);
+        loadError.value = '';
         _updateCardCounts();
         _applyFilters();
       } else {
-        showMsgDialog(message: response.message, type: MsgType.error);
+        loadError.value = response.status
+            ? 'لم يرجع الراوتر قائمة كروت صالحة'
+            : (response.message.isNotEmpty
+                ? response.message
+                : 'تعذّر جلب الكروت من الراوتر');
       }
     } catch (e) {
       if (currentId == _requestCounter) {
-        showMsgDialog(message: "خطأ في مزامنة الكروت: $e", type: MsgType.error);
+        loadError.value = 'خطأ في مزامنة الكروت: $e';
       }
     } finally {
       if (currentId == _requestCounter) {

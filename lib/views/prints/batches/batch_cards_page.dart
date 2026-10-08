@@ -13,7 +13,13 @@ import '../../widgets/shared/typography/section_title.dart';
 
 class GeneratedCardsView extends StatelessWidget {
   final List<GeneratedCardsModel> generatedCards;
-  const GeneratedCardsView(this.generatedCards,{super.key,});
+  final String batchName;
+
+  const GeneratedCardsView(
+    this.generatedCards, {
+    super.key,
+    this.batchName = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +32,11 @@ class GeneratedCardsView extends StatelessWidget {
           builder: (controller) {
             return Column(
               children: [
-                const PremiumHeader(
-                  title: "الكروت المولدة",
-                  subtitle: "إدارة وإرسال الكروت إلى السيرفر",
+                PremiumHeader(
+                  title: batchName.trim().isEmpty ? 'الكروت المولدة' : batchName.trim(),
+                  subtitle: batchName.trim().isEmpty
+                      ? 'إدارة وإرسال الكروت إلى السيرفر'
+                      : 'كروت الدفعة — إدارة وإرسال إلى الراوتر',
                   icon: Icons.auto_awesome_motion_rounded,
                 ),
             

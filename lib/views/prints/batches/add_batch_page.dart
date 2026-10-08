@@ -102,7 +102,13 @@ class _AddBatchViewState extends State<AddBatchView> {
                 const Text('دفعة مرتبطة بهذا الراوتر', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 3),
                 Text(
-                  serial.isEmpty ? 'جارٍ قراءة هوية الراوتر…' : 'الرقم التسلسلي: $serial',
+                  serial.isNotEmpty
+                      ? 'الرقم التسلسلي: $serial'
+                      : controller.isLoadingRouterData
+                          ? 'جارٍ قراءة هوية الراوتر…'
+                          : (controller.routerIdentityError.isNotEmpty
+                              ? controller.routerIdentityError
+                              : 'تعذّر تحديد الراوتر'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.white70, fontSize: 10.5),
@@ -110,7 +116,11 @@ class _AddBatchViewState extends State<AddBatchView> {
               ],
             ),
           ),
-          const Icon(Icons.verified_user_rounded, color: Color(0xFFBBF7D0), size: 20),
+          Icon(
+            serial.isNotEmpty ? Icons.verified_user_rounded : Icons.error_outline_rounded,
+            color: serial.isNotEmpty ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A),
+            size: 20,
+          ),
         ],
       ),
     );
@@ -120,7 +130,7 @@ class _AddBatchViewState extends State<AddBatchView> {
     return _sectionCard(
       icon: Icons.edit_note_rounded,
       title: 'بيانات الدفعة',
-      subtitle: 'اسم واضح وعدد الكروت المراد توليدها',
+      subtitle: 'اسم واضح وعدد الكروت المراد توليدها؛ المعاينة مطلوبة قبل الإنشاء',
       children: [
         _textField(
           controller: controller.batchName,
@@ -159,8 +169,14 @@ class _AddBatchViewState extends State<AddBatchView> {
         if (controller.allCustomers.isEmpty)
           _emptyDropdownNote(
             title: 'العميل',
-            message: 'لا توجد قائمة عملاء متاحة. سيُستخدم حساب User Manager الافتراضي.',
+            message: controller.isLoadingRouterData
+                ? 'جارٍ تحميل العملاء من الراوتر…'
+                : (controller.customersLoadError.isNotEmpty
+                    ? controller.customersLoadError
+                    : 'لم يرجع الراوتر أي عميل؛ لن يُستخدم حساب افتراضي.'),
             icon: Icons.person_outline_rounded,
+            actionLabel: controller.isLoadingRouterData ? null : 'إعادة المحاولة',
+            onAction: controller.isLoadingRouterData ? null : controller.getAllCustomers,
           )
         else
           _dropdownField<String>(
@@ -184,13 +200,17 @@ class _AddBatchViewState extends State<AddBatchView> {
         if (controller.allProfiles.isEmpty)
           _emptyDropdownNote(
             title: 'الباقة',
-            message: 'لا توجد باقات محمّلة. أنشئ باقة أو أعد تحميلها أولًا.',
+            message: controller.isLoadingRouterData
+                ? 'جارٍ تحميل الباقات من الراوتر…'
+                : 'لا توجد باقات متاحة؛ أنشئ باقة أو أعد المحاولة.',
             icon: Icons.layers_outlined,
-            actionLabel: 'فتح الباقات',
-            onAction: () async {
-              await Get.toNamed(AppRoutes.packages);
-              await controller.getallProfiles();
-            },
+            actionLabel: controller.isLoadingRouterData ? null : 'فتح الباقات',
+            onAction: controller.isLoadingRouterData
+                ? null
+                : () async {
+                    await Get.toNamed(AppRoutes.packages);
+                    await controller.getallProfiles();
+                  },
           )
         else
           _dropdownField<String>(
@@ -216,13 +236,17 @@ class _AddBatchViewState extends State<AddBatchView> {
             title: 'قالب الطباعة',
             message: controller.templatesLoadError.isNotEmpty
                 ? 'تعذّر تحميل القوالب. أعد المحاولة أو أنشئ قالبًا جديدًا.'
-                : 'لا توجد قوالب محفوظة للاختيار.',
+                : (controller.isLoadingRouterData
+                    ? 'جارٍ تحميل القوالب المحفوظة…'
+                    : 'لا توجد قوالب محفوظة للاختيار.'),
             icon: Icons.palette_outlined,
-            actionLabel: 'إدارة القوالب',
-            onAction: () async {
-              await Get.toNamed(AppRoutes.templates);
-              await controller.reloadTemplates();
-            },
+            actionLabel: controller.isLoadingRouterData ? null : 'إدارة القوالب',
+            onAction: controller.isLoadingRouterData
+                ? null
+                : () async {
+                    await Get.toNamed(AppRoutes.templates);
+                    await controller.reloadTemplates();
+                  },
           )
         else
           Row(
@@ -588,7 +612,7 @@ class _AddBatchViewState extends State<AddBatchView> {
               child: FilledButton.icon(
                 onPressed: controller.handleGenerate,
                 icon: const Icon(Icons.bolt_rounded),
-                label: const Text('إنشاء وتوليد'),
+                label: const Text('إنشاء الدفعة'),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.info,
                   foregroundColor: const Color(0xFF07111E),
@@ -602,9 +626,15 @@ class _AddBatchViewState extends State<AddBatchView> {
             Expanded(
               flex: 2,
               child: OutlinedButton.icon(
-                onPressed: controller.handlePreview,
-                icon: const Icon(Icons.visibility_outlined, size: 18),
-                label: const Text('معاينة'),
+                onPressed: controller.isPreparingPreview ? null : controller.handlePreview,
+                icon: controller.isPreparingPreview
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.visibility_outlined, size: 18),
+                label: Text(controller.isPreparingPreview ? 'جاري التجهيز' : 'معاينة'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.text,
                   side: const BorderSide(color: AppColors.border),

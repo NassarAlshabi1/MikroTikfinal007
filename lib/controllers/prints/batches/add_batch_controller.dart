@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/api/print_api.dart';
@@ -23,6 +25,11 @@ class BatchesFormController extends GetxController {
   List<String> generatedPasswords = [];
   List<GeneratedCardsModel> generatedCards = [];
   String routerSerial = "";
+  String routerIdentityError = "";
+  String customersLoadError = "";
+  bool isLoadingRouterData = true;
+  bool isPreparingPreview = false;
+  String? _previewSignature;
 
   // Form Variables
   TextEditingController batchName = TextEditingController();
@@ -115,35 +122,62 @@ class BatchesFormController extends GetxController {
 
   Future<void> getallProfiles() async {
     try {
-      AppResponse<List<ProfilesModel>> result = await ProfilesApi.getProfiles();
-      allProfiles = result.data ?? [];
+      final result = await ProfilesApi.getProfiles();
+      if (!result.status || result.data == null) {
+        throw Exception(!result.status && result.message.isNotEmpty
+            ? result.message
+            : 'لم يُرجع الراوتر قائمة باقات صالحة');
+      }
+      allProfiles = result.data!;
       if (allProfiles.isNotEmpty && selectedProfile.value.isEmpty) {
         selectedProfile.value = allProfiles.first.id.toString();
       }
       update();
     } catch (e) {
-      showMsgDialog(message: "Get Profiles Error : ${e.toString()}",type: MsgType.error);
+      allProfiles = [];
+      selectedProfile.value = '';
+      showMsgDialog(message: "تعذّر جلب الباقات: ${e.toString()}", type: MsgType.error);
+      update();
     }
   }
 
-  // دالة لجلب العملاء من ميكروتك
+  /// جلب العملاء الفعليين؛ لا نختلق حسابًا افتراضيًا إذا لم يرجع الراوتر أي عميل.
   Future<void> getAllCustomers() async {
     try {
-      AppResponse<List<CustomerModel>> result = await CardsApi.getCustomers();
-      allCustomers = result.data ?? [];
-      selectedCustomer.value = allCustomers.isNotEmpty ? allCustomers[0].name : "admin";
-      update();
+      final result = await CardsApi.getCustomers();
+      if (!result.status || result.data == null) {
+        throw Exception(!result.status && result.message.isNotEmpty
+            ? result.message
+            : 'لم يُرجع الراوتر قائمة عملاء صالحة');
+      }
+
+      allCustomers = result.data!
+          .where((customer) => customer.name.trim().isNotEmpty)
+          .toList();
+      selectedCustomer.value = allCustomers.isNotEmpty ? allCustomers.first.name : '';
+      customersLoadError = allCustomers.isEmpty ? 'لا توجد أسماء عملاء متاحة من الراوتر.' : '';
     } catch (e) {
-      showMsgDialog(message: "Get Customers Error : ${e.toString()}",type: MsgType.error);
+      allCustomers = [];
+      selectedCustomer.value = '';
+      customersLoadError = e.toString().replaceFirst('Exception: ', '');
     }
+    update();
   }
+
   Future<void> getRouterSerial() async {
-    var res =await RouterApi.getRouterSerial();
-    if(!res.status){
-      await showMsgDialog(message: res.message,type: MsgType.error);
-      Get.back();
+    try {
+      final response = await RouterApi.getRouterSerial();
+      routerSerial = response.status ? (response.data?.trim() ?? '') : '';
+      routerIdentityError = routerSerial.isEmpty
+          ? (!response.status && response.message.isNotEmpty
+              ? response.message
+              : 'لم يرجع الراوتر رقمًا تسلسليًا صالحًا')
+          : '';
+    } catch (e) {
+      routerSerial = '';
+      routerIdentityError = e.toString().replaceFirst('Exception: ', '');
     }
-    routerSerial = res.data.toString();
+    update();
   }
 
   void prepareCardsData(ProfilesModel profile, {List<String> existingUsers = const []}) {
@@ -245,59 +279,76 @@ class BatchesFormController extends GetxController {
     try {
       validation();
     } catch (e) {
-      showMsgDialog(message: e.toString(),type: MsgType.error);
+      showMsgDialog(message: e.toString(), type: MsgType.error);
       return;
     }
 
-    PrintTemplatesModel? template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
+    final template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
     if (template == null) {
-      if (allTemplates.isNotEmpty) {
-        template = allTemplates.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة", type: MsgType.error);
-        return;
-      }
+      showMsgDialog(
+        message: "يرجى إنشاء قالب طباعة صالح أو اختياره أولاً",
+        type: MsgType.error,
+      );
+      return;
     }
 
-    var profile = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString());
+    final profile = allProfiles.firstWhereOrNull(
+      (p) => p.id.toString() == selectedProfile.value.toString(),
+    );
     if (profile == null) {
-      if (allProfiles.isNotEmpty) {
-        profile = allProfiles.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء باقة أولاً من قسم الباقات", type: MsgType.error);
-        return;
-      }
+      showMsgDialog(message: "يرجى اختيار باقة صالحة من الراوتر", type: MsgType.error);
+      return;
+    }
+
+    final requestedCount = int.tryParse(numOfCards.text.trim()) ?? 0;
+    if (_previewSignature != _configurationSignature() ||
+        generatedCards.length != requestedCount) {
+      showMsgDialog(
+        message: "يجب فتح معاينة الإعدادات الحالية قبل إنشاء الدفعة. إذا غيّرت أي حقل، أعد المعاينة.",
+        type: MsgType.info,
+      );
+      return;
     }
 
     generationProgress.value = 0.0;
-    generationStatus.value = "يرجى الانتظار...\nجلب الكروت من ميكروتك";
+    generationStatus.value = "يرجى الانتظار...\nإعادة التحقق من أسماء الكروت في الراوتر";
     showProgressDialog();
 
     try {
-      var mikrotikResponse = await CardsApi.getAllCards();
-      List<String> existingUsernames = [];
-      if (mikrotikResponse.status && mikrotikResponse.data != null) {
-        existingUsernames = mikrotikResponse.data!.map((e) => e.username).toList();
-      } else {
-        throw Exception("فشل في جلب الكروت: ${mikrotikResponse.message}");
+      final mikrotikResponse = await CardsApi.getAllCards();
+      if (!mikrotikResponse.status || mikrotikResponse.data == null) {
+        final message = !mikrotikResponse.status && mikrotikResponse.message.isNotEmpty
+            ? mikrotikResponse.message
+            : 'لم يرجع الراوتر قائمة كروت صالحة';
+        throw Exception("تعذّر إعادة التحقق من الكروت: $message");
       }
 
-      generationStatus.value = "جاري توليد كروت فريدة...";
-      prepareCardsData(profile, existingUsers: existingUsernames);
+      final existingUsernames = mikrotikResponse.data!
+          .map((card) => card.username.trim())
+          .where((username) => username.isNotEmpty)
+          .toSet();
+      final collisions = generatedUsernames
+          .where((username) => existingUsernames.contains(username))
+          .toList();
+      if (collisions.isNotEmpty) {
+        _previewSignature = null;
+        throw Exception(
+          "أصبحت بعض أسماء المعاينة مستخدمة على الراوتر. أعد المعاينة لتوليد أسماء جديدة قبل الإنشاء.",
+        );
+      }
 
       generationStatus.value = "حفظ الدفعة في قاعدة البيانات...";
-      int batchId = await addBatchToDB();
+      final batchId = await addBatchToDB();
       if (batchId <= 0) throw Exception("حدث خطأ أثناء الحفظ في قاعدة البيانات");
 
-      int totalCards = generatedCards.length;
+      final totalCards = generatedCards.length;
       for (int i = 0; i < totalCards; i++) {
-        var card = generatedCards[i];
-        
+        final card = generatedCards[i];
         generationStatus.value = "إضافة الكرت: ${card.username}\n(${i + 1} من $totalCards)";
-        generationProgress.value = (i) / totalCards;
+        generationProgress.value = i / totalCards;
 
-        var addRes = await CardsApi.addOneCard(
-          customer: selectedCustomer.value, // استخدام العميل المحدد بدلاً من profile.customer
+        final addRes = await CardsApi.addOneCard(
+          customer: selectedCustomer.value,
           username: card.username,
           password: card.password,
           profile: profile.name,
@@ -316,63 +367,163 @@ class BatchesFormController extends GetxController {
         generationProgress.value = (i + 1) / totalCards;
       }
 
-      Get.back(); 
-      Get.back(); 
+      _previewSignature = null;
+      Get.back();
+      Get.back();
       showSuccessDialog();
-
     } catch (e) {
-      Get.back(); 
-      showMsgDialog(message: e.toString(),type: MsgType.error);
+      Get.back();
+      showMsgDialog(message: e.toString(), type: MsgType.error);
     }
   }
 
   Future<void> handlePreview() async {
+    if (isPreparingPreview) return;
+
     try {
       validation();
     } catch (e) {
-      showMsgDialog(message: e.toString(),type: MsgType.error);
+      showMsgDialog(message: e.toString(), type: MsgType.error);
       return;
     }
 
-    PrintTemplatesModel? template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
-    if (template == null) {
-      if (allTemplates.isNotEmpty) {
-        template = allTemplates.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة", type: MsgType.error);
-        return;
-      }
-    }
-
-    
-    var profile = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString());
-    if (profile == null) {
-      if (allProfiles.isNotEmpty) {
-        profile = allProfiles.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء باقة أولاً من قسم الباقات", type: MsgType.error);
-        return;
-      }
-    }
-
-    prepareCardsData(profile);
-    
-    Get.to(
-      PdfView(
-        usernames: generatedUsernames,
-        passwords: generatedPasswords,
-        template: template,
-        saveFile: false,
-      ),
+    final template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
+    final profile = allProfiles.firstWhereOrNull(
+      (p) => p.id.toString() == selectedProfile.value.toString(),
     );
+    if (template == null || profile == null) {
+      showMsgDialog(
+        message: "تعذّر تحديد القالب أو الباقة المحددة من البيانات المحمّلة",
+        type: MsgType.error,
+      );
+      return;
+    }
+
+    isPreparingPreview = true;
+    _previewSignature = null;
+    update();
+    try {
+      final response = await CardsApi.getAllCards();
+      if (!response.status || response.data == null) {
+        final message = !response.status && response.message.isNotEmpty
+            ? response.message
+            : 'لم يرجع الراوتر قائمة كروت صالحة';
+        throw Exception('تعذّر جلب الكروت للتحقق من الأسماء المتاحة: $message');
+      }
+
+      final existingUsernames = response.data!
+          .map((card) => card.username.trim())
+          .where((username) => username.isNotEmpty)
+          .toList(growable: false);
+      prepareCardsData(profile, existingUsers: existingUsernames);
+
+      final requestedCount = int.tryParse(numOfCards.text.trim()) ?? 0;
+      if (generatedCards.length != requestedCount) {
+        throw Exception('تعذّر توليد العدد المطلوب من أسماء المستخدمين الفريدة');
+      }
+
+      final previewSignature = _configurationSignature();
+      final previewCount = generatedCards.length < 10 ? generatedCards.length : 10;
+      final shouldOpenPreview = await Get.dialog<bool>(
+            AlertDialog(
+              title: Text('معاينة الدفعة: ${batchName.text.trim()}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('عدد الكروت: ${generatedCards.length}'),
+                  const SizedBox(height: 5),
+                  Text('العميل: ${selectedCustomer.value}'),
+                  Text('الباقة: ${profile.name}'),
+                  Text('القالب: ${template.name}'),
+                  Text(
+                    'نمط الدخول: ${selectedPasswordType == 'diff' ? 'اسم مستخدم مع كلمة مرور' : 'اسم مستخدم فقط'}',
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'ستُعرض أول $previewCount كروت فقط. لن تُحفظ الدفعة أو تُرسل إلى الراوتر من شاشة المعاينة.',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(result: false),
+                  child: const Text('رجوع للتعديل'),
+                ),
+                FilledButton.icon(
+                  onPressed: () => Get.back(result: true),
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('عرض الكروت'),
+                ),
+              ],
+            ),
+            barrierDismissible: false,
+          ) ??
+          false;
+
+      if (!shouldOpenPreview) return;
+
+      await Get.to(
+        PdfView(
+          usernames: generatedUsernames.take(previewCount).toList(),
+          passwords: generatedPasswords.take(previewCount).toList(),
+          template: template,
+          saveFile: false,
+        ),
+      );
+
+      // الاعتماد على نفس الأسماء التي شاهدها المستخدم عند الإنشاء، ما لم تتغير
+      // الإعدادات بعد الرجوع من المعاينة.
+      if (_configurationSignature() == previewSignature) {
+        _previewSignature = previewSignature;
+      }
+    } catch (e) {
+      showMsgDialog(message: 'تعذّرت معاينة الدفعة: $e', type: MsgType.error);
+    } finally {
+      isPreparingPreview = false;
+      update();
+    }
+  }
+
+  String _configurationSignature() {
+    final template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
+    final profile = allProfiles.firstWhereOrNull(
+      (p) => p.id.toString() == selectedProfile.value.toString(),
+    );
+    return jsonEncode([
+      batchName.text.trim(),
+      numOfCards.text.trim(),
+      prefix.text.trim(),
+      suffix.text.trim(),
+      usernameLength.text.trim(),
+      passwordLength.text.trim(),
+      selectedTemplate.value,
+      template?.name,
+      template?.withPassword,
+      profile?.name,
+      selectedProfile.value,
+      selectedCustomer.value.trim(),
+      selectedPasswordType,
+      routerSerial.trim(),
+    ]);
   }
 
   void validation() {
-    if (selectedCustomer.value.trim().isEmpty) {
-      throw "يرجى اختيار العميل";
+    if (routerSerial.trim().isEmpty) {
+      throw routerIdentityError.isNotEmpty
+          ? "تعذّر التحقق من الراوتر: $routerIdentityError"
+          : "انتظر قراءة هوية الراوتر قبل إنشاء الدفعة";
     }
-    if (selectedProfile.value.trim().isEmpty) {
-      throw "يرجى اختيار الباقة";
+    if (selectedCustomer.value.trim().isEmpty ||
+        !allCustomers.any((customer) => customer.name == selectedCustomer.value)) {
+      throw customersLoadError.isNotEmpty
+          ? "تعذّر اختيار عميل فعلي من الراوتر: $customersLoadError"
+          : "يرجى اختيار عميل موجود على الراوتر";
+    }
+    if (selectedProfile.value.trim().isEmpty ||
+        !allProfiles.any((profile) => profile.id.toString() == selectedProfile.value)) {
+      throw "يرجى اختيار باقة موجودة على الراوتر";
     }
     if (batchName.text.trim().isEmpty) {
       throw "يرجى إدخال اسم الدفعة";
@@ -429,11 +580,18 @@ class BatchesFormController extends GetxController {
     super.onClose();
   }
 
-  void _getDataFromMikrotik() async {
-    await getRouterSerial();
-    await getAllCustomers(); // استدعاء دالة جلب العملاء
-    await getAllTemplates();
-    await getallProfiles();
+  Future<void> _getDataFromMikrotik() async {
+    isLoadingRouterData = true;
+    update();
+    try {
+      await getRouterSerial();
+      await getAllCustomers();
+      await getAllTemplates();
+      await getallProfiles();
+    } finally {
+      isLoadingRouterData = false;
+      update();
+    }
   }
 
   @override

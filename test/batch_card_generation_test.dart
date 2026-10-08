@@ -29,22 +29,18 @@ void main() {
       }
     });
 
-    test('أنماط توليد كلمات المرور (diff, same, none)', () {
+    test('أنماط التوليد المدعومة فقط: اسم مستخدم فقط أو مع كلمة مرور', () {
       const count = 50;
-      final usernames = generateUniqueRandomStrings(count: count, length: 7);
 
-      // 1. نمط diff: كلمات مرور مختلفة
+      // النمط الثاني ينشئ كلمة مرور مستقلة لكل كرت.
       final diffPasswords = generateUniqueRandomStrings(count: count, length: 5);
       expect(diffPasswords.length, count);
       expect(diffPasswords.toSet().length, count);
 
-      // 2. نمط same: مطابقة اسم المستخدم
-      final samePasswords = List<String>.from(usernames);
-      expect(samePasswords, equals(usernames));
-
-      // 3. نمط none: بدون كلمة مرور
-      final nonePasswords = List.generate(count, (i) => '');
-      expect(nonePasswords.every((p) => p.isEmpty), isTrue);
+      // النمط الأول لا يضيف كلمة مرور.
+      final noPasswords = List<String>.filled(count, '');
+      expect(noPasswords.length, count);
+      expect(noPasswords.every((password) => password.isEmpty), isTrue);
     });
 
     test('ربط بطاقات الدفعة بالباقة والقالب وقواعد التحقق', () {
@@ -113,6 +109,26 @@ void main() {
       expect(dbMap['username'], usernames.first);
       expect(dbMap['password'], passwords.first);
       expect(dbMap['profile_name'], 'باقة 20 جيجا شهرية');
+    });
+
+    test('اسم الدفعة يبقى محفوظًا ليظهر في قائمة الدفعات', () {
+      final batch = PrintBatchesModel(
+        id: 4,
+        name: 'دفعة المدارس - أكتوبر',
+        createdAt: DateTime(2026, 10, 8, 9),
+        templateId: 2,
+        generatedCards: const ['card001', 'card002'],
+        cardsProfile: 'باقة الطلاب',
+      );
+
+      final restored = PrintBatchesModel.fromDatabase({
+        'id': batch.id,
+        ...batch.toDatabase(),
+        'cards': const [],
+      });
+
+      expect(restored.name, 'دفعة المدارس - أكتوبر');
+      expect(restored.generatedCards, ['card001', 'card002']);
     });
 
     test('أداء توليد 1,000 كرت مع فحص التكرار في زمن فائق السرعة', () {

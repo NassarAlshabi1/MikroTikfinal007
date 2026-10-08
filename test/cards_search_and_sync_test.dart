@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mikronet/api/version7_api.dart';
 import 'package:mikronet/models/cards_model.dart';
 
 void main() {
@@ -47,6 +48,32 @@ void main() {
       });
 
       expect(card.status, 'expired');
+    });
+
+    test('غياب الباقة أو العميل لا يتحول إلى قيمة وهمية', () {
+      final card = CardModel.fromMikrotik({
+        '.id': '*4D',
+        'username': 'withoutprofile',
+        'uptime-used': '',
+      });
+      final customer = CustomerModel.fromMikrotik({});
+
+      expect(card.profile, isEmpty);
+      expect(card.customer, isEmpty);
+      expect(card.searchKey.contains('unknown'), isFalse);
+      expect(customer.name, isEmpty);
+    });
+
+    test('بيانات RouterOS v7 الناقصة لا تُستبدل باسم أو باقة افتراضية', () {
+      final card = CardsApi7.fromMikrotik7({
+        '.id': '*5E',
+        'profile': <String, dynamic>{},
+      });
+
+      expect(card.username, isEmpty);
+      expect(card.profile, isEmpty);
+      expect(card.customer, isEmpty);
+      expect(card.status, 'normal');
     });
 
     test('سرعة البحث والفلترة مع 10,000 كرت في زمن قياسي', () {

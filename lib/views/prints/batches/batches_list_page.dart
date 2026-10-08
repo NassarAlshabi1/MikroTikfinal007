@@ -151,7 +151,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الباقات",
-                value: "${ctrl.profilesCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.profilesCount}',
                 icon: Icons.grid_view_rounded,
               ),
             ),
@@ -160,7 +160,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الراوترات",
-                value: "${ctrl.routersCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.routersCount}',
                 icon: Icons.router_rounded,
               ),
             ),
@@ -173,7 +173,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الكروت المولدة",
-                value: "${ctrl.generatedCardsCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.generatedCardsCount}',
                 icon: Icons.style_rounded,
               ),
             ),
@@ -182,7 +182,7 @@ class BatchesView extends GetView<BatchesListController> {
             Expanded(
               child: _overviewCard(
                 title: "الدفوعات",
-                value: "${ctrl.batchesCount}",
+                value: ctrl.loadError.isNotEmpty ? '—' : '${ctrl.batchesCount}',
                 icon: Icons.history_rounded,
               ),
             ),
@@ -243,6 +243,7 @@ class BatchesView extends GetView<BatchesListController> {
     final displayItems = ctrl.currentPageBatches.map((batch) {
       return {
         'id': batch.id,
+        'name': batch.name.trim(),
         'count': ctrl.cardCountForBatch(batch),
         'date': DateFormat('HH:mm yyyy-MM-dd').format(batch.createdAt),
         'profile': batch.cardsProfile.trim().isEmpty
@@ -294,7 +295,7 @@ class BatchesView extends GetView<BatchesListController> {
             ),
           ),
 
-          // رأس جدول الدفعات
+          // عناوين ملخص الدفعات؛ يظهر اسم الدفعة والتاريخ في العمود الأول.
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: const BoxDecoration(
@@ -304,27 +305,27 @@ class BatchesView extends GetView<BatchesListController> {
             child: const Row(
               children: [
                 Expanded(
+                  flex: 4,
+                  child: Text(
+                    "اسم الدفعة / التاريخ",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Expanded(
                   flex: 3,
                   child: Text(
                     "الحالة",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: Text(
                     "الباقة",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: Text(
-                    "التاريخ",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -332,15 +333,7 @@ class BatchesView extends GetView<BatchesListController> {
                   child: Text(
                     "العدد",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    "الدف...",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -402,6 +395,29 @@ class BatchesView extends GetView<BatchesListController> {
                 child: Row(
                   children: [
                     Expanded(
+                      flex: 4,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (item['name'] as String).isNotEmpty
+                                ? item['name'].toString()
+                                : 'دفعة #${item['id']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            item['date'].toString(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
                       flex: 3,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -419,26 +435,20 @@ class BatchesView extends GetView<BatchesListController> {
                             child: Text(
                               item['status'].toString(),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontSize: 11),
+                              style: const TextStyle(color: Colors.white, fontSize: 10),
                             ),
                           ),
                         ],
                       ),
                     ),
                     Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: Text(
                         item['profile'].toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        item['date'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 10),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 10),
                       ),
                     ),
                     Expanded(
@@ -447,14 +457,6 @@ class BatchesView extends GetView<BatchesListController> {
                         item['count'].toString(),
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item['id'].toString(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                       ),
                     ),
                   ],

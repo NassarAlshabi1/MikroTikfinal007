@@ -24,10 +24,10 @@ class CardsListPage extends GetView<CardsListController> {
               subtitle: "مزامنة لحظية وبحث فائق السرعة لكافة اشتراكات الشبكة",
               showBackButton: true,
             ),
-            
+
             // 2. منطقة البحث والفلترة
             _buildSearchAndFilterArea(),
-            
+
             // 3. القائمة المحدثة مع دعم السحب للتحديث
             Expanded(
               child: RefreshIndicator(
@@ -37,7 +37,7 @@ class CardsListPage extends GetView<CardsListController> {
                 child: _buildCardsList(),
               ),
             ),
-            
+
             // 4. الفوتر
             const AppMiniFooter(
               title: Row(
@@ -125,8 +125,8 @@ class CardsListPage extends GetView<CardsListController> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), 
-            blurRadius: 15, 
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
             offset: const Offset(0, 5),
           )
         ],
@@ -136,7 +136,7 @@ class CardsListPage extends GetView<CardsListController> {
         onChanged: controller.setSearch,
         style: const TextStyle(color: Colors.white, fontSize: 14),
         decoration: InputDecoration(
-          hintText: "بحث سريع برقم الكرت أو الباقة...",
+          hintText: "ابحث باسم المستخدم أو كلمة المرور أو الباقة...",
           hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
           prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF3B82F6)),
           suffixIcon: controller.searchQuery.value.isNotEmpty
@@ -169,36 +169,39 @@ class CardsListPage extends GetView<CardsListController> {
     );
   }
 
-  Widget _addButton() { 
-    return InkWell( 
-      onTap: controller.goToAddSingleCard, 
+  Widget _addButton() {
+    return InkWell(
+      onTap: controller.goToAddSingleCard,
       borderRadius: BorderRadius.circular(18),
-      child: Container( 
-        height: 55, 
-        width: 55, 
-        decoration: BoxDecoration( 
-          gradient: const LinearGradient(colors: [Color(0xFF38BDF8), Color(0xFF0EA5E9)]), 
-          borderRadius: BorderRadius.circular(18), 
-          boxShadow: [ 
-            BoxShadow( 
-              color: const Color(0xFF0EA5E9).withOpacity(0.3), 
-              blurRadius: 10, 
-              offset: const Offset(0, 4), 
-            ) 
-          ], 
-        ), 
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30), 
-      ), 
-    ); 
+      child: Container(
+        height: 55,
+        width: 55,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF38BDF8), Color(0xFF0EA5E9)]),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0EA5E9).withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
+      ),
+    );
   }
 
   Widget _buildFilterChips() {
     final items = ["الكل", "جديدة", "نشطة", "منتهية"];
-    
+
     return Obx(() => Row(
       children: items.map((f) {
         final active = controller.filter.value == f;
         final count = controller.cardCounts[f]?.value ?? 0;
+        final countUnavailable = controller.allCards.isEmpty &&
+            (controller.isLoading.value || controller.loadError.value.isNotEmpty);
+        final countLabel = countUnavailable ? '—' : '$count';
         
         return Expanded(
           child: GestureDetector(
@@ -217,11 +220,11 @@ class CardsListPage extends GetView<CardsListController> {
                     : null,
               ),
               child: Text(
-                "$f\n($count)",
+                "$f\n($countLabel)",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: active ? Colors.white : const Color(0xFF94A3B8), 
-                  fontWeight: FontWeight.w900, 
+                  color: active ? Colors.white : const Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w900,
                   fontSize: 12,
                 ),
                 maxLines: 2,
@@ -251,22 +254,31 @@ class CardsListPage extends GetView<CardsListController> {
         );
       }
 
+      // لا نعرض رسالة «لا توجد كروت» إذا كان الجلب نفسه قد فشل.
+      if (controller.allCards.isEmpty && controller.loadError.value.isNotEmpty) {
+        return _loadErrorState();
+      }
+
       // 2. حالة القائمة فارغة
       if (controller.filteredCards.isEmpty) {
         return _emptyState();
       }
 
-      // 3. بناء القائمة المفلترة
+      // 3. بناء القائمة المفلترة، مع إبقاء البيانات السابقة ظاهرة عند فشل التحديث.
+      final showLoadWarning = controller.loadError.value.isNotEmpty &&
+          controller.allCards.isNotEmpty;
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        itemCount: controller.filteredCards.length,
+        itemCount: controller.filteredCards.length + (showLoadWarning ? 1 : 0),
         itemBuilder: (context, i) {
-          final card = controller.filteredCards[i];
+          if (showLoadWarning && i == 0) return _loadWarningBanner();
+          final cardIndex = i - (showLoadWarning ? 1 : 0);
+          final card = controller.filteredCards[cardIndex];
 
           return CardItemTile(
             username: card.username,
-            package: card.profile,
+            package: card.profile.trim().isEmpty ? 'غير متاحة' : card.profile,
             status: card.status,
             onTap: () => controller.goToCardDetails(card),
             onAnalyticsTap: () => controller.goToCardSessions(card),
@@ -274,6 +286,77 @@ class CardsListPage extends GetView<CardsListController> {
         },
       );
     });
+  }
+
+  Widget _loadErrorState() {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: SizedBox(
+        height: 320,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.cloud_off_rounded, size: 54, color: Color(0xFFF59E0B)),
+                const SizedBox(height: 12),
+                const Text(
+                  'تعذّر تحميل الكروت',
+                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  controller.loadError.value,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, height: 1.4),
+                ),
+                const SizedBox(height: 14),
+                ElevatedButton.icon(
+                  onPressed: controller.refreshCards,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('إعادة المحاولة'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _loadWarningBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFF78350F).withOpacity(0.25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded, color: Color(0xFFFBBF24), size: 17),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              'تعذّر تحديث الكروت؛ المعروض هو آخر ما تم تحميله. ${controller.loadError.value}',
+              style: const TextStyle(color: Color(0xFFFDE68A), fontSize: 10.5),
+            ),
+          ),
+          IconButton(
+            tooltip: 'إعادة المحاولة',
+            onPressed: controller.refreshCards,
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF38BDF8), size: 19),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _emptyState() {
@@ -288,6 +371,10 @@ class CardsListPage extends GetView<CardsListController> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (controller.loadError.value.isNotEmpty && !isTotalEmpty) ...[
+                _loadWarningBanner(),
+                const SizedBox(height: 8),
+              ],
               Icon(
                 hasSearch ? Icons.search_off_rounded : Icons.credit_card_off_rounded,
                 size: 64,

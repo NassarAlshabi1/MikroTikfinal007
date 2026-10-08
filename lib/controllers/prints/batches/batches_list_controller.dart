@@ -174,7 +174,7 @@ class BatchesListController extends GetxController {
       var cards = List.generate(r.cards.length, (i) {
         return GeneratedCardsModel.fromDatabase(r.cards[i]);
       });
-      await Get.to(GeneratedCardsView(cards));
+      await Get.to(GeneratedCardsView(cards, batchName: r.name));
       await getAllBatches2();
     } catch (e) {
       showErrorDialog(content: e.toString());
