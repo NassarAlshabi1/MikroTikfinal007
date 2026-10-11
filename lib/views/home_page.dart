@@ -492,6 +492,18 @@ class HomePage extends GetView<HomeController> {
       _HomeMetric('المستخدمون النشطون', controller.activeUsersCount, Icons.people_alt_rounded, AppColors.success),
     ];
 
+  Widget _buildServicesGrid() {
+    final items = <_HomeService>[
+      _HomeService('نظام البوزرمينجر', Icons.groups_rounded, const Color(0xFF16A5DE), controller.goToCards),
+      _HomeService('نظام الهوتسبوت', Icons.wifi_rounded, const Color(0xFF19B99A), controller.goToUsers),
+      _HomeService('إدارة المايكروتك', Icons.map_rounded, const Color(0xFF2B9EEB), controller.goToSites),
+      _HomeService('تصاميم الكروت', Icons.palette_outlined, const Color(0xFF25C9A5), controller.goToPrint),
+      _HomeService('الاكستن والهوتسبوت', Icons.podcasts_rounded, const Color(0xFFD2A91A), controller.goToMonitor),
+      _HomeService('الحسابات المالية', Icons.account_balance_wallet_outlined, const Color(0xFFF0C21F), controller.goToDistributors),
+      _HomeService('الأنشطة الحديثة', Icons.history_rounded, const Color(0xFF20C8A6), controller.goToReports),
+      _HomeService('النسخ الاحتياطية', Icons.archive_outlined, const Color(0xFFE2B71A), controller.goToMoreSettings),
+      _HomeService('الملف الشخصي', Icons.person_outline_rounded, const Color(0xFF48C3DD), controller.goToMoreSettings),
+    ];
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
