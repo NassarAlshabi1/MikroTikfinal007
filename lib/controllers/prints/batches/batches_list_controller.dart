@@ -223,7 +223,7 @@ class BatchesListController extends GetxController {
       final batches = <PrintBatchesModel>[];
       for (final row in result) {
         if (row is! Map) {
-          throw const FormatException("صيغة سجل دفعة غير صالحة");
+          continue;
         }
         batches.add(PrintBatchesModel.fromDatabase(row));
       }
