@@ -19,7 +19,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: AppColors.page,
 
         // زر الإضافة جهة اليسار بارتفاع متناسق
         //floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
@@ -116,7 +116,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.white,
+            color: isSelected ? AppColors.primary : AppColors.card,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: isSelected ? Colors.transparent : AppColors.borderBlue),
@@ -259,7 +259,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                     margin: const EdgeInsets.only(bottom: 25),
                     padding: const EdgeInsets.symmetric(horizontal: 11),
                     decoration: BoxDecoration(
-                        color: const Color(0xffF1F5F9),
+                        color: AppColors.overlay,
                         borderRadius: BorderRadius.circular(15)),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<UserType>(
@@ -417,7 +417,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11),
         decoration: BoxDecoration(
-            color: const Color(0xffF1F5F9),
+            color: AppColors.overlay,
             borderRadius: BorderRadius.circular(15)),
         child: TextField(
           controller: controller,
@@ -425,7 +425,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
           decoration: InputDecoration(
               hintText: hint,
               border: InputBorder.none,
-              icon: Icon(icon, color: const Color(0xff1E3A8A), size: 22)),
+              icon: Icon(icon, color: AppColors.info, size: 22)),
         ),
       ),
     );
@@ -446,7 +446,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
               color: AppColors.text,
               fontSize: 14)),
       trailing: const Icon(Icons.arrow_back_ios_new_rounded,
-          size: 14, color: Colors.black12),
+          size: 14, color: AppColors.border),
     );
   }
   Widget _searchField() {

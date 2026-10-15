@@ -259,15 +259,15 @@ Widget gridControl(String title, RxInt val, IconData icon, {int min=1, int max=2
         Row(
           mainAxisAlignment: MainAxisAlignment.center, 
           children: [
-            Icon(icon, size: 14, color: Colors.grey), 
+            Icon(icon, size: 14, color: AppColors.textMuted), 
             const SizedBox(width: 4), 
-            Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold))
+            Text(title, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.bold))
           ]
         ),
         const SizedBox(height: 8),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 5),
-          decoration: BoxDecoration(color: const Color(0xffF1F5F9), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: AppColors.overlay, borderRadius: BorderRadius.circular(12)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -321,9 +321,9 @@ Widget locationControl(
         Row(
           mainAxisAlignment: MainAxisAlignment.center, 
           children: [
-            Icon(icon, size: 14, color: Colors.grey), 
+            Icon(icon, size: 14, color: AppColors.textMuted), 
             const SizedBox(width: 4), 
-            Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold))
+            Text(title, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.bold))
           ]
         ),
         const SizedBox(height: 8),
@@ -331,7 +331,7 @@ Widget locationControl(
         // لوحة التحكم بالاتجاهات
         Container(
           padding: const EdgeInsets.all(8), // إضافة بادينج بسيط لجمالية الشكل
-          decoration: BoxDecoration(color: const Color(0xffF1F5F9), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: AppColors.overlay, borderRadius: BorderRadius.circular(12)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -422,7 +422,7 @@ Widget modernSwitch(
   {String text="عرض كلمة السر في المعاينة"}
 ) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10),
-    decoration: BoxDecoration(color: const Color(0xffF1F5F9), borderRadius: BorderRadius.circular(12)),
+    decoration: BoxDecoration(color: AppColors.overlay, borderRadius: BorderRadius.circular(12)),
     child: SwitchListTile(
       title: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
       value: showPassword,

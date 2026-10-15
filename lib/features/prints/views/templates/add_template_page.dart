@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mikronet/core/ui/widgets/main_gate_header.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
+import 'package:mikronet/core/ui/widgets/sub_page_header.dart';
 import 'package:mikronet/core/ui/widgets/modern_input.dart';
 import 'package:mikronet/features/prints/controllers/templates/add_template_controller.dart';
 import 'package:mikronet/core/ui/widgets/gradient_button.dart';
@@ -18,10 +19,10 @@ class AddTemplatePage extends GetView<AddTemplateController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
-            const MainGateHeader(title: "إضافة قالب جديد", subtitle: "",),
+            PremiumHeader(title: "إضافة قالب جديد", subtitle: "صمّم قالب طباعة الكروت", goBack: Get.back),
             // circleAvatarHeader(context, "إضافة قالب جديد"), 
             Expanded(
               child: SingleChildScrollView(

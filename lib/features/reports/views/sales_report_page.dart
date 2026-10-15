@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
+import 'package:mikronet/core/ui/widgets/sub_page_header.dart';
 import 'package:intl/intl.dart' show NumberFormat;
 import 'package:mikronet/features/reports/controllers/sales_report_controller.dart';
 
@@ -15,12 +16,12 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.ink,
+        backgroundColor: AppColors.page,
         body: SafeArea(
           child: Column(
             children: [
               // 1. شريط التطبيق العلوي (MkCards مع الأيقونات والنقطة الخضراء)
-              _buildTopAppBar(),
+              PremiumHeader(title: "التقارير والمبيعات", subtitle: "تقرير المبيعات المفصّل", goBack: Get.back),
 
               // 2. المحتوى الرئيسي القابل للتمرير
               Expanded(
@@ -60,74 +61,6 @@ class SalesReportPage extends GetView<SalesReportController> {
   }
 
   /* ================= 1. شريط التطبيق العلوي ================= */
-  Widget _buildTopAppBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: AppColors.ink,
-        border: Border(bottom: BorderSide(color: AppColors.surface, width: 0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // الأيقونات على اليسار
-          Row(
-            children: [
-              _topIconBtn(Icons.language_rounded, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.wb_sunny_outlined, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.logout_rounded, () {}),
-            ],
-          ),
-
-          // العنوان في الوسط مع النقطة الخضراء
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "MkCards",
-                style: TextStyle(
-                  color: AppColors.textBright,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.success,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-
-          // زر الرجوع في اليمين
-          _topIconBtn(Icons.arrow_forward_rounded, () => Get.back()),
-        ],
-      ),
-    );
-  }
-
-  Widget _topIconBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.surface, width: 1),
-        ),
-        child: Icon(icon, color: AppColors.info, size: 18),
-      ),
-    );
-  }
 
   /* ================= 2. كارد العنوان وأزرار الإجراءات ================= */
   Widget _buildHeaderCard(SalesReportController controller) {

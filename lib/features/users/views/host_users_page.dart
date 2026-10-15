@@ -15,7 +15,7 @@ class HostUsersPage extends GetView<HostUsersController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             Obx(() => PremiumHeader(

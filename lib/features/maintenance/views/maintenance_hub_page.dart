@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
+import 'package:mikronet/core/ui/widgets/sub_page_header.dart';
 import 'package:mikronet/features/maintenance/controllers/maintenance_hub_controller.dart';
 
 class MaintenanceHubPage extends GetView<MaintenanceHubController> {
@@ -14,12 +15,12 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.ink,
+        backgroundColor: AppColors.page,
         body: SafeArea(
           child: Column(
             children: [
               // 1. شريط التطبيق العلوي (MkCards)
-              _buildTopAppBar(),
+              PremiumHeader(title: "أدوات الصيانة", subtitle: "فحص الشبكة وتشخيص الراوتر", goBack: Get.back),
 
               // 2. المحتوى الرئيسي لخطوات صيانة اليوزر مانجر
               Expanded(
@@ -111,69 +112,6 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
   }
 
   /* ================= 1. شريط التطبيق العلوي ================= */
-  Widget _buildTopAppBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: AppColors.ink,
-        border: Border(bottom: BorderSide(color: AppColors.surface, width: 0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              _topIconBtn(Icons.language_rounded, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.wb_sunny_outlined, () {}),
-              const SizedBox(width: 8),
-              _topIconBtn(Icons.logout_rounded, () {}),
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "MkCards",
-                style: TextStyle(
-                  color: AppColors.textBright,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.success,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-          _topIconBtn(Icons.arrow_forward_rounded, () => Get.back()),
-        ],
-      ),
-    );
-  }
-
-  Widget _topIconBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.surface, width: 1),
-        ),
-        child: Icon(icon, color: AppColors.info, size: 18),
-      ),
-    );
-  }
 
   /* ================= 2. بطاقة خطوة الصيانة ================= */
   Widget _buildStepCard({

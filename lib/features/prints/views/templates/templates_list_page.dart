@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/app/routes/app_routes.dart';
 import 'package:mikronet/core/ui/widgets/floating_button.dart';
-import 'package:mikronet/core/ui/widgets/main_gate_header.dart';
+import 'package:mikronet/core/ui/widgets/sub_page_header.dart';
 import 'package:mikronet/features/prints/controllers/templates/templates_list_controller.dart';
 import 'package:mikronet/features/prints/models/print_model.dart';
 
@@ -22,10 +22,10 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
-            const MainGateHeader(title: "مكتبة القوالب المحفوظة", subtitle: "", icon: Icons.bookmarks_rounded), // نفس الهيدر المعتمد
+            PremiumHeader(title: "مكتبة القوالب المحفوظة", subtitle: "قوالب طباعة الكروت", icon: Icons.bookmarks_rounded, goBack: Get.back),
             GetBuilder<TemplatesListController>(
               init: controller,
               builder: (controller) {
@@ -134,8 +134,8 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xff0F172A))),
-                      _infoBadge("$total كرت", const Color(0xff2563EB)),
+                      Text(name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                      _infoBadge("$total كرت", AppColors.blue),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -145,7 +145,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                       const SizedBox(width: 11),
                       _gridDetail(Icons.view_column_rounded, "أعمدة: $cols"),
                       const Spacer(),
-                       Text("${t.withPassword ? "مع":"بدون"} كلمة مرور", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                       Text("${t.withPassword ? "مع":"بدون"} كلمة مرور", style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                     ],
                   ),
                   const Padding(padding: EdgeInsets.symmetric(vertical: 9), child: Divider(height: 1, thickness: 0.5)),
@@ -155,7 +155,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                         child: _actionButton(
                           label: "فتح المعاينة",
                           icon: Icons.remove_red_eye_rounded,
-                          color: const Color(0xff1E3C72),
+                          color: AppColors.headerBottom,
                           onTap: () {
                             // final dummyBatchData = {'total': total, 'prefix': 'USR-', 'suffix': '', 'name': name};
                             // onPreview(t.id);
@@ -241,7 +241,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: AppColors.dangerOverlay, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
-      child: const Icon(Icons.mode_edit_outline_outlined, color: Colors.purple, size: 22),
+      child: const Icon(Icons.mode_edit_outline_outlined, color: AppColors.violet, size: 22),
     ),
   );
 
@@ -251,7 +251,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
       children: [
         Icon(Icons.folder_open_rounded, size: 70, color: AppColors.border),
         SizedBox(height: 11),
-        Text("لا توجد قوالب محفوظة", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text("لا توجد قوالب محفوظة", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
       ],
     ),
   );

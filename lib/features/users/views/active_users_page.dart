@@ -16,7 +16,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             Obx(() => PremiumHeader(
@@ -60,9 +60,9 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
       child: Column(
         children: [
           ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Color(0xffF0FDF4), 
-              child: Icon(Icons.person, color: Colors.green)
+            leading: CircleAvatar(
+              backgroundColor: AppColors.success.withValues(alpha: 0.15), 
+              child: const Icon(Icons.person, color: Colors.green)
             ),
             // عرض الـ Label بجانب الـ Username
             title: Row(
