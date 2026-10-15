@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:mikronet/features/home/controllers/home_controller.dart';
-
+import 'package:mikronet/features/home/views/widgets/dashboard_widgets.dart';
 import 'package:mikronet/features/home/views/widgets/home_header.dart';
-import 'package:mikronet/features/home/views/widgets/home_carousel.dart';
 import 'package:mikronet/features/home/views/widgets/menu_item_card.dart';
 
 class HomePage extends GetView<HomeController> {
@@ -12,184 +11,187 @@ class HomePage extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if(didPop) return;
+        if (didPop) return;
         controller.logout();
       },
-    child :Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: AppColors.soft,
-        body: Column(
-          children: [
-            HomeHeader(
-              pulseAnimation: controller.pulseController,
-              onLogout: controller.logout,
-            ),
-            
-            Obx(() => HomeCarousel(
-              controller: controller.pageController,
-              currentPage: controller.currentPage.value,
-              onPageChanged: controller.updateCurrentPage,
-              items: _buildCarouselItems(),
-            )),
-            
-            _buildSectionTitle("إدارة النظام والعمليات"),
-            
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildGridMenu(),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: AppColors.soft,
+          body: Column(
+            children: [
+              HomeHeader(
+                pulseAnimation: controller.pulseController,
+                onLogout: controller.logout,
               ),
-            ),
-          ],
+              Expanded(
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                        child: Column(
+                          children: [
+                            PrimaryActionBanner(
+                              title: "توليد كرت واحد",
+                              subtitle: "إنشاء كرت مستخدم فوري على الراوتر",
+                              icon: Icons.add_moderator_rounded,
+                              onTap: controller.generateSingleCard,
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 102,
+                              child: Obx(() => Row(
+                                    children: [
+                                      Expanded(
+                                        child: StatCard(
+                                          title: "المتصلين الآن",
+                                          value: controller
+                                              .activeUsersCount.value,
+                                          icon: Icons
+                                              .online_prediction_rounded,
+                                          accent: AppColors.green,
+                                          onTap:
+                                              controller.manageActiveUsers,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: StatCard(
+                                          title: "وقت التشغيل",
+                                          value: controller.uptime.value,
+                                          icon: Icons.timer_rounded,
+                                          accent: AppColors.warning,
+                                          onTap:
+                                              controller.viewUptimeDetails,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: StatCard(
+                                          title: "مساحة القرص",
+                                          value: controller
+                                              .diskSpacePercent.value,
+                                          icon: Icons.sd_storage_rounded,
+                                          accent: AppColors.info,
+                                          onTap: controller.checkDiskSpace,
+                                        ),
+                                      ),
+                                    ],
+                                  )),
+                            ),
+                            const SizedBox(height: 12),
+                            Obx(() => ResourcePanel(
+                                  cpu: controller.cpuPercent.value,
+                                  ram: controller.ramPercent.value,
+                                  disk: controller.diskSpacePercent.value,
+                                  diskDetails:
+                                      controller.diskSpaceDetails.value,
+                                  onTap: controller.checkDiskSpace,
+                                )),
+                            const SizedBox(height: 16),
+                            _buildSectionTitle("إدارة النظام والعمليات"),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      sliver: _buildGridMenu(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    )
     );
   }
 
-  List<Widget> _buildCarouselItems() {
-    return [
-      // 1. توليد كرت واحد
-      ActionCarouselItem(
-        category: "إجراء سريع",
-        title: "توليد كرت واحد",
-        subtitle: "إنشاء كرت مستخدم فوري",
-        icon: Icons.add_moderator_rounded,
-        color: AppColors.blue,
-        actionText: "ابدأ الإضافة",
-        onTap: controller.generateSingleCard, 
-      ),
-      // 2. المتصلين النشطين
-      ActionCarouselItem(
-        category: "مراقبة الشبكة",
-        title: "المتصلين النشطين",
-        subtitle: "أجهزة تسحب بيانات الآن",
-        value: controller.activeUsersCount.value, 
-        icon: Icons.online_prediction_rounded,
-        color: AppColors.green, 
-        actionText: "عرض المتصلين",
-        onTap: controller.manageActiveUsers, 
-      ),
-      // 3. وقت التشغيل (Uptime)
-      ActionCarouselItem(
-        category: "حالة النظام",
-        title: "وقت التشغيل",
-        subtitle: "مدة عمل الراوتر (Uptime)",
-        value: controller.uptime.value, 
-        icon: Icons.timer_rounded,
-        color: AppColors.warning, 
-        actionText: "تقارير النظام",
-        onTap: controller.viewUptimeDetails, 
-      ),
-      // 4. حمل المعالج
-      ResourceCarouselItem(
-        category: "مراقبة الأداء",
-        label: "حمل المعالج (CPU)",
-        percent: controller.cpuPercent.value, 
-        icon: Icons.speed_rounded,
-        color: Colors.cyanAccent,
-      ),
-      // 5. استهلاك الرام
-      ResourceCarouselItem(
-        category: "مراقبة الأداء",
-        label: "استهلاك الرام (RAM)",
-        percent: controller.ramPercent.value, 
-        icon: Icons.memory_rounded,
-        color: Colors.purpleAccent,
-      ),
-      // 6. 🔹 مساحة القرص (تم التحديث هنا)
-      ActionCarouselItem(
-        category: "تنبيه النظام",
-        title: "مساحة التخزين (Disk)",
-        subtitle: controller.diskSpaceDetails.value, // الإجمالي والمستخدم
-        value: controller.diskSpacePercent.value,    // النسبة المئوية
-        icon: Icons.sd_storage_rounded,
-        color: AppColors.textMuted,
-        actionText: "تفاصيل القرص",
-        onTap: controller.checkDiskSpace, 
-      ),
-    ];
-  }
-
   Widget _buildGridMenu() {
-    final List<Map<String, dynamic>> menuData = [
+    final items = <Map<String, dynamic>>[
       {
         "title": "إدارة الكروت",
         "icon": Icons.credit_card_rounded,
+        "accent": AppColors.blue,
         "onTap": controller.goToCards
       },
       {
         "title": "المستخدمين",
         "icon": Icons.people_alt_rounded,
+        "accent": AppColors.green,
         "onTap": controller.goToUsers
       },
       {
         "title": "الموزعين ونقاط البيع",
         "icon": Icons.storefront_rounded,
+        "accent": AppColors.violet,
         "onTap": controller.goToDistributors
       },
       {
-        "title": "ادارة عملية الطباعة",
+        "title": "إدارة عملية الطباعة",
         "icon": Icons.print_rounded,
+        "accent": AppColors.sky,
         "onTap": controller.goToPrint
       },
       {
-        "title": "اعدادات المواقع",
+        "title": "إعدادات المواقع",
         "icon": Icons.dns_rounded,
+        "accent": AppColors.teal,
         "onTap": controller.goToSites
       },
       {
         "title": "التقارير والمبيعات",
         "icon": Icons.analytics_rounded,
+        "accent": AppColors.pink,
         "onTap": controller.goToReports
       },
       {
         "title": "أدوات الصيانة",
         "icon": Icons.build_circle_rounded,
+        "accent": AppColors.warning,
         "onTap": controller.goToMaintenance
       },
       {
-        "title": "المزيد من الاعدادات",
+        "title": "المزيد من الإعدادات",
         "icon": Icons.tune_rounded,
+        "accent": AppColors.textMuted,
         "onTap": controller.goToMoreSettings
       },
     ];
 
-    return GridView.builder(
-      padding: const EdgeInsets.only(top: 6, bottom: 18),
-      itemCount: menuData.length,
-      // بطاقات أصغر (أعرض من ارتفاعها) لعرض أكبر عدد ممكن في الشاشة
+    return SliverGrid.builder(
+      itemCount: items.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.55,
       ),
       itemBuilder: (context, index) => MenuItemCard(
-        title: menuData[index]['title'],
-        icon: menuData[index]['icon'],
-        onTap: menuData[index]['onTap'], 
+        title: items[index]['title'],
+        icon: items[index]['icon'],
+        accent: items[index]['accent'],
+        onTap: items[index]['onTap'],
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Text(
-          title,
-          style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: AppColors.text),
-        ),
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Text(
+        title,
+        style: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textPale),
       ),
     );
   }
