@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/auth/controllers/login_controller.dart';
 
@@ -16,7 +17,7 @@ class LoginPage extends GetView<LoginController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220), 
+        backgroundColor: AppColors.page, 
         body: Column(
           children: [
             // 1. الهيدر
@@ -38,12 +39,12 @@ class LoginPage extends GetView<LoginController> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF16213A),
+                      color: AppColors.card,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.blue.withOpacity(0.05)),
+                      border: Border.all(color: Colors.blue.withValues(alpha: 0.05)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
+                          color: Colors.black.withValues(alpha: 0.02),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         )
@@ -81,9 +82,9 @@ class LoginPage extends GetView<LoginController> {
                               margin: const EdgeInsets.only(top: 4, bottom: 12),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1B2740),
+                                color: AppColors.soft,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFF243352)),
+                                border: Border.all(color: AppColors.border),
                               ),
                               child: Row(
                                 children: [
@@ -92,8 +93,8 @@ class LoginPage extends GetView<LoginController> {
                                         ? Icons.lock_rounded
                                         : Icons.lock_open_rounded,
                                     color: controller.useSsl.value
-                                        ? const Color(0xFF16A34A)
-                                        : const Color(0xFF94A3B8),
+                                        ? AppColors.successDark
+                                        : AppColors.textMuted,
                                     size: 20,
                                   ),
                                   const SizedBox(width: 10),
@@ -106,19 +107,19 @@ class LoginPage extends GetView<LoginController> {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFFE8EEF9),
+                                            color: AppColors.text,
                                           ),
                                         ),
                                         Text(
                                           "فعّله إذا كان الراوتر يستخدم TLS على منفذك المخصّص",
-                                          style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Switch(
                                     value: controller.useSsl.value,
-                                    activeColor: const Color(0xFF16A34A),
+                                    activeColor: AppColors.successDark,
                                     onChanged: controller.toggleSsl,
                                   ),
                                 ],
@@ -157,7 +158,7 @@ class LoginPage extends GetView<LoginController> {
                   _buildActionBtn(
                     text: "تسجيل الدخول",
                     icon: Icons.login_rounded,
-                    bgColor: const Color(0xFF2563EB), 
+                    bgColor: AppColors.blue, 
                     textColor: Colors.white,
                     onPressed: controller.connectToRouter,
                   ),
@@ -165,7 +166,7 @@ class LoginPage extends GetView<LoginController> {
                   _buildActionBtn(
                     text: "حفظ البيانات",
                     icon: Icons.save_rounded,
-                    bgColor: const Color(0xFF3B82F6), 
+                    bgColor: AppColors.primary, 
                     textColor: Colors.white,
                     onPressed: controller.addRouterData,
                   ),
@@ -173,8 +174,8 @@ class LoginPage extends GetView<LoginController> {
                   _buildActionBtn(
                     text: "البيانات المحفوظة",
                     icon: Icons.manage_search_rounded,
-                    bgColor: const Color(0xFF243352), 
-                    textColor: const Color(0xFF8FA3C0), 
+                    bgColor: AppColors.border, 
+                    textColor: AppColors.textSubtle, 
                     onPressed: controller.showSavedData,
                   ),
                 ],
@@ -182,10 +183,10 @@ class LoginPage extends GetView<LoginController> {
             ),
 
             // 4. الفوتر
-             AppMiniFooter(
+             const AppMiniFooter(
               title: Text("تسجيل الدخول إلى الميكروتك",
-                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
-              subTitle: Text("الرجاء إدخال بيانات الراوتر للمتابعة",style: TextStyle(color: const Color(0xFF243352),fontSize: 12),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textSubtle),),
+              subTitle: Text("الرجاء إدخال بيانات الراوتر للمتابعة",style: TextStyle(color: AppColors.border,fontSize: 12),),
               ),
           ],
         ),
@@ -209,20 +210,20 @@ class LoginPage extends GetView<LoginController> {
         controller: ctrl,
         obscureText: isObscured,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFE8EEF9), letterSpacing: 1.2),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.text, letterSpacing: 1.2),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, letterSpacing: 0),
+          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12, letterSpacing: 0),
           hintMaxLines: 1,
           floatingLabelAlignment: FloatingLabelAlignment.center,
-          labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, letterSpacing: 0),
-          prefixIcon: Icon(icon, color: const Color(0xFF8FA3C0), size: 22), 
+          labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13, letterSpacing: 0),
+          prefixIcon: Icon(icon, color: AppColors.textSubtle, size: 22), 
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     controller.hidePassword.value ? Icons.visibility_off : Icons.visibility, 
-                    color: const Color(0xFF94A3B8), 
+                    color: AppColors.textMuted, 
                     size: 20
                   ),
                   onPressed: () => controller.hidePassword.toggle(), 
@@ -231,18 +232,18 @@ class LoginPage extends GetView<LoginController> {
           contentPadding: const EdgeInsets.only(top: 16,bottom: 16,right: 0,left: 20),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF243352)),
+            borderSide: const BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF243352)),
+            borderSide: const BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+            borderSide: const BorderSide(color: AppColors.blue, width: 1.5),
           ),
           filled: true,
-          fillColor: const Color(0xFF1B2740),
+          fillColor: AppColors.soft,
         ),
       );
     }

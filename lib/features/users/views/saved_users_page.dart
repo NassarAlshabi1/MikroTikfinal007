@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/floating_button.dart';
 import 'package:mikronet/features/users/controllers/saved_users_controller.dart';
@@ -60,21 +61,21 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                     children: [
                       Icon(Icons.circle,color: Colors.green,size: 15,),
                       SizedBox(width: 5,),
-                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
+                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textMuted),),
                     ],
                   ),
                  Row(
                     children: [
                       Icon(Icons.circle,color: Colors.red,size: 15,),
                       SizedBox(width: 5,),
-                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
+                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textMuted),),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle,color: Colors.blue,size: 15,),
                       SizedBox(width: 5,),
-                      Text("عادي",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
+                      Text("عادي",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textMuted),),
                     ],
                   ),
                 ],
@@ -115,21 +116,21 @@ class SavedUsersPage extends GetView<SavedUsersController> {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF3B82F6) : Colors.white,
+            color: isSelected ? AppColors.primary : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-                color: isSelected ? Colors.transparent : const Color(0xFF1E3A5F)),
+                color: isSelected ? Colors.transparent : AppColors.borderBlue),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                        color: const Color(0xFF3B82F6).withOpacity(0.2),
+                        color: AppColors.primary.withValues(alpha: 0.2),
                         blurRadius: 8)
                   ]
                 : [],
           ),
           child: Text(title,
               style: TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                  color: isSelected ? Colors.white : AppColors.textMuted,
                   fontWeight: FontWeight.bold,
                   fontSize: 13)),
         ),
@@ -168,12 +169,12 @@ class SavedUsersPage extends GetView<SavedUsersController> {
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF16213A),
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFF1E3A5F)),
+              border: Border.all(color: AppColors.borderBlue),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.02), blurRadius: 10)
+                    color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)
               ],
             ),
             child: ListTile(
@@ -182,19 +183,19 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               leading: CircleAvatar(
                 radius: 24,
-                backgroundColor: _getStatusColor(d).withOpacity(0.1),
+                backgroundColor: _getStatusColor(d).withValues(alpha: 0.1),
                 child: Icon(Icons.smartphone_rounded,
                     color: _getStatusColor(d), size: 22),
               ),
               title: Text(d.label,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9))),
+                      fontWeight: FontWeight.w900, color: AppColors.text)),
               subtitle: Text("${d.srcAddress} • ${d.macAddress}\n$deviceType",
                   style:
-                      const TextStyle(fontSize: 11, color: const Color(0xFF94A3B8))),
+                      const TextStyle(fontSize: 11, color: AppColors.textMuted)),
               trailing: const Icon(Icons.more_horiz_rounded,
-                  color: const Color(0xFF94A3B8)),
-              onTap: () => _showOptionsSheet(Get.context ?? _, d),
+                  color: AppColors.textMuted),
+              onTap: () => _showOptionsSheet(Get.context!, d),
             ),
           );
         },
@@ -229,7 +230,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
               bottom: MediaQuery.of(context).viewInsets.bottom + 30,
             ),
             decoration: const BoxDecoration(
-              color: const Color(0xFF16213A),
+              color: AppColors.card,
               borderRadius: BorderRadius.vertical(top: Radius.circular(35)),
             ),
             child: SingleChildScrollView(
@@ -240,14 +241,14 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                       width: 45,
                       height: 5,
                       decoration: BoxDecoration(
-                          color: const Color(0xFF1B2740),
+                          color: AppColors.soft,
                           borderRadius: BorderRadius.circular(10))),
                   const SizedBox(height: 16),
                   const Text("إضافة جهاز جديد",
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFE8EEF9))),
+                          color: AppColors.text)),
                   const SizedBox(height: 16),
                   _modernField(nameCtrl, "اسم الجهاز", Icons.badge_outlined),
                   _modernField(ipCtrl, "IP Address", Icons.wifi_rounded),
@@ -282,7 +283,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                     height: 55,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
+                        backgroundColor: AppColors.green,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15)),
                         elevation: 0,
@@ -324,14 +325,14 @@ class SavedUsersPage extends GetView<SavedUsersController> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
+      builder: (ctx) => Container(
         padding: EdgeInsets.only(
             left: 24,
             right: 24,
             top: 20,
-            bottom: MediaQuery.of(_).viewInsets.bottom + 30),
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 30),
         decoration: const BoxDecoration(
-            color: const Color(0xFF16213A),
+            color: AppColors.card,
             borderRadius: BorderRadius.vertical(top: Radius.circular(35))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -340,7 +341,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
                 width: 45,
                 height: 5,
                 decoration: BoxDecoration(
-                    color: const Color(0xFF1B2740),
+                    color: AppColors.soft,
                     borderRadius: BorderRadius.circular(10))),
             const SizedBox(height: 16),
             const Text("إدارة الجهاز",
@@ -352,7 +353,7 @@ class SavedUsersPage extends GetView<SavedUsersController> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: AppColors.indigo,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15)),
                     elevation: 0),
@@ -436,13 +437,13 @@ class SavedUsersPage extends GetView<SavedUsersController> {
       leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-              color: c.withOpacity(0.1),
+              color: c.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10)),
           child: Icon(i, color: c, size: 22)),
       title: Text(t,
           style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFFE8EEF9),
+              color: AppColors.text,
               fontSize: 14)),
       trailing: const Icon(Icons.arrow_back_ios_new_rounded,
           size: 14, color: Colors.black12),
@@ -454,11 +455,11 @@ class SavedUsersPage extends GetView<SavedUsersController> {
       margin: const EdgeInsets.symmetric(horizontal: 13,vertical: 5),
       //padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), 
+            color: Colors.black.withValues(alpha: 0.04), 
             blurRadius: 15, 
             offset: const Offset(0, 5)
           )
@@ -470,8 +471,8 @@ class SavedUsersPage extends GetView<SavedUsersController> {
         textAlign: TextAlign.center,
         decoration: const InputDecoration(
           hintText: "بحث باسم الجهاز او ip او mac",
-          hintStyle: TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
-          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF3B82F6)),
+          hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
+          prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary),
           suffixIcon: Icon(Icons.search_off_rounded,color: Color(0x00000000),),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 11),

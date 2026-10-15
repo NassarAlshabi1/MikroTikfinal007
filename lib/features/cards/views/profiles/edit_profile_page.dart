@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/cards/controllers/profiles/edit_profile_controller.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
@@ -14,7 +15,7 @@ class EditProfilePage extends GetView<EditProfileController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
              PremiumHeader(
@@ -29,13 +30,13 @@ class EditProfilePage extends GetView<EditProfileController> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                   color: const Color(0xFF1B2740),
+                   color: AppColors.soft,
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: const Color(0xFF243352), width: 1.5),
+                    border: Border.all(color: AppColors.border, width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 15,
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         offset: const Offset(0, 5),
                       )
                     ],
@@ -149,9 +150,9 @@ class EditProfilePage extends GetView<EditProfileController> {
               ),
             ),
             
-           AppMiniFooter(
+           const AppMiniFooter(
               title: Text("تعديل بيانات الباقة الحالية",
-                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textSubtle),),
               ),
           ],
         ),
@@ -173,12 +174,12 @@ class EditProfilePage extends GetView<EditProfileController> {
           gradient:const LinearGradient(
             colors: 
 
-             [ Color(0xFF0F172A), Color(0xFF1E3A8A)]
+             [ AppColors.headerTop, AppColors.headerBottom]
           ),
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF3B82F6).withOpacity(0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             )
@@ -204,14 +205,14 @@ class EditProfilePage extends GetView<EditProfileController> {
                 width: 4,
                 height: 18,
                 decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10))),
             const SizedBox(width: 8),
             Text(title,
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: Color(0xFF3B82F6))),
+                    color: AppColors.primary)),
           ],
         ),
       );

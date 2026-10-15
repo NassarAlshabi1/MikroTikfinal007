@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:charset/charset.dart';
 import 'package:mikronet/core/mikrotik/ftp_client.dart';
@@ -105,12 +106,6 @@ class MikrotikClient {
     return decodedResult;
   }
 
-  // التوجيه الذكي: فحص الأمر هل هو كروت/جلسات؟
-  static bool _isHeavyCommand(dynamic command) {
-    String cmdStr = command is List ? command.join(" ") : command.toString();
-    return cmdStr.contains("user/print") || cmdStr.contains("session/print");
-  }
-
   static Future<List> fetch({
     required dynamic command,
     Map<String, String>? params,
@@ -135,7 +130,7 @@ class MikrotikClient {
       return _decodeResult(rawResult);
     } catch (e) {
       // إعادة الاتصال الصامت إذا حصل أي خطأ
-      print("Socket error detected! Reconnecting... ($e)");
+      debugPrint("Socket error detected! Reconnecting... ($e)");
       init(
         address: _address, user: _user, password: _password, 
         port: _port, timeout: _timeout, useSsl: _useSsl, verbose: _verbose
@@ -183,7 +178,7 @@ class MikrotikClient {
         yield decodedMap;
       }
     } catch (e) {
-       print("Stream Error: $e");
+       debugPrint("Stream Error: $e");
        rethrow;
     }
   }

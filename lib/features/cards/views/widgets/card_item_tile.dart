@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class CardItemTile extends StatelessWidget {
   final String username;
@@ -27,7 +28,7 @@ class CardItemTile extends StatelessWidget {
       statusColor = Colors.green;
       statusIcon = Icons.check_circle_rounded;
     } else if (status == "normal") {
-      statusColor = const Color(0xFF0EA5E9); // لون أزرق للبطاقات الجديدة
+      statusColor = AppColors.sky; // لون أزرق للبطاقات الجديدة
       statusIcon = Icons.fiber_new_rounded;
     } else {
       statusColor = Colors.red;
@@ -37,11 +38,11 @@ class CardItemTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02), 
+            color: Colors.black.withValues(alpha: 0.02), 
             blurRadius: 10, 
             offset: const Offset(0, 4)
           )
@@ -59,7 +60,7 @@ class CardItemTile extends StatelessWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -79,19 +80,19 @@ class CardItemTile extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.w900, 
                         fontSize: 15, 
-                        color: Color(0xFFE8EEF9)
+                        color: AppColors.text
                       ),
                     ),
                     Text(
                       "باقة: $package",
-                      style: TextStyle(color: const Color(0xFF8FA3C0), fontSize: 11),
+                      style: const TextStyle(color: AppColors.textSubtle, fontSize: 11),
                     ),
                   ],
                 ),
               ),
               // زر الانتقال لسجل الجلسات
               IconButton(
-                icon: const Icon(Icons.analytics_outlined, color: Color(0xFF3B82F6), size: 22),
+                icon: const Icon(Icons.analytics_outlined, color: AppColors.primary, size: 22),
                 onPressed: onAnalyticsTap,
               ),
             ],

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -41,7 +42,7 @@ Widget buildFieldPosition(
 Widget buildCanvasArea(BaseTemplateController controller) {
   return Container(
     padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
+    decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.borderBlue)),
     height: 200,
     alignment: Alignment.center,
     child: SingleChildScrollView(
@@ -94,9 +95,9 @@ Widget textFieldWithOutButton(
 ) => Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A), 
+        color: AppColors.card, 
         borderRadius: BorderRadius.circular(((padding/4)+1)*4), 
-        border: Border.all(color: const Color(0xFF1E3A5F))
+        border: Border.all(color: AppColors.borderBlue)
       ),
       child: TextField(
         controller: controller, 
@@ -114,7 +115,7 @@ Widget textFieldWithOutButton(
 Widget whiteContainer(Widget child) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.borderBlue)),
       child: child
     );
   }
@@ -159,7 +160,7 @@ Widget buildSettingsArea(BaseTemplateController controller, double screenWidth) 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.pickImage, icon: Icons.image_outlined, label: 'اختيار صورة', colors: [const Color(0xFF94A3B8), const Color(0xFFE8EEF9)]),
+            GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.pickImage, icon: Icons.image_outlined, label: 'اختيار صورة', colors: const [AppColors.textMuted, AppColors.text]),
             GradientButton(width: ((screenWidth / 3) + 20), onPressed: controller.preview, icon: Icons.remove_red_eye_rounded, label: 'معاينة', colors: [Colors.lightGreen.shade700, Colors.lime.shade900]),
           ],
         ),
@@ -188,13 +189,13 @@ class ContinuousButton extends StatefulWidget {
   final double? size;
 
   const ContinuousButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.color,
     required this.onPressed,
     this.padding=8.0,
     this.size
-  }) : super(key: key);
+  });
 
   @override
   State<ContinuousButton> createState() => _ContinuousButtonState();

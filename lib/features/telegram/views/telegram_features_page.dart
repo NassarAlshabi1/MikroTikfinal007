@@ -83,9 +83,9 @@ class TelegramFeaturesPage extends GetView<TelegramFeaturesController> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.5)),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -117,7 +117,7 @@ class TelegramFeaturesPage extends GetView<TelegramFeaturesController> {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: enabled ? feature.color.withOpacity(0.55) : AppColors.border,
+          color: enabled ? feature.color.withValues(alpha: 0.55) : AppColors.border,
         ),
       ),
       child: Column(
@@ -127,7 +127,7 @@ class TelegramFeaturesPage extends GetView<TelegramFeaturesController> {
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: feature.color.withOpacity(0.15),
+                  color: feature.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(feature.icon, color: feature.color, size: 22),
@@ -148,7 +148,7 @@ class TelegramFeaturesPage extends GetView<TelegramFeaturesController> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: enabled
-                      ? AppColors.success.withOpacity(0.18)
+                      ? AppColors.success.withValues(alpha: 0.18)
                       : AppColors.soft,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -166,7 +166,7 @@ class TelegramFeaturesPage extends GetView<TelegramFeaturesController> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: feature.color.withOpacity(0.14),
+                  color: feature.color.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

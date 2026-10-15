@@ -166,18 +166,6 @@ class ReportsApi {
         if (rowsToInsert.isNotEmpty) {
           for (final row in rowsToInsert) {
             try {
-              final userEscaped = row['card_username'].toString().replaceAll("'", "''");
-              final profEscaped = row['profile_name'].toString().replaceAll("'", "''");
-              final dateEscaped = row['sale_date'].toString().replaceAll("'", "''");
-              final serialEscaped = row['router_serial'].toString().replaceAll("'", "''");
-              final priceVal = row['price'];
-              final tsVal = row['timestamp'];
-
-              final sql = '''
-                INSERT OR IGNORE INTO sales_records 
-                (card_username, profile_name, price, sale_date, timestamp, router_serial, source)
-                VALUES ('$userEscaped', '$profEscaped', $priceVal, '$dateEscaped', $tsVal, '$serialEscaped', 'usermanager')
-              ''';
               final res = await DBApi.insert("sales_records", row);
               if (res > 0) newInserted++;
             } catch (_) {}

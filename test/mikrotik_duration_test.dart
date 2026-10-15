@@ -135,7 +135,7 @@ void main() {
 
     test('بدون حد (0 أو فارغ) ← لا يُحذف أبدًا', () {
       expect(
-        UptimeUsage(used: const Duration(days: 10), limit: Duration.zero).isExhausted,
+        const UptimeUsage(used: Duration(days: 10), limit: Duration.zero).isExhausted,
         isFalse,
       );
     });

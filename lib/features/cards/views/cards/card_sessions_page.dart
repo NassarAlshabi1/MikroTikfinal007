@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 // استيراد المتحكم والموديل
@@ -20,7 +21,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // 1. الهيدر الموحد
@@ -35,7 +36,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
                 // 2. حالة التحميل
                 if (controller.isLoading.value) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   );
                 }
 
@@ -86,7 +87,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
       child: Text(
         title,
         style: const TextStyle(
-          color: Color(0xFF8FA3C0), 
+          color: AppColors.textSubtle, 
           fontWeight: FontWeight.w900, 
           fontSize: 15
         ),
@@ -95,15 +96,15 @@ class CardSessionsPage extends GetView<CardSessionsController> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_toggle_off_rounded, size: 60, color: const Color(0xFF1B2740)),
-          const SizedBox(height: 11),
-          const Text(
+          Icon(Icons.history_toggle_off_rounded, size: 60, color: AppColors.soft),
+          SizedBox(height: 11),
+          Text(
             "لا توجد جلسات مسجلة لهذا الكرت",
-            style: TextStyle(color: const Color(0xFF94A3B8), fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.bold),
           ),
         ],
       ),

@@ -4,7 +4,7 @@ extension ByteFormatter on String {
   
   String get formatBytes {
     // تنظيف النص وتحويله لأحرف صغيرة لتسهيل المقارنة
-    String input = this.trim().toLowerCase();
+    String input = trim().toLowerCase();
     double bytes = 0;
 
     // استخراج الرقم والوحدة (إن وجدت) باستخدام Regex

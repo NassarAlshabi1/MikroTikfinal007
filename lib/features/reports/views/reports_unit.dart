@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart'; // استيراد مكتبة GetX للتنقل
 
 // استيراد الويدجتس المشتركة بناءً على هيكلة مشروعك
@@ -16,7 +17,7 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // الهيدر المطور
@@ -39,7 +40,7 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
                     title: "تقرير مبيعات",
                     subtitle: "إحصائيات الكروت المباعة وإيرادات الشبكة",
                     icon: Icons.point_of_sale_rounded,
-                    color: const Color(0xFF10B981), // لون أخضر مناسب للمبيعات والأموال
+                    color: AppColors.green, // لون أخضر مناسب للمبيعات والأموال
                     onTap: controller.gotToSalesReport,
                   ),
 
@@ -51,7 +52,7 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
                     title: "تقرير حالة النظام",
                     subtitle: "مراقبة أداء المايكروتيك واستهلاك الموارد",
                     icon: Icons.monitor_heart_rounded,
-                    color: const Color(0xFF8B5CF6), // لون بنفسجي مميز لحالة النظام
+                    color: AppColors.purple, // لون بنفسجي مميز لحالة النظام
                     onTap: controller.gotToSystemStatus, // التنقل باستخدام GetX
                   ),
 
@@ -60,7 +61,7 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
                     title: "مراقبة الشبكة",
                     subtitle: "حرارة الراوتر، المنافذ، وحركة البيانات لحظيًا",
                     icon: Icons.monitor_heart_rounded,
-                    color: const Color(0xFF7C3AED),
+                    color: AppColors.violet,
                     onTap: controller.goToMonitor,
                   ),
 
@@ -69,7 +70,7 @@ class ReportsUnitPage extends GetView<ReportsUnitController> {
                     title: "أدوات الصيانة",
                     subtitle: "التشخيص، إعدادات IP، جدار الحماية، وإدارة النطاق الترددي",
                     icon: Icons.build_circle_rounded,
-                    color: const Color(0xFF0EA5E9),
+                    color: AppColors.sky,
                     onTap: controller.goToMaintenance,
                   ),
                 ],

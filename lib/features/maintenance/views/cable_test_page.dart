@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/maintenance/controllers/cable_test_controller.dart';
@@ -12,20 +13,19 @@ class CableTestPage extends GetView<CableTestController> {
   const CableTestPage({super.key});
 
   // ألوان الحالات (موحّدة مع هوية التطبيق)
-  static const _navy = Color(0xFF0F172A);
-  static const _blue = Color(0xFF3B82F6);
-  static const _primary = Color(0xFF2563EB);
-  static const _green = Color(0xFF16A34A);
-  static const _amber = Color(0xFFF59E0B);
+  static const _navy = AppColors.headerTop;
+  static const _blue = AppColors.primary;
+  static const _green = AppColors.successDark;
+  static const _amber = AppColors.warning;
   static const _red = Color(0xFFDC2626);
-  static const _slate = Color(0xFF94A3B8);
+  static const _slate = AppColors.textMuted;
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             PremiumHeader(
@@ -146,9 +146,9 @@ class CableTestPage extends GetView<CableTestController> {
                     color: selected ? Colors.white : _navy,
                   ),
                   selectedColor: _blue,
-                  backgroundColor: const Color(0xFF1B2740),
+                  backgroundColor: AppColors.soft,
                   side: BorderSide(
-                    color: selected ? _blue : const Color(0xFF243352),
+                    color: selected ? _blue : AppColors.border,
                   ),
                 );
               }).toList(),
@@ -207,7 +207,7 @@ class CableTestPage extends GetView<CableTestController> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: _blue,
                 minimumSize: const Size.fromHeight(45),
-                side: BorderSide(color: _blue.withOpacity(0.4)),
+                side: BorderSide(color: _blue.withValues(alpha: 0.4)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               ),
             ),
@@ -278,9 +278,9 @@ class CableTestPage extends GetView<CableTestController> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
@@ -288,7 +288,7 @@ class CableTestPage extends GetView<CableTestController> {
             width: 26,
             height: 26,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.15), shape: BoxShape.circle),
             child: Text(
               "${pair.index}",
               style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12.5),
@@ -372,7 +372,7 @@ class CableTestPage extends GetView<CableTestController> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _amber.withOpacity(0.10),
+                    color: _amber.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
@@ -461,7 +461,7 @@ class CableTestPage extends GetView<CableTestController> {
                 const SizedBox(height: 8),
                 Text(
                   diagnosis.details,
-                  style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 12, height: 1.7),
+                  style: const TextStyle(color: Color(0xB3E8EEF9), fontSize: 12, height: 1.7),
                 ),
               ],
               if (diagnosis.recommendations.isNotEmpty) ...[
@@ -479,13 +479,13 @@ class CableTestPage extends GetView<CableTestController> {
                       children: [
                         const Padding(
                           padding: EdgeInsets.only(top: 6),
-                          child: Icon(Icons.circle, size: 5, color: const Color(0xB3E8EEF9)),
+                          child: Icon(Icons.circle, size: 5, color: Color(0xB3E8EEF9)),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             item,
-                            style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11.5, height: 1.7),
+                            style: const TextStyle(color: Color(0xB3E8EEF9), fontSize: 11.5, height: 1.7),
                           ),
                         ),
                       ],
@@ -507,11 +507,11 @@ class CableTestPage extends GetView<CableTestController> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF243352)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: child,
@@ -522,7 +522,7 @@ class CableTestPage extends GetView<CableTestController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -537,7 +537,7 @@ class CableTestPage extends GetView<CableTestController> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B2740),
+        color: AppColors.soft,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 
 class ModernInput extends StatelessWidget {
@@ -22,11 +23,11 @@ class ModernInput extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: isReadOnly ? const Color(0xFF243352) : Colors.white,
+        color: isReadOnly ? AppColors.border : Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: isReadOnly ? [] : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03), 
+            color: Colors.black.withValues(alpha: 0.03), 
             blurRadius: 10, 
             offset: const Offset(0, 4)
           )
@@ -44,19 +45,19 @@ class ModernInput extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: isReadOnly ? const Color(0xFF8FA3C0) : const Color(0xFF94A3B8), 
+            color: isReadOnly ? AppColors.textSubtle : AppColors.textMuted, 
             fontSize: 12
           ),
           prefixIcon: Icon(
             icon, 
-            color: isReadOnly ? const Color(0xFF8FA3C0) : const Color(0xFF3B82F6), 
+            color: isReadOnly ? AppColors.textSubtle : AppColors.primary, 
             size: 20
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         style: TextStyle(
-          color: isReadOnly ? const Color(0xFF94A3B8) : Colors.black,
+          color: isReadOnly ? AppColors.textMuted : Colors.black,
           fontWeight: isReadOnly ? FontWeight.bold : FontWeight.normal,
         ),
       ),

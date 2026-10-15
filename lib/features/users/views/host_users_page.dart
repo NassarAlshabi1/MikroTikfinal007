@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
 import 'package:mikronet/features/users/controllers/host_users_controller.dart';
@@ -47,28 +48,28 @@ class HostUsersPage extends GetView<HostUsersController> {
                     children: [
                       Icon(Icons.circle,color: Colors.green,size: 15,),
                       SizedBox(width: 5,),
-                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
+                      Text("مجاني",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textMuted),),
                     ],
                   ),
                  Row(
                     children: [
                       Icon(Icons.circle,color: Colors.red,size: 15,),
                       SizedBox(width: 5,),
-                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
+                      Text("محظور",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textMuted),),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle,color: Colors.blue,size: 15,),
                       SizedBox(width: 5,),
-                      Text("بكرت",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
+                      Text("بكرت",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textMuted),),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle,color: Colors.grey,size: 15,),
                       SizedBox(width: 5,),
-                      Text("بدون كرت",style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF94A3B8)),),
+                      Text("بدون كرت",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textMuted),),
                     ],
                   ),
                 ],
@@ -91,14 +92,14 @@ class HostUsersPage extends GetView<HostUsersController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF1E3A5F)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        border: Border.all(color: AppColors.borderBlue),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getStatusColor(h.type).withOpacity(0.1),
+          backgroundColor: _getStatusColor(h.type).withValues(alpha: 0.1),
           child: Icon(Icons.important_devices, color: _getStatusColor(h.type)),
         ),
         title: Text(h.label == "Unknown" ? "جهاز غير معروف" : h.label, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -115,7 +116,7 @@ class HostUsersPage extends GetView<HostUsersController> {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(25),
-        decoration: const BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+        decoration: const BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

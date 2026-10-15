@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:charset/charset.dart';
@@ -300,21 +299,35 @@ class RouterOSClient {
 
   List<String> _buildCommand(dynamic command, Map<String, String>? params) {
     List<String> sentence = [];
-    if (command is String) sentence.add(command);
-    else if (command is List<String>) sentence.addAll(command);
-    else throw ArgumentError('Invalid command type');
+    if (command is String) {
+      sentence.add(command);
+    } else if (command is List<String>) {
+      sentence.addAll(command);
+    } else {
+      throw ArgumentError('Invalid command type');
+    }
 
-    if (params != null) params.forEach((key, value) => sentence.add('=$key=$value'));
+    if (params != null) {
+      params.forEach((key, value) => sentence.add('=$key=$value'));
+    }
     return sentence;
   }
 
   void _sendLength(Socket socket, int length) {
-    if (length < 0x80) socket.add([length]);
-    else if (length < 0x4000) socket.add((length + 0x8000).toBytes(2));
-    else if (length < 0x200000) socket.add((length + 0xC00000).toBytes(3));
-    else if (length < 0x10000000) socket.add((length + 0xE0000000).toBytes(4));
-    else if (length < 0x100000000) { socket.add([0xF0]); socket.add(length.toBytes(4)); }
-    else throw WordTooLong('Word is too long.');
+    if (length < 0x80) {
+      socket.add([length]);
+    } else if (length < 0x4000) {
+      socket.add((length + 0x8000).toBytes(2));
+    } else if (length < 0x200000) {
+      socket.add((length + 0xC00000).toBytes(3));
+    } else if (length < 0x10000000) {
+      socket.add((length + 0xE0000000).toBytes(4));
+    } else if (length < 0x100000000) {
+      socket.add([0xF0]);
+      socket.add(length.toBytes(4));
+    } else {
+      throw WordTooLong('Word is too long.');
+    }
   }
 
   Map<String, String> _parseSentence(List<String> sentence) {
@@ -356,7 +369,9 @@ class RouterOSClient {
   
   List<int> _hexToBytes(String hex) {
     var result = <int>[];
-    for (int i = 0; i < hex.length; i += 2) result.add(int.parse(hex.substring(i, i + 2), radix: 16));
+    for (int i = 0; i < hex.length; i += 2) {
+      result.add(int.parse(hex.substring(i, i + 2), radix: 16));
+    }
     return result;
   }
 }
@@ -375,15 +390,19 @@ class RouterOSTrapError implements Exception { final String message; RouterOSTra
 extension on int {
   List<int> toBytes(int byteCount) {
     var result = <int>[];
-    for (var i = 0; i < byteCount; i++) result.add((this >> (8 * (byteCount - i - 1))) & 0xFF);
+    for (var i = 0; i < byteCount; i++) {
+      result.add((this >> (8 * (byteCount - i - 1))) & 0xFF);
+    }
     return result;
   }
 }
 
 
 class UsersScreen extends StatefulWidget {
+  const UsersScreen({super.key});
+
   @override
-  _UsersScreenState createState() => _UsersScreenState();
+  State<UsersScreen> createState() => _UsersScreenState();
 }
 
 class _UsersScreenState extends State<UsersScreen> {
@@ -404,7 +423,7 @@ class _UsersScreenState extends State<UsersScreen> {
       port: 8727,
       verbose: true,
       useSsl: true,
-      timeout: Duration(seconds: 40),
+      timeout: const Duration(seconds: 40),
     );
     _fetchUsers();
   }
@@ -426,7 +445,7 @@ class _UsersScreenState extends State<UsersScreen> {
         });
       }
     } catch (e) {
-      print("Error or Canceled: $e");
+      debugPrint("Error or Canceled: $e");
     }
   }
 
@@ -443,9 +462,9 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("الكروت")),
+      appBar: AppBar(title: const Text("الكروت")),
       body: isLoading 
-          ? Center(child: CircularProgressIndicator()) 
+          ? const Center(child: CircularProgressIndicator()) 
           : ListView.builder(
               itemCount: usersList.length,
               itemBuilder: (c, i) => ListTile(title: Text(usersList[i]['username'] ?? 'No Name')),

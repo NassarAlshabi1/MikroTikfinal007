@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -54,7 +55,7 @@ class PrintTemplatesDesignView extends StatelessWidget {
                               // item settings container
                               Container(
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
+                                decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.borderBlue)),
                                 height: 200, // كبرنا المساحة قليلاً لتأخذ راحتها
                                 alignment: Alignment.center,
                                 // استخدمنا ScrollView عشان لو الكرت كبير ما ينضغط ويخرب الحسبة
@@ -196,7 +197,7 @@ class PrintTemplatesDesignView extends StatelessWidget {
                                     onPressed: controller.pickImage,
                                     icon: Icons.image_outlined,
                                     label: 'اختيار صورة',
-                                    colors: [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
+                                    colors: [AppColors.primary, AppColors.blue],
                                   ),
                                   // const SizedBox(width: 30,),
                                   // preview btn
@@ -287,10 +288,10 @@ class PrintTemplatesDesignView extends StatelessWidget {
                   const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: const Color(0xFF16213A).withOpacity(0.2), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: AppColors.card.withValues(alpha: 0.2), shape: BoxShape.circle),
                     child: const CircleAvatar(
                       radius: 30,
-                      backgroundColor: const Color(0xFF16213A),
+                      backgroundColor: AppColors.card,
                       child: Icon(Icons.auto_awesome_motion_rounded, color: Color(0xff1E3C72), size: 28),
                     ),
                   ),
@@ -308,7 +309,7 @@ class PrintTemplatesDesignView extends StatelessWidget {
     onTap: () => Navigator.pop(context),
     child: Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: const Color(0xFF16213A).withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: AppColors.card.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
       child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
     ),
   );
@@ -359,22 +360,6 @@ class PrintTemplatesDesignView extends StatelessWidget {
   //   ),
   // ]);
 
-  /* ويدجت الزر المتدرج الموحد */
-  Widget _gradientButton({required VoidCallback onPressed, required IconData icon, required String label, required List<Color> colors, double? width, double height = 45}) => Container(
-    width: width ?? double.infinity,
-    height: height,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(colors: colors), 
-      borderRadius: BorderRadius.circular(15), 
-      boxShadow: [BoxShadow(color: colors.first.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))]
-    ),
-    child: ElevatedButton.icon(
-      onPressed: onPressed, icon: Icon(icon, size: 18), label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-      style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-    ),
-  );
-
-  Widget _footer() => Container(height: 30, width: double.infinity, color: const Color(0xff0F172A), child: const Center(child: Text("Micronet Professional Edition v4.5", style: TextStyle(color: const Color(0x61E8EEF9), fontSize: 10, fontWeight: FontWeight.bold))));
 
 
 }
@@ -422,13 +407,13 @@ class ContinuousButton extends StatefulWidget {
   final double? size;
 
   const ContinuousButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.color,
     required this.onPressed,
     this.padding=8.0,
     this.size
-  }) : super(key: key);
+  });
 
   @override
   State<ContinuousButton> createState() => _ContinuousButtonState();
@@ -694,7 +679,7 @@ Widget locationControl(
 Widget whiteContainer(Widget child) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1E3A5F))),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.borderBlue)),
       child: child
     );
   }
@@ -723,7 +708,7 @@ Widget gradientButton({required VoidCallback onPressed, required IconData icon, 
     decoration: BoxDecoration(
       gradient: LinearGradient(colors: colors), 
       borderRadius: BorderRadius.circular(15), 
-      boxShadow: [BoxShadow(color: colors.first.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))]
+      boxShadow: [BoxShadow(color: colors.first.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5))]
     ),
     child: ElevatedButton.icon(
       onPressed: onPressed, icon: Icon(icon, size: 18), label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -744,7 +729,7 @@ Widget textFieldWithButton(
   }
 ) => Container(
     padding: const EdgeInsets.all(6),
-    decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFF1E3A5F))),
+    decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(15), border: Border.all(color: AppColors.borderBlue)),
     child: Row(children: [
       const SizedBox(width: 10),
       const Icon(Icons.text_fields_rounded, color: Colors.grey, size: 20),
@@ -767,9 +752,9 @@ Widget textFieldWithOutButton(
 ) => Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A), 
+        color: AppColors.card, 
         borderRadius: BorderRadius.circular(((padding/4)+1)*4), 
-        border: Border.all(color: const Color(0xFF1E3A5F))
+        border: Border.all(color: AppColors.borderBlue)
       ),
       child: TextField(
         controller: controller, 
@@ -788,7 +773,7 @@ Widget textFieldWithOutButton(
 //   children: [
 //     Container(
 //         padding: const EdgeInsets.all(6),
-//         decoration: BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFF1E3A5F))),
+//         decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(15), border: Border.all(color: AppColors.borderBlue)),
 //         child: Row(children: [
 //           const SizedBox(width: 10),
 //           const Icon(Icons.text_fields_rounded, color: Colors.grey, size: 20),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 class PremiumHeader extends StatelessWidget {
@@ -24,7 +25,7 @@ class PremiumHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         // التدرج اللوني الذي تفضله (Dark Blue Gradient)
         gradient: LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+          colors: [AppColors.headerTop, AppColors.headerBottom],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -69,7 +70,7 @@ class PremiumHeader extends StatelessWidget {
 
                   // أيقونة مخصصة تظهر على اليسار
                   icon != null 
-                    ? Icon(icon, color: Colors.white.withOpacity(0.5), size: 22)
+                    ? Icon(icon, color: Colors.white.withValues(alpha: 0.5), size: 22)
                     : const SizedBox(width: 40),
                 ],
               ),
@@ -80,13 +81,13 @@ class PremiumHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16213A).withOpacity(0.1),
+                    color: AppColors.card.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     subtitle!,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8), 
+                      color: Colors.white.withValues(alpha: 0.8), 
                       fontSize: 10,
                     ),
                   ),

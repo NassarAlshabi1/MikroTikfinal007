@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class MainGateHeader extends StatelessWidget {
   final String title;
@@ -49,7 +50,7 @@ class MainGateHeader extends StatelessWidget {
             left: -14,
             child: CircleAvatar(
               radius: 45,
-              backgroundColor: const Color(0xFF16213A).withOpacity(0.05),
+              backgroundColor: AppColors.card.withValues(alpha: 0.05),
             ),
           ),
           Center(
@@ -62,13 +63,13 @@ class MainGateHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16213A).withOpacity(0.2),
+                    color: AppColors.card.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                     border: Border.all(color: const Color(0x3DE8EEF9), width: 2),
                   ),
                   child: CircleAvatar(
                     radius: 26,
-                    backgroundColor: const Color(0xFF16213A),
+                    backgroundColor: AppColors.card,
                     child:icon != null ? Icon(icon, color: const Color(0xff1E3C72), size: 26):null,
                   ),
                 ),
@@ -86,7 +87,7 @@ class MainGateHeader extends StatelessWidget {
                   subtitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 11,
                   ),
                 ),
@@ -105,7 +106,7 @@ class MainGateHeader extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16213A).withOpacity(0.15),
+                    color: AppColors.card.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.white12),
                   ),

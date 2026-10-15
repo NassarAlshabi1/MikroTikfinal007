@@ -111,9 +111,9 @@ class ProfilesListController extends GetxController {
       "customer": customers.isNotEmpty ? customers.first.name : "admin", 
       "users": "1",
     };
-    // print('\n');print('\n');print('\n');print('\n');print('\n');
-    // print(data);
-    // print('\n');print('\n');print('\n');print('\n');print('\n');
+    // debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');
+    // debugPrint(data);
+    // debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');
 
     Get.back();
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);

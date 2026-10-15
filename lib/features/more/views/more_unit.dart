@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 // استيراد المتحكم الذي أنشأناه
@@ -18,7 +19,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // الهيدر المطور
@@ -41,7 +42,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "نسخ الراوتر الاحتياطي",
                     subtitle: "إنشاء نسخة إعدادات على الراوتر وتنزيلها أو استعادتها",
                     icon: Icons.settings_backup_restore_rounded,
-                    color: const Color(0xFF3B82F6),
+                    color: AppColors.primary,
                     onTap: controller.goToRouterBackup,
                   ),
 
@@ -53,7 +54,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "الموزعون والمحاسبة",
                     subtitle: "نقاط البيع، الأرصدة، الأرباح، وكشوف الحساب PDF",
                     icon: Icons.groups_rounded,
-                    color: const Color(0xFF10B981),
+                    color: AppColors.green,
                     onTap: controller.goToDistributors,
                   ),
 
@@ -64,7 +65,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "مراقبة الشبكة",
                     subtitle: "حرارة الراوتر، المنافذ، وحركة البيانات لحظيًا",
                     icon: Icons.monitor_heart_rounded,
-                    color: const Color(0xFF7C3AED),
+                    color: AppColors.violet,
                     onTap: controller.goToMonitor,
                   ),
 
@@ -75,7 +76,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "Hotspot",
                     subtitle: "قسائم الإنترنت • الجلسات النشطة • رفع صفحة الدخول",
                     icon: Icons.wifi_rounded,
-                    color: const Color(0xFF0D9488),
+                    color: AppColors.teal,
                     onTap: controller.goToHotspot,
                   ),
 
@@ -86,7 +87,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "التكامل مع التليجرام",
                     subtitle: "إشعارات فورية وتقارير دورية عبر بوت تيليجرام",
                     icon: Icons.send_rounded,
-                    color: const Color(0xFF229ED9),
+                    color: AppColors.telegram,
                     onTap: controller.goToTelegram,
                   ),
 
@@ -97,7 +98,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "أدوات الصيانة",
                     subtitle: "التشخيص، إعدادات IP، جدار الحماية، وإدارة النطاق الترددي",
                     icon: Icons.build_circle_rounded,
-                    color: const Color(0xFF0EA5E9),
+                    color: AppColors.sky,
                     onTap: controller.goToMaintenance,
                   ),
 
@@ -108,7 +109,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "نسخ بيانات التطبيق",
                     subtitle: "حفظ قوالب الكروت والراوترات المحفوظة كملف قاعدة بيانات",
                     icon: Icons.save_rounded,
-                    color: const Color(0xFF3B82F6),
+                    color: AppColors.primary,
                     onTap: controller.goToBackupAndRestore,
                   ),
 
@@ -120,7 +121,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                     title: "إعادة تشغيل النظام",
                     subtitle: "عمل Reboot للراوتر وتحديث حالة الخدمات",
                     icon: Icons.restart_alt_rounded,
-                    color: const Color(0xFFF59E0B), // لون برتقالي تحذيري
+                    color: AppColors.warning, // لون برتقالي تحذيري
                     onTap: controller.rebootSystem, // استدعاء الدالة من المتحكم
                   ),
                 ],

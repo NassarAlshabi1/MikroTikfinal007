@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 // استيراد المتحكم
 import 'package:mikronet/features/cards/controllers/cards_unit_controller.dart'; 
@@ -18,7 +19,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // الهيدر المطور المشترك
@@ -40,7 +41,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "الكروت والخدمات",
                     subtitle: "إضافة • تعديل • حذف الكروت",
                     icon: Icons.style_rounded,
-                    color: const Color(0xFF6366F1),
+                    color: AppColors.indigo,
                     onTap: controller.goToCardsList, // استخدام دالة المتحكم
                   ),
 
@@ -49,7 +50,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "إضافة كرت واحد",
                     subtitle: "إنشاء كرت اشتراك يدوي سريع",
                     icon: Icons.add_moderator_rounded,
-                    color: const Color(0xFF0EA5E9),
+                    color: AppColors.sky,
                     onTap: controller.goToAddSingleCard, // استخدام دالة المتحكم
                   ),
 
@@ -60,7 +61,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "المستخدمون المنتهون",
                     subtitle: "فحص ذكي: من استهلك مدته كاملة فقط",
                     icon: Icons.auto_delete_rounded,
-                    color: const Color(0xFFEF4444),
+                    color: AppColors.danger,
                     onTap: controller.goToExpiredUsers,
                   ),
 
@@ -71,7 +72,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "Hotspot",
                     subtitle: "قسائم الإنترنت • الجلسات • صفحة الدخول",
                     icon: Icons.wifi_rounded,
-                    color: const Color(0xFF0D9488),
+                    color: AppColors.teal,
                     onTap: controller.goToHotspot,
                   ),
 
@@ -84,16 +85,16 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "الباقات والسرعات",
                     subtitle: "الأسعار • المدد • تحديد السرعات",
                     icon: Icons.inventory_2_rounded,
-                    color: const Color(0xFFF59E0B),
+                    color: AppColors.warning,
                     onTap: controller.goToPackages, // استخدام دالة المتحكم
                   ),
                 ],
               ),
             ),
 
-            AppMiniFooter(
+            const AppMiniFooter(
               title: Text("إدارة الكروت",
-                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textSubtle),),
               ),
           ],
         ),

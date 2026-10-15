@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/reports/data/router_monitor_api.dart';
@@ -13,7 +14,7 @@ class MonitorPage extends GetView<MonitorController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             PremiumHeader(
@@ -24,9 +25,9 @@ class MonitorPage extends GetView<MonitorController> {
             ),
             TabBar(
               controller: controller.tabController,
-              labelColor: const Color(0xFF3B82F6),
-              unselectedLabelColor: const Color(0xFF94A3B8),
-              indicatorColor: const Color(0xFF2563EB),
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textMuted,
+              indicatorColor: AppColors.blue,
               tabs: const [
                 Tab(text: "الموارد والحساسات"),
                 Tab(text: "المنافذ"),
@@ -59,23 +60,23 @@ class MonitorPage extends GetView<MonitorController> {
       children: [
         Row(
           children: [
-            _resourceCard("المعالج", controller.cpu.value, Icons.memory_rounded, const Color(0xFF2563EB)),
+            _resourceCard("المعالج", controller.cpu.value, Icons.memory_rounded, AppColors.blue),
             const SizedBox(width: 10),
-            _resourceCard("ذاكرة حرة", controller.freeMemory.value, Icons.sd_storage_rounded, const Color(0xFF10B981)),
+            _resourceCard("ذاكرة حرة", controller.freeMemory.value, Icons.sd_storage_rounded, AppColors.green),
           ],
         ),
         const SizedBox(height: 10),
         Row(
           children: [
-            _resourceCard("مدة التشغيل", controller.uptime.value, Icons.timer_outlined, const Color(0xFFF59E0B)),
+            _resourceCard("مدة التشغيل", controller.uptime.value, Icons.timer_outlined, AppColors.warning),
             const SizedBox(width: 10),
-            _resourceCard("الإصدار", controller.version.value, Icons.info_outline_rounded, const Color(0xFF7C3AED)),
+            _resourceCard("الإصدار", controller.version.value, Icons.info_outline_rounded, AppColors.violet),
           ],
         ),
         const SizedBox(height: 16),
         const Text(
           "الحساسات",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFFE8EEF9)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.text),
         ),
         const SizedBox(height: 10),
         if (controller.temperatureValue != null)
@@ -84,7 +85,7 @@ class MonitorPage extends GetView<MonitorController> {
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFB91C1C), Color(0xFFEF4444)],
+                colors: [Color(0xFFB91C1C), AppColors.danger],
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
               ),
@@ -99,7 +100,7 @@ class MonitorPage extends GetView<MonitorController> {
                   children: [
                     const Text(
                       "درجة الحرارة",
-                      style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 13),
+                      style: TextStyle(color: Color(0xB3E8EEF9), fontSize: 13),
                     ),
                     Text(
                       controller.temperatureValue!,
@@ -119,13 +120,13 @@ class MonitorPage extends GetView<MonitorController> {
             return Container(
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: const Color(0xFF16213A),
+                color: AppColors.card,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Text(
                 "لا يوفّر هذا الراوتر بيانات حساسات عبر /system/health، "
                 "أو أن الإصدار لا يدعمها. (الخَطأ الشائع: بعض أجهزة RouterOS v6)",
-                style: TextStyle(color: Color(0xFF94A3B8), height: 1.6, fontSize: 12),
+                style: TextStyle(color: AppColors.textMuted, height: 1.6, fontSize: 12),
               ),
             );
           }
@@ -146,11 +147,11 @@ class MonitorPage extends GetView<MonitorController> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF16213A),
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 5),
             ),
@@ -161,7 +162,7 @@ class MonitorPage extends GetView<MonitorController> {
           children: [
             Icon(icon, color: color),
             const SizedBox(height: 10),
-            Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
             const SizedBox(height: 4),
             Text(
               value,
@@ -170,7 +171,7 @@ class MonitorPage extends GetView<MonitorController> {
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 15,
-                color: Color(0xFFE8EEF9),
+                color: AppColors.text,
               ),
             ),
           ],
@@ -184,19 +185,19 @@ class MonitorPage extends GetView<MonitorController> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(name, style: const TextStyle(fontSize: 13, color: Color(0xFF8FA3C0))),
+          Text(name, style: const TextStyle(fontSize: 13, color: AppColors.textSubtle)),
           Text(
             value,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: Color(0xFF3B82F6),
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -217,7 +218,7 @@ class MonitorPage extends GetView<MonitorController> {
               const Expanded(
                 child: Text(
                   "قراءة لحظية كل 6 ثوانٍ للمنافذ العاملة",
-                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
               ),
               Obx(
@@ -229,7 +230,7 @@ class MonitorPage extends GetView<MonitorController> {
                       )
                     : IconButton(
                         onPressed: controller.refreshTraffic,
-                        icon: const Icon(Icons.bolt_rounded, color: Color(0xFFF59E0B)),
+                        icon: const Icon(Icons.bolt_rounded, color: AppColors.warning),
                       ),
               ),
             ],
@@ -240,12 +241,12 @@ class MonitorPage extends GetView<MonitorController> {
               return Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF16213A),
+                  color: AppColors.card,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Text(
                   "لم يتم العثور على منافذ، أو تعذّر قراءة /interface/print.",
-                  style: TextStyle(color: Color(0xFF94A3B8)),
+                  style: TextStyle(color: AppColors.textMuted),
                 ),
               );
             }
@@ -264,20 +265,20 @@ class MonitorPage extends GetView<MonitorController> {
   Widget _interfaceCard(RouterInterfaceModel element) {
     final isRunning = element.running && !element.disabled;
     final color = element.disabled
-        ? const Color(0xFF94A3B8)
+        ? AppColors.textMuted
         : isRunning
-            ? const Color(0xFF10B981)
-            : const Color(0xFFEF4444);
+            ? AppColors.green
+            : AppColors.danger;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -290,7 +291,7 @@ class MonitorPage extends GetView<MonitorController> {
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.settings_ethernet_rounded, color: color, size: 20),
@@ -305,13 +306,13 @@ class MonitorPage extends GetView<MonitorController> {
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Color(0xFFE8EEF9),
+                        color: AppColors.text,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       "${element.type}${element.comment.isEmpty ? "" : " • ${element.comment}"}",
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                     ),
                   ],
                 ),
@@ -319,7 +320,7 @@ class MonitorPage extends GetView<MonitorController> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -332,8 +333,8 @@ class MonitorPage extends GetView<MonitorController> {
           const SizedBox(height: 10),
           Row(
             children: [
-              _trafficStat("تنزيل", element.rxBitsPerSecond, const Color(0xFF2563EB)),
-              _trafficStat("رفع", element.txBitsPerSecond, const Color(0xFFF59E0B)),
+              _trafficStat("تنزيل", element.rxBitsPerSecond, AppColors.blue),
+              _trafficStat("رفع", element.txBitsPerSecond, AppColors.warning),
             ],
           ),
         ],

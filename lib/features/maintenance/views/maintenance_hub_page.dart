@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/maintenance/controllers/maintenance_hub_controller.dart';
 
@@ -13,7 +14,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF070F1E),
+        backgroundColor: AppColors.ink,
         body: SafeArea(
           child: Column(
             children: [
@@ -33,8 +34,8 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                         title: "إغلاق وحذف الجلسات (اختياري)",
                         subtitle: "يغلق جميع جلسات User Manager، ينتظر 20 ثانية، يحذفها، ثم ينتظر 20 ثانية أخرى. يمكن تجاوز هذه الخطوة.",
                         icon: Icons.logout_rounded,
-                        accentColor: const Color(0xFFF59E0B),
-                        buttonColor: const Color(0xFFF59E0B),
+                        accentColor: AppColors.warning,
+                        buttonColor: AppColors.warning,
                         controller: controller,
                       ),
                       const SizedBox(height: 12),
@@ -45,8 +46,8 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                         title: "تنظيف سجلات User Manager",
                         subtitle: "ينظف سجلات User Manager القديمة من الراوتر.",
                         icon: Icons.cleaning_services_rounded,
-                        accentColor: const Color(0xFF38E5FF),
-                        buttonColor: const Color(0xFF38E5FF),
+                        accentColor: AppColors.cyan,
+                        buttonColor: AppColors.cyan,
                         controller: controller,
                       ),
                       const SizedBox(height: 12),
@@ -57,8 +58,8 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                         title: "إعادة بناء قاعدة User Manager",
                         subtitle: "يعيد بناء قاعدة User Manager بعد الحذف.",
                         icon: Icons.dns_rounded,
-                        accentColor: const Color(0xFF38BDF8),
-                        buttonColor: const Color(0xFF38BDF8),
+                        accentColor: AppColors.info,
+                        buttonColor: AppColors.info,
                         controller: controller,
                       ),
                       const SizedBox(height: 12),
@@ -81,8 +82,8 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                         title: "تفعيل الهوتسبوت",
                         subtitle: "يعيد تفعيل الهوتسبوت بعد أوامر الصيانة.",
                         icon: Icons.wifi_rounded,
-                        accentColor: const Color(0xFF0EA5E9),
-                        buttonColor: const Color(0xFF0EA5E9),
+                        accentColor: AppColors.sky,
+                        buttonColor: AppColors.sky,
                         controller: controller,
                       ),
                       const SizedBox(height: 12),
@@ -93,8 +94,8 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                         title: "إعادة تشغيل الراوتر",
                         subtitle: "يفتح الهوتسبوت ويتحقق من حالته أولاً، ثم يرسل أمر إعادة تشغيل الراوتر النهائي.",
                         icon: Icons.restart_alt_rounded,
-                        accentColor: const Color(0xFFEF4444),
-                        buttonColor: const Color(0xFFEF4444),
+                        accentColor: AppColors.danger,
+                        buttonColor: AppColors.danger,
                         controller: controller,
                       ),
                       const SizedBox(height: 20),
@@ -114,8 +115,8 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: const BoxDecoration(
-        color: Color(0xFF070F1E),
-        border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 0.5)),
+        color: AppColors.ink,
+        border: Border(bottom: BorderSide(color: AppColors.surface, width: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -135,7 +136,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
               const Text(
                 "MkCards",
                 style: TextStyle(
-                  color: Color(0xFFE2E8F0),
+                  color: AppColors.textBright,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -146,7 +147,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
+                  color: AppColors.success,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -165,11 +166,11 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
+          color: AppColors.cardDark,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1),
+          border: Border.all(color: AppColors.surface, width: 1),
         ),
-        child: Icon(icon, color: const Color(0xFF38BDF8), size: 18),
+        child: Icon(icon, color: AppColors.info, size: 18),
       ),
     );
   }
@@ -187,9 +188,9 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Column(
         children: [
@@ -213,7 +214,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                     Text(
                       subtitle,
                       style: const TextStyle(
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.textMuted,
                         fontSize: 11,
                         height: 1.4,
                       ),
@@ -225,9 +226,9 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.12),
+                  color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 1),
                 ),
                 child: Icon(icon, color: accentColor, size: 22),
               ),
@@ -252,7 +253,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: buttonColor.withOpacity(0.3),
+                          color: buttonColor.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -262,12 +263,12 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(color: Color(0xFF070F1E), strokeWidth: 2),
+                            child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 2),
                           )
                         : const Text(
                             "تنفيذ الخطوة",
                             style: TextStyle(
-                              color: Color(0xFF070F1E),
+                              color: AppColors.ink,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
@@ -280,7 +281,7 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
               Obx(() => Text(
                 controller.stepStatus[stepNumber] ?? "بانتظار التنفيذ",
                 style: const TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textMuted,
                   fontSize: 12,
                 ),
               )),

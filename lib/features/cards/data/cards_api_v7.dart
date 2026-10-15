@@ -1,7 +1,4 @@
-import 'package:get/get.dart';
 
-import 'package:mikronet/features/sites/models/sites_model.dart';
-import 'package:mikronet/features/cards/models/profiles_model.dart';
 import 'package:mikronet/core/mikrotik/mikrotik_client.dart';
 import 'package:mikronet/core/models/app_response.dart';
 import 'package:mikronet/features/cards/models/cards_model.dart';
@@ -307,7 +304,7 @@ class CardsApi7 {
   // ]);
 
   // if (expiredUsers.isEmpty) {
-  //   print('ممتاز! لا يوجد كروت منتهية لحذفها.');
+  //   debugPrint('ممتاز! لا يوجد كروت منتهية لحذفها.');
   //   return; // إنهاء العملية إذا لم يكن هناك بيانات
   // }
 
@@ -319,7 +316,7 @@ class CardsApi7 {
   //   }
   // }
 
-  // print('تم العثور على ${idsToDelete.length} كارت منتهي. جاري الحذف...');
+  // debugPrint('تم العثور على ${idsToDelete.length} كارت منتهي. جاري الحذف...');
 
   // // 3. تقسيم المعرفات إلى دفعات (50 كارت في كل دفعة) للحفاظ على استقرار الراوتر
   // int batchSize = 50;
@@ -338,14 +335,14 @@ class CardsApi7 {
   //       '=numbers=$numbers'
   //     ]);
       
-  //     print('تم حذف الدفعة من ${i + 1} إلى $end بنجاح.');
+  //     debugPrint('تم حذف الدفعة من ${i + 1} إلى $end بنجاح.');
   //   } catch (e) {
-  //     print('حدث خطأ أثناء حذف الدفعة ${i + 1} إلى $end: $e');
+  //     debugPrint('حدث خطأ أثناء حذف الدفعة ${i + 1} إلى $end: $e');
   //     // الكود سيستمر في محاولة حذف الدفعات الأخرى حتى لو فشلت إحداها
   //   }
   // }
 
-  // print('تم الانتهاء من تنظيف قاعدة البيانات بالكامل!');
+  // debugPrint('تم الانتهاء من تنظيف قاعدة البيانات بالكامل!');
 
 
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
 import 'package:mikronet/features/cards/controllers/cards/add_single_card_controller.dart';
@@ -14,7 +15,7 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             const PremiumHeader(
@@ -29,13 +30,13 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
                 child: Container(
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16213A),
+                    color: AppColors.card,
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: const Color(0xFF243352), width: 1.5),
+                    border: Border.all(color: AppColors.border, width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 15,
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         offset: const Offset(0, 5),
                       )
                     ],
@@ -91,9 +92,9 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
               ),
             ),
             
-           AppMiniFooter(
+           const AppMiniFooter(
               title: Text("إنشاء حساب مستخدم جديد في الشبكة",
-                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textSubtle),),
               ),
           ],
         ),
@@ -104,9 +105,9 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1220),
+        color: AppColors.page,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFF243352)),
+        border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -116,7 +117,7 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
               ? controller.selectedCustomer.value?.name
               : null, 
           isExpanded: true,
-          icon: const Icon(Icons.person_search_rounded, color: Color(0xFF3B82F6)),
+          icon: const Icon(Icons.person_search_rounded, color: AppColors.primary),
           hint: const Text("اختر العميل"),
           items: controller.customers.map((c) => DropdownMenuItem(
             value: c.name,
@@ -139,7 +140,7 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w900,
-        color: Color(0xFF3B82F6),
+        color: AppColors.primary,
       ),
     );
   }
@@ -148,15 +149,15 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1220),
+        color: AppColors.page,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFF243352)),
+        border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: controller.selectedProfile.value?.name,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF3B82F6)),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
           hint: const Text("اختر الباقة"),
           items: controller.profiles.map((p) => DropdownMenuItem(
             value: p.name,
@@ -181,13 +182,13 @@ class AddSingleCardPage extends GetView<AddSingleCardController> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: controller.isLoading.value 
-              ? [Colors.grey, const Color(0xFF94A3B8)]
-              : [const Color(0xFF0F172A), const Color(0xFF1E3A8A)]
+              ?  [Colors.grey, AppColors.textMuted]
+              : [AppColors.headerTop, AppColors.headerBottom]
           ),
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF3B82F6).withOpacity(0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             )

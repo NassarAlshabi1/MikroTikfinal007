@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/hotspot/controllers/hotspot_controller.dart';
@@ -11,20 +12,20 @@ import 'package:mikronet/core/ui/widgets/sub_page_header.dart';
 class HotspotPage extends GetView<HotspotController> {
   const HotspotPage({super.key});
 
-  static const _navy = Color(0xFF0F172A);
-  static const _blue = Color(0xFF3B82F6);
-  static const _primary = Color(0xFF2563EB);
-  static const _green = Color(0xFF16A34A);
-  static const _amber = Color(0xFFF59E0B);
+  static const _navy = AppColors.headerTop;
+  static const _blue = AppColors.primary;
+  static const _primary = AppColors.blue;
+  static const _green = AppColors.successDark;
+  static const _amber = AppColors.warning;
   static const _red = Color(0xFFDC2626);
-  static const _slate = Color(0xFF94A3B8);
+  static const _slate = AppColors.textMuted;
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             PremiumHeader(
@@ -37,7 +38,7 @@ class HotspotPage extends GetView<HotspotController> {
               controller: controller.tabController,
               isScrollable: true,
               labelColor: _blue,
-              unselectedLabelColor: const Color(0xFF94A3B8),
+              unselectedLabelColor: AppColors.textMuted,
               indicatorColor: _primary,
               tabs: const [
                 Tab(text: "المستخدمون"),
@@ -144,7 +145,7 @@ class HotspotPage extends GetView<HotspotController> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 9.5),
+            style: const TextStyle(color: Color(0xB3E8EEF9), fontSize: 9.5),
           ),
           const SizedBox(height: 4),
           Text(
@@ -233,10 +234,10 @@ class HotspotPage extends GetView<HotspotController> {
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF16213A),
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? _primary.withOpacity(0.55) : const Color(0xFF243352),
+            color: selected ? _primary.withValues(alpha: 0.55) : AppColors.border,
             width: selected ? 1.4 : 1,
           ),
         ),
@@ -293,7 +294,7 @@ class HotspotPage extends GetView<HotspotController> {
                           if (user.macAddress.isNotEmpty) "MAC: ${user.macAddress}",
                           if (user.comment.isNotEmpty) user.comment,
                         ].join(' • '),
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                        style: const TextStyle(color: AppColors.textMuted, fontSize: 10.5),
                       ),
                     ],
                   ],
@@ -370,10 +371,10 @@ class HotspotPage extends GetView<HotspotController> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF16213A),
+                        color: AppColors.card,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: selected ? _primary.withOpacity(0.55) : const Color(0xFF243352),
+                          color: selected ? _primary.withValues(alpha: 0.55) : AppColors.border,
                           width: selected ? 1.4 : 1,
                         ),
                       ),
@@ -512,9 +513,9 @@ class HotspotPage extends GetView<HotspotController> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF16213A),
+                      color: AppColors.card,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFF243352)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -619,7 +620,7 @@ class HotspotPage extends GetView<HotspotController> {
                 const SizedBox(height: 6),
                 const Text(
                   "الافتراضي hotspot — وتأكد من تفعيل خدمة FTP: /ip service enable ftp",
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 10.5),
                 ),
               ],
             ),
@@ -834,7 +835,7 @@ class HotspotPage extends GetView<HotspotController> {
                   const SizedBox(height: 6),
                   const Text(
                     "تُستثنى الأحرف الملتبسة (0/O و 1/I) تلقائيًا لسهولة القراءة.",
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 10.5),
                   ),
                 ],
               ),
@@ -981,7 +982,7 @@ class HotspotPage extends GetView<HotspotController> {
               _dialogField(dirCtrl, "اسم المجلد", Icons.folder_rounded),
               const Text(
                 "يجب أن يكون المجلد موجودًا في ذاكرة الراوتر وأن يحتوي login.html",
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 10.5),
               ),
             ],
           ),
@@ -1010,7 +1011,7 @@ class HotspotPage extends GetView<HotspotController> {
     return OutlinedButton.styleFrom(
       foregroundColor: color,
       minimumSize: const Size.fromHeight(42),
-      side: BorderSide(color: color.withOpacity(0.4)),
+      side: BorderSide(color: color.withValues(alpha: 0.4)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     );
   }
@@ -1032,15 +1033,15 @@ class HotspotPage extends GetView<HotspotController> {
       labelText: label,
       prefixIcon: Icon(icon, size: 20),
       filled: true,
-      fillColor: const Color(0xFF1B2740),
+      fillColor: AppColors.soft,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF243352)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF243352)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
     );
   }
@@ -1066,9 +1067,9 @@ class HotspotPage extends GetView<HotspotController> {
       width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF243352)),
+        border: Border.all(color: AppColors.border),
       ),
       child: child,
     );
@@ -1083,9 +1084,9 @@ class HotspotPage extends GetView<HotspotController> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF243352)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1118,7 +1119,7 @@ class HotspotPage extends GetView<HotspotController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -1166,7 +1167,7 @@ class HotspotPage extends GetView<HotspotController> {
       return Center(
         child: Text(
           emptyMessage,
-          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
         ),
       );
     }

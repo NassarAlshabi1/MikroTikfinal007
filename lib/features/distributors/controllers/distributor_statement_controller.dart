@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/distributors/data/distributors_api.dart';
@@ -83,7 +84,7 @@ class DistributorStatementController extends GetxController {
             ),
             ElevatedButton(
               onPressed: () => Get.back(result: true),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               child: const Text("حفظ", style: TextStyle(color: Colors.white)),
             ),
           ],

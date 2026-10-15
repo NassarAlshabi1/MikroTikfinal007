@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 // استيراد المتحكم والموديل
@@ -28,7 +29,7 @@ class CardInfoPage extends GetView<CardInfoController> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: const Color(0xFF1B2740),
+          backgroundColor: AppColors.soft,
           body: Column(
             children: [
               // 1. الهيدر الموحد
@@ -92,10 +93,10 @@ class CardInfoPage extends GetView<CardInfoController> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20)
         ],
       ),
       child: Column(
@@ -105,7 +106,7 @@ class CardInfoPage extends GetView<CardInfoController> {
             children: [
               const Text(
                 "حالة الكرت", 
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8FA3C0))
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSubtle)
               ),
               // استخدام Obx لمراقبة تغير الحالة في المتحكم
               Obx(() => StatusBadge(status: controller.status.value)),
@@ -141,14 +142,14 @@ class CardInfoPage extends GetView<CardInfoController> {
     padding: const EdgeInsets.only(bottom: 12, right: 5),
     child: Text(
       label, 
-      style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9), fontSize: 15)
+      style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 15)
     ),
   );
 
   Widget _statusBtn(String t, Color c, VoidCallback o) => OutlinedButton(
     onPressed: o,
     style: OutlinedButton.styleFrom(
-      side: BorderSide(color: c.withOpacity(0.5)),
+      side: BorderSide(color: c.withValues(alpha: 0.5)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       padding: const EdgeInsets.symmetric(vertical: 9),
     ),
@@ -160,11 +161,11 @@ class CardInfoPage extends GetView<CardInfoController> {
     child: Container(
       height: 58, width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)]),
+        gradient: const LinearGradient(colors: [AppColors.headerTop, AppColors.headerBottom]),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3B82F6).withOpacity(0.3), 
+            color: AppColors.primary.withValues(alpha: 0.3), 
             blurRadius: 12, 
             offset: const Offset(0, 6)
           )
@@ -188,7 +189,7 @@ class CardInfoPage extends GetView<CardInfoController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color.fromARGB(255, 138, 30, 30).withOpacity(0.3), 
+            color: const Color.fromARGB(255, 138, 30, 30).withValues(alpha: 0.3), 
             blurRadius: 12, 
             offset: const Offset(0, 6)
           )

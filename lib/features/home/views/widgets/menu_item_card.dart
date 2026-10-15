@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class MenuItemCard extends StatelessWidget {
   final String title;
@@ -19,10 +20,10 @@ class MenuItemCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-            color: const Color(0xFF16213A),
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)
             ]),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -30,9 +31,9 @@ class MenuItemCard extends StatelessWidget {
             Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6).withOpacity(0.05),
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     shape: BoxShape.circle),
-                child: Icon(icon, size: 23, color: const Color(0xFF3B82F6))),
+                child: Icon(icon, size: 23, color: AppColors.primary)),
             const SizedBox(height: 5),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),

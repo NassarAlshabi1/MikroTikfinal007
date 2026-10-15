@@ -20,7 +20,7 @@ class PrintsRoutes {
     ),
     GetPage(
       name: AppRoutes.batches, 
-      page: () => BatchesView(),
+      page: () => const BatchesView(),
       binding: BindingsBuilder(() => Get.lazyPut(() => BatchesListController())),
     ),
     GetPage(

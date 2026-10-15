@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/app/routes/app_routes.dart';
 import 'package:mikronet/features/auth/models/login_model.dart';
@@ -23,8 +24,6 @@ class LoginController extends GetxController {
   /// هل اختار المستخدم وضع SSL يدويًا؟ (لعدم تجاوز اختياره عند تغيير المنفذ)
   bool _sslManuallySet = false;
   static const String _sslPrefKey = 'login_use_ssl';
-
-  @override
 
   RxList<LoginModel> savedRouters = <LoginModel>[].obs;
   bool _isOperationCancelled = false;
@@ -205,7 +204,7 @@ class LoginController extends GetxController {
     }
     Get.dialog(
       AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.surface,
         title: const Text("البيانات المحفوظة", style: TextStyle(color: Colors.white)),
         content: SizedBox(
           width: double.maxFinite,
@@ -215,12 +214,12 @@ class LoginController extends GetxController {
             itemBuilder: (context, index) {
               final item = savedRouters[index];
               return ListTile(
-                leading: const Icon(Icons.router, color: Color(0xFF38BDF8)),
+                leading: const Icon(Icons.router, color: AppColors.info),
                 title: Text(
                   item.networkName.trim().isEmpty ? 'بدون اسم' : item.networkName,
                   style: const TextStyle(color: Colors.white),
                 ),
-                subtitle: Text("User: ${item.username}", style: const TextStyle(color: const Color(0xB3E8EEF9))),
+                subtitle: Text("User: ${item.username}", style: const TextStyle(color: Color(0xB3E8EEF9))),
                 trailing: IconButton(onPressed: (){
                   showConfirmDialog(message: "confirm", onConfirm: ()async{
                     var result = await LoginApi.deleteLoginData(savedRouters[index].id);
@@ -267,10 +266,10 @@ class LoginController extends GetxController {
     }
     Get.dialog(
       AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.surface,
         content: Row(
           children: [
-            const CircularProgressIndicator(color: Color(0xFF38BDF8)),
+            const CircularProgressIndicator(color: AppColors.info),
             const SizedBox(width: 20),
             Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
           ],

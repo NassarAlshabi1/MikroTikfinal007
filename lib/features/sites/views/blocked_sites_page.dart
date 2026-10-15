@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/sites/controllers/blocked_sites_controller.dart'; 
@@ -18,13 +19,13 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B2740),
+        backgroundColor: AppColors.soft,
 
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 90),
           child: FloatingActionButton.extended(
             onPressed: () => _showAddSiteDialog(context),
-            backgroundColor: const Color(0xFF3B82F6),
+            backgroundColor: AppColors.primary,
             elevation: 8,
             icon: const Icon(Icons.add_moderator_rounded, color: Colors.white),
             label: const Text(
@@ -81,12 +82,12 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.red.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -94,23 +95,23 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFF3B1D24),
-          child: const Icon(Icons.public_off_rounded, color: Colors.red, size: 20),
+        leading: const CircleAvatar(
+          backgroundColor: AppColors.dangerOverlay,
+          child: Icon(Icons.public_off_rounded, color: Colors.red, size: 20),
         ),
         title: Text(
           site.blockValue, 
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,
-            color: Color(0xFFE8EEF9),
+            color: AppColors.text,
           ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
             site.name, 
-            style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 12),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
           ),
         ),
         trailing: IconButton(
@@ -145,7 +146,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
               decoration: InputDecoration(
                 hintText: "اسم القاعدة (مثال: Facebook Block)",
                 filled: true,
-                fillColor: const Color(0xFF1B2740),
+                fillColor: AppColors.soft,
                 prefixIcon: const Icon(Icons.label_outline_rounded, color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -162,7 +163,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
               decoration: InputDecoration(
                 hintText: controller.inputHint, 
                 filled: true,
-                fillColor: const Color(0xFF1B2740),
+                fillColor: AppColors.soft,
                 prefixIcon: const Icon(Icons.block_rounded, color: Colors.redAccent),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -179,7 +180,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
+              backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               elevation: 0,
@@ -198,7 +199,7 @@ class BlockedSitesPage extends GetView<BlockedSitesController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.shield_outlined,
-              size: 70, color: Colors.green.withOpacity(0.4)),
+              size: 70, color: Colors.green.withValues(alpha: 0.4)),
           const SizedBox(height: 11),
           Text(
             "لا توجد قيود في ${controller.pageTitle} حالياً",

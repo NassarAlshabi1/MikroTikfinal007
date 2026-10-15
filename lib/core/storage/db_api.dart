@@ -57,7 +57,7 @@ class DBApi{
       return response;
     } catch (e) {
       throw Exception("Error in select: $e");
-      //print('Error in select: $e');
+      //debugPrint('Error in select: $e');
       // return [];
     }
   }
@@ -77,7 +77,7 @@ class DBApi{
       return response;
     } catch (e) {
       throw Exception("Error in insert: $e");
-      //print('Error in insert: $e');
+      //debugPrint('Error in insert: $e');
       // return -1;
     }
   }
@@ -143,7 +143,7 @@ class DBApi{
       return response;
     } catch (e) {
       throw Exception("Error in update: $e");
-      //print('Error in update: $e');
+      //debugPrint('Error in update: $e');
       // return -1;
     }
   }
@@ -159,7 +159,7 @@ class DBApi{
       return response;
     } catch (e) {
       throw Exception("Error in delete: $e");
-      //print('Error in delete: $e');
+      //debugPrint('Error in delete: $e');
       // return -1;
     }
   }

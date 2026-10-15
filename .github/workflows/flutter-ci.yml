@@ -43,12 +43,12 @@ jobs:
       # ملاحظة: الكود الموروث (فرع controller الأصلي) يحتوي 17 تحذيرًا موجودًا مسبقًا
       # (دوال غير مستخدمة/كود ميت)، لذا نجعل التحذيرات والمعلومات غير مُفشِلة
       # مع إبقاء الأخطاء (errors) مُفشِلة للبناء.
-      - name: Unit tests (محلل مدد RouterOS والحذف الذكي)
+      - name: Unit tests (all tests)
         id: unit_tests
         shell: bash
         run: |
           set +e
-          flutter test test/mikrotik_duration_test.dart test/expired_users_classifier_test.dart test/cable_diagnostics_test.dart test/hotspot_logic_test.dart test/connection_errors_test.dart test/print_model_test.dart test/telegram_features_test.dart > test_output.txt 2>&1
+          flutter test > test_output.txt 2>&1
           status=$?
           echo "unit_tests exit=$status"
           tail -n 40 test_output.txt

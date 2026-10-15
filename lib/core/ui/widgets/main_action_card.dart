@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class MainActionCard extends StatelessWidget {
   final String title;
@@ -21,11 +22,11 @@ class MainActionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 11),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 11,
             offset: const Offset(0, 5),
           ),
@@ -44,7 +45,7 @@ class MainActionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(icon, color: color, size: 22),
@@ -62,7 +63,7 @@ class MainActionCard extends StatelessWidget {
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14.5,
-                          color: Color(0xFFE8EEF9),
+                          color: AppColors.text,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -70,8 +71,8 @@ class MainActionCard extends StatelessWidget {
                         subtitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: const Color(0xFF8FA3C0),
+                        style: const TextStyle(
+                          color: AppColors.textSubtle,
                           fontSize: 11,
                         ),
                       ),
@@ -79,7 +80,7 @@ class MainActionCard extends StatelessWidget {
                   ),
                 ),
                 // سهم الانتقال
-                Icon(Icons.chevron_left_rounded, color: const Color(0xFF243352)),
+                const Icon(Icons.chevron_left_rounded, color: AppColors.border),
               ],
             ),
           ),

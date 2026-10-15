@@ -104,7 +104,7 @@ class DistributorPdf {
 
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-      columnWidths: {0: pw.FlexColumnWidth(2), 1: pw.FlexColumnWidth(3)},
+      columnWidths: {0: const pw.FlexColumnWidth(2), 1: const pw.FlexColumnWidth(3)},
       children: rows
           .map(
             (row) => pw.TableRow(

@@ -207,8 +207,8 @@ class BatchesFormController extends GetxController {
 
   void showProgressDialog() {
     Get.dialog(
-      WillPopScope(
-        onWillPop: () async => false, 
+      PopScope(
+        canPop: false, 
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           content: Obx(() => Column(

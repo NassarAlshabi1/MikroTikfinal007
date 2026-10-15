@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:mikronet/app/routes/app_routes.dart'; // لتتمكن من الوصول لـ AppRoutes
 
 class SitesUnitController extends GetxController {
@@ -12,7 +13,7 @@ class SitesUnitController extends GetxController {
 
   void fetchFromMikrotik() {
     // اكتب هنا منطق جلب البيانات من المايكروتك
-    print("Fetching data from Mikrotik...");
+    debugPrint("Fetching data from Mikrotik...");
   }
 
   // ================= دوال الانتقالات =================

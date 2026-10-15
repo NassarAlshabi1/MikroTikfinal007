@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/home/controllers/home_controller.dart';
 
@@ -21,7 +22,7 @@ class HomePage extends GetView<HomeController> {
     child :Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B2740),
+        backgroundColor: AppColors.soft,
         body: Column(
           children: [
             HomeHeader(
@@ -59,7 +60,7 @@ class HomePage extends GetView<HomeController> {
         title: "توليد كرت واحد",
         subtitle: "إنشاء كرت مستخدم فوري",
         icon: Icons.add_moderator_rounded,
-        color: const Color(0xFF2563EB),
+        color: AppColors.blue,
         actionText: "ابدأ الإضافة",
         onTap: controller.generateSingleCard, 
       ),
@@ -70,7 +71,7 @@ class HomePage extends GetView<HomeController> {
         subtitle: "أجهزة تسحب بيانات الآن",
         value: controller.activeUsersCount.value, 
         icon: Icons.online_prediction_rounded,
-        color: const Color(0xFF10B981), 
+        color: AppColors.green, 
         actionText: "عرض المتصلين",
         onTap: controller.manageActiveUsers, 
       ),
@@ -81,7 +82,7 @@ class HomePage extends GetView<HomeController> {
         subtitle: "مدة عمل الراوتر (Uptime)",
         value: controller.uptime.value, 
         icon: Icons.timer_rounded,
-        color: const Color(0xFFF59E0B), 
+        color: AppColors.warning, 
         actionText: "تقارير النظام",
         onTap: controller.viewUptimeDetails, 
       ),
@@ -108,7 +109,7 @@ class HomePage extends GetView<HomeController> {
         subtitle: controller.diskSpaceDetails.value, // الإجمالي والمستخدم
         value: controller.diskSpacePercent.value,    // النسبة المئوية
         icon: Icons.sd_storage_rounded,
-        color: const Color(0xFF94A3B8),
+        color: AppColors.textMuted,
         actionText: "تفاصيل القرص",
         onTap: controller.checkDiskSpace, 
       ),
@@ -187,7 +188,7 @@ class HomePage extends GetView<HomeController> {
           style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
-              color: Color(0xFFE8EEF9)),
+              color: AppColors.text),
         ),
       ),
     );

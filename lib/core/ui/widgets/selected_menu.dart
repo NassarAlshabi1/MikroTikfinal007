@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:mikronet/core/utils/functions.dart';
 
 class MySelectedMenu extends StatefulWidget {
@@ -7,7 +8,6 @@ class MySelectedMenu extends StatefulWidget {
   final String emptyText;
   final String selectedKeyName;
   final String selectedValueName;
-   dynamic value;
   final Function onSave;
   final Color? bgColor;
   final TextStyle textStyle;
@@ -16,12 +16,11 @@ class MySelectedMenu extends StatefulWidget {
   final String? mainValue;
   final double borderRadiusCircular;
   final Widget icon;
-   MySelectedMenu(
+   const MySelectedMenu(
       {super.key,
       required this.items,
-      this.value,
       this.bgColor,
-      this.textStyle=const TextStyle(fontWeight: FontWeight.bold,color: Color(0xFFE8EEF9)),
+      this.textStyle=const TextStyle(fontWeight: FontWeight.bold,color: AppColors.text),
       this.width=80,
       this.border,
       this.borderRadiusCircular= 15,
@@ -31,7 +30,7 @@ class MySelectedMenu extends StatefulWidget {
       this.selectedValueName = "name",
       this.hintText = "Select One",
       this.emptyText="لاتوجد بيانات",
-      this.icon=const Icon(Icons.keyboard_arrow_down,size: 20,color: Color(0xFF3B82F6),),
+      this.icon=const Icon(Icons.keyboard_arrow_down,size: 20,color: AppColors.primary,),
     });
   @override
   State<StatefulWidget> createState() => _MySelectedMenu();
@@ -82,7 +81,7 @@ class _MySelectedMenu extends State<MySelectedMenu> {
             width: widget.width ,
             decoration: BoxDecoration(
               border: widget.border ,
-              color: widget.bgColor ?? Theme.of(context).primaryColor.withOpacity(.1),
+              color: widget.bgColor ?? Theme.of(context).primaryColor.withValues(alpha: .1),
               borderRadius: BorderRadius.circular(widget.borderRadiusCircular),
             ),
             child: MaterialButton(
@@ -93,7 +92,7 @@ class _MySelectedMenu extends State<MySelectedMenu> {
             width: widget.width,
             decoration: BoxDecoration(
               border: widget.border ?? Border.all(),
-              color: widget.bgColor ?? Theme.of(context).primaryColor.withOpacity(.1),
+              color: widget.bgColor ?? Theme.of(context).primaryColor.withValues(alpha: .1),
               borderRadius: BorderRadius.circular(widget.borderRadiusCircular),
             ),
             alignment: Alignment.center, // ????? ??????? ???? ??? Container
@@ -118,8 +117,8 @@ class _MySelectedMenu extends State<MySelectedMenu> {
                 onChanged: (String? val) {
                   setState(() {
                     dropdownvalue = val!;
-                    widget.value = getAttrFromQuery(widget.items,widget.selectedKeyName, widget.selectedValueName, val);
-                    widget.onSave(widget.value.toString());
+                    final selected = getAttrFromQuery(widget.items,widget.selectedKeyName, widget.selectedValueName, val);
+                    widget.onSave(selected.toString());
                   });
                 },
               ),

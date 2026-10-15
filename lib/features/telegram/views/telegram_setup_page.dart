@@ -180,14 +180,14 @@ class TelegramSetupPage extends GetView<TelegramSetupController> {
           gradient: LinearGradient(
             colors: disabled
                 ? [AppColors.soft, AppColors.soft]
-                : [color.withOpacity(0.85), color],
+                : [color.withValues(alpha: 0.85), color],
           ),
           borderRadius: BorderRadius.circular(14),
           boxShadow: disabled
               ? []
               : [
                   BoxShadow(
-                      color: color.withOpacity(0.25),
+                      color: color.withValues(alpha: 0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 4)),
                 ],

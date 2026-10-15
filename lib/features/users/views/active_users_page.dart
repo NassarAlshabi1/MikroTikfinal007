@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/utils/string_extensions.dart';
 import 'package:mikronet/features/users/controllers/active_users_controller.dart';
@@ -51,10 +52,10 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(25),
         border: Border.all(color: const Color(0xFF14532D)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
       ),
       child: Column(
         children: [
@@ -70,7 +71,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
                 Expanded(
                   child: Text(
                     a.label, 
-                    style: const TextStyle(fontSize: 12, color: const Color(0xFF94A3B8), fontWeight: FontWeight.normal),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.normal),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -114,7 +115,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(25),
-        decoration: const BoxDecoration(color: const Color(0xFF16213A), borderRadius: BorderRadius.vertical(top: Radius.circular(35))),
+        decoration: const BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.vertical(top: Radius.circular(35))),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -156,7 +157,7 @@ class ActiveUsersPage extends GetView<ActiveUsersController> {
   }
 
   Widget _actionItem(String t, IconData i, Color c, VoidCallback onTap) => ListTile(
-    leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Icon(i, color: c, size: 20)),
+    leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Icon(i, color: c, size: 20)),
     title: Text(t, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
     onTap: onTap,
   );

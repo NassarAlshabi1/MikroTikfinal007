@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 enum MsgType{
   success,
@@ -20,13 +21,13 @@ Future<bool> showConfirmDialog({
       textDirection: TextDirection.rtl,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        backgroundColor: const Color(0xFF16213A),
+        backgroundColor: AppColors.card,
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.help_outline_rounded, color: Colors.orange, size: 28),
@@ -34,13 +35,13 @@ Future<bool> showConfirmDialog({
             const SizedBox(width: 15),
             const Text(
               "تأكيد العملية",
-              style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9), fontSize: 18),
+              style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 18),
             ),
           ],
         ),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xFF8FA3C0), fontSize: 14, height: 1.5),
+          style: const TextStyle(color: AppColors.textSubtle, fontSize: 14, height: 1.5),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [
@@ -62,12 +63,12 @@ Future<bool> showConfirmDialog({
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+                      colors: [AppColors.headerTop, AppColors.headerBottom],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF3B82F6).withOpacity(0.3),
+                        color: AppColors.primary.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       )
@@ -106,33 +107,33 @@ Future<void> showMsgDialog({required String message, MsgType type = MsgType.msg}
   final (icon, baseColor, titleText, gradientColors) = switch (type) {
     MsgType.success => (
         Icons.check_circle_outline_rounded,
-        const Color(0xFF10B981), // أخضر
+        AppColors.green, // أخضر
         "نجاح",
-        [const Color(0xFF047857), const Color(0xFF10B981)]
+        [const Color(0xFF047857), AppColors.green]
       ),
     MsgType.warning => (
         Icons.warning_amber_rounded,
-        const Color(0xFFF59E0B), // برتقالي
+        AppColors.warning, // برتقالي
         "تحذير",
-        [const Color(0xFFB45309), const Color(0xFFF59E0B)]
+        [const Color(0xFFB45309), AppColors.warning]
       ),
     MsgType.error => (
         Icons.error_outline_rounded,
-        const Color(0xFFEF4444), // أحمر
+        AppColors.danger, // أحمر
         "خطأ",
-        [const Color(0xFFB91C1C), const Color(0xFFEF4444)]
+        [const Color(0xFFB91C1C), AppColors.danger]
       ),
     MsgType.info => (
         Icons.info_outline_rounded,
-        const Color(0xFF3B82F6), // أزرق (لونك الأصلي)
+        AppColors.primary, // أزرق (لونك الأصلي)
         "معلومة",
-        [const Color(0xFF0F172A), const Color(0xFF1E3A8A)]
+        [AppColors.headerTop, AppColors.headerBottom]
       ),
     MsgType.msg => (
         Icons.notifications_none_rounded,
-        const Color(0xFF8FA3C0), // رمادي مزرق للرسائل العادية
+        AppColors.textSubtle, // رمادي مزرق للرسائل العادية
         "تنبيه",
-        [const Color(0xFF8FA3C0), const Color(0xFF8FA3C0)]
+        [AppColors.textSubtle, AppColors.textSubtle]
       ),
   };
 
@@ -141,13 +142,13 @@ Future<void> showMsgDialog({required String message, MsgType type = MsgType.msg}
       textDirection: TextDirection.rtl,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        backgroundColor: const Color(0xFF16213A),
+        backgroundColor: AppColors.card,
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: baseColor.withOpacity(0.1), // لون الخلفية شفاف بناءً على النوع
+                color: baseColor.withValues(alpha: 0.1), // لون الخلفية شفاف بناءً على النوع
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: baseColor, size: 28), // تغيير الأيقونة ولونها
@@ -155,13 +156,13 @@ Future<void> showMsgDialog({required String message, MsgType type = MsgType.msg}
             const SizedBox(width: 15),
             Text(
               titleText, // تغيير العنوان
-              style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFE8EEF9), fontSize: 18),
+              style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 18),
             ),
           ],
         ),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xFF8FA3C0), fontSize: 14, height: 1.5),
+          style: const TextStyle(color: AppColors.textSubtle, fontSize: 14, height: 1.5),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [
@@ -174,7 +175,7 @@ Future<void> showMsgDialog({required String message, MsgType type = MsgType.msg}
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: baseColor.withOpacity(0.3), // ظل الزر يأخذ نفس اللون الأساسي
+                  color: baseColor.withValues(alpha: 0.3), // ظل الزر يأخذ نفس اللون الأساسي
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 )
@@ -208,10 +209,10 @@ void showLoadingDialog({
 
   Get.dialog(
     AlertDialog(
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.surface,
       content: Row(
         children: [
-          const CircularProgressIndicator(color: Color(0xFF38BDF8)),
+          const CircularProgressIndicator(color: AppColors.info),
           const SizedBox(width: 20),
           Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
         ],
@@ -226,7 +227,7 @@ void showLoadingDialog({
             if (onCancel != null) {
               onCancel().catchError((error) {
                 // اصطياد أي خطأ لمنع حدوث Crash في التطبيق
-                print("حدث خطأ في دالة الإلغاء بالخلفية: $error");
+                debugPrint("حدث خطأ في دالة الإلغاء بالخلفية: $error");
               });
             }
           },

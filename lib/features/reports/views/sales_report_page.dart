@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' show NumberFormat;
 import 'package:mikronet/features/reports/controllers/sales_report_controller.dart';
@@ -14,7 +15,7 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF070F1E),
+        backgroundColor: AppColors.ink,
         body: SafeArea(
           child: Column(
             children: [
@@ -63,8 +64,8 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: const BoxDecoration(
-        color: Color(0xFF070F1E),
-        border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 0.5)),
+        color: AppColors.ink,
+        border: Border(bottom: BorderSide(color: AppColors.surface, width: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -87,7 +88,7 @@ class SalesReportPage extends GetView<SalesReportController> {
               const Text(
                 "MkCards",
                 style: TextStyle(
-                  color: Color(0xFFE2E8F0),
+                  color: AppColors.textBright,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -98,7 +99,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
+                  color: AppColors.success,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -119,11 +120,11 @@ class SalesReportPage extends GetView<SalesReportController> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
+          color: AppColors.cardDark,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1),
+          border: Border.all(color: AppColors.surface, width: 1),
         ),
-        child: Icon(icon, color: const Color(0xFF38BDF8), size: 18),
+        child: Icon(icon, color: AppColors.info, size: 18),
       ),
     );
   }
@@ -133,9 +134,9 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Column(
         children: [
@@ -150,10 +151,10 @@ class SalesReportPage extends GetView<SalesReportController> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F3B4C),
+                          color: AppColors.deepCyan,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.calculate_rounded, color: Color(0xFF38E5FF), size: 20),
+                        child: const Icon(Icons.calculate_rounded, color: AppColors.cyan, size: 20),
                       ),
                       const SizedBox(width: 8),
                       const Text(
@@ -169,7 +170,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                   const SizedBox(height: 4),
                   Obx(() => Text(
                     "آخر مزامنة: ${controller.lastSyncTime.value}",
-                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                   )),
                 ],
               ),
@@ -185,14 +186,14 @@ class SalesReportPage extends GetView<SalesReportController> {
                 child: Obx(() => ElevatedButton.icon(
                   onPressed: controller.isSyncing.value ? null : () => controller.syncFromRouter(silent: false),
                   icon: controller.isSyncing.value
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Color(0xFF070F1E), strokeWidth: 2))
-                      : const Icon(Icons.sync_rounded, color: Color(0xFF070F1E), size: 18),
+                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 2))
+                      : const Icon(Icons.sync_rounded, color: AppColors.ink, size: 18),
                   label: const Text(
                     "مزامنة الآن",
-                    style: TextStyle(color: Color(0xFF070F1E), fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF38E5FF),
+                    backgroundColor: AppColors.cyan,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
@@ -210,8 +211,8 @@ class SalesReportPage extends GetView<SalesReportController> {
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFF131D2E),
-                    side: const BorderSide(color: Color(0xFF38E5FF), width: 1),
+                    backgroundColor: AppColors.cardDark,
+                    side: const BorderSide(color: AppColors.cyan, width: 1),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
@@ -225,9 +226,9 @@ class SalesReportPage extends GetView<SalesReportController> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF131D2E),
+                    color: AppColors.cardDark,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+                    border: Border.all(color: AppColors.panel, width: 1),
                   ),
                   child: const Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
                 ),
@@ -244,9 +245,9 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Column(
         children: [
@@ -340,10 +341,10 @@ class SalesReportPage extends GetView<SalesReportController> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF38E5FF),
+                    color: AppColors.cyan,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.remove_red_eye_rounded, color: Color(0xFF070F1E), size: 20),
+                  child: const Icon(Icons.remove_red_eye_rounded, color: AppColors.ink, size: 20),
                 ),
               ),
               const SizedBox(width: 10),
@@ -355,9 +356,9 @@ class SalesReportPage extends GetView<SalesReportController> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.headerTop,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF38E5FF), width: 1.2),
+                      border: Border.all(color: AppColors.cyan, width: 1.2),
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -381,7 +382,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF334155), width: 1),
                   ),
@@ -399,9 +400,9 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF131D2E),
+        color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF38E5FF).withOpacity(0.5), width: 1),
+        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.5), width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -425,7 +426,7 @@ class SalesReportPage extends GetView<SalesReportController> {
           ),
           InkWell(
             onTap: onClear,
-            child: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 16),
+            child: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
           ),
         ],
       ),
@@ -441,20 +442,20 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF131D2E),
+        color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF38E5FF), size: 18),
+          Icon(icon, color: AppColors.cyan, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: items.contains(value) ? value : items.firstOrNull,
-                dropdownColor: const Color(0xFF131D2E),
-                icon: const Icon(Icons.unfold_more_rounded, color: Color(0xFF94A3B8), size: 18),
+                dropdownColor: AppColors.cardDark,
+                icon: const Icon(Icons.unfold_more_rounded, color: AppColors.textMuted, size: 18),
                 isExpanded: true,
                 style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                 items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
@@ -479,7 +480,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                 title: "الكروت الفعالة",
                 value: "${controller.activeCards.value}",
                 icon: Icons.check_circle_rounded,
-                iconColor: const Color(0xFF22C55E),
+                iconColor: AppColors.success,
                 valueColor: Colors.white,
               ),
             ),
@@ -489,7 +490,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                 title: "إجمالي الكروت",
                 value: "${controller.totalCards.value}",
                 icon: Icons.confirmation_number_rounded,
-                iconColor: const Color(0xFF38E5FF),
+                iconColor: AppColors.cyan,
                 valueColor: Colors.white,
               ),
             ),
@@ -505,7 +506,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                 title: "إجمالي البيع",
                 value: _formatNumber(controller.totalSales.value),
                 icon: Icons.point_of_sale_rounded,
-                iconColor: const Color(0xFF38E5FF),
+                iconColor: AppColors.cyan,
                 valueColor: Colors.white,
               ),
             ),
@@ -515,8 +516,8 @@ class SalesReportPage extends GetView<SalesReportController> {
                 title: "الكروت المنتهية",
                 value: "${controller.expiredCards.value}",
                 icon: Icons.cancel_rounded,
-                iconColor: const Color(0xFFEF4444),
-                valueColor: const Color(0xFFEF4444),
+                iconColor: AppColors.danger,
+                valueColor: AppColors.danger,
               ),
             ),
           ],
@@ -531,8 +532,8 @@ class SalesReportPage extends GetView<SalesReportController> {
                 title: "الربح",
                 value: _formatNumber(controller.netProfit.value),
                 icon: Icons.trending_up_rounded,
-                iconColor: const Color(0xFF22C55E),
-                valueColor: const Color(0xFF22C55E),
+                iconColor: AppColors.success,
+                valueColor: AppColors.success,
               ),
             ),
             const SizedBox(width: 10),
@@ -541,8 +542,8 @@ class SalesReportPage extends GetView<SalesReportController> {
                 title: "إجمالي المدفوعات",
                 value: _formatNumber(controller.totalPayments.value),
                 icon: Icons.account_balance_wallet_rounded,
-                iconColor: const Color(0xFFF59E0B),
-                valueColor: const Color(0xFFF59E0B),
+                iconColor: AppColors.warning,
+                valueColor: AppColors.warning,
               ),
             ),
           ],
@@ -561,9 +562,9 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -571,7 +572,7 @@ class SalesReportPage extends GetView<SalesReportController> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.15),
+              color: iconColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -581,7 +582,7 @@ class SalesReportPage extends GetView<SalesReportController> {
             children: [
               Text(
                 title,
-                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
               const SizedBox(height: 4),
               Text(
@@ -603,9 +604,9 @@ class SalesReportPage extends GetView<SalesReportController> {
   Widget _buildBreakdownTable(SalesReportController controller) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Column(
         children: [
@@ -613,7 +614,7 @@ class SalesReportPage extends GetView<SalesReportController> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: const BoxDecoration(
-              color: Color(0xFF38E5FF),
+              color: AppColors.cyan,
               borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
             ),
             child: const Row(
@@ -622,7 +623,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                   flex: 3,
                   child: Text(
                     "الباقة",
-                    style: TextStyle(color: Color(0xFF070F1E), fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
                 Expanded(
@@ -630,7 +631,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                   child: Text(
                     "عدد الكروت",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF070F1E), fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
                 Expanded(
@@ -638,7 +639,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                   child: Text(
                     "الفعالة",
                     textAlign: TextAlign.left,
-                    style: TextStyle(color: Color(0xFF070F1E), fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
               ],
@@ -650,7 +651,7 @@ class SalesReportPage extends GetView<SalesReportController> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFF1E2E44), width: 0.8)),
+                border: Border(bottom: BorderSide(color: AppColors.panel, width: 0.8)),
               ),
               child: Row(
                 children: [
@@ -686,7 +687,7 @@ class SalesReportPage extends GetView<SalesReportController> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: const BoxDecoration(
-              color: Color(0xFF131D2E),
+              color: AppColors.cardDark,
               borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), bottomRight: Radius.circular(15)),
             ),
             child: Row(
@@ -695,7 +696,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                   flex: 3,
                   child: Text(
                     "الإجمالي",
-                    style: TextStyle(color: Color(0xFF38E5FF), fontWeight: FontWeight.bold, fontSize: 14),
+                    style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
                 Expanded(
@@ -727,27 +728,27 @@ class SalesReportPage extends GetView<SalesReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Color(0xFF22C55E), size: 16),
+              const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
               const SizedBox(width: 6),
-              const Text("مدفوعات مسبقة: 61", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+              const Text("مدفوعات مسبقة: 61", style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
               const SizedBox(width: 12),
-              Text("الكروت ${controller.expiredCards.value}", style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+              Text("الكروت ${controller.expiredCards.value}", style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
             ],
           ),
           const Row(
             children: [
-              Icon(Icons.unfold_more_rounded, color: Color(0xFF94A3B8), size: 16),
+              Icon(Icons.unfold_more_rounded, color: AppColors.textMuted, size: 16),
               SizedBox(width: 4),
-              Text("1/1 صفحة", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+              Text("1/1 صفحة", style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
             ],
           ),
         ],

@@ -160,8 +160,7 @@ class PdfViewController extends GetxController {
                                                   fit: pw.BoxFit.fill)
                                               : null),
                                       child: pw.Stack(children: [
-                                        true
-                                            ? pw.Positioned(
+                                        pw.Positioned(
                                                 // أزلنا الزيادة + 1.5 لتكون القسمة دقيقة
                                                 top: (template.usernameLocation.y / 2)+1.5, 
                                                 left: (template.usernameLocation.x / 2)+1.5,
@@ -171,11 +170,7 @@ class PdfViewController extends GetxController {
                                                         style: pw.TextStyle(
                                                             // أزلنا الزيادة + 1 لحجم الخط
                                                             fontSize: (template.usernameFontSize / 2),
-                                                            fontWeight: pw.FontWeight.bold))))
-                                            : pw.Positioned(
-                                                top: -1,
-                                                left: -1,
-                                                child: pw.Text("")),
+                                                            fontWeight: pw.FontWeight.bold)))),
                                                 
                                         template.withPassword
                                             ? pw.Positioned(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 // import 'package:mikronet/controllers/print/batches_controller.dart';
 import 'package:mikronet/features/prints/controllers/batches/batch_cards_controller.dart';
@@ -20,7 +21,7 @@ class GeneratedCardsView extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: GetBuilder<GeneratedCardsController>(
           init: GeneratedCardsController(generatedCards),
           builder: (controller) {
@@ -94,7 +95,7 @@ class GeneratedCardsView extends StatelessWidget {
                 controller.isLoading 
                   ? "جاري المزامنة..." 
                   : (controller.isUploading ? "جاري الإرسال..." : "بدء الإضافة للسيرفر"), 
-                canStart ? [const Color(0xFF1E3A8A), const Color(0xFF0F172A)] : [const Color(0xFF8FA3C0), const Color(0xFF94A3B8)], 
+                canStart ? [AppColors.headerBottom, AppColors.headerTop] : [AppColors.textSubtle, AppColors.textMuted], 
                 controller.isUploading || controller.isLoading ? Icons.sync : Icons.cloud_upload_rounded, 
                 () {
                   if(canStart) _handleStartUpload(controller);
@@ -105,7 +106,7 @@ class GeneratedCardsView extends StatelessWidget {
             Expanded(
               child: _buildActionBtn(
                 "إيقاف العملية", 
-                canStop ? [const Color(0xFFEF4444), const Color(0xFF991B1B)] : [const Color(0xFF8FA3C0), const Color(0xFF94A3B8)], 
+                canStop ? [AppColors.danger, AppColors.dangerDark] : [AppColors.textSubtle, AppColors.textMuted], 
                 Icons.stop_circle_rounded, 
                 () {
                   if(canStop) _handleStopUpload(controller);
@@ -126,12 +127,12 @@ class GeneratedCardsView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFF243352), width: 1.5),
+        border: Border.all(color: AppColors.border, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -149,8 +150,8 @@ class GeneratedCardsView extends StatelessWidget {
               : SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: DataTable(
-                    headingTextStyle: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF3B82F6), fontSize: 13),
-                    dataTextStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF8FA3C0), fontSize: 13),
+                    headingTextStyle: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 13),
+                    dataTextStyle: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textSubtle, fontSize: 13),
                     columnSpacing: 25,
                     horizontalMargin: 15,
                     columns: const [
@@ -180,14 +181,14 @@ class GeneratedCardsView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
-          color: const Color(0xFF16213A),
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: color.withOpacity(0.1),
+              backgroundColor: color.withValues(alpha: 0.1),
               radius: 18,
               child: Icon(icon, color: color, size: 18),
             ),
@@ -195,7 +196,7 @@ class GeneratedCardsView extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                Text(title, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
                 Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
               ],
             )
@@ -214,7 +215,7 @@ class GeneratedCardsView extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: colors),
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [BoxShadow(color: colors.first.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: colors.first.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -241,80 +242,20 @@ class GeneratedCardsView extends StatelessWidget {
     Get.snackbar("تنبيه", "تم إيقاف عملية الإرسال", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
   }
 
-  // (ويدجت الجدول المذكور في الرد السابق يبقى كما هو)
-  Widget _buildTableCard1(GeneratedCardsController controller) {
-    // نفترض أن الكروت موجودة في قائمة داخل الكنترولر بهذا الشكل:
-    // List<Map<String, dynamic>> generatedCards = [{'username': '..', 'password': '..', 'profile': '..', 'isAdded': true/false}]
-    // يمكنك تعديل controller.generatedCards بناءً على اسم المتغير الفعلي لديك
-    // final cardsList = controller.generatedCards ?? []; 
-    final cardsList = controller.generatedCards ; 
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFF243352), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: cardsList.isEmpty
-          ? _buildEmptyState()
-          : SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingTextStyle: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF3B82F6),
-                  fontSize: 13,
-                ),
-                dataTextStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF8FA3C0),
-                  fontSize: 13,
-                ),
-                columnSpacing: 25,
-                horizontalMargin: 15,
-                columns: const [
-                  DataColumn(label: Text("اسم المستخدم")),
-                  DataColumn(label: Text("كلمة المرور")),
-                  DataColumn(label: Text("الباقة (Profile)")),
-                  DataColumn(label: Text("الحالة")),
-                ],
-                rows: cardsList.map<DataRow>((card) {
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(card.username.toString())),
-                      DataCell(Text(card.password.toString())),
-                      DataCell(_buildProfileBadge(card.profileName.toString())),
-                      DataCell(_buildStatusBadge(card.isAdd)),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-    );
-  }
 
   // ويدجت لتصميم شارة الباقة
   Widget _buildProfileBadge(String profileName) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B2740),
+        color: AppColors.soft,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF243352)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Text(
         profileName,
         style: const TextStyle(
-          color: Color(0xFF3B82F6),
+          color: AppColors.primary,
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -327,7 +268,7 @@ class GeneratedCardsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isAdded ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+        color: isAdded ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -354,13 +295,13 @@ class GeneratedCardsView extends StatelessWidget {
 
   // واجهة في حال عدم وجود كروت
   Widget _buildEmptyState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Icon(Icons.layers_clear_rounded, size: 60, color: const Color(0xFF243352)),
-          const SizedBox(height: 11),
-          const Text(
+          Icon(Icons.layers_clear_rounded, size: 60, color: AppColors.border),
+          SizedBox(height: 11),
+          Text(
             "لا توجد كروت مولدة حتى الآن",
             style: TextStyle(
               color: Colors.grey,

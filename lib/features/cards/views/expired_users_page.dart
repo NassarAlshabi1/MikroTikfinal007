@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/cards/data/expired_users_api.dart';
@@ -16,7 +17,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             PremiumHeader(
@@ -74,12 +75,12 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, size: 46, color: Color(0xFFEF4444)),
+            const Icon(Icons.error_outline_rounded, size: 46, color: AppColors.danger),
             const SizedBox(height: 12),
             Text(
               controller.errorMessage.value,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF94A3B8), height: 1.7),
+              style: const TextStyle(color: AppColors.textMuted, height: 1.7),
             ),
             const SizedBox(height: 16),
             GradientButton(
@@ -105,7 +106,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+          colors: [AppColors.headerTop, AppColors.headerBottom],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -120,12 +121,12 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
               _stat("لم يكملوا بعد", running, const Color(0xFFFCD34D)),
             ],
           ),
-          const Divider(color: const Color(0x3DE8EEF9), height: 22),
+          const Divider(color: Color(0x3DE8EEF9), height: 22),
           Row(
             children: [
               _stat("بلا حدود", result?.withoutLimits ?? 0, const Color(0xB3E8EEF9)),
               _stat("غير قابل للتحليل", result?.unparsable ?? 0, const Color(0xFFFDA4AF)),
-              _stat("المحدد للحذف", controller.selectedCount, const Color(0xFF60A5FA)),
+              _stat("المحدد للحذف", controller.selectedCount, AppColors.infoSoft),
             ],
           ),
           const SizedBox(height: 12),
@@ -133,7 +134,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF16213A).withOpacity(0.10),
+              color: AppColors.card.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -143,7 +144,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                   "${result?.versionLabel ?? 'إصدار غير محدد'}"
                   "${(result?.clearedProfileCount ?? 0) > 0 ? " • منها ${result!.clearedProfileCount} بالباقة المُزالة (معيار v6)" : ""}"
                   "${(result?.stateUsedCount ?? 0) > 0 ? " • منها ${result!.stateUsedCount} بحالة used (معيار v7)" : ""}",
-                  style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10.5, height: 1.5),
+                  style: const TextStyle(color: Color(0xB3E8EEF9), fontSize: 10.5, height: 1.5),
                 ),
               ],
             ),
@@ -160,7 +161,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10.5),
+            style: const TextStyle(color: Color(0xB3E8EEF9), fontSize: 10.5),
           ),
           const SizedBox(height: 5),
           Text(
@@ -178,7 +179,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -187,7 +188,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
             () => SwitchListTile(
               dense: true,
               value: controller.includeBytesOnly.value,
-              activeColor: const Color(0xFF2563EB),
+              activeColor: AppColors.blue,
               title: const Text(
                 "إضافة من انتهى رصيد بياناته فقط",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -204,7 +205,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
             () => CheckboxListTile(
               dense: true,
               value: controller.isAllSelected,
-              activeColor: const Color(0xFF10B981),
+              activeColor: AppColors.green,
               title: const Text(
                 "تحديد الكل / إلغاء الكل",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -222,13 +223,13 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       children: [
         const Text(
           "المؤهلون للحذف",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFE8EEF9)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.text),
         ),
         const Spacer(),
         IconButton(
           tooltip: "إعادة الفحص",
           onPressed: controller.scan,
-          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF3B82F6)),
+          icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
         ),
       ],
     );
@@ -243,17 +244,17 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF16213A),
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Column(
             children: [
-              Icon(Icons.verified_rounded, size: 42, color: Color(0xFF10B981)),
+              Icon(Icons.verified_rounded, size: 42, color: AppColors.green),
               SizedBox(height: 10),
               Text(
                 "لا يوجد مستخدمون استهلكوا مدتهم كاملة ✅",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF94A3B8), height: 1.6),
+                style: TextStyle(color: AppColors.textMuted, height: 1.6),
               ),
             ],
           ),
@@ -274,14 +275,14 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF16213A),
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF2563EB).withOpacity(0.5) : const Color(0xFF243352),
+            color: selected ? AppColors.blue.withValues(alpha: 0.5) : AppColors.border,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -298,7 +299,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                 children: [
                   Checkbox(
                     value: selected,
-                    activeColor: const Color(0xFF2563EB),
+                    activeColor: AppColors.blue,
                     onChanged: (value) => controller.toggleUser(user.id, value),
                   ),
                   Expanded(
@@ -315,7 +316,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 13.5,
-                                  color: Color(0xFFE8EEF9),
+                                  color: AppColors.text,
                                 ),
                               ),
                             ),
@@ -325,7 +326,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                         const SizedBox(height: 6),
                         Text(
                           "${user.profile} • المستهلك: ${user.usedLabel} / الحد: ${user.limitLabel}",
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                         ),
                         const SizedBox(height: 6),
                         ClipRRect(
@@ -333,9 +334,9 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                           child: LinearProgressIndicator(
                             value: (user.percent / 100).clamp(0.0, 1.0),
                             minHeight: 6,
-                            backgroundColor: const Color(0xFF243352),
+                            backgroundColor: AppColors.border,
                             valueColor: AlwaysStoppedAnimation(
-                              user.percent >= 100 ? const Color(0xFFEF4444) : const Color(0xFFF59E0B),
+                              user.percent >= 100 ? AppColors.danger : AppColors.warning,
                             ),
                           ),
                         ),
@@ -343,7 +344,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
                         Text(
                           "${user.percent}% مستهلك"
                           "${user.usedBytes > 0 ? " • البيانات: ${user.readableUsedBytes}/${user.readableLimitBytes}" : ""}",
-                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+                          style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
                         ),
                       ],
                     ),
@@ -361,15 +362,15 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
   Color _reasonColor(String reason) {
     switch (reason) {
       case 'انتهت المدة':
-        return const Color(0xFFEF4444);
+        return AppColors.danger;
       case 'الباقة مُزالة (v6)':
-        return const Color(0xFF7C3AED);
+        return AppColors.violet;
       case 'الباقة مستهلكة (v7)':
-        return const Color(0xFF0EA5E9);
+        return AppColors.sky;
       case 'انتهى الرصيد':
-        return const Color(0xFFF59E0B);
+        return AppColors.warning;
       default:
-        return const Color(0xFF94A3B8);
+        return AppColors.textMuted;
     }
   }
 
@@ -377,7 +378,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -392,7 +393,7 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
       decoration: const BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         boxShadow: [
           BoxShadow(color: Color(0x11000000), blurRadius: 14, offset: Offset(0, -4)),
         ],
@@ -405,8 +406,8 @@ class ExpiredUsersPage extends GetView<ExpiredUsersController> {
           icon: Icons.delete_forever_rounded,
           height: 50,
           colors: controller.selectedCount == 0
-              ? const [Color(0xFF94A3B8), Color(0xFFCBD5E1)]
-              : const [Color(0xFF991B1B), Color(0xFFEF4444)],
+              ? const [AppColors.textMuted, AppColors.textPale]
+              : const [AppColors.dangerDark, AppColors.danger],
           onPressed: controller.isDeleting.value || controller.selectedCount == 0
               ? null
               : controller.deleteSelected,

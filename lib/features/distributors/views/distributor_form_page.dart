@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/distributors/controllers/distributor_form_controller.dart';
@@ -15,7 +16,7 @@ class DistributorFormPage extends GetView<DistributorFormController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             PremiumHeader(
@@ -48,7 +49,7 @@ class DistributorFormPage extends GetView<DistributorFormController> {
                     Obx(
                       () => SwitchListTile(
                         value: controller.isActive.value,
-                        activeColor: const Color(0xFF10B981),
+                        activeColor: AppColors.green,
                         title: const Text(
                           "الحساب مُفعّل",
                           style: TextStyle(fontWeight: FontWeight.bold),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 /// نافذة تأكيد بسيطة تُعيد `true` عند ضغط المستخدم على «تأكيد».
@@ -12,7 +13,7 @@ Future<bool> confirmAction(String message) async {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         title: const Row(
           children: [
-            Icon(Icons.help_outline_rounded, color: Color(0xFFF59E0B)),
+            Icon(Icons.help_outline_rounded, color: AppColors.warning),
             SizedBox(width: 10),
             Text(
               "تأكيد العملية",
@@ -22,7 +23,7 @@ Future<bool> confirmAction(String message) async {
         ),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xFF8FA3C0), height: 1.5),
+          style: const TextStyle(color: AppColors.textSubtle, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -35,7 +36,7 @@ Future<bool> confirmAction(String message) async {
           ElevatedButton(
             onPressed: () => Get.back(result: true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
+              backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text("تأكيد", style: TextStyle(color: Colors.white)),

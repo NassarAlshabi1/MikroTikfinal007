@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/users/data/host_users_api.dart';
 import 'package:mikronet/core/ui/dialogs/dialog_helper.dart'; // تأكد من المسار
@@ -64,6 +63,5 @@ class HostUsersController extends GetxController {
   }
 
   // ميثودات مساعدة لواجهة المستخدم
-  void _showLoading() => Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
   void _hideLoading() { if (Get.isDialogOpen ?? false) Get.back(); }
 }

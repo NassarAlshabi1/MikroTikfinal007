@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/sites/controllers/sites_unit_controller.dart';
 
@@ -17,7 +18,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
            
@@ -40,7 +41,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
                     title: "إعدادات DNS",
                     subtitle: "ضبط عناوين DNS وصلاحيات الوصول للشبكة",
                     icon: Icons.settings_ethernet_rounded,
-                    color: const Color(0xFF10B981), // لون أخضر زمردي متميز
+                    color: AppColors.green, // لون أخضر زمردي متميز
                     onTap: controller.goToDnsSettings, // التوجيه لصفحة الإعدادات
                   ),
                   
@@ -53,7 +54,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
                     title: "DNS Cache",
                     subtitle: "عرض وحذف السجلات المؤقتة للشبكة",
                     icon: Icons.dns_rounded,
-                    color: const Color(0xFF0EA5E9), // لون أزرق سماوي
+                    color: AppColors.sky, // لون أزرق سماوي
                     onTap: controller.goToDnsCache, 
                   ),
                   
@@ -67,7 +68,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
                     title: "حظر العناوين (IP)",
                     subtitle: "إدارة قائمة الأجهزة الممنوعة من الاتصال",
                     icon: Icons.router_rounded,
-                    color: const Color(0xFFEF4444), // لون أحمر أمني
+                    color: AppColors.danger, // لون أحمر أمني
                     onTap: controller.goToBlockedIps, 
                   ),
                   const SizedBox(height: 10),
@@ -77,7 +78,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
                     title: "حظر النطاقات (Domain)",
                     subtitle: "منع الوصول لمواقع محددة عبر الـ DNS",
                     icon: Icons.public_off_rounded,
-                    color: const Color(0xFFF59E0B), // لون برتقالي تحذيري
+                    color: AppColors.warning, // لون برتقالي تحذيري
                     onTap: controller.goToBlockedDomains, 
                   ),
                   const SizedBox(height: 10),
@@ -87,7 +88,7 @@ class SitesUnitPage extends GetView<SitesUnitController> {
                     title: "حظر المحتوى (Content)",
                     subtitle: "فلترة الكلمات والمحتويات في الفايرول",
                     icon: Icons.gpp_bad_rounded,
-                    color: const Color(0xFF8B5CF6), // لون بنفسجي
+                    color: AppColors.purple, // لون بنفسجي
                     onTap: controller.goToBlockedContent, 
                   ),
                   

@@ -1,13 +1,9 @@
-import 'dart:io';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:mikronet/features/reports/models/sales_model.dart';
-import 'package:mikronet/core/models/app_response.dart';
 import 'package:mikronet/features/reports/data/reports_api.dart';
-import 'package:mikronet/core/mikrotik/router_api.dart';
-import 'package:mikronet/features/cards/data/profiles_api.dart';
-import 'package:mikronet/features/cards/data/cards_api.dart';
 import 'package:mikronet/core/storage/sql_db.dart';
 
 class SalesReportController extends GetxController {
@@ -169,9 +165,9 @@ class SalesReportController extends GetxController {
       if (!silent) {
         Get.snackbar(
           "مزامنة الحسابات المالية",
-          res.message ?? "تمت المزامنة بنجاح",
+          res.message,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFF00ADB5),
+          backgroundColor: AppColors.cyanDark,
           colorText: Colors.white,
         );
       }
@@ -250,7 +246,7 @@ class SalesReportController extends GetxController {
         "تصدير CSV",
         "تم تجهيز وتصدير التقرير المالي بصيغة CSV بنجاح",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF00ADB5),
+        backgroundColor: AppColors.cyanDark,
         colorText: Colors.white,
       );
     } catch (e) {
@@ -264,7 +260,7 @@ class SalesReportController extends GetxController {
       "تقرير الأجهزة PDF",
       "جاري إنشاء تقرير أجهزة الشبكة والحسابات بصيغة PDF...",
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF00ADB5),
+      backgroundColor: AppColors.cyanDark,
       colorText: Colors.white,
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
  
 // استيراد الويجيت الموحدة
@@ -18,7 +19,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B2740),
+        backgroundColor: AppColors.soft,
         body: Column(
           children: [
             // الهيدر
@@ -31,7 +32,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
                 }
 
                 return ListView(
@@ -95,17 +96,17 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4))
         ],
       ),
       child: SwitchListTile(
-        activeColor: const Color(0xFF3B82F6),
+        activeColor: AppColors.primary,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         title: Text(title,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -128,12 +129,12 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.withOpacity(0.05)),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 4))
         ],
@@ -143,10 +144,10 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
         keyboardType: TextInputType.number,
         style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2),
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: const Color(0xFF3B82F6)),
+          prefixIcon: Icon(icon, color: AppColors.primary),
           labelText: label,
           hintText: hint,
-          labelStyle: const TextStyle(fontSize: 13, color: const Color(0xFF94A3B8)),
+          labelStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 11),
         ),
@@ -165,7 +166,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
             colors: [Color(0xff1E3A8A), Color(0xff3B82F6)]),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xff1E3A8A).withOpacity(0.3),
+              color: const Color(0xff1E3A8A).withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 6))
         ],

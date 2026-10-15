@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/cards/controllers/profiles/profiles_list_controller.dart';
 import 'package:mikronet/features/cards/models/profiles_model.dart';
-import 'package:mikronet/core/utils/string_extensions.dart';
 
 class ProfilesListPage extends GetView<ProfilesListController> {
   const ProfilesListPage({super.key});
@@ -15,7 +15,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF070F1E),
+        backgroundColor: AppColors.ink,
         body: SafeArea(
           child: Column(
             children: [
@@ -43,7 +43,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                           return const Center(
                             child: Padding(
                               padding: EdgeInsets.all(40.0),
-                              child: CircularProgressIndicator(color: Color(0xFF38E5FF)),
+                              child: CircularProgressIndicator(color: AppColors.cyan),
                             ),
                           );
                         }
@@ -134,8 +134,8 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: const BoxDecoration(
-        color: Color(0xFF070F1E),
-        border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 0.5)),
+        color: AppColors.ink,
+        border: Border(bottom: BorderSide(color: AppColors.surface, width: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,7 +155,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
               const Text(
                 "MkCards",
                 style: TextStyle(
-                  color: Color(0xFFE2E8F0),
+                  color: AppColors.textBright,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -166,7 +166,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
+                  color: AppColors.success,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -185,11 +185,11 @@ class ProfilesListPage extends GetView<ProfilesListController> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
+          color: AppColors.cardDark,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1),
+          border: Border.all(color: AppColors.surface, width: 1),
         ),
-        child: Icon(icon, color: const Color(0xFF38BDF8), size: 18),
+        child: Icon(icon, color: AppColors.info, size: 18),
       ),
     );
   }
@@ -200,19 +200,19 @@ class ProfilesListPage extends GetView<ProfilesListController> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F3B4C),
+              color: AppColors.deepCyan,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.layers_rounded, color: Color(0xFF38E5FF), size: 22),
+            child: const Icon(Icons.layers_rounded, color: AppColors.cyan, size: 22),
           ),
           const SizedBox(width: 10),
           const Text(
@@ -241,8 +241,8 @@ class ProfilesListPage extends GetView<ProfilesListController> {
             Get.snackbar(
               "استيراد الباقات",
               "تم جلب ومزامنة باقات اليوزر مانجر من الراوتر بنجاح",
-              backgroundColor: const Color(0xFF38E5FF),
-              colorText: const Color(0xFF070F1E),
+              backgroundColor: AppColors.cyan,
+              colorText: AppColors.ink,
               snackPosition: SnackPosition.BOTTOM,
             );
           },
@@ -279,11 +279,11 @@ class ProfilesListPage extends GetView<ProfilesListController> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
-          color: const Color(0xFF38E5FF),
+          color: AppColors.cyan,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF38E5FF).withOpacity(0.25),
+              color: AppColors.cyan.withValues(alpha: 0.25),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -295,13 +295,13 @@ class ProfilesListPage extends GetView<ProfilesListController> {
             Text(
               title,
               style: const TextStyle(
-                color: Color(0xFF070F1E),
+                color: AppColors.ink,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: 8),
-            Icon(icon, color: const Color(0xFF070F1E), size: 18),
+            Icon(icon, color: AppColors.ink, size: 18),
           ],
         ),
       ),
@@ -323,9 +323,9 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Column(
         children: [
@@ -338,12 +338,12 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 children: [
                   InkWell(
                     onTap: onDelete,
-                    child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                    child: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 20),
                   ),
                   const SizedBox(width: 14),
                   InkWell(
                     onTap: onEdit,
-                    child: const Icon(Icons.edit_outlined, color: Color(0xFF38BDF8), size: 20),
+                    child: const Icon(Icons.edit_outlined, color: AppColors.info, size: 20),
                   ),
                 ],
               ),
@@ -364,7 +364,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                       const Text(
                         "User Manager",
                         style: TextStyle(
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.textMuted,
                           fontSize: 11,
                         ),
                       ),
@@ -374,10 +374,10 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F3B4C),
+                      color: AppColors.deepCyan,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.wifi_tethering_rounded, color: Color(0xFF38E5FF), size: 20),
+                    child: const Icon(Icons.wifi_tethering_rounded, color: AppColors.cyan, size: 20),
                   ),
                 ],
               ),
@@ -392,7 +392,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 child: _profileTile(
                   text: "$template قالب الطباعة",
                   icon: Icons.palette_outlined,
-                  iconColor: const Color(0xFF38BDF8),
+                  iconColor: AppColors.info,
                 ),
               ),
               const SizedBox(width: 10),
@@ -400,7 +400,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 child: _profileTile(
                   text: "$linkedCards عدد الكروت المرتبطة",
                   icon: Icons.confirmation_number_outlined,
-                  iconColor: const Color(0xFF38E5FF),
+                  iconColor: AppColors.cyan,
                 ),
               ),
             ],
@@ -414,7 +414,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 child: _profileTile(
                   text: "$price السعر",
                   icon: Icons.monetization_on_outlined,
-                  iconColor: const Color(0xFFF59E0B),
+                  iconColor: AppColors.warning,
                 ),
               ),
               const SizedBox(width: 10),
@@ -422,7 +422,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 child: _profileTile(
                   text: "$downloadLimit التحميل",
                   icon: Icons.download_rounded,
-                  iconColor: const Color(0xFF22C55E),
+                  iconColor: AppColors.success,
                 ),
               ),
             ],
@@ -436,7 +436,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 child: _profileTile(
                   text: "$validity الصلاحية",
                   icon: Icons.calendar_today_outlined,
-                  iconColor: const Color(0xFF38BDF8),
+                  iconColor: AppColors.info,
                 ),
               ),
               const SizedBox(width: 10),
@@ -444,7 +444,7 @@ class ProfilesListPage extends GetView<ProfilesListController> {
                 child: _profileTile(
                   text: "$timeLimit الوقت",
                   icon: Icons.access_time_rounded,
-                  iconColor: const Color(0xFF38E5FF),
+                  iconColor: AppColors.cyan,
                 ),
               ),
             ],
@@ -462,9 +462,9 @@ class ProfilesListPage extends GetView<ProfilesListController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF131D2E),
+        color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 0.8),
+        border: Border.all(color: AppColors.panel, width: 0.8),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

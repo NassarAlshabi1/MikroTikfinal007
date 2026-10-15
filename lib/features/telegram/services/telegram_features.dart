@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 /// وصف ميزة واحدة من ميزات إشعارات Telegram.
 class TelegramFeature {
@@ -38,7 +39,7 @@ class TelegramFeatureCatalog {
       subtitle: 'إشعار فوري عند انقطاع أو عودة أي جهاز بث عن الشبكة بشكل منفصل',
       badge: 'فوري',
       icon: Icons.wifi_tethering_error_rounded,
-      color: Color(0xFF38BDF8),
+      color: AppColors.info,
     ),
     TelegramFeature(
       id: 'devices_status',
@@ -46,7 +47,7 @@ class TelegramFeatureCatalog {
       subtitle: 'تقرير دوري بعدد أجهزة البث المتصلة وحالتها',
       badge: 'دوري',
       icon: Icons.devices_other_rounded,
-      color: Color(0xFF22C55E),
+      color: AppColors.success,
     ),
     TelegramFeature(
       id: 'router_status',
@@ -54,7 +55,7 @@ class TelegramFeatureCatalog {
       subtitle: 'المعالج والذاكرة ومدة التشغيل وإصدار RouterOS',
       badge: 'دوري',
       icon: Icons.router_rounded,
-      color: Color(0xFF3B82F6),
+      color: AppColors.primary,
     ),
     TelegramFeature(
       id: 'sales',
@@ -62,7 +63,7 @@ class TelegramFeatureCatalog {
       subtitle: 'مبيعات اليوم: عدد الكروت وإجمالي المبلغ',
       badge: 'دوري',
       icon: Icons.point_of_sale_rounded,
-      color: Color(0xFFF59E0B),
+      color: AppColors.warning,
     ),
     TelegramFeature(
       id: 'active_users',
@@ -70,7 +71,7 @@ class TelegramFeatureCatalog {
       subtitle: 'عدد المستخدمين النشطين في كل تقرير',
       badge: 'دوري',
       icon: Icons.people_alt_rounded,
-      color: Color(0xFF8B5CF6),
+      color: AppColors.purple,
     ),
     TelegramFeature(
       id: 'disk_alert',
@@ -78,7 +79,7 @@ class TelegramFeatureCatalog {
       subtitle: 'تحذير عند انخفاض المساحة الحرة عن الحد الآمن',
       badge: 'تنبيه',
       icon: Icons.sd_storage_rounded,
-      color: Color(0xFFEF4444),
+      color: AppColors.danger,
     ),
     TelegramFeature(
       id: 'daily_summary',

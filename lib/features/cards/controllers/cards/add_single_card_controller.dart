@@ -72,10 +72,10 @@ class AddSingleCardController extends GetxController {
         }
       } else {
         // لا تظهر دايالوج هنا إذا كانت البيانات فارغة فقط، يكفي التنبيه
-        print("تنبيه: لا يوجد عملاء في السيرفر");
+        debugPrint("تنبيه: لا يوجد عملاء في السيرفر");
       }
     } catch (e) {
-      print("خطأ في جلب العملاء: $e");
+      debugPrint("خطأ في جلب العملاء: $e");
     } finally {
       isCustomersLoading.value = false;
     }

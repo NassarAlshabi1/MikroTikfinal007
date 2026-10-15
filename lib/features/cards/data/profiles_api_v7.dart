@@ -1,10 +1,8 @@
 import 'package:get/get.dart';
 
-import 'package:mikronet/features/sites/models/sites_model.dart';
 import 'package:mikronet/features/cards/models/profiles_model.dart';
 import 'package:mikronet/core/mikrotik/mikrotik_client.dart';
 import 'package:mikronet/core/models/app_response.dart';
-import 'package:mikronet/features/cards/models/cards_model.dart';
 
 
 class ProfilesApi7 {
@@ -206,9 +204,9 @@ class ProfilesApi7 {
         condition: "?name=MikroNet_${name}_limit"
       );
       
-      // print('\n');print('\n');print('\n');print('\n');print('\n');
-      // print("profileResponse.data!.first.toMap()");
-      // print('\n');print('\n');print('\n');print('\n');print('\n');
+      // debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');
+      // debugPrint("profileResponse.data!.first.toMap()");
+      // debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');
       // edit profile
       await MikrotikClient.editData(
         command: "/user-manager/profile/set",

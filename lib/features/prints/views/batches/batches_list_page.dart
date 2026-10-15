@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:mikronet/features/prints/controllers/batches/batches_list_controller.dart';
-import 'package:mikronet/features/prints/controllers/batches/add_batch_controller.dart';
-import 'package:mikronet/features/prints/views/batches/add_batch_page.dart';
 
 class BatchesView extends GetView<BatchesListController> {
   const BatchesView({super.key});
@@ -16,7 +15,7 @@ class BatchesView extends GetView<BatchesListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF070F1E),
+        backgroundColor: AppColors.ink,
         body: SafeArea(
           child: Column(
             children: [
@@ -29,7 +28,7 @@ class BatchesView extends GetView<BatchesListController> {
                   builder: (ctrl) {
                     if (ctrl.isLoading) {
                       return const Center(
-                        child: CircularProgressIndicator(color: Color(0xFF38E5FF)),
+                        child: CircularProgressIndicator(color: AppColors.cyan),
                       );
                     }
 
@@ -68,8 +67,8 @@ class BatchesView extends GetView<BatchesListController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: const BoxDecoration(
-        color: Color(0xFF070F1E),
-        border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 0.5)),
+        color: AppColors.ink,
+        border: Border(bottom: BorderSide(color: AppColors.surface, width: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -89,7 +88,7 @@ class BatchesView extends GetView<BatchesListController> {
               const Text(
                 "MkCards",
                 style: TextStyle(
-                  color: Color(0xFFE2E8F0),
+                  color: AppColors.textBright,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -100,7 +99,7 @@ class BatchesView extends GetView<BatchesListController> {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
+                  color: AppColors.success,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -119,11 +118,11 @@ class BatchesView extends GetView<BatchesListController> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
+          color: AppColors.cardDark,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1),
+          border: Border.all(color: AppColors.surface, width: 1),
         ),
-        child: Icon(icon, color: const Color(0xFF38BDF8), size: 18),
+        child: Icon(icon, color: AppColors.info, size: 18),
       ),
     );
   }
@@ -187,9 +186,9 @@ class BatchesView extends GetView<BatchesListController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,17 +196,17 @@ class BatchesView extends GetView<BatchesListController> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F3B4C),
+              color: AppColors.deepCyan,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: const Color(0xFF38E5FF), size: 20),
+            child: Icon(icon, color: AppColors.cyan, size: 20),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 title,
-                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
               const SizedBox(height: 4),
               Text(
@@ -229,37 +228,37 @@ class BatchesView extends GetView<BatchesListController> {
   Widget _buildRecentBatchesSection(BatchesListController ctrl) {
     // قائمة تجريبية متطابقة مع الصورة في حال كانت القائمة فارغة
     final List<Map<String, dynamic>> mockBatches = [
-      {'id': 40, 'count': 51, 'date': '00:00 2026-07-16', 'profile': '100c', 'status': 'استكمال آمن', 'statusColor': const Color(0xFFEF4444)},
-      {'id': 39, 'count': 51, 'date': '23:59 2026-07-15', 'profile': '100c', 'status': 'مؤجلة', 'statusColor': const Color(0xFFF59E0B)},
-      {'id': 38, 'count': 1, 'date': '17:57 2026-07-15', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 37, 'count': 1, 'date': '00:59 2026-07-15', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 33, 'count': 510, 'date': '22:36 2026-07-13', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 32, 'count': 51, 'date': '16:39 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 31, 'count': 1, 'date': '15:54 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 30, 'count': 1, 'date': '14:28 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 29, 'count': 51, 'date': '02:23 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
-      {'id': 28, 'count': 51, 'date': '02:15 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': const Color(0xFF22C55E)},
+      {'id': 40, 'count': 51, 'date': '00:00 2026-07-16', 'profile': '100c', 'status': 'استكمال آمن', 'statusColor': AppColors.danger},
+      {'id': 39, 'count': 51, 'date': '23:59 2026-07-15', 'profile': '100c', 'status': 'مؤجلة', 'statusColor': AppColors.warning},
+      {'id': 38, 'count': 1, 'date': '17:57 2026-07-15', 'profile': '3000', 'status': 'مكتملة', 'statusColor': AppColors.success},
+      {'id': 37, 'count': 1, 'date': '00:59 2026-07-15', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
+      {'id': 33, 'count': 510, 'date': '22:36 2026-07-13', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
+      {'id': 32, 'count': 51, 'date': '16:39 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
+      {'id': 31, 'count': 1, 'date': '15:54 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': AppColors.success},
+      {'id': 30, 'count': 1, 'date': '14:28 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': AppColors.success},
+      {'id': 29, 'count': 51, 'date': '02:23 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
+      {'id': 28, 'count': 51, 'date': '02:15 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
     ];
 
     final displayItems = ctrl.allBatches.isNotEmpty
         ? ctrl.currentPageBatches.map((b) {
-            final dt = b.createdAt != null ? DateFormat('HH:mm yyyy-MM-dd').format(b.createdAt!) : '00:00 2026-07-16';
+            final dt = DateFormat('HH:mm yyyy-MM-dd').format(b.createdAt);
             return {
               'id': b.id,
               'count': b.cards.length,
               'date': dt,
               'profile': b.cardsProfile.isNotEmpty ? b.cardsProfile : '100c',
               'status': 'مكتملة',
-              'statusColor': const Color(0xFF22C55E),
+              'statusColor': AppColors.success,
             };
           }).toList()
         : mockBatches;
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,10 +284,10 @@ class BatchesView extends GetView<BatchesListController> {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F3B4C),
+                        color: AppColors.deepCyan,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(Icons.history_rounded, color: Color(0xFF38E5FF), size: 16),
+                      child: const Icon(Icons.history_rounded, color: AppColors.cyan, size: 16),
                     ),
                   ],
                 ),
@@ -300,8 +299,8 @@ class BatchesView extends GetView<BatchesListController> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: const BoxDecoration(
-              color: Color(0xFF131D2E),
-              border: Border.symmetric(horizontal: BorderSide(color: Color(0xFF1E2E44), width: 1)),
+              color: AppColors.cardDark,
+              border: Border.symmetric(horizontal: BorderSide(color: AppColors.panel, width: 1)),
             ),
             child: const Row(
               children: [
@@ -310,7 +309,7 @@ class BatchesView extends GetView<BatchesListController> {
                   child: Text(
                     "الحالة",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -318,7 +317,7 @@ class BatchesView extends GetView<BatchesListController> {
                   child: Text(
                     "الباقة",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -326,7 +325,7 @@ class BatchesView extends GetView<BatchesListController> {
                   child: Text(
                     "التاريخ",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -334,7 +333,7 @@ class BatchesView extends GetView<BatchesListController> {
                   child: Text(
                     "العدد",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -342,7 +341,7 @@ class BatchesView extends GetView<BatchesListController> {
                   child: Text(
                     "الدف...",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -360,7 +359,7 @@ class BatchesView extends GetView<BatchesListController> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFF131D2E), width: 1)),
+                  border: Border(bottom: BorderSide(color: AppColors.cardDark, width: 1)),
                 ),
                 child: Row(
                   children: [
@@ -401,7 +400,7 @@ class BatchesView extends GetView<BatchesListController> {
                       child: Text(
                         item['date'].toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 10),
+                        style: const TextStyle(color: AppColors.textPale, fontSize: 10),
                       ),
                     ),
                     // العدد
@@ -419,7 +418,7 @@ class BatchesView extends GetView<BatchesListController> {
                       child: Text(
                         item['id'].toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                        style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                       ),
                     ),
                   ],
@@ -468,13 +467,13 @@ class BatchesView extends GetView<BatchesListController> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFF131D2E),
+          color: AppColors.cardDark,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+          border: Border.all(color: AppColors.panel, width: 1),
         ),
         child: Text(
           label,
-          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -487,14 +486,14 @@ class BatchesView extends GetView<BatchesListController> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF38E5FF) : const Color(0xFF131D2E),
+          color: isActive ? AppColors.cyan : AppColors.cardDark,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isActive ? const Color(0xFF38E5FF) : const Color(0xFF1E2E44), width: 1),
+          border: Border.all(color: isActive ? AppColors.cyan : AppColors.panel, width: 1),
         ),
         child: Text(
           "$number",
           style: TextStyle(
-            color: isActive ? const Color(0xFF070F1E) : Colors.white,
+            color: isActive ? AppColors.ink : Colors.white,
             fontSize: 11,
             fontWeight: FontWeight.bold,
           ),
@@ -507,9 +506,9 @@ class BatchesView extends GetView<BatchesListController> {
   Widget _buildProfilesSection(BatchesListController ctrl) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1726),
+        color: AppColors.overlay,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E2E44), width: 1),
+        border: Border.all(color: AppColors.panel, width: 1),
       ),
       child: Column(
         children: [
@@ -534,10 +533,10 @@ class BatchesView extends GetView<BatchesListController> {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F3B4C),
+                        color: AppColors.deepCyan,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(Icons.grid_view_rounded, color: Color(0xFF38E5FF), size: 16),
+                      child: const Icon(Icons.grid_view_rounded, color: AppColors.cyan, size: 16),
                     ),
                   ],
                 ),
@@ -551,14 +550,14 @@ class BatchesView extends GetView<BatchesListController> {
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF131D2E),
+                color: AppColors.cardDark,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF1E2E44), width: 0.8),
+                border: Border.all(color: AppColors.panel, width: 0.8),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.chevron_left_rounded, color: Color(0xFF94A3B8), size: 20),
+                  const Icon(Icons.chevron_left_rounded, color: AppColors.textMuted, size: 20),
                   Row(
                     children: [
                       Column(
@@ -575,7 +574,7 @@ class BatchesView extends GetView<BatchesListController> {
                           const SizedBox(height: 4),
                           Text(
                             "الدفعات: ${prof['batches']} | الكروت المولدة: ${prof['cards']}",
-                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                           ),
                         ],
                       ),
@@ -583,10 +582,10 @@ class BatchesView extends GetView<BatchesListController> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F3B4C),
+                          color: AppColors.deepCyan,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.grid_view_rounded, color: Color(0xFF38E5FF), size: 18),
+                        child: const Icon(Icons.grid_view_rounded, color: AppColors.cyan, size: 18),
                       ),
                     ],
                   ),

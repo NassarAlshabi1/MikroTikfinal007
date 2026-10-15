@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/maintenance/data/maintenance_api.dart';
@@ -105,7 +106,7 @@ class MaintenanceHubController extends GetxController {
                 : ["/tool/user-manager/session/remove", "=.id=all"],
           );
           stepStatus[step] = "تم التنفيذ بنجاح";
-          Get.snackbar("نجاح", "تم إغلاق وحذف جميع جلسات User Manager بنجاح", backgroundColor: const Color(0xFF10B981), colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar("نجاح", "تم إغلاق وحذف جميع جلسات User Manager بنجاح", backgroundColor: AppColors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
           break;
 
         case 2:
@@ -116,7 +117,7 @@ class MaintenanceHubController extends GetxController {
                 : ["/tool/user-manager/log/remove", "=.id=all"],
           );
           stepStatus[step] = "تم التنفيذ بنجاح";
-          Get.snackbar("نجاح", "تم تنظيف سجلات User Manager القديمة من الراوتر", backgroundColor: const Color(0xFF10B981), colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar("نجاح", "تم تنظيف سجلات User Manager القديمة من الراوتر", backgroundColor: AppColors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
           break;
 
         case 3:
@@ -127,7 +128,7 @@ class MaintenanceHubController extends GetxController {
                 : ["/tool/user-manager/database/rebuild"],
           );
           stepStatus[step] = "تم التنفيذ بنجاح";
-          Get.snackbar("نجاح", "تمت إعادة بناء قاعدة User Manager بنجاح", backgroundColor: const Color(0xFF10B981), colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar("نجاح", "تمت إعادة بناء قاعدة User Manager بنجاح", backgroundColor: AppColors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
           break;
 
         case 4:
@@ -138,21 +139,21 @@ class MaintenanceHubController extends GetxController {
                 : ["/tool/user-manager/log/print"],
           );
           stepStatus[step] = "تم التنفيذ بنجاح";
-          Get.snackbar("نجاح", "تمت إعادة بناء مخزن سجلات User Manager بنجاح", backgroundColor: const Color(0xFF10B981), colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar("نجاح", "تمت إعادة بناء مخزن سجلات User Manager بنجاح", backgroundColor: AppColors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
           break;
 
         case 5:
           // تفعيل الهوتسبوت
           await MikrotikClient.sendRaw(["/ip/hotspot/enable", "=.id=all"]);
           stepStatus[step] = "تم التنفيذ بنجاح";
-          Get.snackbar("نجاح", "تم إعادة تفعيل الهوتسبوت بنجاح", backgroundColor: const Color(0xFF10B981), colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar("نجاح", "تم إعادة تفعيل الهوتسبوت بنجاح", backgroundColor: AppColors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
           break;
 
         case 6:
           // إعادة تشغيل الراوتر
           await MikrotikClient.sendRaw(["/system/reboot"]);
           stepStatus[step] = "تم إرسال أمر إعادة التشغيل";
-          Get.snackbar("إعادة التشغيل", "تم إرسال أمر إعادة تشغيل الراوتر بنجاح", backgroundColor: const Color(0xFFEF4444), colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar("إعادة التشغيل", "تم إرسال أمر إعادة تشغيل الراوتر بنجاح", backgroundColor: AppColors.danger, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
           break;
       }
     } catch (e) {

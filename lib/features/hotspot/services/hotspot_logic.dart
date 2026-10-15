@@ -684,7 +684,7 @@ class HotspotLoginPageValidator {
       final lower = content.toLowerCase();
 
       if (!content.contains(loginActionTag)) {
-        issues.add(LoginPageIssue(
+        issues.add(const LoginPageIssue(
           LoginIssueSeverity.error,
           "login.html لا يحتوي الوسم $loginActionTag — النموذج لن يُرسل بيانات الدخول للراوتر",
         ));

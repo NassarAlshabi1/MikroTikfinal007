@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class HomeCarousel extends StatelessWidget {
   final PageController controller;
@@ -39,8 +40,8 @@ class HomeCarousel extends StatelessWidget {
               height: 7,
               decoration: BoxDecoration(
                 color: currentPage == index
-                    ? const Color(0xFF3B82F6)
-                    : const Color(0xFF243352),
+                    ? AppColors.primary
+                    : AppColors.border,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -80,13 +81,13 @@ class ActionCarouselItem extends StatelessWidget {
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              colors: [color.withOpacity(0.85), color],
+              colors: [color.withValues(alpha: 0.85), color],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight),
           borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
-                color: color.withOpacity(0.28),
+                color: color.withValues(alpha: 0.28),
                 blurRadius: 10,
                 offset: const Offset(0, 5))
           ],
@@ -97,7 +98,7 @@ class ActionCarouselItem extends StatelessWidget {
                 left: -14,
                 top: -16,
                 child: Icon(icon,
-                    size: 96, color: Colors.white.withOpacity(0.12))),
+                    size: 96, color: Colors.white.withValues(alpha: 0.12))),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -114,7 +115,7 @@ class ActionCarouselItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style:
-                        const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 10)),
+                        const TextStyle(color: Color(0xB3E8EEF9), fontSize: 10)),
                 const Spacer(),
                 if (value != null)
                   Text(value!,
@@ -178,7 +179,7 @@ class ResourceCarouselItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: AppColors.headerTop,
         borderRadius: BorderRadius.circular(26),
         boxShadow: const [
           BoxShadow(
@@ -199,7 +200,7 @@ class ResourceCarouselItem extends StatelessWidget {
                 child: Text(label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11)),
+                    style: const TextStyle(color: Color(0xB3E8EEF9), fontSize: 11)),
               ),
               Text(percent,
                   style: TextStyle(

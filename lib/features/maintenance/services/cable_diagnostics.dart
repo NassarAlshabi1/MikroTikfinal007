@@ -181,12 +181,12 @@ class CableTestResult {
     final faulty = pairs.where((pair) => !pair.isOk).map((pair) => pair.index).toList();
     if (faulty.isEmpty) {
       final count = pairs.length;
-      return "${count == 4 ? "الأزواج الأربعة" : "الأزواج ($count)"} سليمة — ${statusLabel}";
+      return "${count == 4 ? "الأزواج الأربعة" : "الأزواج ($count)"} سليمة — $statusLabel";
     }
     if (hasFaultPairs) {
-      return "الأزواج المتأثرة: ${faulty.join('، ')} — ${statusLabel}";
+      return "الأزواج المتأثرة: ${faulty.join('، ')} — $statusLabel";
     }
-    return "تعذّر تحديد حالة الأزواج: ${faulty.join('، ')} — ${statusLabel}";
+    return "تعذّر تحديد حالة الأزواج: ${faulty.join('، ')} — $statusLabel";
   }
 
   /// تحليل نتيجة الراوتر الخام إلى نموذج واضح.
@@ -589,12 +589,12 @@ class CableDiagnostics {
 
     // (4) لا يوجد رابط
     if (cable != null && cable.status.toLowerCase().contains('no-link')) {
-      return CableDiagnosis(
+      return const CableDiagnosis(
         severity: CableSeverity.warning,
         headline: "لا يوجد اتصال على هذا المنفذ",
         details: "الأزواج سليمة إن رجعت النتائج، لكن لا يوجد جهاز أو سويتش في الطرف الآخر، "
             "أو أن الطرف الآخر مغلق، أو الكيبل غير موصول.",
-        recommendations: const [
+        recommendations: [
           "تأكد أن الكيبل موصول بجهاز يعمل (سويتش/كمبيوتر) وأن مؤشر المنفذ مضيء.",
           "جرّب منفذًا آخر في الراوتر أو الكيبل نفسه في جهاز آخر.",
           "إن كان الطرف الآخر جهازًا يحتاج PoE فتأكد من تفعيله أو استخدام مُغذٍّ خارجي.",

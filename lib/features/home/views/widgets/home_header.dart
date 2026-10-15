@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class HomeHeader extends StatelessWidget {
   final Animation<double> pulseAnimation;
@@ -17,7 +18,7 @@ class HomeHeader extends StatelessWidget {
       padding: const EdgeInsets.only(top: 45, left: 20, right: 20),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+          colors: [AppColors.headerTop, AppColors.headerBottom],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -42,7 +43,7 @@ class HomeHeader extends StatelessWidget {
                           color: Colors.greenAccent, size: 10)),
                   const SizedBox(width: 8),
                   const Text("ميكروتك: متصل الآن",
-                      style: TextStyle(color: const Color(0xB3E8EEF9), fontSize: 11)),
+                      style: TextStyle(color: Color(0xB3E8EEF9), fontSize: 11)),
                 ],
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
 import 'package:mikronet/features/cards/controllers/cards/cards_list_controller.dart';
@@ -15,7 +16,7 @@ class CardsListPage extends GetView<CardsListController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // 1. الهيدر
@@ -32,8 +33,8 @@ class CardsListPage extends GetView<CardsListController> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: controller.refreshCards,
-                color: const Color(0xFF3B82F6),
-                backgroundColor: const Color(0xFF16213A),
+                color: AppColors.primary,
+                backgroundColor: AppColors.card,
                 child: _buildCardsList(),
               ),
             ),
@@ -45,23 +46,23 @@ class CardsListPage extends GetView<CardsListController> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.circle, color: Color(0xFF0EA5E9), size: 14),
+                      Icon(Icons.circle, color: AppColors.sky, size: 14),
                       SizedBox(width: 5),
-                      Text("جديدة", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), fontSize: 12)),
+                      Text("جديدة", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMuted, fontSize: 12)),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle, color: Colors.green, size: 14),
                       SizedBox(width: 5),
-                      Text("نشطة", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), fontSize: 12)),
+                      Text("نشطة", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMuted, fontSize: 12)),
                     ],
                   ),
                   Row(
                     children: [
                       Icon(Icons.circle, color: Colors.redAccent, size: 14),
                       SizedBox(width: 5),
-                      Text("منتهية", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), fontSize: 12)),
+                      Text("منتهية", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMuted, fontSize: 12)),
                     ],
                   ),
                 ],
@@ -103,11 +104,11 @@ class CardsListPage extends GetView<CardsListController> {
     return Container(
       height: 55,
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), 
+            color: Colors.black.withValues(alpha: 0.04), 
             blurRadius: 15, 
             offset: const Offset(0, 5),
           )
@@ -119,11 +120,11 @@ class CardsListPage extends GetView<CardsListController> {
         style: const TextStyle(color: Colors.white, fontSize: 14),
         decoration: InputDecoration(
           hintText: "بحث سريع برقم الكرت أو الباقة...",
-          hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF3B82F6)),
+          hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
           suffixIcon: controller.searchQuery.value.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear_rounded, color: Color(0xFF94A3B8), size: 20),
+                  icon: const Icon(Icons.clear_rounded, color: AppColors.textMuted, size: 20),
                   onPressed: controller.clearSearch,
                 )
               : null,
@@ -142,11 +143,11 @@ class CardsListPage extends GetView<CardsListController> {
         height: 55,
         width: 50,
         decoration: BoxDecoration(
-          color: const Color(0xFF16213A),
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFF243352)),
+          border: Border.all(color: AppColors.border),
         ),
-        child: const Icon(Icons.sync_rounded, color: Color(0xFF3B82F6), size: 24),
+        child: const Icon(Icons.sync_rounded, color: AppColors.primary, size: 24),
       ),
     );
   }
@@ -159,11 +160,11 @@ class CardsListPage extends GetView<CardsListController> {
         height: 55, 
         width: 55, 
         decoration: BoxDecoration( 
-          gradient: const LinearGradient(colors: [Color(0xFF38BDF8), Color(0xFF0EA5E9)]), 
+          gradient: const LinearGradient(colors: [AppColors.info, AppColors.sky]), 
           borderRadius: BorderRadius.circular(18), 
           boxShadow: [ 
             BoxShadow( 
-              color: const Color(0xFF0EA5E9).withOpacity(0.3), 
+              color: AppColors.sky.withValues(alpha: 0.3), 
               blurRadius: 10, 
               offset: const Offset(0, 4), 
             ) 
@@ -191,18 +192,18 @@ class CardsListPage extends GetView<CardsListController> {
               padding: const EdgeInsets.symmetric(vertical: 7),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: active ? const Color(0xFF3B82F6) : const Color(0xFF16213A),
+                color: active ? AppColors.primary : AppColors.card,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: active ? const Color(0xFF60A5FA) : const Color(0xFF243352)),
+                border: Border.all(color: active ? AppColors.infoSoft : AppColors.border),
                 boxShadow: active
-                    ? [BoxShadow(color: const Color(0xFF3B82F6).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))]
+                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))]
                     : null,
               ),
               child: Text(
                 "$f\n($count)",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: active ? Colors.white : const Color(0xFF94A3B8), 
+                  color: active ? Colors.white : AppColors.textMuted, 
                   fontWeight: FontWeight.w900, 
                   fontSize: 12,
                 ),
@@ -225,9 +226,9 @@ class CardsListPage extends GetView<CardsListController> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: Color(0xFF3B82F6)),
+              CircularProgressIndicator(color: AppColors.primary),
               SizedBox(height: 14),
-              Text("جاري مزامنة الكروت مع الراوتر...", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+              Text("جاري مزامنة الكروت مع الراوتر...", style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
             ],
           ),
         );
@@ -281,7 +282,7 @@ class CardsListPage extends GetView<CardsListController> {
                     ? "لم يتم العثور على نتائج مطابقة لـ \"${controller.searchQuery.value}\""
                     : (isTotalEmpty ? "لا توجد كروت مسجلة في الراوتر حالياً" : "لا توجد كروت في هذا التصنيف"),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
               if (hasSearch)
@@ -290,8 +291,8 @@ class CardsListPage extends GetView<CardsListController> {
                   icon: const Icon(Icons.clear_all_rounded, size: 18),
                   label: const Text("مسح البحث"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E293B),
-                    foregroundColor: const Color(0xFF60A5FA),
+                    backgroundColor: AppColors.surface,
+                    foregroundColor: AppColors.infoSoft,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 )
@@ -301,7 +302,7 @@ class CardsListPage extends GetView<CardsListController> {
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: const Text("إضافة كرت الآن"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
+                    backgroundColor: AppColors.blue,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),

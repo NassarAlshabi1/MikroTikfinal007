@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class AppMiniFooter extends StatelessWidget {
   final Widget title;
@@ -15,15 +16,15 @@ class AppMiniFooter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
-        border: Border(top: BorderSide(color: const Color(0xFF243352))),
+        color: AppColors.card,
+        border: const Border(top: BorderSide(color: AppColors.border)),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(22), 
           topRight: Radius.circular(22),
     ),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.08),
+        color: Colors.black.withValues(alpha: 0.08),
         spreadRadius: 1, 
         blurRadius: 8 ,
         offset: const Offset(0, -2), 

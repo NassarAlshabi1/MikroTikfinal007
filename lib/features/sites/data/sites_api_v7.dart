@@ -1,10 +1,7 @@
-import 'package:get/get.dart';
 
 import 'package:mikronet/features/sites/models/sites_model.dart';
-import 'package:mikronet/features/cards/models/profiles_model.dart';
 import 'package:mikronet/core/mikrotik/mikrotik_client.dart';
 import 'package:mikronet/core/models/app_response.dart';
-import 'package:mikronet/features/cards/models/cards_model.dart';
 
 
 class SitesApi7 {

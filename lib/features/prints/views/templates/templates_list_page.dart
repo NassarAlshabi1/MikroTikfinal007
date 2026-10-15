@@ -1,4 +1,5 @@
 // import 'dart:convert';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -101,10 +102,10 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
-        border: Border.all(color: const Color(0xFF1E3A5F)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 8))],
+        border: Border.all(color: AppColors.borderBlue),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -123,7 +124,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                       )
                     : null,
               ),
-              child: Container(color: Colors.black.withOpacity(0.2)),
+              child: Container(color: Colors.black.withValues(alpha: 0.2)),
             ),
             Padding(
               padding: const EdgeInsets.all(12),
@@ -144,7 +145,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                       const SizedBox(width: 11),
                       _gridDetail(Icons.view_column_rounded, "أعمدة: $cols"),
                       const Spacer(),
-                       Text("${t.withPassword ? "مع":"بدون"} كلمة مرور", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                       Text("${t.withPassword ? "مع":"بدون"} كلمة مرور", style: const TextStyle(fontSize: 11, color: Colors.grey)),
                     ],
                   ),
                   const Padding(padding: EdgeInsets.symmetric(vertical: 9), child: Divider(height: 1, thickness: 0.5)),
@@ -195,15 +196,15 @@ class TemplatesListPage extends GetView<TemplatesListController> {
   /* ================= المكونات الصغيرة ================= */
   Widget _gridDetail(IconData icon, String txt) => Row(
     children: [
-      Icon(icon, size: 14, color: const Color(0xFF94A3B8)),
+      Icon(icon, size: 14, color: AppColors.textMuted),
       const SizedBox(width: 4),
-      Text(txt, style: const TextStyle(fontSize: 12, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
+      Text(txt, style: const TextStyle(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
     ],
   );
 
   Widget _infoBadge(String txt, Color col) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(color: col.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+    decoration: BoxDecoration(color: col.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
     child: Text(txt, style: TextStyle(color: col, fontSize: 12, fontWeight: FontWeight.bold)),
   );
 
@@ -212,7 +213,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     borderRadius: BorderRadius.circular(12),
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -229,7 +230,7 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     borderRadius: BorderRadius.circular(12),
     child: Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF3B1D24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
+      decoration: BoxDecoration(color: AppColors.dangerOverlay, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
       child: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 22),
     ),
   );
@@ -239,23 +240,21 @@ class TemplatesListPage extends GetView<TemplatesListController> {
     borderRadius: BorderRadius.circular(12),
     child: Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF3B1D24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
+      decoration: BoxDecoration(color: AppColors.dangerOverlay, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF7F2A34))),
       child: const Icon(Icons.mode_edit_outline_outlined, color: Colors.purple, size: 22),
     ),
   );
 
-  Widget _buildEmptyState() => Center(
+  Widget _buildEmptyState() => const Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.folder_open_rounded, size: 70, color: const Color(0xFF243352)),
-        const SizedBox(height: 11),
-        const Text("لا توجد قوالب محفوظة", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Icon(Icons.folder_open_rounded, size: 70, color: AppColors.border),
+        SizedBox(height: 11),
+        Text("لا توجد قوالب محفوظة", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
       ],
     ),
   );
-
-  Widget _footer() => Container(height: 30, width: double.infinity, color: const Color(0xff0F172A), child: const Center(child: Text("Micronet Professional Edition v4.5", style: TextStyle(color: const Color(0x61E8EEF9), fontSize: 10, fontWeight: FontWeight.bold))));
 
   void _confirmDelete(BuildContext context, int id,Function(int) onDelete) async {
     final confirm = await showDialog<bool>(

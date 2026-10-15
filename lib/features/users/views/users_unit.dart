@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/users/controllers/users_unit_controller.dart';
 
@@ -17,7 +18,7 @@ class UsersUnitPage extends GetView<UsersUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // 1. الهيدر الموحد
@@ -45,7 +46,7 @@ class UsersUnitPage extends GetView<UsersUnitController> {
                     title: "الاجهزة المتصلة بكروت",
                     subtitle: "عرض الاجهزة المتصلة بكروت",
                     icon: Icons.online_prediction_rounded,
-                    color: const Color(0xFF10B981),
+                    color: AppColors.green,
                     onTap: controller.goToActiveUsers
                   ),
 
@@ -58,7 +59,7 @@ class UsersUnitPage extends GetView<UsersUnitController> {
                     title: "إدارة الأجهزة المحفوظة",
                     subtitle: "التحكم في MAC Address وحظر الأجهزة",
                     icon: Icons.important_devices_rounded,
-                    color: const Color(0xFF6366F1),
+                    color: AppColors.indigo,
                     onTap: controller.goToSavedUsers,
                   ),
                 ],
@@ -66,9 +67,9 @@ class UsersUnitPage extends GetView<UsersUnitController> {
             ),
 
             // 4. الفوتر مع تمرير اسم القسم المطلوب (حل المشكلة)
-            AppMiniFooter(
+            const AppMiniFooter(
               title: Text("مراقبة الجلسات النشطة والتحكم بالأجهزة",
-                style: TextStyle(fontWeight: FontWeight.bold,color: const Color(0xFF8FA3C0)),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textSubtle),),
               ),
           ],
         ),

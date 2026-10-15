@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/main_gate_header.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
@@ -15,7 +16,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // الهيدر
@@ -30,7 +31,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 // نستخدم controller مباشرة لأن GetView توفره لنا
                 if (controller.isLoading.value) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   );
                 }
 
@@ -42,7 +43,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 
                 return RefreshIndicator(
                   onRefresh: controller.fetchSystemStatus,
-                  color: const Color(0xFF3B82F6),
+                  color: AppColors.primary,
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -62,9 +63,9 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                       // 4. كروت المعلومات الإضافية
                       Row(
                         children: [
-                          Expanded(child: _buildInfoCard("وقت التشغيل", state.uptime.formatUptime, Icons.timer_rounded, const Color(0xFFF59E0B))),
+                          Expanded(child: _buildInfoCard("وقت التشغيل", state.uptime.formatUptime, Icons.timer_rounded, AppColors.warning)),
                           const SizedBox(width: 11),
-                          Expanded(child: _buildInfoCard("إصدار النظام", state.version, Icons.info_outline_rounded, const Color(0xFF0EA5E9))),
+                          Expanded(child: _buildInfoCard("إصدار النظام", state.version, Icons.info_outline_rounded, AppColors.sky)),
                         ],
                       ),
                     ],
@@ -87,15 +88,15 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
   // --- كارت المعالج (CPU) ---
   Widget _buildCpuCard(String cpuLoad) {
     int load = int.tryParse(cpuLoad) ?? 0;
-    Color statusColor = load > 80 ? Colors.redAccent : (load > 50 ? Colors.orange : const Color(0xFF10B981));
+    Color statusColor = load > 80 ? Colors.redAccent : (load > 50 ? Colors.orange : AppColors.green);
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Row(
@@ -108,7 +109,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                     child: Icon(Icons.memory_rounded, color: statusColor, size: 24),
                   ),
                   const SizedBox(width: 10),
@@ -127,7 +128,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 height: 70,
                 child: CircularProgressIndicator(
                   value: load / 100,
-                  backgroundColor: const Color(0xFF1B2740),
+                  backgroundColor: AppColors.soft,
                   color: statusColor,
                   strokeWidth: 8,
                   strokeCap: StrokeCap.round,
@@ -147,13 +148,13 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], 
+          colors: [AppColors.indigo, AppColors.purple], 
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF8B5CF6).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(color: AppColors.purple.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -163,7 +164,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: const Color(0xFF16213A).withOpacity(0.2), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.card.withValues(alpha: 0.2), shape: BoxShape.circle),
                 child: const Icon(Icons.sd_storage_rounded, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 10),
@@ -175,7 +176,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _infoStat("الذاكرة الحرة", freeMem),
-              Container(width: 1, height: 40, color: Colors.white.withOpacity(0.3)), 
+              Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.3)), 
               _infoStat("إجمالي الذاكرة", totalMem),
             ],
           ),
@@ -195,13 +196,13 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)], 
+          colors: [AppColors.sky, AppColors.blue], 
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF2563EB).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(color: AppColors.blue.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -214,7 +215,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFF16213A).withOpacity(0.2), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: AppColors.card.withValues(alpha: 0.2), shape: BoxShape.circle),
                     child: const Icon(Icons.storage_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 10),
@@ -229,7 +230,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: total > 0 ? used / total : 0,
-              backgroundColor: const Color(0xFF16213A).withOpacity(0.2),
+              backgroundColor: AppColors.card.withValues(alpha: 0.2),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
               minHeight: 6,
             ),
@@ -239,7 +240,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _infoStat("المستخدمة", used.toStringAsFixed(1).formatBytes),
-              Container(width: 1, height: 40, color: Colors.white.withOpacity(0.3)), 
+              Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.3)), 
               _infoStat("الإجمالية", total.toStringAsFixed(1).formatBytes),
             ],
           ),
@@ -252,7 +253,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: const Color(0xB3E8EEF9), fontSize: 12)),
+        Text(label, style: const TextStyle(color: Color(0xB3E8EEF9), fontSize: 12)),
         const SizedBox(height: 5),
         Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
       ],
@@ -264,10 +265,10 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -277,7 +278,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 5),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE8EEF9))),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.text)),
         ],
       ),
     );
@@ -298,7 +299,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
             onPressed: controller.fetchSystemStatus, // استخدام مباشر
             icon: const Icon(Icons.refresh_rounded),
             label: const Text("إعادة المحاولة"),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
           )
         ],
       ),
@@ -311,9 +312,9 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5)),
         ],
       ),
       child: SizedBox(
@@ -323,7 +324,7 @@ class SystemStatusReportPage extends GetView<SystemStatusReportController> {
           icon: const Icon(Icons.sync_rounded, color: Colors.white),
           label: const Text("تحديث حالة النظام", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3B82F6), 
+            backgroundColor: AppColors.primary, 
             padding: const EdgeInsets.symmetric(vertical: 11),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),

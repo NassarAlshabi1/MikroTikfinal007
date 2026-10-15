@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class FloatingButton extends StatelessWidget {
   final String text;
@@ -17,7 +18,7 @@ class FloatingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton.extended(
-      backgroundColor: color ?? const Color(0xFF3B82F6),
+      backgroundColor: color ?? AppColors.primary,
       onPressed: onPressed,
       label: Text(
         text, 

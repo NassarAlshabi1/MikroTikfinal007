@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/prints/controllers/prints_unit_controller.dart';
 
@@ -18,7 +19,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.page,
         body: Column(
           children: [
             // 1. الهيدر الموحد بالفخامة الجديدة
@@ -40,7 +41,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
                     title: "دفعات الكروت",
                     subtitle: "إنشاء • توليد • متابعة الدفعات",
                     icon: Icons.layers_rounded,
-                    color: const Color(0xFF2563EB),
+                    color: AppColors.blue,
                     onTap: controller.gotToBtches,
                   ),
 
@@ -48,7 +49,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
                     title: "قوالب الطباعة",
                     subtitle: "تصميم • تعديل • حفظ القوالب",
                     icon: Icons.style_rounded, // أيقونة متناسقة مع التصميم
-                    color: const Color(0xFF3B82F6),
+                    color: AppColors.primary,
                     onTap: controller.gotToTemplates,
                   ),
 
@@ -74,10 +75,10 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B2740),
+              color: AppColors.soft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.info_outline, color: Color(0xFF94A3B8), size: 20),
+            child: const Icon(Icons.info_outline, color: AppColors.textMuted, size: 20),
           ),
           const SizedBox(width: 11),
           const Expanded(
@@ -85,7 +86,7 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
               "يمكنك إنشاء دفعة كروت أولاً، ثم ربطها بقالب طباعة جاهز من استوديو التصميم.",
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF8FA3C0),
+                color: AppColors.textSubtle,
                 fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
@@ -100,46 +101,4 @@ class PrintsUnitPage extends GetView<PrintsUnitController> {
     );
   }
 
-  /* ================= INFO CARD (Custom for this view) ================= */
-  Widget _buildInfoCard({required IconData icon, required String text}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1B2740),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF8FA3C0),
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

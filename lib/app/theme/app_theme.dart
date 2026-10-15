@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// مستوحاة من تصميم التطبيق المعتمد: خلفية كحلية داكنة، بطاقات أغمق قليلًا
 /// بحدود خفيفة، وأزرق ساطع للعناصر النشطة.
 class AppColors {
-  const AppColors._();
+  AppColors._();
 
   /// خلفية الصفحات.
   static const Color page = Color(0xFF0B1220);
@@ -40,6 +40,33 @@ class AppColors {
 
   /// ألوان تكامل Telegram.
   static const Color telegram = Color(0xFF229ED9);
+  /// لوحة الألوان الموسّعة (القيم كما كانت مستخدمة في الشاشات).
+  static const Color green = Color(0xFF10B981);
+  static const Color successDark = Color(0xFF16A34A);
+  static const Color textSubtle = Color(0xFF8FA3C0);
+  static const Color textBright = Color(0xFFE2E8F0);
+  static const Color textPale = Color(0xFFCBD5E1);
+  static const Color cyan = Color(0xFF38E5FF);
+  static const Color cyanDark = Color(0xFF00ADB5);
+  static const Color blue = Color(0xFF2563EB);
+  static const Color sky = Color(0xFF0EA5E9);
+  static const Color infoSoft = Color(0xFF60A5FA);
+  static const Color indigo = Color(0xFF6366F1);
+  static const Color violet = Color(0xFF7C3AED);
+  static const Color pink = Color(0xFFDB2777);
+  static const Color teal = Color(0xFF0D9488);
+  static const Color tealDark = Color(0xFF0F766E);
+  static const Color ink = Color(0xFF070F1E);
+  static const Color panel = Color(0xFF1E2E44);
+  static const Color cardDark = Color(0xFF131D2E);
+  static const Color surface = Color(0xFF1E293B);
+  static const Color borderBlue = Color(0xFF1E3A5F);
+  static const Color overlay = Color(0xFF0D1726);
+  static const Color deepCyan = Color(0xFF0F3B4C);
+  static const Color dangerDark = Color(0xFF991B1B);
+  static const Color dangerOverlay = Color(0xFF3B1D24);
+  static const Color headerTop = Color(0xFF0F172A);
+  static const Color headerBottom = Color(0xFF1E3A8A);
 }
 
 /// ثيم التطبيق الداكن — يُستخدم في كل الشاشات.
@@ -71,7 +98,7 @@ class AppTheme {
       canvasColor: AppColors.page,
       cardColor: AppColors.card,
       dividerColor: AppColors.border,
-      shadowColor: Colors.black.withOpacity(0.4),
+      shadowColor: Colors.black.withValues(alpha: 0.4),
 
       // النصوص: كل ما لا يحدد لونًا صريحًا يصبح فاتحًا مقروءًا
       textTheme: base.textTheme.apply(

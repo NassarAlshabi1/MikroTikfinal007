@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/sites/controllers/dns_cache_controller.dart'; 
@@ -16,7 +17,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B2740),
+        backgroundColor: AppColors.soft,
 
         floatingActionButton: Obx(() {
           if (controller.dnsCacheList.isEmpty) return const SizedBox.shrink();
@@ -24,7 +25,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
             padding: const EdgeInsets.only(bottom: 20),
             child: FloatingActionButton.extended(
               onPressed: controller.confirmClearCache,
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: AppColors.danger,
               elevation: 8,
               icon: const Icon(Icons.delete_sweep_rounded, color: Colors.white),
               label: const Text(
@@ -60,7 +61,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
                     Expanded(
                       child: Obx(() {
                         if (controller.isLoading.value) {
-                          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+                          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
                         }
 
                         if (controller.dnsCacheList.isEmpty) {
@@ -69,8 +70,8 @@ class DnsCachePage extends GetView<DnsCacheController> {
 
                         return RefreshIndicator(
                           onRefresh: controller.fetchDnsCache,
-                          color: const Color(0xFF3B82F6),
-                          backgroundColor: const Color(0xFF16213A),
+                          color: AppColors.primary,
+                          backgroundColor: AppColors.card,
                           child: ListView.builder(
                             padding: const EdgeInsets.only(bottom: 90, top: 6),
                             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -108,7 +109,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xff1E3A8A).withOpacity(0.3),
+            color: const Color(0xff1E3A8A).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           )
@@ -119,7 +120,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF16213A).withOpacity(0.3),
+              color: AppColors.card.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.speed_rounded, color: Colors.white, size: 28),
@@ -159,12 +160,12 @@ class DnsCachePage extends GetView<DnsCacheController> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF243352)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 3),
           )
@@ -175,17 +176,17 @@ class DnsCachePage extends GetView<DnsCacheController> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xff1E3A8A).withOpacity(0.2),
+            color: const Color(0xff1E3A8A).withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.language_rounded, color: Color(0xFF60A5FA), size: 22),
+          child: const Icon(Icons.language_rounded, color: AppColors.infoSoft, size: 22),
         ),
         title: Text(
           site.name.isNotEmpty ? site.name : "Unknown Host",
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: Color(0xFFE8EEF9),
+            color: AppColors.text,
           ),
         ),
         subtitle: Column(
@@ -195,7 +196,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
             Text(
               site.data.isNotEmpty ? site.data : "0.0.0.0", 
               style: const TextStyle(
-                color: Color(0xFF94A3B8), 
+                color: AppColors.textMuted, 
                 fontSize: 12, 
                 letterSpacing: 0.5,
                 fontWeight: FontWeight.w500,
@@ -204,18 +205,18 @@ class DnsCachePage extends GetView<DnsCacheController> {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.category_outlined, size: 12, color: Color(0xFF94A3B8)),
+                const Icon(Icons.category_outlined, size: 12, color: AppColors.textMuted),
                 const SizedBox(width: 3),
                 Text(
                   site.type.isNotEmpty ? site.type : "A",
-                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
                 const SizedBox(width: 14),
-                const Icon(Icons.history_toggle_off_rounded, size: 12, color: Color(0xFF94A3B8)),
+                const Icon(Icons.history_toggle_off_rounded, size: 12, color: AppColors.textMuted),
                 const SizedBox(width: 3),
                 Text(
                   site.ttl.isNotEmpty ? site.ttl : "00:00:00",
-                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
               ],
             ),
@@ -235,11 +236,11 @@ class DnsCachePage extends GetView<DnsCacheController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.auto_awesome_rounded, size: 56, color: Colors.blue.withOpacity(0.3)),
+          Icon(Icons.auto_awesome_rounded, size: 56, color: Colors.blue.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
           const Text(
             "ذاكرة DNS المؤقتة فارغة تماماً",
-            style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 12),
           ElevatedButton.icon(
@@ -247,8 +248,8 @@ class DnsCachePage extends GetView<DnsCacheController> {
             icon: const Icon(Icons.refresh_rounded, size: 18),
             label: const Text("تحديث السجلات"),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E293B),
-              foregroundColor: const Color(0xFF60A5FA),
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.infoSoft,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),

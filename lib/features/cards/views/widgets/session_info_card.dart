@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 
 class SessionInfoCard extends StatelessWidget {
   final String from;
@@ -23,10 +24,10 @@ class SessionInfoCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213A),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -35,16 +36,16 @@ class SessionInfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-              color: const Color(0xFF94A3B8).withOpacity(0.03),
+              color: AppColors.textMuted.withValues(alpha: 0.03),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.history_toggle_off_rounded, size: 18, color: Color(0xFF3B82F6)),
+                const Icon(Icons.history_toggle_off_rounded, size: 18, color: AppColors.primary),
                 const SizedBox(width: 10),
                 Text(
                   "$from  ←  $to",
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFE8EEF9)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.text),
                 ),
               ],
             ),
@@ -56,7 +57,7 @@ class SessionInfoCard extends StatelessWidget {
               children: [
                 _buildRow(Icons.lan_outlined, "العنوان (IP)", ip),
                 _buildRow(Icons.fingerprint_rounded, "الماك (MAC)", mac),
-                const Divider(height: 25, color: Color(0xFF1B2740)),
+                const Divider(height: 25, color: AppColors.soft),
                 // عرض الرفع والتنزيل بجانب بعض
                 Row(
                   children: [
@@ -78,7 +79,7 @@ class SessionInfoCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF243352)),
+          Icon(icon, size: 16, color: AppColors.border),
           const SizedBox(width: 10),
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
           const Spacer(),
@@ -91,7 +92,7 @@ class SessionInfoCard extends StatelessWidget {
   Widget _buildTraffic(IconData icon, String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Icon(icon, size: 18, color: color),

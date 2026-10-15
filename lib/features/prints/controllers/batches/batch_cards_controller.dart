@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/cards/data/cards_api.dart';
 import 'package:mikronet/features/prints/models/print_model.dart';
@@ -50,7 +51,7 @@ class GeneratedCardsController extends GetxController {
       }
 
     } catch (e) {
-      print("Error syncing cards: $e");
+      debugPrint("Error syncing cards: $e");
     }
 
     isLoading = false;
@@ -74,11 +75,11 @@ class GeneratedCardsController extends GetxController {
         update(); 
         return true;
       } else {
-        print("خطأ في الكرت ${card.username}: ${response.message}");
+        debugPrint("خطأ في الكرت ${card.username}: ${response.message}");
         return false;
       }
     } catch (e) {
-      print("خطأ استثنائي في الكرت ${card.username}: ${e.toString()}");
+      debugPrint("خطأ استثنائي في الكرت ${card.username}: ${e.toString()}");
       return false; 
     }
   }
@@ -117,7 +118,7 @@ class GeneratedCardsController extends GetxController {
       "اكتملت العملية.\nنجح: $successCount \nفشل: $failCount", 
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 4),
-      backgroundColor: const Color(0xFF16213A),
+      backgroundColor: AppColors.card,
     );
   }
 
