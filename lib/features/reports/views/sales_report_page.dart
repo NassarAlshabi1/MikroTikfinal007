@@ -340,23 +340,31 @@ class SalesReportPage extends GetView<SalesReportController> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          InkWell(
-            onTap: onPick,
-            child: Row(
-              children: [
-                Obx(() {
-                  final d = dateRx.value;
-                  final text = d != null ? "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}" : "اختر التاريخ";
-                  return Text(
-                    text,
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                  );
-                }),
-                const SizedBox(width: 6),
-                const Icon(Icons.calendar_today_rounded, color: Colors.white, size: 16),
-              ],
+          Flexible(
+            child: InkWell(
+              onTap: onPick,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Obx(() {
+                    final d = dateRx.value;
+                    final text = d != null ? "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}" : "اختر التاريخ";
+                    return Text(
+                      text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    );
+                  }),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.calendar_today_rounded, color: Colors.white, size: 16),
+                ],
+              ),
             ),
           ),
+          const SizedBox(width: 6),
           InkWell(
             onTap: onClear,
             child: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 16),
@@ -510,7 +518,9 @@ class SalesReportPage extends GetView<SalesReportController> {
             ),
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          Column(
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
@@ -527,6 +537,7 @@ class SalesReportPage extends GetView<SalesReportController> {
                 ),
               ),
             ],
+          ),
           ),
         ],
       ),
@@ -668,14 +679,26 @@ class SalesReportPage extends GetView<SalesReportController> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          Flexible(
+            child: Row(
             children: [
               const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
               const SizedBox(width: 6),
-              const Text("مدفوعات مسبقة: 61", style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+              const Flexible(
+                child: Text("مدفوعات مسبقة: 61",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+              ),
               const SizedBox(width: 12),
-              Text("الكروت ${controller.expiredCards.value}", style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+              Flexible(
+                child: Text("الكروت ${controller.expiredCards.value}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+              ),
             ],
+          ),
           ),
           const Row(
             children: [

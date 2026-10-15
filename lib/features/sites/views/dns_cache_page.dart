@@ -126,7 +126,8 @@ class DnsCachePage extends GetView<DnsCacheController> {
             child: const Icon(Icons.speed_rounded, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 12),
-          Column(
+          Flexible(
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
@@ -143,6 +144,7 @@ class DnsCachePage extends GetView<DnsCacheController> {
                 ),
               ),
             ],
+          ),
           ),
           const Spacer(),
           IconButton(

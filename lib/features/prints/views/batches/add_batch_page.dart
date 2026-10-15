@@ -209,16 +209,19 @@ class _AddBatchViewState extends State<AddBatchView> {
   }){
     return
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          SizedBox(
-            width: (screenWidth / 3) - padding,
-            child: Text(label),
+          Expanded(
+            flex: 1,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          SizedBox(
-            width: (screenWidth / 3 * 2) - padding,
-            child: child
-          )
+          Expanded(
+            flex: 2,
+            child: child,
+          ),
         ],
       );
   }

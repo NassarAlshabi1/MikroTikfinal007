@@ -139,7 +139,9 @@ class BatchesView extends GetView<BatchesListController> {
             ),
             child: Icon(icon, color: AppColors.cyan, size: 20),
           ),
-          Column(
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
@@ -156,6 +158,7 @@ class BatchesView extends GetView<BatchesListController> {
                 ),
               ),
             ],
+          ),
           ),
         ],
       ),
@@ -316,9 +319,13 @@ class BatchesView extends GetView<BatchesListController> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            item['status'].toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 11),
+                          Flexible(
+                            child: Text(
+                              item['status'].toString(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontSize: 11),
+                            ),
                           ),
                         ],
                       ),
@@ -368,7 +375,9 @@ class BatchesView extends GetView<BatchesListController> {
           // شريط أزرار التنقل بين الصفحات (Pagination)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _pageBtn(
@@ -391,6 +400,7 @@ class BatchesView extends GetView<BatchesListController> {
                   isActive: false,
                 ),
               ],
+            ),
             ),
           ),
         ],
@@ -496,13 +506,19 @@ class BatchesView extends GetView<BatchesListController> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Icon(Icons.chevron_left_rounded, color: AppColors.textMuted, size: 20),
-                  Row(
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Column(
+                      Flexible(
+                        child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
                             prof['name'].toString(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 15,
@@ -512,9 +528,12 @@ class BatchesView extends GetView<BatchesListController> {
                           const SizedBox(height: 4),
                           Text(
                             "الدفعات: ${prof['batches']} | الكروت المولدة: ${prof['cards']}",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                           ),
                         ],
+                      ),
                       ),
                       const SizedBox(width: 12),
                       Container(
@@ -526,6 +545,7 @@ class BatchesView extends GetView<BatchesListController> {
                         child: const Icon(Icons.grid_view_rounded, color: AppColors.cyan, size: 18),
                       ),
                     ],
+                  ),
                   ),
                 ],
               ),

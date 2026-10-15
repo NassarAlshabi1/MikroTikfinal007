@@ -20,13 +20,17 @@ class SectionTitle extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
+          Flexible(
+            child: Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 14,
               color: AppColors.text,
             ),
+          ),
           ),
         ],
       ),

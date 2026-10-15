@@ -216,13 +216,18 @@ class MaintenanceHubPage extends GetView<MaintenanceHubController> {
               }),
 
               // نص حالة التنفيذ
-              Obx(() => Text(
-                controller.stepStatus[stepNumber] ?? "بانتظار التنفيذ",
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 12,
-                ),
-              )),
+              Expanded(
+                child: Obx(() => Text(
+                  controller.stepStatus[stepNumber] ?? "بانتظار التنفيذ",
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                  ),
+                )),
+              ),
             ],
           ),
         ],

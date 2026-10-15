@@ -230,13 +230,15 @@ class _HelpNote extends StatelessWidget {
             children: [
               Icon(Icons.help_outline_rounded, color: AppColors.info, size: 18),
               SizedBox(width: 8),
-              Text(
+              Flexible(
+                child: Text(
                 "كيف أحصل على Token و Chat ID؟",
                 style: TextStyle(
                   color: AppColors.text,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
+              ),
               ),
             ],
           ),
