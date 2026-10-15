@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/models/cards_model.dart';
+import 'package:mikronet/features/cards/models/cards_model.dart';
 
 void main() {
   group('CardModel - Parsing and Search Indexing', () {

@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/controllers/helpers/functions.dart';
-import 'package:mikronet/models/print_model.dart';
-import 'package:mikronet/models/profiles_model.dart';
+import 'package:mikronet/core/utils/functions.dart';
+import 'package:mikronet/features/prints/models/print_model.dart';
+import 'package:mikronet/features/cards/models/profiles_model.dart';
 
 void main() {
   group('اختبارات توليد دفعات الكروت واختيار الباقة والقالب', () {

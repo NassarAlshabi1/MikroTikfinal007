@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/services/mikrotik_duration.dart';
+import 'package:mikronet/core/mikrotik/mikrotik_duration.dart';
 
 void main() {
   group('MikrotikDuration.parse - صيغة الرموز', () {

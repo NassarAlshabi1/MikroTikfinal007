@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/models/print_model.dart';
+import 'package:mikronet/features/prints/models/print_model.dart';
 
 /// اختبارات **قراءة القوالب** — منطق نقي بلا قاعدة بيانات ولا اتصال.
 ///

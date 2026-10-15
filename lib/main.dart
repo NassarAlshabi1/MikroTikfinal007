@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'core/app_pages.dart';
-import 'core/app_theme.dart';
-import 'services/telegram_scheduler.dart';
+import 'package:mikronet/app/routes/app_pages.dart';
+import 'package:mikronet/app/routes/app_routes.dart';
+import 'package:mikronet/app/theme/app_theme.dart';
+import 'package:mikronet/features/telegram/services/telegram_scheduler.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

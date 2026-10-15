@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/services/expired_users_classifier.dart';
+import 'package:mikronet/features/cards/services/expired_users_classifier.dart';
 
 /// اختبارات توافق User Manager مع **RouterOS v6** و v7.
 ///

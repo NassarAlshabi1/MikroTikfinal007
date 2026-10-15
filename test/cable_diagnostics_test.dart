@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/services/cable_diagnostics.dart';
+import 'package:mikronet/features/maintenance/services/cable_diagnostics.dart';
 
 /// اختبارات **فحص الكيبل** — حمولات RouterOS حقيقية بلا أي اتصال شبكة.
 ///
