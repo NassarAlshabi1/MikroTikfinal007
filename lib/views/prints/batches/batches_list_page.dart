@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import '../../../controllers/prints/batches/batches_list_controller.dart';
 import '../../../controllers/prints/batches/add_batch_controller.dart';
 import 'add_batch_page.dart';

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:mikronet/api/profiles_api.dart';
 import 'package:mikronet/views/prints/batches/batch_cards_page.dart';
 import 'package:mikronet/views/prints/templates/pdf_view.dart';

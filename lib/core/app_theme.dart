@@ -85,7 +85,7 @@ class AppTheme {
         elevation: 0,
       ),
 
-      dialogTheme: const DialogTheme(
+      dialogTheme: const DialogThemeData(
         backgroundColor: AppColors.card,
         surfaceTintColor: Colors.transparent,
       ),

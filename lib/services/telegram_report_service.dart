@@ -3,6 +3,7 @@ import 'dart:async';
 import '../api/reports_api.dart';
 import '../api/users/active_users_api.dart';
 import '../models/response.dart';
+import '../models/selles_model.dart';
 import '../models/telegram_settings.dart';
 import 'telegram_client.dart';
 import 'telegram_health.dart';
@@ -146,7 +147,7 @@ class TelegramReportService {
     if (settings.isFeatureEnabled('sales')) {
       try {
         final startOfDay = DateTime(now.year, now.month, now.day);
-        final sales = await ReportsApi.getSallesReport(from: startOfDay, to: now);
+        final sales = await _todaySales(startOfDay, now);
         if (sales.status && sales.data != null) {
           final total =
               sales.data!.fold<double>(0, (sum, item) => sum + item.price);
@@ -309,7 +310,7 @@ class TelegramReportService {
 
       var cardsCount = 0;
       double total = 0;
-      final sales = await ReportsApi.getSallesReport(from: startOfDay, to: now);
+      final sales = await _todaySales(startOfDay, now);
       if (sales.status && sales.data != null) {
         cardsCount = sales.data!.length;
         total = sales.data!.fold<double>(0, (sum, item) => sum + item.price);
@@ -357,6 +358,13 @@ class TelegramReportService {
       lastError = response.message;
     }
     return response;
+  }
+
+  /// مبيعات اليوم: مزامنة مدفوعات الراوتر إلى السجل المحلي ثم القراءة منه.
+  static Future<AppResponse<List<SellesReportModel>>> _todaySales(
+      DateTime from, DateTime to) async {
+    await ReportsApi.syncSalesFromMikrotik();
+    return ReportsApi.getStoredSalesReport(from: from, to: to);
   }
 
   static String _short(Object error) {
