@@ -92,9 +92,11 @@ class GeneratedCardsView extends StatelessWidget {
           children: [
             Expanded(
               child: _buildActionBtn(
-                controller.isLoading 
-                  ? "جاري المزامنة..." 
-                  : (controller.isUploading ? "جاري الإرسال..." : "بدء الإضافة للسيرفر"), 
+                controller.isLoading
+                  ? "جاري المزامنة..."
+                  : (controller.isUploading
+                      ? "جاري الإرسال ${controller.uploadedCount + controller.failedCount}/$remainingCount"
+                      : "بدء الإضافة للسيرفر"),
                 canStart ? [AppColors.headerBottom, AppColors.headerTop] : [AppColors.textSubtle, AppColors.textMuted], 
                 controller.isUploading || controller.isLoading ? Icons.sync : Icons.cloud_upload_rounded, 
                 () {

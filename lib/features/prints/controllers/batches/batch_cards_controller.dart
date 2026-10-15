@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
@@ -14,6 +16,19 @@ class GeneratedCardsController extends GetxController {
   bool isUploading = false; 
   bool isLoading = true; // متغير لمتابعة حالة المزامنة الأولية
 
+  /// عدد الكروت التي نجح رفعها في آخر عملية.
+  int uploadedCount = 0;
+
+  /// عدد الكروت التي فشل رفعها في آخر عملية.
+  int failedCount = 0;
+
+  /// كروت ما زالت قيد الانتظار (غير موجودة على الراوتر).
+  int get pendingCount => generatedCards.where((c) => !c.isAdd).length;
+
+  /// عدد الطلبات المتزامنة على قناة الراوتر — أوامر API محمية بوسم `.tag`
+  /// فيمكن تنفيذ عدة أوامر بالتوازي دون خلط الردود.
+  static const int _uploadConcurrency = 4;
+
   @override
   void onInit() {
     super.onInit();
@@ -26,30 +41,29 @@ class GeneratedCardsController extends GetxController {
     update();
 
     try {
-      // 1. جلب العملاء (customers) أولاً لاستخدامهم لاحقاً في الرفع
-      AppResponse<List<CustomerModel>> customersRes = await CardsApi.getCustomers();
+      // جلب العملاء والكروت بالتوازي — طلبتان مستقلتان على القناة نفسها.
+      final results = await Future.wait([
+        CardsApi.getCustomers(),
+        CardsApi.getAllCards(),
+      ]);
+
+      final AppResponse<List<CustomerModel>> customersRes =
+          results[0] as AppResponse<List<CustomerModel>>;
       if (customersRes.status && customersRes.data != null) {
         customers = customersRes.data!;
       }
 
-      // 2. جلب جميع الكروت الموجودة في الميكروتك
-      AppResponse<List<CardModel>> mikrotikCardsRes = await CardsApi.getAllCards();
-      Set<String> mikrotikUsernames = {};
-      
-      if (mikrotikCardsRes.status && mikrotikCardsRes.data != null) {
-        // تخزين أسماء المستخدمين في Set لسرعة البحث والمقارنة
-        mikrotikUsernames = mikrotikCardsRes.data!.map((e) => e.username).toSet();
-      }
+      final AppResponse<List<CardModel>> mikrotikCardsRes =
+          results[1] as AppResponse<List<CardModel>>;
+      final Set<String> mikrotikUsernames =
+          (mikrotikCardsRes.status && mikrotikCardsRes.data != null)
+              ? mikrotikCardsRes.data!.map((e) => e.username).toSet()
+              : <String>{};
 
-      // 3. مقارنة الكروت المولدة مع كروت الميكروتك وتحديث حالتها
-      for (int i = 0; i < generatedCards.length; i++) {
-        if (mikrotikUsernames.contains(generatedCards[i].username)) {
-          generatedCards[i].isAdd = true; // موجودة مسبقاً (جاهزة)
-        } else {
-          generatedCards[i].isAdd = false; // غير موجودة (قيد الانتظار)
-        }
+      // مقارنة الكروت المولدة مع كروت الميكروتك وتحديث حالتها
+      for (final card in generatedCards) {
+        card.isAdd = mikrotikUsernames.contains(card.username);
       }
-
     } catch (e) {
       debugPrint("Error syncing cards: $e");
     }
@@ -57,22 +71,21 @@ class GeneratedCardsController extends GetxController {
     isLoading = false;
     update(); // تحديث الواجهة بعد انتهاء المزامنة
   }
-  
-  Future<bool> createCard(int index, GeneratedCardsModel card) async {
-    try {
-      String customerName = customers.isNotEmpty ? customers[0].name : "admin";
 
+  /// اسم العميل الذي تُضاف الكروت تحته — أول عميل متاح أو admin.
+  String get _customerName => customers.isNotEmpty ? customers[0].name : "admin";
+  
+  Future<bool> createCard(GeneratedCardsModel card) async {
+    try {
       AppResponse response = await CardsApi.addOneCard(
-        customer: customerName, 
+        customer: _customerName, 
         username: card.username, 
         password: card.password, 
         profile: card.profileName
       );
 
       if (response.status) {
-        // تحديث حالة الكرت في واجهة المستخدم
-        generatedCards[index].isAdd = true;
-        update(); 
+        card.isAdd = true;
         return true;
       } else {
         debugPrint("خطأ في الكرت ${card.username}: ${response.message}");
@@ -87,35 +100,60 @@ class GeneratedCardsController extends GetxController {
   // ==========================================
   // دوال التحكم بالرفع للسيرفر
   // ==========================================
+
+  /// رفع الكروت الناقصة إلى الراوتر بمجموعات متوازية.
+  ///
+  /// بدل كرت-كرت (بطيء جداً على دفعات كبيرة)، يشغّل [_uploadConcurrency]
+  /// "عمّال" يسحبون الكروت من قائمة انتظار مشتركة. زر الإيقاف يوقف سحب
+  /// كروت جديدة فوراً مع ترك الجاري إنهاؤه.
   Future<void> startUploadingToServer() async {
     if (isUploading) return;
     isUploading = true;
+    uploadedCount = 0;
+    failedCount = 0;
     update();
 
-    int successCount = 0;
-    int failCount = 0;
+    // قائمة انتظار مشتركة بفهارس الكروت المعلّقة — العمّال يسحبون منها.
+    final pendingIndexes = <int>[
+      for (int i = 0; i < generatedCards.length; i++)
+        if (!generatedCards[i].isAdd) i,
+    ];
+    int cursor = 0;
+    int completedSinceLastUpdate = 0;
 
-    for (int i = 0; i < generatedCards.length; i++) {
-      if (!isUploading) break; // توقف فوري إذا ضغط المستخدم زر الإيقاف
-      
-      // لا نرفع إلا الكروت التي هي قيد الانتظار (isAdd == false)
-      if (!generatedCards[i].isAdd) {
-        bool isSuccess = await createCard(i, generatedCards[i]);
-        
-        if (isSuccess) {
-          successCount++;
+    Future<void> worker() async {
+      while (isUploading) {
+        if (cursor >= pendingIndexes.length) break;
+        final index = pendingIndexes[cursor++];
+
+        final success = await createCard(generatedCards[index]);
+        if (success) {
+          uploadedCount++;
         } else {
-          failCount++;
+          failedCount++;
+        }
+
+        // تحديث الواجهة كل بضعة كروت بدل كل كرت — أسرع بكثير على دفعات كبيرة.
+        if (++completedSinceLastUpdate >= 10) {
+          completedSinceLastUpdate = 0;
+          update();
         }
       }
     }
-    
+
+    await Future.wait(
+      List.generate(
+        pendingIndexes.length.clamp(1, _uploadConcurrency),
+        (_) => worker(),
+      ),
+    );
+
     isUploading = false;
     update();
 
     Get.snackbar(
       "نتيجة الإرسال", 
-      "اكتملت العملية.\nنجح: $successCount \nفشل: $failCount", 
+      "اكتملت العملية.\nنجح: $uploadedCount \nفشل: $failedCount", 
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 4),
       backgroundColor: AppColors.card,
