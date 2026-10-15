@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_fonts.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/home/controllers/home_controller.dart';
 import 'package:mikronet/features/home/views/home_page.dart';
@@ -12,6 +13,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
+    await loadCairoFonts();
     Get.put(HomeController());
     await tester.pumpWidget(GetMaterialApp(
       theme: AppTheme.dark(),
