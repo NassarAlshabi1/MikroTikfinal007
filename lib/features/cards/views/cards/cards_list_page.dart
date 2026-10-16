@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
+import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/features/cards/controllers/cards/cards_list_controller.dart';
 
 // استيراد الوجتات المشتركة
@@ -28,6 +29,9 @@ class CardsListPage extends GetView<CardsListController> {
             
             // 2. منطقة البحث والفلترة
             _buildSearchAndFilterArea(),
+
+            // 2.5 شريط الإجراءات الجماعية (يظهر عند التحديد)
+            _buildBulkActionBar(),
             
             // 3. القائمة المحدثة مع دعم السحب للتحديث
             Expanded(
@@ -217,6 +221,64 @@ class CardsListPage extends GetView<CardsListController> {
     ));
   }
 
+  /* ================= شريط الإجراءات الجماعية (مثل ABOTALAL) ================= */
+  Widget _buildBulkActionBar() {
+    return Obx(() {
+      if (!controller.selectionMode) return const SizedBox.shrink();
+      final count = controller.selectedUsernames.length;
+      final running = controller.isBulkActionRunning.value;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        child: Row(
+          children: [
+            _bulkBtn("تفعيل ($count)", Colors.green, Icons.check_circle_rounded,
+                running ? () {} : controller.bulkActivate),
+            const SizedBox(width: 8),
+            _bulkBtn("حذف", Colors.redAccent, Icons.delete_rounded,
+                running ? () {} : () async {
+                  final confirm = await showConfirmDialog(
+                      message: "حذف $count كرت من الراوتر نهائياً؟",
+                      onConfirm: () {});
+                  if (confirm) controller.bulkDelete();
+                }),
+            const SizedBox(width: 8),
+            _bulkBtn("الكل", AppColors.sky, Icons.select_all_rounded,
+                controller.selectAllVisible),
+            const SizedBox(width: 8),
+            _bulkBtn("إلغاء", AppColors.textMuted, Icons.close_rounded,
+                controller.clearSelection),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _bulkBtn(String text, Color color, IconData icon, VoidCallback onTap) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 2),
+              Text(text,
+                  style: TextStyle(
+                      color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /* ================= عرض قائمة الكروت ================= */
   Widget _buildCardsList() {
     return Obx(() {
@@ -251,7 +313,12 @@ class CardsListPage extends GetView<CardsListController> {
             username: card.username,
             package: card.profile,
             status: card.status,
-            onTap: () => controller.goToCardDetails(card),
+            selectionMode: controller.selectionMode,
+            selected: controller.selectedUsernames.contains(card.username),
+            onTap: () => controller.selectionMode
+                ? controller.toggleSelect(card)
+                : controller.goToCardDetails(card),
+            onLongPress: () => controller.toggleSelect(card),
             onAnalyticsTap: () => controller.goToCardSessions(card),
           );
         },

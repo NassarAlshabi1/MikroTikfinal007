@@ -24,6 +24,11 @@ class CardsListController extends GetxController {
   
   final RxBool isLoading = true.obs;
   final RxBool isRefreshing = false.obs;
+  final RxBool isBulkActionRunning = false.obs;
+
+  /// أسماء الكروت المحددة للإجراءات الجماعية (وضع التحديد).
+  final RxSet<String> selectedUsernames = <String>{}.obs;
+
   int _requestCounter = 0;
   Timer? _debounceTimer;
 
@@ -168,6 +173,89 @@ class CardsListController extends GetxController {
       if (currentId == _requestCounter) {
         isLoading.value = false;
       }
+    }
+  }
+
+  // ============ وضع التحديد والإجراءات الجماعية (مثل ABOTALAL) ============
+
+  bool get selectionMode => selectedUsernames.isNotEmpty;
+
+  void toggleSelect(CardModel card) {
+    if (selectedUsernames.contains(card.username)) {
+      selectedUsernames.remove(card.username);
+    } else {
+      selectedUsernames.add(card.username);
+    }
+  }
+
+  void selectAllVisible() {
+    selectedUsernames.addAll(filteredCards.map((c) => c.username));
+  }
+
+  void clearSelection() => selectedUsernames.clear();
+
+  /// حذف جماعي: جلب المعرفات الداخلية ثم حذفها دفعة واحدة من الراوتر.
+  Future<void> bulkDelete() async {
+    if (isBulkActionRunning.value || selectedUsernames.isEmpty) return;
+    isBulkActionRunning.value = true;
+    try {
+      final idsRes = await CardsApi.getIdsByUsernames(selectedUsernames.toList());
+      if (idsRes.status && (idsRes.data?.isNotEmpty ?? false)) {
+        await CardsApi.deleteCardsBatch(idsRes.data!);
+        allCards.removeWhere((c) => selectedUsernames.contains(c.username));
+        showMsgDialog(
+            message: "تم حذف ${idsRes.data!.length} كرت من الراوتر",
+            type: MsgType.success);
+      } else {
+        throw Exception(idsRes.message);
+      }
+      clearSelection();
+      _updateCardCounts();
+      _applyFilters();
+    } catch (e) {
+      showMsgDialog(message: "فشل الحذف الجماعي: $e", type: MsgType.error);
+    } finally {
+      isBulkActionRunning.value = false;
+    }
+  }
+
+  /// تفعيل جماعي: إعادة تفعيل باقة كل كرت محدد (create-and-activate-profile).
+  Future<void> bulkActivate() async {
+    if (isBulkActionRunning.value || selectedUsernames.isEmpty) return;
+    isBulkActionRunning.value = true;
+    int ok = 0, failed = 0;
+    try {
+      final targets = allCards
+          .where((c) => selectedUsernames.contains(c.username))
+          .toList();
+      // تشغيل متوازٍ محدود (4) — قناة API تحمي الردود بوسم .tag
+      int cursor = 0;
+      Future<void> worker() async {
+        while (cursor < targets.length && isBulkActionRunning.value) {
+          final card = targets[cursor++];
+          final res = await CardsApi.addCardProfile(
+            customer: card.customer.isEmpty ? "admin" : card.customer,
+            username: card.username,
+            profile: card.profile,
+          );
+          if (res.status) {
+            ok++;
+          } else {
+            failed++;
+          }
+        }
+      }
+      await Future.wait(List.generate(
+          targets.length.clamp(1, 4), (_) => worker()));
+      showMsgDialog(
+          message: "تم تفعيل $ok كرت${failed > 0 ? ' — فشل $failed' : ''}",
+          type: failed == 0 ? MsgType.success : MsgType.warning);
+      clearSelection();
+      refreshCards();
+    } catch (e) {
+      showMsgDialog(message: "فشل التفعيل الجماعي: $e", type: MsgType.error);
+    } finally {
+      isBulkActionRunning.value = false;
     }
   }
 

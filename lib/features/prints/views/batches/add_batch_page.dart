@@ -98,9 +98,7 @@ class _AddBatchViewState extends State<AddBatchView> {
           const SizedBox(height: 11),
           _buildModernInput(
               controller.batchName, "اسم الدفعة (مثال: دفعة الشتاء)", Icons.badge_outlined,controller),
-          _buildModernInput(
-              controller.numOfCards, "عدد الكروت المطلوب توليدها", Icons.pin_outlined,controller,
-              isNumber: true),
+          _buildCardsCountRow(controller),
           const Divider(height: 40),
           _buildFieldLabel("إعدادات الربط والتصميم",controller),
           const SizedBox(height: 11),
@@ -114,6 +112,10 @@ class _AddBatchViewState extends State<AddBatchView> {
           _buildTemplateSection(controller),
           const Divider(height: 40),
           
+          _buildFieldLabel("نمط اسم المستخدم",controller),
+          const SizedBox(height: 12),
+          _buildUsernamePatternSelector(controller),
+          const Divider(height: 40),
           _buildFieldLabel("نمط كلمة المرور",controller),
           const SizedBox(height: 12),
           _buildGenerationTypeSelector(controller),
@@ -172,6 +174,86 @@ class _AddBatchViewState extends State<AddBatchView> {
             fontSize: 13,
             fontWeight: FontWeight.w900,
             color: AppColors.primary));
+  }
+
+  /// عدد الصفحات ↔ عدد الكروت مرتبطان بسعة القالب (مثل ABOTALAL).
+  Widget _buildCardsCountRow(BatchesFormController controller) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildLinkedInput(controller.numOfPages,
+              "عدد الصفحات", Icons.description_outlined, controller,
+              onChanged: (_) => controller.syncCardsFromPages()),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildLinkedInput(controller.numOfCards,
+              "عدد الكروت", Icons.pin_outlined, controller,
+              onChanged: (_) => controller.syncPagesFromCards()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLinkedInput(
+      TextEditingController ctrl, String hint, IconData icon,
+      BatchesFormController controller,
+      {required ValueChanged<String> onChanged}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      decoration: BoxDecoration(
+          color: AppColors.soft,
+          borderRadius: BorderRadius.circular(15)),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        onChanged: (value) {
+          onChanged(value);
+          controller.update();
+        },
+      ),
+    );
+  }
+
+  /// اختيار نمط اسم المستخدم — نفس خيارات ABOTALAL الأربعة.
+  Widget _buildUsernamePatternSelector(BatchesFormController controller) {
+    return Row(
+      children: controller.usernamePatterns.map((opt) {
+        bool isSelected = controller.selectedUsernamePattern == opt['id'];
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              controller.selectedUsernamePattern = opt['id'];
+              controller.update();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.info : AppColors.soft,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                    color: isSelected ? Colors.transparent : AppColors.border),
+              ),
+              child: Text(opt['label'],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : AppColors.textMuted)),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildModernInput(

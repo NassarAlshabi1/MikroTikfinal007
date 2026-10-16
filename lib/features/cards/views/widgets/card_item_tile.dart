@@ -8,6 +8,11 @@ class CardItemTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onAnalyticsTap;
 
+  /// وضع التحديد الجماعي (مثل ABOTALAL) — ضغطة مطوّلة تدخله وضغطة تبدّله.
+  final bool selectionMode;
+  final bool selected;
+  final VoidCallback? onLongPress;
+
   const CardItemTile({
     super.key,
     required this.username,
@@ -15,6 +20,9 @@ class CardItemTile extends StatelessWidget {
     required this.status,
     required this.onTap,
     required this.onAnalyticsTap,
+    this.selectionMode = false,
+    this.selected = false,
+    this.onLongPress,
   });
 
   @override
@@ -38,8 +46,11 @@ class CardItemTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: selected ? AppColors.info.withValues(alpha: 0.12) : AppColors.card,
         borderRadius: BorderRadius.circular(22),
+        border: selected
+            ? Border.all(color: AppColors.info, width: 1.5)
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02), 
@@ -50,25 +61,43 @@ class CardItemTile extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(22),
         child: Padding(
           padding: const EdgeInsets.all(11),
           child: Row(
             children: [
-              // أيقونة الحالة الديناميكية
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+              // علامة التحديد أو أيقونة الحالة الديناميكية
+              if (selectionMode)
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColors.info
+                        : statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    selected ? Icons.check_rounded : statusIcon,
+                    color: selected ? Colors.white : statusColor,
+                    size: 26,
+                  ),
+                )
+              else
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    statusIcon,
+                    color: statusColor,
+                    size: 26,
+                  ),
                 ),
-                child: Icon(
-                  statusIcon,
-                  color: statusColor,
-                  size: 26,
-                ),
-              ),
               const SizedBox(width: 11),
               // معلومات الكرت
               Expanded(
@@ -90,11 +119,12 @@ class CardItemTile extends StatelessWidget {
                   ],
                 ),
               ),
-              // زر الانتقال لسجل الجلسات
-              IconButton(
-                icon: const Icon(Icons.analytics_outlined, color: AppColors.primary, size: 22),
-                onPressed: onAnalyticsTap,
-              ),
+              // زر الانتقال لسجل الجلسات (يخفي أثناء وضع التحديد)
+              if (!selectionMode)
+                IconButton(
+                  icon: const Icon(Icons.analytics_outlined, color: AppColors.primary, size: 22),
+                  onPressed: onAnalyticsTap,
+                ),
             ],
           ),
         ),

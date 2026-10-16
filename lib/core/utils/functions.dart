@@ -1,36 +1,40 @@
 import 'dart:math';
 
-// String type is "numbers" or "letters" or "mixed"
+// أنماط الأحرف — نفس تجمعات تطبيق ABOTALAL مع استبعاد الأحرف المشبهة
+// (بلا 0/O و 1/l/I) لتقليل أخطاء قراءة الكروت المطبوعة.
+const Map<String, String> kCardCharPools = {
+  "numbers": "0123456789",
+  "mixed": "23456789ABCDEFGHJKLMNPQRSTUVWXYZ",
+  "lower": "abcdefghijkmnopqrstuvwxyz",
+  "upper": "ABCDEFGHJKLMNPQRSTUVWXYZ",
+  // توافق مع القيم القديمة إن استخدمت
+  "letters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
+};
+
+// String type is "numbers" or "letters" or "mixed" or "lower" or "upper"
 List<String> generateUniqueRandomStrings({
   required int count,
   int length = 7,
   String prefix = "",
   String suffix = "",
-  String type = "numbers", // "numbers", "letters", "mixed"
+  String type = "numbers", // "numbers", "mixed", "lower", "upper", "letters"
   List<String> users=const []
 }) {
-  const String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  const String digits = "0123456789";
-  const String mix = "012345678901234567890123456789";
-
-  String characters;
-  switch (type) {
-    case "letters":
-      characters = letters;
-      break;
-    case "mixed":
-      characters = letters + mix;
-      break;
-    case "numbers":
-    default:
-      characters = digits;
-      break;
-  }
+  final String characters = kCardCharPools[type] ?? kCardCharPools["numbers"]!;
 
   Random random = Random();
   Set<String> uniqueValues = {};
 
+  // سقف محاولات يمنع التعليق اللانهائي عند استنفاد فضاء التركيبات
+  // (مثلاً طول قصير جداً + بادئة/لاحقة تلتهمانه + عدد كبير).
+  final int maxAttempts = count * 500 + 1000;
+  int attempts = 0;
+
   while (uniqueValues.length < count) {
+    if (++attempts > maxAttempts) {
+      throw StateError(
+          "تعذّر توليد $count كرتاً فريداً بهذه المواصفات — زد طول الرمز أو غيّر النمط");
+    }
     String randomString = List.generate(
       length,
       (index) => characters[random.nextInt(characters.length)],

@@ -18,8 +18,18 @@ class BatchesFormController extends GetxController {
   List<Map<String, dynamic>> passwordTypes = [
     {"id": "none", "label": "بدون \n", "icon": Icons.minimize_outlined},
     {"id": "diff", "label": "ارقام مختلفة \n", "icon": Icons.pin_outlined},
+    {"id": "mixed", "label": "ارقام وحروف\nمدمجة", "icon": Icons.shuffle_rounded},
     {"id": "same", "label": "مطابقة اسم المستخدم", "icon": Icons.abc_rounded},
   ];
+
+  /// أنماط اسم المستخدم — مثل تطبيق ABOTALAL.
+  List<Map<String, dynamic>> usernamePatterns = [
+    {"id": "numbers", "label": "ارقام فقط"},
+    {"id": "mixed", "label": "احرف وارقام"},
+    {"id": "lower", "label": "احرف صغيرة فقط"},
+    {"id": "upper", "label": "احرف كبيرة فقط"},
+  ];
+  String selectedUsernamePattern = "numbers";
   Map dataInsert = {};
   List<PrintTemplatesModel> allTemplates = [];
   List<ProfilesModel> allProfiles = [];
@@ -32,6 +42,7 @@ class BatchesFormController extends GetxController {
   // Form Variables
   TextEditingController batchName = TextEditingController();
   TextEditingController numOfCards = TextEditingController();
+  TextEditingController numOfPages = TextEditingController();
   TextEditingController prefix = TextEditingController();
   TextEditingController suffix = TextEditingController();
   TextEditingController usernameLength = TextEditingController();
@@ -136,6 +147,28 @@ class BatchesFormController extends GetxController {
     routerSerial = res.data.toString();
   }
 
+  /// عدد الكروت في الصفحة الواحدة حسب القالب المختار (صفوف × أعمدة).
+  int get cardsPerPage {
+    final t = allTemplates.firstWhereOrNull((x) => x.id == selectedTemplate.value);
+    final perPage = (t?.numOfRows ?? 0) * (t?.numOfColumns ?? 0);
+    return perPage > 0 ? perPage : 51;
+  }
+
+  /// ربط عدد الصفحات بعدد الكروت مثل ABOTALAL — كتابة أحدهما تحسب الآخر.
+  void syncPagesFromCards() {
+    final c = int.tryParse(numOfCards.text.trim()) ?? 0;
+    if (c > 0) {
+      numOfPages.text = ((c + cardsPerPage - 1) ~/ cardsPerPage).toString();
+    }
+  }
+
+  void syncCardsFromPages() {
+    final p = int.tryParse(numOfPages.text.trim()) ?? 0;
+    if (p > 0) {
+      numOfCards.text = (p * cardsPerPage).toString();
+    }
+  }
+
   void prepareCardsData(ProfilesModel profile, {List<String> existingUsers = const []}) {
     int count = int.parse(numOfCards.text.trim());
     int uLen = int.parse(usernameLength.text.trim());
@@ -146,13 +179,16 @@ class BatchesFormController extends GetxController {
       length: uLen,
       prefix: prefix.text.trim(),
       suffix: suffix.text.trim(),
+      type: selectedUsernamePattern,
       users: existingUsers, 
     );
 
-    if (dataInsert["password_type"] == "diff") {
+    if (dataInsert["password_type"] == "diff" ||
+        dataInsert["password_type"] == "mixed") {
       generatedPasswords = generateUniqueRandomStrings(
         count: count,
         length: pLen,
+        type: dataInsert["password_type"] == "mixed" ? "mixed" : "numbers",
       );
     } else if (dataInsert["password_type"] == "same") {
       generatedPasswords = List.from(generatedUsernames);
@@ -400,6 +436,7 @@ class BatchesFormController extends GetxController {
     } else {
       switch (selectedPasswordType) {
         case "diff":
+        case "mixed":
           throw "لايمكن ان يكون نمط كلمة المرور مختلف بينما القالب بدون كلمة مرور";
         default:
       }
@@ -434,6 +471,7 @@ class BatchesFormController extends GetxController {
       "profile": selectedProfile.value,
       "template_id": selectedTemplate.value,
       "password_type": selectedPasswordType,
+      "username_pattern": selectedUsernamePattern,
       "card_prefix": prefix.text,
       "card_suffix": suffix.text,
       "username_length": usernameLength.text,
