@@ -2,8 +2,8 @@
 // الحسابات المالية #مبيعات_شبكتك
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/api/reports_api.dart';
-import 'package:mikronet/models/selles_model.dart';
+import 'package:mikronet/features/reports/data/reports_api.dart';
+import 'package:mikronet/features/reports/models/sales_model.dart';
 
 void main() {
   group('ReportsApi Date Parser Tests', () {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/services/hotspot_logic.dart';
+import 'package:mikronet/features/hotspot/services/hotspot_logic.dart';
 
 /// اختبارات منطق **Hotspot** — حمولات RouterOS حقيقية بلا أي اتصال شبكة.
 ///

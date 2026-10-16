@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/services/mikrotik_duration.dart';
+import 'package:mikronet/core/mikrotik/mikrotik_duration.dart';
 
 void main() {
   group('MikrotikDuration.parse - صيغة الرموز', () {
@@ -135,7 +135,7 @@ void main() {
 
     test('بدون حد (0 أو فارغ) ← لا يُحذف أبدًا', () {
       expect(
-        UptimeUsage(used: const Duration(days: 10), limit: Duration.zero).isExhausted,
+        const UptimeUsage(used: Duration(days: 10), limit: Duration.zero).isExhausted,
         isFalse,
       );
     });

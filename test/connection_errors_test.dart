@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/services/connection_errors.dart';
+import 'package:mikronet/core/mikrotik/connection_errors.dart';
 
 /// اختبارات **أخطاء الاتصال** — منطق نقي بلا أي اتصال شبكة.
 ///

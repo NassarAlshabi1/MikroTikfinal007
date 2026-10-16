@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mikronet/services/telegram_features.dart';
-import 'package:mikronet/services/telegram_health.dart';
-import 'package:mikronet/services/telegram_messages.dart';
+import 'package:mikronet/features/telegram/services/telegram_features.dart';
+import 'package:mikronet/features/telegram/services/telegram_health.dart';
+import 'package:mikronet/features/telegram/services/telegram_messages.dart';
 
 /// اختبارات **تكامل Telegram** — منطق نقي بلا أي اتصال شبكة.
 ///
