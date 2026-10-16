@@ -234,6 +234,11 @@ class MikrotikClient {
     return await fetch(command: [command, "=.id=$userId"],customTag: tag);
   }
 
+  /// تنفيذ أمر RouterOS خام: العنصر الأول هو المسار والباقي كلمات API مثل `=.id=*1`.
+  static Future<List> sendRaw(List<String> words, {String tag = "raw_tag"}) async {
+    return await fetch(command: words, customTag: tag);
+  }
+
   static Future<List> removeById({required String command, required String id,String tag="remove_by_id_tage",}) async {
     return await fetch(command: [command, "=.id=$id"],customTag: tag);
   }
