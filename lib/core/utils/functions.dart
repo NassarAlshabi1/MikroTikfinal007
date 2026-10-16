@@ -18,9 +18,18 @@ List<String> generateUniqueRandomStrings({
   String prefix = "",
   String suffix = "",
   String type = "numbers", // "numbers", "mixed", "lower", "upper", "letters"
+  Set<String> excludedChars = const {},
   List<String> users=const []
 }) {
-  final String characters = kCardCharPools[type] ?? kCardCharPools["numbers"]!;
+  String characters = kCardCharPools[type] ?? kCardCharPools["numbers"]!;
+  // استبعاد أحرف يدوياً (مثل ABOTALAL) — إن استُبعدت التجمع كلها نرجع للأصل.
+  if (excludedChars.isNotEmpty) {
+    final filtered = characters
+        .split("")
+        .where((c) => !excludedChars.contains(c))
+        .join();
+    if (filtered.isNotEmpty) characters = filtered;
+  }
 
   Random random = Random();
   Set<String> uniqueValues = {};

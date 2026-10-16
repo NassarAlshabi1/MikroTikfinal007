@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/selected_menu.dart';
-// import 'package:mikronet/controllers/print/batches_controller.dart';
 import 'package:mikronet/features/prints/controllers/batches/add_batch_controller.dart';
-// import 'package:mikronet/views/helpers/dialogs.dart';
+import 'package:mikronet/app/routes/app_routes.dart';
 
 // استيراد الويجيت الموحدة
 import 'package:mikronet/core/ui/widgets/sub_page_header.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
 import 'package:mikronet/core/ui/widgets/section_title.dart';
 
+/// شاشة إنشاء/توليد دفعة كروت — نفس تقسيم شاشة ABOTALAL:
+/// بطاقة "خيارات الباقة" ثم بطاقة "مواصفات الكرت والتوليد" ثم زر إضافة كبير.
 class AddBatchView extends StatefulWidget {
   final BatchesFormController controller;
   final int? editIndex;
@@ -28,14 +29,7 @@ class AddBatchView extends StatefulWidget {
 }
 
 class _AddBatchViewState extends State<AddBatchView> {
-  
-  @override
-  void initState() {
-    super.initState();
-    if (widget.batch != null) {
-      // يمكنك تهيئة القيم هنا في حالة التعديل لاحقاً
-    }
-  }
+  int selectedTab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -44,470 +38,527 @@ class _AddBatchViewState extends State<AddBatchView> {
       child: Scaffold(
         backgroundColor: AppColors.page,
         body: GetBuilder<BatchesFormController>(
-          init: BatchesFormController(),
+          init: widget.controller,
           builder: (controller) {
             return Column(
               children: [
                 PremiumHeader(
-                  title:
-                      widget.editIndex == null ? "إنشاء دفعة كروت" : "تعديل الدفعة",
-                  subtitle: "توليد وإدارة رموز الشبكة",
-                  icon: Icons.layers_rounded,
+                  title: "إضافة وتوليد كروت يوزرمانجر",
+                  subtitle: widget.editIndex == null ? "إنشاء دفعة جديدة" : "تعديل الدفعة",
+                  icon: Icons.auto_awesome_motion_rounded,
                 ),
-            
+                _buildTabs(),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                    child: Column(
-                      children: [
-                        const SectionTitle(title: "إعدادات الدفعة الجديدة"),
-                        _buildFormCard(controller),
-                      ],
-                    ),
-                  ),
+                  child: selectedTab == 0
+                      ? _buildCreateTab(controller)
+                      : _buildImportTab(),
                 ),
-            
                 const AppMiniFooter(title: Text("Micronet Card Engine")),
               ],
             );
-          }
+          },
         ),
       ),
     );
   }
 
-  Widget _buildFormCard(BatchesFormController controller) {
+  // ---------- تبويبات الصفحة (إنشاء دفعة / استيراد دفعة) ----------
+  Widget _buildTabs() {
     return Container(
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: AppColors.border, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 10))
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          _tabItem("إنشاء دفعة", 0),
+          _tabItem("استيراد دفعة", 1),
         ],
       ),
+    );
+  }
+
+  Widget _tabItem(String label, int index) {
+    final active = selectedTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => selectedTab = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: active ? AppColors.info : Colors.transparent,
+                width: 2.5,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                index == 0 ? Icons.add_card_rounded : Icons.file_upload_outlined,
+                size: 18,
+                color: active ? AppColors.info : AppColors.textMuted,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: active ? AppColors.info : AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImportTab() {
+    // الاستيراد من الراوتر يحدث من شاشة الدفعات (batches_list)
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cloud_download_rounded, size: 56, color: AppColors.info),
+            const SizedBox(height: 14),
+            const Text("استيراد دفعة موجودة على الراوتر",
+                style: TextStyle(color: AppColors.textBright, fontWeight: FontWeight.w900, fontSize: 15)),
+            const SizedBox(height: 6),
+            const Text("ستُعرض دفعات الراوتر المخزّنة لتستوردها وتطبعها",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.batches),
+              icon: const Icon(Icons.layers_rounded, size: 18),
+              label: const Text("فتح دفعات الطباعة"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.info,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateTab(BatchesFormController controller) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildFieldLabel("المعلومات الأساسية",controller),
-          const SizedBox(height: 11),
-          _buildModernInput(
-              controller.batchName, "اسم الدفعة (مثال: دفعة الشتاء)", Icons.badge_outlined,controller),
-          _buildCardsCountRow(controller),
-          const Divider(height: 40),
-          _buildFieldLabel("إعدادات الربط والتصميم",controller),
-          const SizedBox(height: 11),
-          
-          // تم إضافة حقل اختيار العميل هنا
-          _buildCustomerDropdown(controller),
-          const SizedBox(height: 12),
-          
-          _buildProfileDropdown(controller),
-          const SizedBox(height: 12),
-          _buildTemplateSection(controller),
-          const Divider(height: 40),
-          
-          _buildFieldLabel("نمط اسم المستخدم",controller),
-          const SizedBox(height: 12),
-          _buildUsernamePatternSelector(controller),
-          const Divider(height: 40),
-          _buildFieldLabel("نمط كلمة المرور",controller),
-          const SizedBox(height: 12),
-          _buildGenerationTypeSelector(controller),
-          const Divider(height: 40),
-          
-          _buildFieldLabel("طول الرموز",controller),
-          const SizedBox(height: 11),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Expanded(child: Text("طول اسم المستخدم")),
-              SizedBox(width: 12),
-              Expanded(child: Text("طول كلمة المرور")),
-            ],
-          ),
-          const SizedBox(height: 11),
-          Row(
-            children: [
-              Expanded(
-                  child: _buildModernInput(
-                      controller.usernameLength, "طول اسم المستخدم", Icons.person,controller)),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: _buildModernInput(
-                      controller.passwordLength, "طول كلمة المرور", Icons.password,controller)),
-            ],
-          ),
-          const Divider(height: 40),
-          // // 
-          // Text(controller.dataInsert.toString()),
-          // const Divider(height: 40),
-          // 
-          _buildFieldLabel("تخصيص الرموز (اختياري)",controller),
-          const SizedBox(height: 11),
-          Row(
-            children: [
-              Expanded(
-                  child: _buildModernInput(
-                      controller.prefix, "بادئة (Prefix)", Icons.login_rounded,controller)),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: _buildModernInput(
-                      controller.suffix, "لاحقة (Suffix)", Icons.logout_rounded,controller)),
-            ],
-          ),
-          const SizedBox(height: 35),
-          _buildActionButtons(controller),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(String text,BatchesFormController controller) {
-    return Text(text,
-        style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary));
-  }
-
-  /// عدد الصفحات ↔ عدد الكروت مرتبطان بسعة القالب (مثل ABOTALAL).
-  Widget _buildCardsCountRow(BatchesFormController controller) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildLinkedInput(controller.numOfPages,
-              "عدد الصفحات", Icons.description_outlined, controller,
-              onChanged: (_) => controller.syncCardsFromPages()),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildLinkedInput(controller.numOfCards,
-              "عدد الكروت", Icons.pin_outlined, controller,
-              onChanged: (_) => controller.syncPagesFromCards()),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLinkedInput(
-      TextEditingController ctrl, String hint, IconData icon,
-      BatchesFormController controller,
-      {required ValueChanged<String> onChanged}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(
-          color: AppColors.soft,
-          borderRadius: BorderRadius.circular(15)),
-      child: TextField(
-        controller: ctrl,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        ),
-        onChanged: (value) {
-          onChanged(value);
-          controller.update();
-        },
-      ),
-    );
-  }
-
-  /// اختيار نمط اسم المستخدم — نفس خيارات ABOTALAL الأربعة.
-  Widget _buildUsernamePatternSelector(BatchesFormController controller) {
-    return Row(
-      children: controller.usernamePatterns.map((opt) {
-        bool isSelected = controller.selectedUsernamePattern == opt['id'];
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              controller.selectedUsernamePattern = opt['id'];
-              controller.update();
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 11),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.info : AppColors.soft,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                    color: isSelected ? Colors.transparent : AppColors.border),
+          // ======== بطاقة خيارات الباقة ========
+          const SectionTitle(title: "خيارات الباقة"),
+          const SizedBox(height: 8),
+          _groupCard(children: [
+            _labeledField(
+              label: "باقات اليوزرمانجر",
+              trailing: IconButton(
+                tooltip: "إضافة باقة",
+                onPressed: () => Get.toNamed(AppRoutes.addProfile),
+                icon: const Icon(Icons.add_circle_rounded, color: AppColors.info, size: 28),
               ),
-              child: Text(opt['label'],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : AppColors.textMuted)),
+              child: MySelectedMenu(
+                items: controller.allProfiles.map((p) => {"id": p.id, "name": p.name}).toList(),
+                onSave: (val) {
+                  controller.selectedProfile.value = val.toString();
+                  controller.update();
+                },
+                hintText: "اختر باقة",
+                selectedKeyName: "id",
+                bgColor: AppColors.overlay,
+                border: Border.all(color: AppColors.border),
+              ),
             ),
-          ),
-        );
-      }).toList(),
-    );
-  }
+            const SizedBox(height: 14),
+            _labeledField(
+              label: "قالب الطباعة",
+              trailing: TextButton(
+                onPressed: () => Get.toNamed(AppRoutes.templates),
+                child: const Text("تغيير القالب",
+                    style: TextStyle(color: AppColors.info, fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+              child: _templateDropdown(controller),
+            ),
+            const SizedBox(height: 14),
+            _labeledField(
+              label: "نقطة البيع (العميل)",
+              trailing: const Icon(Icons.storefront_rounded, color: AppColors.textMuted, size: 20),
+              child: MySelectedMenu(
+                items: controller.allCustomers.map((c) => {"id": c.name, "name": c.name}).toList(),
+                onSave: (val) {
+                  controller.selectedCustomer.value = val.toString();
+                  controller.update();
+                },
+                hintText: "اختر العميل",
+                selectedKeyName: "id",
+                bgColor: AppColors.overlay,
+                border: Border.all(color: AppColors.border),
+              ),
+            ),
+            const SizedBox(height: 14),
+            _buildModernInput(controller.batchName, "اسم الدفعة (مثال: دفعة الشتاء)",
+                Icons.badge_outlined, controller),
+          ]),
+          const SizedBox(height: 16),
 
-  Widget _buildModernInput(
-      TextEditingController ctrl, String hint, IconData icon,BatchesFormController controller,
-      {bool isNumber = false}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(
-          color: AppColors.soft,
-          borderRadius: BorderRadius.circular(15)),
-      child: TextField(
-        controller: ctrl,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        ),
-        onChanged: (value) {
-          controller.update();
-        } ,
+          // ======== بطاقة مواصفات الكرت ========
+          const SectionTitle(title: "مواصفات الكرت والتوليد"),
+          const SizedBox(height: 8),
+          _groupCard(children: [
+            _labeledField(
+              label: "صنف الكرت",
+              trailing: const Icon(Icons.password_rounded, color: AppColors.textMuted, size: 20),
+              child: _cardTypeDropdown(controller),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _labeledField(
+                    label: "نمط الاسم",
+                    child: _patternDropdown(controller),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _labeledField(
+                    label: "عدد",
+                    child: _numberInput(controller.usernameLength, "9"),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _labeledField(
+                    label: "عدد الصفحات",
+                    child: _numberInput(controller.numOfPages, "1",
+                        onChanged: (_) => controller.syncCardsFromPages()),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _labeledField(
+                    label: "عدد الكروت",
+                    child: _numberInput(controller.numOfCards, "51",
+                        onChanged: (_) => controller.syncPagesFromCards()),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _labeledField(
+              label: "نهاية الكرت",
+              child: _textInput(controller.suffix, "نهاية اختيارية (مثال: 99)"),
+            ),
+            const SizedBox(height: 14),
+            _labeledField(
+              label: "بداية الكرت",
+              child: _textInput(controller.prefix, "بداية اختيارية"),
+            ),
+            const SizedBox(height: 6),
+            // خيار استبعاد حرف/رقم (مثل ABOTALAL)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Text("استبعاد حرف/رقم",
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                const SizedBox(width: 8),
+                Checkbox(
+                  value: controller.excludeCharEnabled,
+                  onChanged: (v) {
+                    controller.excludeCharEnabled = v ?? false;
+                    controller.update();
+                  },
+                  activeColor: AppColors.info,
+                ),
+              ],
+            ),
+            if (controller.excludeCharEnabled)
+              _textInput(controller.excludedCharsCtrl,
+                  "رقم واحد أو حرف واحد (مثال: 0 أو O أو 1)"),
+            const SizedBox(height: 6),
+            _labeledField(
+              label: "طول كلمة المرور",
+              child: _numberInput(controller.passwordLength, "6"),
+            ),
+          ]),
+          const SizedBox(height: 20),
+
+          // ======== زر الإضافة الرئيسي ========
+          _mainAddButton(controller),
+          const SizedBox(height: 12),
+          _previewButton(controller),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 
-  Widget _buildDropdownRow(
-    BatchesFormController controller,
-    {
-    required double screenWidth,
-    double padding=10,
-    required Widget child,
-    required String label
-  }){
-    return
-      Row(
-        children: [
-          Expanded(
-            flex: 1,
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: child,
-          ),
-        ],
-      );
+  // ---------- مكوّنات مساعدة ----------
+  Widget _groupCard({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
   }
 
-  // --- دالة ويدجت حقل اختيار العميل الجديدة ---
-  Widget _buildCustomerDropdown(BatchesFormController controller) => 
-  _buildDropdownRow(controller,
-    screenWidth: Navigator.of(context).context.width , 
-    padding: 45,
-    label: "اختر العميل",
-    child: MySelectedMenu(
-      // استخدام اسم العميل كمعرف (id) لسهولة إرساله للميكروتك
-      items: controller.allCustomers.map((c)=>{"id":c.name ,"name":c.name}).toList(),
-      onSave: (val) {
-        controller.selectedCustomer.value=val.toString();
-        controller.update();
-      },
-      hintText: "اختر العميل",
-      selectedKeyName: "id",
-      bgColor: AppColors.soft,
-      border: Border.all(color: AppColors.border),
-    ),
-  );
-
-  Widget _buildProfileDropdown(BatchesFormController controller) => 
-  _buildDropdownRow(controller,
-    screenWidth: Navigator.of(context).context.width , 
-    padding: 45,
-    label: "اختر باقة",
-    child: MySelectedMenu(
-      items: controller.allProfiles.map((p)=>{"id":p.id ,"name":p.name}).toList(),
-      onSave: (val) {
-        controller.selectedProfile.value=val.toString();
-        controller.update();
-      },
-      hintText: "اختر باقة",
-      selectedKeyName: "id",
-      bgColor: AppColors.soft,
-      border: Border.all(color: AppColors.border),
-    ),
-  );
-
-  /// صف القوالب مع زر تحديث وملاحظة عدد القوالب المتاحة.
-  Widget _buildTemplateSection(BatchesFormController controller) {
-    final hasSkipped = controller.skippedTemplates > 0;
-    final hasError = controller.templatesLoadError.isNotEmpty;
+  Widget _labeledField({required String label, required Widget child, Widget? trailing}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(child: _buildTemplateDropdown(controller)),
-            IconButton(
-              tooltip: "تحديث القوالب",
-              onPressed: () => controller.reloadTemplates(),
-              icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
             ),
+            if (trailing != null) trailing,
           ],
         ),
-        if (controller.allTemplates.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(right: 54, bottom: 6),
-            child: Text(
-              "القوالب المتاحة: ${controller.allTemplates.length}",
-              style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
-            ),
-          ),
-        if (hasSkipped)
-          Padding(
-            padding: const EdgeInsets.only(right: 54, bottom: 6),
-            child: Text(
-              "تم تجاهل ${controller.skippedTemplates} قالبًا تالفًا",
-              style: const TextStyle(fontSize: 10, color: Colors.orange),
-            ),
-          ),
-        if (hasError)
-          const Padding(
-            padding: EdgeInsets.only(right: 54, bottom: 6),
-            child: Text(
-              "تعذّر جلب القوالب — اضغط زر التحديث",
-              style: TextStyle(fontSize: 10, color: Colors.redAccent),
-            ),
-          ),
+        const SizedBox(height: 6),
+        child,
       ],
     );
   }
 
-  Widget _buildTemplateDropdown(BatchesFormController controller) => 
-  _buildDropdownRow(controller,
-    screenWidth: Navigator.of(context).context.width , 
-    padding: 45,
-    label: "اختر قالب",
-    child: MySelectedMenu(
-      items: controller.allTemplates.map((t)=>{"id":t.id ,"name":t.name}).toList(),
-      onSave: (val) {
-        controller.selectedTemplate.value=int.parse(val);
-        controller.update();
-      },
-      hintText: "اختر قالب" ,
-      emptyText: controller.templatesLoadError.isNotEmpty
-          ? "تعذّر جلب القوالب"
-          : "لا توجد قوالب — أنشئ قالبًا من قسم الطباعة",
-      selectedKeyName: "id",
-      bgColor: AppColors.soft,
-      border: Border.all(color: AppColors.border),
-    ),
-  );
-  
-  Widget _buildGenerationTypeSelector(BatchesFormController controller) {
-    return Row(
-      children: controller.passwordTypes.map((opt) {
-        bool isSelected = controller.selectedPasswordType == opt['id'];
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              controller.selectedPasswordType=opt['id'];
-              controller.update();
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.soft,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                    color: isSelected
-                        ? Colors.transparent
-                        : AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  Icon(opt['icon'],
-                      color:
-                          isSelected ? Colors.white : AppColors.textMuted,
-                      size: 20),
-                  const SizedBox(height: 4),
-                  Text(opt['label'],textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textMuted)),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+  Widget _inputShell(Widget child) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.overlay,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      alignment: Alignment.center,
+      child: child,
     );
   }
 
-  Widget _buildActionButtons(BatchesFormController controller) {
+  Widget _textInput(TextEditingController ctrl, String hint) {
+    return TextField(
+      controller: ctrl,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+        filled: true,
+        fillColor: AppColors.overlay,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+      ),
+      style: const TextStyle(color: AppColors.textBright, fontSize: 13, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _numberInput(TextEditingController ctrl, String hint,
+      {ValueChanged<String>? onChanged}) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: TextInputType.number,
+      textAlign: TextAlign.center,
+      onChanged: (v) {
+        onChanged?.call(v);
+      },
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+        filled: true,
+        fillColor: AppColors.overlay,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+      ),
+      style: const TextStyle(color: AppColors.textBright, fontSize: 13, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _cardTypeDropdown(BatchesFormController controller) {
+    const labels = {
+      "none": "كلمة سر فارغة",
+      "same": "اسم المستخدم = كلمة السر",
+      "diff": "أرقام مختلفة",
+      "mixed": "أرقام وحروف مدمجة",
+    };
+    return _inputShell(DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: controller.selectedPasswordType,
+        isExpanded: true,
+        icon: const Icon(Icons.unfold_more_rounded, color: AppColors.textMuted, size: 20),
+        dropdownColor: AppColors.card,
+        style: const TextStyle(color: AppColors.textBright, fontSize: 13, fontWeight: FontWeight.bold),
+        items: controller.passwordTypes
+            .map((o) => DropdownMenuItem<String>(
+                  value: o["id"],
+                  child: Text(labels[o["id"]] ?? o["label"]),
+                ))
+            .toList(),
+        onChanged: (v) {
+          controller.selectedPasswordType = v ?? "none";
+          controller.update();
+        },
+      ),
+    ));
+  }
+
+  Widget _patternDropdown(BatchesFormController controller) {
+    return _inputShell(DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: controller.selectedUsernamePattern,
+        isExpanded: true,
+        icon: const Icon(Icons.arrow_drop_down_rounded, color: AppColors.textMuted, size: 20),
+        dropdownColor: AppColors.card,
+        style: const TextStyle(color: AppColors.textBright, fontSize: 13, fontWeight: FontWeight.bold),
+        items: controller.usernamePatterns
+            .map((o) => DropdownMenuItem<String>(
+                  value: o["id"],
+                  child: Text(o["label"]),
+                ))
+            .toList(),
+        onChanged: (v) {
+          controller.selectedUsernamePattern = v ?? "numbers";
+          controller.update();
+        },
+      ),
+    ));
+  }
+
+  Widget _templateDropdown(BatchesFormController controller) {
     return Row(
       children: [
         Expanded(
-            flex: 2,
-            child: _customButton(
-                "إنشاء وتوليد",
-                const [AppColors.headerTop, AppColors.headerBottom],
-                Icons.bolt_rounded,
-                controller.handleGenerate,
-                controller
-              )),
-        const SizedBox(width: 12),
-        Expanded(
-            child: _customButton(
-                "معاينة",
-                const [AppColors.green, Color(0xFF059669)],
-                Icons.visibility_rounded,
-                controller.handlePreview,
-                controller
-              )),
+          child: MySelectedMenu(
+            items: controller.allTemplates.map((t) => {"id": t.id, "name": t.name}).toList(),
+            onSave: (val) {
+              controller.selectedTemplate.value = int.parse(val);
+              controller.update();
+            },
+            hintText: "اختر قالب",
+            emptyText: controller.templatesLoadError.isNotEmpty
+                ? "تعذّر جلب القوالب"
+                : "لا توجد قوالب — أنشئ قالبًا من قسم الطباعة",
+            selectedKeyName: "id",
+            bgColor: AppColors.overlay,
+            border: Border.all(color: AppColors.border),
+          ),
+        ),
+        IconButton(
+          tooltip: "تحديث القوالب",
+          onPressed: controller.reloadTemplates,
+          icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 20),
+        ),
       ],
     );
   }
 
-  Widget _customButton(
-      String text, List<Color> colors, IconData icon, VoidCallback tap,BatchesFormController controller) {
+  Widget _buildModernInput(TextEditingController ctrl, String hint, IconData icon,
+      BatchesFormController controller) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: AppColors.overlay,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: TextField(
+        controller: ctrl,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        onChanged: (value) => controller.update(),
+        style: const TextStyle(color: AppColors.textBright, fontSize: 13, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _mainAddButton(BatchesFormController controller) {
     return InkWell(
-      onTap: tap,
+      onTap: controller.handleGenerate,
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-            gradient: LinearGradient(colors: colors),
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                  color: colors.last.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5))
-            ]),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, color: Colors.white, size: 18),
-          const SizedBox(width: 8),
-          Text(text,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13))
-        ]),
+          gradient: const LinearGradient(colors: [AppColors.info, AppColors.sky]),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(color: AppColors.info.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 5))
+          ],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_circle_rounded, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text("إضافة وتوليد الكروت",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _previewButton(BatchesFormController controller) {
+    return InkWell(
+      onTap: controller.handlePreview,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        decoration: BoxDecoration(
+          color: AppColors.soft,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.visibility_rounded, color: AppColors.textMuted, size: 18),
+            SizedBox(width: 8),
+            Text("معاينة الكروت قبل الإنشاء",
+                style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.bold, fontSize: 13)),
+          ],
+        ),
       ),
     );
   }

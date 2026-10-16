@@ -47,6 +47,8 @@ class BatchesFormController extends GetxController {
   TextEditingController suffix = TextEditingController();
   TextEditingController usernameLength = TextEditingController();
   TextEditingController passwordLength = TextEditingController();
+  TextEditingController excludedCharsCtrl = TextEditingController();
+  bool excludeCharEnabled = false;
   RxInt selectedTemplate = 0.obs;
   RxString selectedProfile = "".obs;
   RxString selectedCustomer = "".obs; // العميل المختار
@@ -174,12 +176,18 @@ class BatchesFormController extends GetxController {
     int uLen = int.parse(usernameLength.text.trim());
     int pLen = int.tryParse(passwordLength.text.trim()) ?? 5;
 
+    // أحرف يدوية مستبعدة (خيار استبعاد حرف/رقم — مثل ABOTALAL)
+    final excluded = excludeCharEnabled
+        ? excludedCharsCtrl.text.trim().split("").toSet()
+        : const <String>{};
+
     generatedUsernames = generateUniqueRandomStrings(
       count: count,
       length: uLen,
       prefix: prefix.text.trim(),
       suffix: suffix.text.trim(),
       type: selectedUsernamePattern,
+      excludedChars: excluded,
       users: existingUsers, 
     );
 
@@ -189,6 +197,7 @@ class BatchesFormController extends GetxController {
         count: count,
         length: pLen,
         type: dataInsert["password_type"] == "mixed" ? "mixed" : "numbers",
+        excludedChars: excluded,
       );
     } else if (dataInsert["password_type"] == "same") {
       generatedPasswords = List.from(generatedUsernames);

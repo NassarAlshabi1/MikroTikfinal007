@@ -30,7 +30,18 @@ void main() {
       expect(cards.every((c) => c.startsWith("A") && c.endsWith("99")), isTrue);
     });
 
-    test('سقف المحاولات يرمي خطأً بدل التعليق عند استنفاد التركيبات', () {
+    test('استبعاد حرف/رقم يزيله من الرموز المولدة', () {
+    final res = generateUniqueRandomStrings(
+      count: 50,
+      length: 6,
+      type: 'numbers',
+      excludedChars: {'0', '5'},
+    );
+    expect(res.length, 50);
+    expect(res.every((c) => !c.contains('0') && !c.contains('5')), isTrue);
+  });
+
+  test('سقف المحاولات يرمي خطأً بدل التعليق عند استنفاد التركيبات', () {
       expect(
         () => generateUniqueRandomStrings(count: 15, length: 1, type: "numbers",
             users: const []),
