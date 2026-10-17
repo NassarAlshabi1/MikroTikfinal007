@@ -11,6 +11,10 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
+        // [ci-fix] مرايا Maven Central قبل mavenCentral (تقييد 403 من
+        // repo.maven.apache.org على عناوين GitHub Actions runners)
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
         google()
         mavenCentral()
         gradlePluginPortal()

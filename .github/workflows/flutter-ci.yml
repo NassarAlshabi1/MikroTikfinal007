@@ -126,6 +126,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          # [ci-fix] تخزين مؤقت لتبعيات Gradle بين الجولات: تقليل التنزيلات
+          # من الشبكة ⇒ تقليل التعرض لتقييد 403 من Maven Central وتسريع البناء
+          cache: 'gradle'
 
       # 🔐 بوابة المفتاح الموحّد: نفس مفتاح التوقيع في كل بناء ⇒ النسخة الجديدة
       #    تُثبَّت فوق المثبَّتة بلا رسالة «تعارض الحزمة/لم يتم تثبيت التطبيق».
@@ -236,13 +239,59 @@ jobs:
           echo "versionName=$VERSION versionCode=$CODE asset=$ASSET previous=${PREV:-none}"
           exit 0
 
+      # [ci-fix] المشروع المضمّن flutter_tools/gradle (المهمة :gradle:compileGroovy)
+      # يستخدم مستودعاته من ملفات Flutter SDK نفسها (dependencyResolutionManagement
+      # مع FAIL_ON_PROJECT_REPOS) ولا تصل إليها تعديلات android/ — لذا نُدخل المرايا
+      # مباشرة في ملف الـ SDK هنا قبل البناء (مطلوب لملف الأصل:
+      # repo.maven.apache.org يرجع 403 أحيانًا لعناوين GitHub runners، و403 خطأ
+      # فادح في Gradle فلا يجرّب المستودع التالي).
+      - name: Add Maven mirrors to Flutter SDK (403 workaround)
+        shell: bash
+        run: |
+          set -e
+          FLUTTER_DIR="${FLUTTER_ROOT:-$(dirname "$(dirname "$(command -v flutter)")")}"
+          F="$FLUTTER_DIR/packages/flutter_tools/gradle/settings.gradle.kts"
+          echo "الملف الهدف: $F"
+          [ -f "$F" ] || { echo "::error::الملف غير موجود: $F"; exit 1; }
+
+          if grep -q "maven.aliyun.com" "$F"; then
+            echo "المرايا موجودة مسبقًا — تخطّي (idempotent)"
+          else
+            cp "$F" "$F.orig"
+            sed -i 's|^\([[:space:]]*\)google()|\1maven("https://maven.aliyun.com/repository/public")\n\1maven("https://repo.huaweicloud.com/repository/maven/")\n\1google()|' "$F"
+          fi
+
+          echo "--- المحتوى بعد الترقيع ---"
+          cat "$F"
+          grep -q "maven.aliyun.com" "$F" || { echo "::error::فشل إدخال المرايا في $F"; exit 1; }
+          echo "✅ المرايا جاهزة في flutter_tools/gradle/settings.gradle.kts"
+
       # بناء لمعمارية الأجهزة الحديثة فقط (arm64-v8a) — ملف أصغر وأسرع تثبيتًا
       # ملاحظة: الأجهزة القديمة 32-بت (armeabi-v7a) والمحاكيات (x86_64) غير مدعومة في هذا الملف
+      # [ci-fix] إعادة المحاولة حتى 3 مرات لتحمل أي هفوات شبكية عابرة
       - name: Build APK (arm64-v8a only)
+        shell: bash
         run: |
-          flutter build apk --release --target-platform android-arm64 \
-            --build-name=${{ steps.version.outputs.version_name }} \
-            --build-number=${{ steps.version.outputs.version_code }}
+          set +e
+          ATTEMPTS=3
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "=== محاولة البناء $i/$ATTEMPTS ==="
+            flutter build apk --release --target-platform android-arm64 \
+              --build-name=${{ steps.version.outputs.version_name }} \
+              --build-number=${{ steps.version.outputs.version_code }}
+            code=$?
+            if [ $code -eq 0 ]; then
+              echo "✅ نجح البناء في المحاولة $i"
+              exit 0
+            fi
+            echo "⚠️ فشلت المحاولة $i (exit=$code)"
+            if [ $i -lt $ATTEMPTS ]; then
+              echo "انتظار $((i*30)) ثانية قبل المحاولة التالية..."
+              sleep $((i*30))
+            fi
+          done
+          echo "::error::فشل البناء بعد $ATTEMPTS محاولات"
+          exit 1
 
       # إثبات الإصدار والمعمارية المدمجَين داخل APK، ورفض أي مكتبات 32-بت
       - name: Verify APK metadata (version + arm64 only)

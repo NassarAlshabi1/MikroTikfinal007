@@ -1,5 +1,11 @@
 allprojects {
     repositories {
+        // [ci-fix] مرايا Maven Central تُجرَّب قبل mavenCentral:
+        // repo.maven.apache.org يرجع 403 Forbidden أحيانًا لعناوين GitHub Actions
+        // runners (تقييد معدل من Maven Central)، وGradle يعامل 403 كخطأ فادح
+        // فوريًا فلا يجرّب المستودعات التالية — لذا يجب أن تأتي المرايا أولًا.
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
         google()
         mavenCentral()
     }
