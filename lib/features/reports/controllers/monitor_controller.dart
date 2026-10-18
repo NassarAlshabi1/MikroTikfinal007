@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:mikronet/core/ui/dialogs/confirm_dialog.dart';
+import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/features/reports/data/reports_api.dart';
 import 'package:mikronet/features/reports/data/router_monitor_api.dart';
 
@@ -15,6 +17,9 @@ class MonitorController extends GetxController with GetSingleTickerProviderState
   final RxBool isLoading = true.obs;
   final RxBool isLiveRefreshing = false.obs;
   final RxString errorMessage = "".obs;
+
+  /// منفذ يجري الآن تفعيله/تعطيله (معرّفه) — لتعطيل زره أثناء العملية.
+  final RxString togglingInterfaceId = "".obs;
 
   // بيانات الموارد العامة
   final RxString cpu = "0%".obs;
@@ -114,4 +119,40 @@ class MonitorController extends GetxController with GetSingleTickerProviderState
   }
 
   bool get hasHealth => health.isNotEmpty;
+
+  /// تفعيل/تعطيل منفذ بعد تأكيد المستخدم (قد يقطع الاتصال إن كان منفذ التغذية).
+  Future<void> toggleInterface(RouterInterfaceModel element) async {
+    if (togglingInterfaceId.isNotEmpty) return;
+
+    final enable = element.disabled;
+    final action = enable ? "تفعيل" : "تعطيل";
+
+    final confirmed = await confirmAction(
+      "$action المنفذ «${element.name}»؟\n"
+      "${enable ? "سيعود المنفذ للعمل وتمرير حركة البيانات عبره." : "تنبيه: تعطيل منفذ التغذية (WAN) يقطع اتصالك بالإنترنت، وتعطيل منفذ يفصل كل المتصلين عبره."}",
+    );
+    if (!confirmed) return;
+
+    togglingInterfaceId.value = element.id;
+    showLoadingDialog(message: "جاري $action المنفذ...");
+
+    final response = await RouterMonitorApi.setInterfaceEnabled(
+      id: element.id,
+      name: element.name,
+      enable: enable,
+    );
+
+    hideDialog();
+    togglingInterfaceId.value = "";
+
+    await showMsgDialog(
+      message: response.status ? "تم $action المنفذ «${element.name}»" : response.message,
+      type: response.status ? MsgType.success : MsgType.error,
+    );
+
+    if (response.status) {
+      await _loadInterfaces();
+      unawaited(refreshTraffic());
+    }
+  }
 }

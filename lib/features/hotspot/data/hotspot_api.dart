@@ -300,6 +300,23 @@ class HotspotApi {
     return AppResponse(status: true, message: "تم قطع $removed جلسة", data: removed);
   }
 
+  /// محو **جميع** جلسات Hotspot النشطة دفعة واحدة (`/ip/hotspot/active/remove-all`).
+  /// أسرع وأخف على الراوتر من القطع المتكرر جلسةً جلسة.
+  static Future<AppResponse<void>> clearAllSessions() async {
+    try {
+      await MikrotikClient.fetch(
+        command: ["/ip/hotspot/active/remove-all"],
+        customTag: "hotspot_active_remove_all",
+      );
+      return AppResponse(status: true, message: "done");
+    } catch (e) {
+      return AppResponse(
+        status: false,
+        message: _friendlyError(e, "تعذّر محو الجلسات — قد لا يدعم الراوتر هذا الأمر"),
+      );
+    }
+  }
+
   // ==================== الباقات والخوادم ====================
 
   static Future<AppResponse<List<HotspotProfile>>> printProfiles() async {

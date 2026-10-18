@@ -136,6 +136,7 @@ class HotspotVoucherPdf {
           if (item.profile.isNotEmpty) _line("الباقة: ${item.profile}", font),
           if (item.validity.isNotEmpty) _line("الصلاحية: ${item.validity}", font),
           if (item.dataLimit.isNotEmpty) _line("حجم البيانات: ${item.dataLimit}", font),
+          if (item.price > 0) _line(item.priceLabel, font, color: PdfColor.fromHex('#1E3A8A')),
           if (item.note.isNotEmpty) _line(item.note, font, color: PdfColors.grey700),
           pw.SizedBox(height: 6),
           pw.Text("✂ ────────────────", style: _style(font, size: 7, color: PdfColors.grey500)),

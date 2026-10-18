@@ -435,6 +435,10 @@ class VoucherSpec {
   /// حد البيانات الكلي بصيغة RouterOS (مثل `2G` أو `1073741824`).
   final String limitBytes;
 
+  /// سعر الكرت الواحد (يُسجّل في تقرير المبيعات عند التوليد).
+  /// 0 = كروت بلا سعر (لا تُسجّل مبيعات).
+  final double price;
+
   final String comment;
 
   const VoucherSpec({
@@ -447,6 +451,7 @@ class VoucherSpec {
     this.server = "all",
     this.limitUptime = "",
     this.limitBytes = "",
+    this.price = 0,
     this.comment = "",
   });
 
@@ -472,8 +477,14 @@ class VoucherSpec {
     if (limitBytes.trim().isNotEmpty && ExpiredBytesParser.parse(limitBytes) == null) {
       issues.add("صيغة حد البيانات غير مفهومة (أمثلة صحيحة: 500M · 2G · 1073741824)");
     }
+    if (price < 0 || price > 1000000) {
+      issues.add("سعر الكرت يجب أن يكون بين 0 و 1000000 (0 = بلا تسجيل مبيعات)");
+    }
     return issues;
   }
+
+  /// هل تُسجّل هذه الدفعة في تقرير المبيعات؟
+  bool get shouldRecordSale => price > 0;
 }
 
 /// قسيمة (كرت هوت سبوت) مولّدة.
@@ -533,6 +544,10 @@ class VoucherPrintItem {
   final String profile;
   final String validity;
   final String dataLimit;
+
+  /// سعر الكرت (0 = بلا سعر).
+  final double price;
+
   final String note;
 
   const VoucherPrintItem({
@@ -541,8 +556,18 @@ class VoucherPrintItem {
     this.profile = "",
     this.validity = "",
     this.dataLimit = "",
+    this.price = 0,
     this.note = "",
   });
+
+  /// سطر السعر كما يُطبع على الكرت (فارغ إن لم يُحدّد سعر).
+  String get priceLabel {
+    if (price <= 0) return "";
+    final text = price == price.roundToDouble()
+        ? price.round().toString()
+        : price.toStringAsFixed(2);
+    return "السعر: $text";
+  }
 }
 
 /// ============================ تصدير القسائم ============================
@@ -551,7 +576,7 @@ class VoucherExporter {
   /// تصدير CSV (متوافق مع Excel: BOM + سطر عناوين + تهريب الفواصل).
   static String toCsv(List<VoucherPrintItem> items) {
     final buffer = StringBuffer();
-    buffer.write('username,password,profile,validity,data_limit,note\r\n');
+    buffer.write('username,password,profile,validity,data_limit,price,note\r\n');
     for (final item in items) {
       buffer.write([
         _escape(item.username),
@@ -559,11 +584,19 @@ class VoucherExporter {
         _escape(item.profile),
         _escape(item.validity),
         _escape(item.dataLimit),
+        _escape(item.price <= 0 ? "" : _priceText(item.price)),
         _escape(item.note),
       ].join(','));
       buffer.write('\r\n');
     }
     return buffer.toString();
+  }
+
+  /// تمثيل نصي موحّد للسعر (بلا فواصل تُفسد CSV).
+  static String _priceText(double price) {
+    return price == price.roundToDouble()
+        ? price.round().toString()
+        : price.toStringAsFixed(2);
   }
 
   static String _escape(String value) {
@@ -590,6 +623,46 @@ class VoucherExporter {
       buffer.writeln(parts.join(' '));
     }
     return buffer.toString();
+  }
+}
+
+/// ====================== تسجيل مبيعات القسائم ======================
+
+/// يبني صفوف جدول `sales_records` من دفعة قسائم مولّدة (منطق نقي قابل للاختبار).
+///
+/// مستوحى من تدفق تطبيق MikroNet Voucher: كل عملية توليد كروت بسعر تُسجّل
+/// تلقائيًا في تقرير المبيعات — صف لكل كرت أُضيف فعلًا على الراوتر.
+class VoucherSalesRecorder {
+  /// [vouchers] القسائم المولّدة، و[failedNames] أسماء التي فشل إضافتها،
+  /// و[spec] المواصفات (السعر والباقة)، و[routerSerial] معرّف الراوتر.
+  static List<Map<String, dynamic>> buildRows({
+    required List<HotspotVoucher> vouchers,
+    required VoucherSpec spec,
+    Set<String> failedNames = const {},
+    String routerSerial = "",
+    DateTime? now,
+  }) {
+    if (!spec.shouldRecordSale) return const [];
+
+    final moment = now ?? DateTime.now();
+    final saleDate = "${moment.year}"
+        "-${moment.month.toString().padLeft(2, '0')}"
+        "-${moment.day.toString().padLeft(2, '0')}";
+
+    final rows = <Map<String, dynamic>>[];
+    for (final voucher in vouchers) {
+      if (failedNames.contains(voucher.username)) continue;
+      rows.add({
+        'card_username': voucher.username,
+        'profile_name': spec.profile,
+        'price': spec.price,
+        'sale_date': saleDate,
+        'timestamp': moment.millisecondsSinceEpoch,
+        'router_serial': routerSerial,
+        'source': 'hotspot',
+      });
+    }
+    return rows;
   }
 }
 

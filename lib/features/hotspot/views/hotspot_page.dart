@@ -341,6 +341,15 @@ class HotspotPage extends GetView<HotspotController> {
                 ),
                 const SizedBox(width: 8),
                 Obx(() => OutlinedButton.icon(
+                      onPressed: controller.sessions.isEmpty
+                          ? null
+                          : controller.disconnectAllSessions,
+                      icon: const Icon(Icons.highlight_remove_rounded, size: 17),
+                      label: const Text("قطع الكل", style: TextStyle(fontSize: 12.5)),
+                      style: _outlinedStyle(color: _amber),
+                    )),
+                const SizedBox(width: 8),
+                Obx(() => OutlinedButton.icon(
                       onPressed: controller.selectedSessions.isEmpty
                           ? null
                           : controller.disconnectSelectedSessions,
@@ -795,6 +804,7 @@ class HotspotPage extends GetView<HotspotController> {
     final profileCtrl = TextEditingController(text: "default");
     final uptimeCtrl = TextEditingController(text: "1d");
     final bytesCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
     final commentCtrl = TextEditingController();
     var charset = VoucherCharset.digits;
 
@@ -831,10 +841,17 @@ class HotspotPage extends GetView<HotspotController> {
                   _dialogField(profileCtrl, "الباقة (profile)", Icons.card_membership_rounded),
                   _dialogField(uptimeCtrl, "مدة الصلاحية (1d · 12h · 1w2d)", Icons.timer_rounded),
                   _dialogField(bytesCtrl, "حد البيانات (500M · 2G — اختياري)", Icons.data_usage_rounded),
+                  _dialogField(
+                    priceCtrl,
+                    "سعر الكرت (اختياري — يُسجّل في المبيعات)",
+                    Icons.sell_rounded,
+                    isNumber: true,
+                  ),
                   _dialogField(commentCtrl, "ملاحظة على القسائم", Icons.notes_rounded),
                   const SizedBox(height: 6),
                   const Text(
-                    "تُستثنى الأحرف الملتبسة (0/O و 1/I) تلقائيًا لسهولة القراءة.",
+                    "تُستثنى الأحرف الملتبسة (0/O و 1/I) تلقائيًا لسهولة القراءة.\n"
+                    "عند تحديد سعر تُسجّل الكروت المولّدة تلقائيًا في تقرير المبيعات.",
                     style: TextStyle(color: AppColors.textMuted, fontSize: 10.5),
                   ),
                 ],
@@ -854,6 +871,9 @@ class HotspotPage extends GetView<HotspotController> {
                     profile: profileCtrl.text.trim().isEmpty ? "default" : profileCtrl.text.trim(),
                     limitUptime: uptimeCtrl.text.trim(),
                     limitBytes: bytesCtrl.text.trim(),
+                    price: double.tryParse(
+                            priceCtrl.text.trim().replaceAll(',', '.')) ??
+                        0,
                     comment: commentCtrl.text.trim(),
                   );
 

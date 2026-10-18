@@ -328,6 +328,34 @@ class MonitorPage extends GetView<MonitorController> {
                   style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11),
                 ),
               ),
+              const SizedBox(width: 6),
+              Obx(() {
+                final busy = controller.togglingInterfaceId.value == element.id;
+                final anyToggling = controller.togglingInterfaceId.isNotEmpty;
+                return IconButton(
+                  onPressed: (busy || anyToggling)
+                      ? null
+                      : () => controller.toggleInterface(element),
+                  icon: busy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          element.disabled
+                              ? Icons.power_settings_new_rounded
+                              : Icons.power_off_rounded,
+                          size: 20,
+                          color: element.disabled ? AppColors.green : AppColors.danger,
+                        ),
+                  tooltip: element.disabled
+                      ? "تفعيل المنفذ"
+                      : "تعطيل المنفذ (يقطع المتصلين عبره)",
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  padding: EdgeInsets.zero,
+                );
+              }),
             ],
           ),
           const SizedBox(height: 10),

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/hotspot/data/hotspot_api.dart';
+import 'package:mikronet/core/storage/db_api.dart';
+import 'package:mikronet/core/mikrotik/router_api.dart';
 import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/core/ui/dialogs/confirm_dialog.dart';
 import 'package:mikronet/features/hotspot/services/hotspot_logic.dart';
@@ -48,6 +50,9 @@ class HotspotController extends GetxController with GetSingleTickerProviderState
 
   /// آخر قسائم مولّدة (للطباعة والتصدير).
   final RxList<VoucherPrintItem> lastVouchers = <VoucherPrintItem>[].obs;
+
+  /// عدد مبيعات آخر دفعة قسائم سُجّلت في تقرير المبيعات.
+  final RxInt lastRecordedSales = 0.obs;
 
   // ===================== صفحة الدخول =====================
   final RxList<HotspotLoginFile> loginFiles = <HotspotLoginFile>[].obs;
@@ -345,6 +350,30 @@ class HotspotController extends GetxController with GetSingleTickerProviderState
     if (response.status) await loadSessions();
   }
 
+  /// محو **جميع** الجلسات النشطة دفعة واحدة (أمر الراوتر remove-all).
+  Future<void> disconnectAllSessions() async {
+    if (sessions.isEmpty) {
+      await showMsgDialog(message: "لا توجد جلسات نشطة أصلاً", type: MsgType.warning);
+      return;
+    }
+
+    final confirmed = await confirmAction(
+      "سيتم قطع ${sessions.length} جلسة نشطة وإخراج جميع المتصلين من الشبكة فورًا.\n"
+      "هل تريد المتابعة؟",
+    );
+    if (!confirmed) return;
+
+    showLoadingDialog(message: "جاري محو جميع الجلسات...");
+    final response = await HotspotApi.clearAllSessions();
+    hideDialog();
+
+    await showMsgDialog(
+      message: response.status ? "تم محو جميع الجلسات النشطة" : response.message,
+      type: response.status ? MsgType.success : MsgType.error,
+    );
+    if (response.status) await loadSessions();
+  }
+
   // ===================== توليد القسائم =====================
 
   /// توليد قسائم وإضافتها للراوتر. ترجع عدد المضاف.
@@ -390,15 +419,61 @@ class HotspotController extends GetxController with GetSingleTickerProviderState
               profile: spec.profile,
               validity: validity,
               dataLimit: dataLimit,
+              price: spec.price,
               note: spec.comment,
             ),
           )
           .toList(),
     );
 
-    await showMsgDialog(message: response.message, type: MsgType.success);
+    // تسجيل المبيعات تلقائيًا في تقرير المبيعات (إن حُدّد سعر للكرت)
+    final recorded = await _recordVoucherSales(
+      vouchers: vouchers,
+      spec: spec,
+      failedNames: failedNames,
+    );
+    lastRecordedSales.value = recorded;
+
+    final salesNote = recorded > 0 ? "\nوسُجّلت $recorded مبيعة في تقرير المبيعات" : "";
+    await showMsgDialog(
+      message: "${response.message}$salesNote",
+      type: MsgType.success,
+    );
     await loadUsers();
     return response.data?.added ?? 0;
+  }
+
+  /// يبني صفوف المبيعات ويُدرجها في جدول `sales_records` دفعة واحدة.
+  /// يرجع عدد الصفوف المسجّلة فعليًا (0 إن لم يُحدّد سعر).
+  Future<int> _recordVoucherSales({
+    required List<HotspotVoucher> vouchers,
+    required VoucherSpec spec,
+    required Set<String> failedNames,
+  }) async {
+    final rows = VoucherSalesRecorder.buildRows(
+      vouchers: vouchers,
+      spec: spec,
+      failedNames: failedNames,
+      routerSerial: await _currentRouterSerial(),
+    );
+    if (rows.isEmpty) return 0;
+
+    try {
+      await DBApi.insertBatch("sales_records", rows);
+      return rows.length;
+    } catch (_) {
+      // فشل التسجيل لا يُفشل التوليد — الكروت أُضيفت بنجاح على الراوتر
+      return 0;
+    }
+  }
+
+  /// معرّف الراوتر الحالي (إن توفّر) لربط سجل المبيعة به.
+  Future<String> _currentRouterSerial() async {
+    try {
+      final response = await RouterApi.getRouterSerial();
+      if (response.status && response.data != null) return response.data!;
+    } catch (_) {}
+    return "";
   }
 
   /// طباعة/مشاركة آخر قسائم مولّدة (PDF جاهز للقص).

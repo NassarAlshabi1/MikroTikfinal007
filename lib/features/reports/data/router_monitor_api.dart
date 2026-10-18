@@ -140,6 +140,39 @@ class RouterMonitorApi {
     }
   }
 
+  /// تفعيل/تعطيل منفذ (`/interface/enable` أو `/interface/disable`).
+  ///
+  /// يجرّب المعرّف الداخلي (`.id`) أولًا ثم اسم المنفذ — للأوامر التي
+  /// تقبل `numbers=` فقط على بعض إصدارات RouterOS.
+  static Future<AppResponse<void>> setInterfaceEnabled({
+    required String id,
+    required String name,
+    required bool enable,
+  }) async {
+    final command = enable ? "/interface/enable" : "/interface/disable";
+    final actionLabel = enable ? "تفعيل" : "تعطيل";
+    Object? lastError;
+
+    for (final target in ["=.id=$id", "=numbers=$name"]) {
+      if (target.endsWith("=")) continue; // قيمة فارغة (id مفقود مثلًا)
+      try {
+        await MikrotikClient.fetch(
+          command: [command, target],
+          customTag: enable ? "iface_enable" : "iface_disable",
+        );
+        return AppResponse(status: true, message: "done");
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    return AppResponse(
+      status: false,
+      message: "تعذّر $actionLabel المنفذ «$name» — "
+          "تحقق من صلاحيات الحساب (policy: write).\n${lastError ?? ''}",
+    );
+  }
+
   static double _asDouble(dynamic value) {
     if (value == null) return 0;
     if (value is num) return value.toDouble();

@@ -2,10 +2,24 @@
 
 # 📋 تقرير حالة الميزات: الكود مقابل النص التسويقي
 
-**آخر تحديث:** 2026-10-02 · **الفرع:** `arena/01a0fa82-mikrotikfinal007`
+**آخر تحديث:** 2026-10-18 · **الفرع:** `arena/1e8ad561-mikrotikfinal007`
 
 > هذا التقرير مبني على تدقيق فعلي للكود (118 ملف Dart + `pubspec.yaml` + قاعدة SQLite)،
 > ويُحدَّث بعد كل عملية تنفيذ. **لا تُعلن أي ميزة على أنها منفّذة إلا بوجود دليل في الكود.**
+
+---
+
+## 🔄 ميزات منقولة من تطبيق MikroNet Voucher (2026-10-18)
+
+> نُقلت الميزات غير الموجودة من تطبيق `Bidroali91/MikroNet_Voucher` (Kotlin)
+> إلى هذا التطبيق — للتفاصيل راجع أعلى `CHANGELOG.md`.
+
+| # | الميزة | الدليل في الكود | أوامر RouterOS |
+| --- | --- | --- | --- |
+| 1 | **تسعير الكروت + تسجيل المبيعات تلقائيًا عند توليد قسائم Hotspot** | `VoucherSpec.price` + `VoucherSalesRecorder` (hotspot_logic.dart) + إدراج دفعي في `sales_records` من `HotspotController._recordVoucherSales` | — (تخزين محلي SQLite) |
+| 2 | **سعر الكرت على القسيمة المطبوعة وفي CSV** | `VoucherPrintItem.priceLabel` + `HotspotVoucherPdf._cell` + عمود `price` في `VoucherExporter.toCsv` | — |
+| 3 | **تفعيل/تعطيل المنافذ بضغطة** | `RouterMonitorApi.setInterfaceEnabled` + زر الطاقة في `monitor_page.dart` | `/interface/enable` · `/interface/disable` |
+| 4 | **محو جميع جلسات Hotspot النشطة دفعة واحدة** | `HotspotApi.clearAllSessions` + زر «قطع الكل» في `hotspot_page.dart` | `/ip/hotspot/active/remove-all` |
 
 ---
 

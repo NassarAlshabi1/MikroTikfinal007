@@ -338,6 +338,32 @@ void main() {
       expect(const VoucherSpec(count: 1, limitUptime: '1h30').validate(), isNotEmpty);
       expect(const VoucherSpec(count: 1, limitBytes: 'كثير').validate(), isNotEmpty);
     });
+
+    test('سعر الكرت: يقبل الصحيح ويرفض السالب والمبالغ فيه', () {
+      // سعر صحيح — بلا أخطاء متعلقة بالسعر
+      expect(
+        const VoucherSpec(count: 1, price: 10).validate()
+            .where((issue) => issue.contains('سعر')),
+        isEmpty,
+      );
+      // 0 = بلا تسجيل مبيعات — مقبول
+      expect(
+        const VoucherSpec(count: 1, price: 0).validate()
+            .where((issue) => issue.contains('سعر')),
+        isEmpty,
+      );
+      // سالب أو مبالغ فيه — مرفوض
+      expect(
+        const VoucherSpec(count: 1, price: -1).validate()
+            .where((issue) => issue.contains('سعر')),
+        isNotEmpty,
+      );
+      expect(
+        const VoucherSpec(count: 1, price: 2000000).validate()
+            .where((issue) => issue.contains('سعر')),
+        isNotEmpty,
+      );
+    });
   });
 
   group('تصدير القسائم', () {
@@ -355,9 +381,9 @@ void main() {
       final csv = VoucherExporter.toCsv(items);
       final lines = csv.split('\r\n').where((line) => line.isNotEmpty).toList();
 
-      expect(lines.first, 'username,password,profile,validity,data_limit,note');
+      expect(lines.first, 'username,password,profile,validity,data_limit,price,note');
       expect(lines.length, 2);
-      expect(lines[1], '1001,9182,default,1d,1G,');
+      expect(lines[1], '1001,9182,default,1d,1G,,');
     });
 
     test('تهريب الفواصل وعلامات الاقتباس', () {
