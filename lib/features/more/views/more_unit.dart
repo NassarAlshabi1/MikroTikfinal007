@@ -36,7 +36,19 @@ class MoreUnitPage extends GetView<MoreUnitController> {
                 children: [
                   // عنوان القسم
                   const SectionTitle(title: "إدارة النظام"),
-                  
+
+                  // النسخ الاحتياطي لبيانات التطبيق (نفس ترتيب MikroNet: النسخ الاحتياطي أولاً)
+                  MainActionCard(
+                    title: "نسخ بيانات التطبيق",
+                    subtitle: "حفظ قوالب الكروت والراوترات المحفوظة كملف قاعدة بيانات",
+                    icon: Icons.save_rounded,
+                    color: AppColors.primary,
+                    onTap: controller.goToBackupAndRestore,
+                  ),
+
+                  // مسافة بين البطاقات
+                  const SizedBox(height: 11),
+
                   // النسخ الاحتياطي الحقيقي لراوتر MikroTik
                   MainActionCard(
                     title: "نسخ الراوتر الاحتياطي",
@@ -104,19 +116,7 @@ class MoreUnitPage extends GetView<MoreUnitController> {
 
                   const SizedBox(height: 11),
 
-                  // النسخ الاحتياطي لبيانات التطبيق
-                  MainActionCard(
-                    title: "نسخ بيانات التطبيق",
-                    subtitle: "حفظ قوالب الكروت والراوترات المحفوظة كملف قاعدة بيانات",
-                    icon: Icons.save_rounded,
-                    color: AppColors.primary,
-                    onTap: controller.goToBackupAndRestore,
-                  ),
-
-                  // مسافة بين البطاقات
-                  const SizedBox(height: 11),
-
-                  // الزر الثاني: إعادة التشغيل
+                  // الزر الأخير: إعادة التشغيل (نفس ترتيب MikroNet: إعادة التشغيل أخيراً)
                   MainActionCard(
                     title: "إعادة تشغيل النظام",
                     subtitle: "عمل Reboot للراوتر وتحديث حالة الخدمات",
