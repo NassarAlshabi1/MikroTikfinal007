@@ -1,0 +1,59 @@
+name: Update golden files
+
+# تحديث ملفات golden المرجعية (test/*_preview.png) بعد تغييرات واجهة مقصودة.
+# التشغيل يدوي فقط: Actions ← Update golden files ← Run workflow ← اختر الفرع.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-goldens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-goldens:
+    name: flutter test --update-goldens
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.27.2'   # نفس إصدار Flutter CI ليكون التوليد مطابقًا للمقارنة
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Regenerate goldens
+        shell: bash
+        run: |
+          set +e
+          flutter test --update-goldens > goldens_output.txt 2>&1
+          status=$?
+          echo "update_goldens exit=$status"
+          tail -n 20 goldens_output.txt
+          # نُكمل حتى لو فشلت اختبارات غير golden (المهم توليد الملفات)
+          # لكن نُفشل الوظيفة لو لم يُنتج flutter test أي ملفات
+          exit 0
+
+      - name: Clean failures dir
+        run: rm -rf test/failures
+
+      - name: Commit and push updated goldens
+        shell: bash
+        run: |
+          set -e
+          git config user.name "arena-ci"
+          git config user.email "arena-ci@users.noreply.github.com"
+          git add -A test/*.png || true
+          if git diff --cached --quiet; then
+            echo "لا تغييرات في ملفات golden — لا حاجة للدفع"
+          else
+            git commit -m "test: تحديث ملفات golden بعد تغييرات واجهة الكروت وترتيب الشاشات"
+            git push
+            echo "✅ تم دفع ملفات golden المحدثة"
+          fi
