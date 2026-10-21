@@ -1,8 +1,13 @@
 name: Update golden files
 
 # تحديث ملفات golden المرجعية (test/*_preview.png) بعد تغييرات واجهة مقصودة.
-# التشغيل يدوي فقط: Actions ← Update golden files ← Run workflow ← اختر الفرع.
+# يعمل تلقائيًا عند الدفع لهذا الفرع (أنشئه من رأس الفرع المراد تحديث ملفاته):
+#   git push origin <branch>:update-goldens
+# أو يدويًا من تبويب Actions (بعد تسجيل الـ workflow على الفرع الافتراضي).
 on:
+  push:
+    branches:
+      - update-goldens
   workflow_dispatch:
 
 permissions:
