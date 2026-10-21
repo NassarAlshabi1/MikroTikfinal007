@@ -94,15 +94,25 @@ class HomePage extends GetView<HomeController> {
                                   onTap: controller.checkDiskSpace,
                                 )),
                             const SizedBox(height: 16),
-                            _buildSectionTitle("إدارة النظام والعمليات"),
+                            _buildSectionTitle("الخدمات"),
                             const SizedBox(height: 8),
                           ],
                         ),
                       ),
                     ),
                     SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                      sliver: _buildServicesGrid(),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                        child: _buildSectionTitle("الأدوات"),
+                      ),
+                    ),
+                    SliverPadding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      sliver: _buildGridMenu(),
+                      sliver: _buildToolsGrid(),
                     ),
                   ],
                 ),
@@ -114,7 +124,9 @@ class HomePage extends GetView<HomeController> {
     );
   }
 
-  Widget _buildGridMenu() {
+  // قسم الخدمات — نفس ترتيب لوحة ABOTALAL (NetCraft):
+  // يوزرمانجر | هوتسبوت | مصروفات / تصاميم كروت | اكتيف | حسابات مالية / نسخ احتياطية | إعدادات
+  Widget _buildServicesGrid() {
     final items = <Map<String, dynamic>>[
       {
         "title": "إدارة الكروت",
@@ -123,10 +135,16 @@ class HomePage extends GetView<HomeController> {
         "onTap": controller.goToCards
       },
       {
-        "title": "المستخدمين",
-        "icon": Icons.people_alt_rounded,
-        "accent": AppColors.green,
-        "onTap": controller.goToUsers
+        "title": "الهوتسبوت",
+        "icon": Icons.wifi_rounded,
+        "accent": AppColors.teal,
+        "onTap": controller.goToHotspot
+      },
+      {
+        "title": "الموزعين والمحاسبة",
+        "icon": Icons.storefront_rounded,
+        "accent": AppColors.pink,
+        "onTap": controller.goToDistributors
       },
       {
         "title": "إدارة عملية الطباعة",
@@ -135,34 +153,74 @@ class HomePage extends GetView<HomeController> {
         "onTap": controller.goToPrint
       },
       {
-        "title": "إعدادات المواقع",
-        "icon": Icons.dns_rounded,
-        "accent": AppColors.teal,
-        "onTap": controller.goToSites
+        "title": "المستخدمين",
+        "icon": Icons.people_alt_rounded,
+        "accent": AppColors.green,
+        "onTap": controller.goToUsers
       },
       {
         "title": "التقارير والمبيعات",
         "icon": Icons.analytics_rounded,
-        "accent": AppColors.pink,
+        "accent": AppColors.violet,
         "onTap": controller.goToReports
       },
       {
-        "title": "الموزعين ونقاط البيع",
-        "icon": Icons.storefront_rounded,
-        "accent": AppColors.violet,
-        "onTap": controller.goToDistributors
-      },
-      {
-        "title": "أدوات الصيانة",
-        "icon": Icons.build_circle_rounded,
-        "accent": AppColors.warning,
-        "onTap": controller.goToMaintenance
+        "title": "نسخ الراوتر الاحتياطي",
+        "icon": Icons.settings_backup_restore_rounded,
+        "accent": AppColors.indigo,
+        "onTap": controller.goToRouterBackup
       },
       {
         "title": "المزيد من الإعدادات",
         "icon": Icons.tune_rounded,
         "accent": AppColors.textMuted,
         "onTap": controller.goToMoreSettings
+      },
+    ];
+
+    return SliverGrid.builder(
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.55,
+      ),
+      itemBuilder: (context, index) => MenuItemCard(
+        title: items[index]['title'],
+        icon: items[index]['icon'],
+        accent: items[index]['accent'],
+        onTap: items[index]['onTap'],
+      ),
+    );
+  }
+
+  // قسم الأدوات — نفس ترتيب ABOTALAL: المنافذ والاستهلاك، تيليجرام، الشبكة، الصيانة
+  Widget _buildToolsGrid() {
+    final items = <Map<String, dynamic>>[
+      {
+        "title": "مراقبة الشبكة",
+        "icon": Icons.monitor_heart_rounded,
+        "accent": AppColors.cyan,
+        "onTap": controller.goToMonitor
+      },
+      {
+        "title": "إشعارات التليجرام",
+        "icon": Icons.send_rounded,
+        "accent": AppColors.telegram,
+        "onTap": controller.goToTelegram
+      },
+      {
+        "title": "إعدادات المواقع",
+        "icon": Icons.dns_rounded,
+        "accent": AppColors.sky,
+        "onTap": controller.goToSites
+      },
+      {
+        "title": "أدوات الصيانة",
+        "icon": Icons.build_circle_rounded,
+        "accent": AppColors.warning,
+        "onTap": controller.goToMaintenance
       },
     ];
 
