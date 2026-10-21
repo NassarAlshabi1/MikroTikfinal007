@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/features/cards/controllers/profiles/add_profile_controller.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
@@ -15,7 +14,7 @@ class AddProfilePage extends GetView<AddProfileController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.page,
+        backgroundColor: const Color(0xFFF8FAFC),
         body: Column(
           children: [
             const PremiumHeader(
@@ -26,17 +25,17 @@ class AddProfilePage extends GetView<AddProfileController> {
             
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 25),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                   color: AppColors.soft,
+                   color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: AppColors.border, width: 1.5),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 15,
-                        color: Colors.black.withValues(alpha: 0.03),
+                        color: Colors.black.withOpacity(0.03),
                         offset: const Offset(0, 5),
                       )
                     ],
@@ -150,9 +149,9 @@ class AddProfilePage extends GetView<AddProfileController> {
               ),
             ),
             
-           const AppMiniFooter(
+           AppMiniFooter(
               title: Text("إنشاء باقة جديدة وتحديد الوقت والصلاحية",
-                style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textSubtle),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey.shade400),),
               ),
           ],
         ),
@@ -173,13 +172,13 @@ class AddProfilePage extends GetView<AddProfileController> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: controller.isLoading.value 
-              ? [Colors.grey, AppColors.textMuted]
-              : [AppColors.headerTop, AppColors.headerBottom]
+              ? [Colors.grey, Colors.blueGrey]
+              : [const Color(0xFF0F172A), const Color(0xFF1E3A8A)]
           ),
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
+              color: const Color(0xFF1E3A8A).withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             )
@@ -207,14 +206,14 @@ class AddProfilePage extends GetView<AddProfileController> {
                 width: 4,
                 height: 18,
                 decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: const Color(0xFF1E3A8A),
                     borderRadius: BorderRadius.circular(10))),
             const SizedBox(width: 8),
             Text(title,
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: AppColors.primary)),
+                    color: Color(0xFF1E3A8A))),
           ],
         ),
       );

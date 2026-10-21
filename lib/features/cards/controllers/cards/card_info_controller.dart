@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mikronet/features/cards/data/profiles_api.dart';
+import 'package:mikronet/features/cards/models/profiles_model.dart';
 import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/features/cards/data/cards_api.dart';
 import 'package:mikronet/features/cards/models/cards_model.dart';
@@ -8,6 +10,8 @@ import 'package:mikronet/features/cards/controllers/cards/cards_list_controller.
 
 class CardInfoController extends GetxController {
   CardModel card;
+  List<ProfilesModel>profiles=[];
+  Rxn<ProfilesModel> selectedProfile = Rxn<ProfilesModel>();
 
   CardInfoController({required this.card});
 
@@ -19,6 +23,7 @@ class CardInfoController extends GetxController {
   var isChanged = false;
   @override
   void onInit() {
+    getProfiles();
     super.onInit();
     userCtrl = TextEditingController(text: card.username);
     passCtrl = TextEditingController(text: card.password);
@@ -42,6 +47,7 @@ class CardInfoController extends GetxController {
        onConfirm: _saveChanges
     );
   }
+  
   void _saveChanges() async {
     showLoadingDialog();
     
@@ -67,6 +73,51 @@ class CardInfoController extends GetxController {
       hideDialog();
       showMsgDialog(message: "Error saving changes: $e");
     }
+  }
+
+  Future<void> updateProfile()async{
+    showLoadingDialog();
+    
+    try {
+      AppResponse<void> response = await CardsApi.addCardProfile(customer: card.customer, username: card.username, profile: selectedProfile.value?.name??'');
+      hideDialog();
+
+      if (response.status) {
+        card = CardModel(id: card.id, username: userCtrl.text, password: passCtrl.text, profile: selectedProfile.value?.name??card.profile, status: card.status, customer: card.customer);
+        isChanged = true;
+        Get.back();
+        showMsgDialog(message: response.message,type: MsgType.success);
+        
+      } else {
+        showMsgDialog(message: response.message);
+      }
+    } catch (e) {
+      hideDialog();
+      showMsgDialog(message: "Error saving changes: $e");
+    }
+    // var response=await CardsApi.addCardProfile(customer: card.customer, username: card.username, profile: selectedProfile.value?.name??'');
+    // if (!response.status) {
+    //   showMsgDialog(message: response.message);
+    //   return;
+    // }
+    // card = CardModel(id: card.id, username: userCtrl.text, password: passCtrl.text, profile: selectedProfile.value?.name??card.profile, status: card.status, customer: card.customer);
+    // isChanged = true;
+    // showMsgDialog(message: 'تم تجديد الكرت');
+  }
+
+  Future<void> getProfiles()async{
+    var response = await ProfilesApi.getProfiles();
+    if(!response.status){
+      showMsgDialog(message: response.message);
+      return;
+    }
+    profiles=response.data!;
+    selectedProfile.value=profiles.firstWhereOrNull((p)=>p.name==card.package)??profiles.first;
+    // if(card.package!="unknown"){
+    //   selectedProfile=profiles
+    // }
+    // update();
+    // showMsgDialog(message: message)
   }
 
 

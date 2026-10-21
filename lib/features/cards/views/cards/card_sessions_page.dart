@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 // استيراد المتحكم والموديل
@@ -17,11 +16,12 @@ class CardSessionsPage extends GetView<CardSessionsController> {
   Widget build(BuildContext context) {
     // حقن المتحكم وتمرير اسم المستخدم (cardCode) إليه
     // نستخدم Get.put هنا لضمان تمرير البرامتر 'username' للمشيد
+    Get.put(CardSessionsController(cardCode: username));
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.page,
+        backgroundColor: const Color(0xFFF8FAFC),
         body: Column(
           children: [
             // 1. الهيدر الموحد
@@ -36,7 +36,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
                 // 2. حالة التحميل
                 if (controller.isLoading.value) {
                   return const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                    child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
                   );
                 }
 
@@ -47,7 +47,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
 
                 // 4. عرض قائمة الجلسات الحقيقية
                 return ListView.builder(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(20),
                   physics: const BouncingScrollPhysics(),
                   itemCount: controller.sessionsList.length,
                   itemBuilder: (context, index) {
@@ -87,7 +87,7 @@ class CardSessionsPage extends GetView<CardSessionsController> {
       child: Text(
         title,
         style: const TextStyle(
-          color: AppColors.textSubtle, 
+          color: Color(0xFF475569), 
           fontWeight: FontWeight.w900, 
           fontSize: 15
         ),
@@ -96,15 +96,15 @@ class CardSessionsPage extends GetView<CardSessionsController> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_toggle_off_rounded, size: 60, color: AppColors.soft),
-          SizedBox(height: 11),
-          Text(
+          Icon(Icons.history_toggle_off_rounded, size: 60, color: Colors.blueGrey.shade100),
+          const SizedBox(height: 15),
+          const Text(
             "لا توجد جلسات مسجلة لهذا الكرت",
-            style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold),
           ),
         ],
       ),

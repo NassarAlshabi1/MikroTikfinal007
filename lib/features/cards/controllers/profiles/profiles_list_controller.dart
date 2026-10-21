@@ -103,17 +103,17 @@ class ProfilesListController extends GetxController {
 
     final data = {
       "name": nameCtrl.text, 
-      "price": priceCtrl.text.isEmpty ? '0' : priceCtrl.text,
+      "price": priceCtrl.text.isEmpty?'0':priceCtrl.text,
       "validity": validity, 
       "uptime": uptime,
       "palance": palance, 
-      "speed": speedCtrl.text.trim().isEmpty ? '0/0' : speedCtrl.text.toUpperCase().trim(),
-      "customer": customers.isNotEmpty ? customers.first.name : "admin", 
+      "speed": speedCtrl.text.trim().isEmpty?'0/0':speedCtrl.text.toUpperCase().trim().toUpperCase(),
+      "customer": customers.first.name, 
       "users": "1",
     };
-    // debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');
-    // debugPrint(data);
-    // debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');debugPrint('\n');
+    // print('\n');print('\n');print('\n');print('\n');print('\n');
+    // print(data);
+    // print('\n');print('\n');print('\n');print('\n');print('\n');
 
     Get.back();
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);

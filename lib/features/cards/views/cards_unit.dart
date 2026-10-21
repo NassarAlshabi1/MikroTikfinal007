@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 // استيراد المتحكم
 import 'package:mikronet/features/cards/controllers/cards_unit_controller.dart'; 
@@ -19,7 +18,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.page,
+        backgroundColor: const Color(0xFFF8FAFC),
         body: Column(
           children: [
             // الهيدر المطور المشترك
@@ -31,7 +30,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   const SectionTitle(title: "إدارة الكروت والخدمات"),
@@ -41,7 +40,7 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "الكروت والخدمات",
                     subtitle: "إضافة • تعديل • حذف الكروت",
                     icon: Icons.style_rounded,
-                    color: AppColors.indigo,
+                    color: const Color(0xFF6366F1),
                     onTap: controller.goToCardsList, // استخدام دالة المتحكم
                   ),
 
@@ -50,33 +49,11 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "إضافة كرت واحد",
                     subtitle: "إنشاء كرت اشتراك يدوي سريع",
                     icon: Icons.add_moderator_rounded,
-                    color: AppColors.sky,
+                    color: const Color(0xFF0EA5E9),
                     onTap: controller.goToAddSingleCard, // استخدام دالة المتحكم
                   ),
 
-                  const SizedBox(height: 11),
-
-                  // حذف المستخدمين المنتهين (فحص ذكي للمدة)
-                  MainActionCard(
-                    title: "المستخدمون المنتهون",
-                    subtitle: "فحص ذكي: من استهلك مدته كاملة فقط",
-                    icon: Icons.auto_delete_rounded,
-                    color: AppColors.danger,
-                    onTap: controller.goToExpiredUsers,
-                  ),
-
-                  const SizedBox(height: 11),
-
-                  // إدارة Hotspot (قسائم الإنترنت)
-                  MainActionCard(
-                    title: "Hotspot",
-                    subtitle: "قسائم الإنترنت • الجلسات • صفحة الدخول",
-                    icon: Icons.wifi_rounded,
-                    color: AppColors.teal,
-                    onTap: controller.goToHotspot,
-                  ),
-
-                  const SizedBox(height: 11),
+                  const SizedBox(height: 15),
 
                   const SectionTitle(title: "الاشتراكات والأسعار"),
 
@@ -85,16 +62,16 @@ class CardsUnitPage extends GetView<CardsUnitController> {
                     title: "الباقات والسرعات",
                     subtitle: "الأسعار • المدد • تحديد السرعات",
                     icon: Icons.inventory_2_rounded,
-                    color: AppColors.warning,
+                    color: const Color(0xFFF59E0B),
                     onTap: controller.goToPackages, // استخدام دالة المتحكم
                   ),
                 ],
               ),
             ),
 
-            const AppMiniFooter(
+            AppMiniFooter(
               title: Text("إدارة الكروت",
-                style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.textSubtle),),
+                style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey.shade400),),
               ),
           ],
         ),

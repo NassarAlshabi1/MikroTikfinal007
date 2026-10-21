@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 // استيراد المتحكم والموديل
@@ -29,7 +28,7 @@ class CardInfoPage extends GetView<CardInfoController> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: AppColors.soft,
+          backgroundColor: const Color(0xFFF1F5F9),
           body: Column(
             children: [
               // 1. الهيدر الموحد
@@ -42,7 +41,7 @@ class CardInfoPage extends GetView<CardInfoController> {
               
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(11),
+                  padding: const EdgeInsets.all(22),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -71,11 +70,11 @@ class CardInfoPage extends GetView<CardInfoController> {
                       // 3. قسم الحالة (مربوط بـ Obx للتحديث التلقائي)
                       _buildStatusSection(),
                       
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 30),
                       
                       // 4. أزرار التحكم
                       _buildSaveButton(),
-                      const SizedBox(height: 11),
+                      const SizedBox(height: 15),
                       _buildDeleteButton(),
                     ],
                   ),
@@ -91,12 +90,12 @@ class CardInfoPage extends GetView<CardInfoController> {
   /* ================= STATUS SECTION ================= */
   Widget _buildStatusSection() {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20)
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)
         ],
       ),
       child: Column(
@@ -106,20 +105,39 @@ class CardInfoPage extends GetView<CardInfoController> {
             children: [
               const Text(
                 "حالة الكرت", 
-                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSubtle)
+                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF475569))
               ),
               // استخدام Obx لمراقبة تغير الحالة في المتحكم
               Obx(() => StatusBadge(status: controller.status.value)),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: _statusBtn(
                   "تجديد الكرت", 
                   Colors.green, 
-                  () => controller.changeStatus("نشطة")
+                  () {
+                    Get.dialog(
+                      AlertDialog(
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildSectionLabel('نوع الباقة'),
+                            Obx(() =>( _buildPackageDropdown())),
+                            const SizedBox(height: 10,),
+                            _statusBtn(
+                              "تجديد الكرت", 
+                              Colors.green, 
+                              ()async{await controller.updateProfile();}
+                            )
+                          ],
+                        ),
+                      )
+                    );
+                    // controller.changeStatus("نشطة")
+                  },
                 )
               ),
               const SizedBox(width: 12),
@@ -138,20 +156,49 @@ class CardInfoPage extends GetView<CardInfoController> {
   }
 
   /* ================= HELPERS & WIDGETS ================= */
+  void showUpdateCardDialog(){}
+  
+  Widget _buildPackageDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: controller.selectedProfile.value?.name,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF1E3A8A)),
+          hint: const Text("اختر الباقة"),
+          items: controller.profiles.map((p) => DropdownMenuItem(
+            value: p.name,
+            child: Text(p.name, 
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          )).toList(),
+          onChanged: (v) {
+            controller.selectedProfile.value = controller.profiles.firstWhere((p) => p.name == v);
+          },
+        ),
+      ),
+    );
+  }
+  
   Widget _buildSectionLabel(String label) => Padding(
     padding: const EdgeInsets.only(bottom: 12, right: 5),
     child: Text(
       label, 
-      style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 15)
+      style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B), fontSize: 15)
     ),
   );
 
   Widget _statusBtn(String t, Color c, VoidCallback o) => OutlinedButton(
     onPressed: o,
     style: OutlinedButton.styleFrom(
-      side: BorderSide(color: c.withValues(alpha: 0.5)),
+      side: BorderSide(color: c.withOpacity(0.5)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      padding: const EdgeInsets.symmetric(vertical: 9),
+      padding: const EdgeInsets.symmetric(vertical: 12),
     ),
     child: Text(t, style: TextStyle(color: c, fontWeight: FontWeight.bold, fontSize: 13)),
   );
@@ -161,11 +208,11 @@ class CardInfoPage extends GetView<CardInfoController> {
     child: Container(
       height: 58, width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.headerTop, AppColors.headerBottom]),
+        gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)]),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3), 
+            color: const Color(0xFF1E3A8A).withOpacity(0.3), 
             blurRadius: 12, 
             offset: const Offset(0, 6)
           )
@@ -189,7 +236,7 @@ class CardInfoPage extends GetView<CardInfoController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color.fromARGB(255, 138, 30, 30).withValues(alpha: 0.3), 
+            color: const Color.fromARGB(255, 138, 30, 30).withOpacity(0.3), 
             blurRadius: 12, 
             offset: const Offset(0, 6)
           )
@@ -203,7 +250,7 @@ class CardInfoPage extends GetView<CardInfoController> {
         "حذف هذا الكرت نهائياً", 
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
       ),
-      style: TextButton.styleFrom(padding: const EdgeInsets.all(11)),
+      style: TextButton.styleFrom(padding: const EdgeInsets.all(15)),
     ),
       ),
     ),

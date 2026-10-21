@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/app_mini_footer.dart';
-import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/features/cards/controllers/cards/cards_list_controller.dart';
 
 // استيراد الوجتات المشتركة
@@ -14,64 +12,55 @@ class CardsListPage extends GetView<CardsListController> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.page,
+        backgroundColor: const Color(0xFFF8FAFC),
         body: Column(
           children: [
             // 1. الهيدر
             const PremiumHeader(
               title: "إدارة الكروت",
-              subtitle: "مزامنة لحظية وبحث فائق السرعة لكافة اشتراكات الشبكة",
+              subtitle: "عرض وتحرير كافة اشتراكات الشبكة",
               showBackButton: true,
             ),
             
-            // 2. منطقة البحث والفلترة
+            // 2. منطقة البحث والفلترة (مربوطة الآن بالمتحكم تفاعلياً)
             _buildSearchAndFilterArea(),
-
-            // 2.5 شريط الإجراءات الجماعية (يظهر عند التحديد)
-            _buildBulkActionBar(),
             
-            // 3. القائمة المحدثة مع دعم السحب للتحديث
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: controller.refreshCards,
-                color: AppColors.primary,
-                backgroundColor: AppColors.card,
-                child: _buildCardsList(),
-              ),
-            ),
+            // 3. القائمة المحدثة
+            Expanded(child: _buildCardsList()),
             
             // 4. الفوتر
-            const AppMiniFooter(
+           const AppMiniFooter(
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.circle, color: AppColors.sky, size: 14),
-                      SizedBox(width: 5),
-                      Text("جديدة", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMuted, fontSize: 12)),
+                      Icon(Icons.circle,color: Colors.blue,size: 15,),
+                      SizedBox(width: 5,),
+                      Text("جديدة",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
                     ],
                   ),
                   Row(
                     children: [
-                      Icon(Icons.circle, color: Colors.green, size: 14),
-                      SizedBox(width: 5),
-                      Text("نشطة", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMuted, fontSize: 12)),
+                      Icon(Icons.circle,color: Colors.green,size: 15,),
+                      SizedBox(width: 5,),
+                      Text("نشطة",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
                     ],
                   ),
-                  Row(
+                 Row(
                     children: [
-                      Icon(Icons.circle, color: Colors.redAccent, size: 14),
-                      SizedBox(width: 5),
-                      Text("منتهية", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMuted, fontSize: 12)),
+                      Icon(Icons.circle,color: Colors.red,size: 15,),
+                      SizedBox(width: 5,),
+                      Text("منتهية",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey),),
                     ],
                   ),
                 ],
+              )
               ),
-            ),
           ],
         ),
       ),
@@ -81,22 +70,20 @@ class CardsListPage extends GetView<CardsListController> {
   /* ================= منطقة البحث والفلترة ================= */
   Widget _buildSearchAndFilterArea() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: _searchField(),
               ),
-              const SizedBox(width: 8),
-              _refreshButton(),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               _addButton(),
             ],
           ),
-          const SizedBox(height: 11),
+          const SizedBox(height: 15),
           _buildFilterChips(),
           const SizedBox(height: 10),
         ],
@@ -108,67 +95,42 @@ class CardsListPage extends GetView<CardsListController> {
     return Container(
       height: 55,
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04), 
+            color: Colors.black.withOpacity(0.04), 
             blurRadius: 15, 
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 5)
           )
         ],
       ),
-      child: Obx(() => TextField(
-        controller: controller.searchCtrl,
-        onChanged: controller.setSearch,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
-        decoration: InputDecoration(
-          hintText: "بحث سريع برقم الكرت أو الباقة...",
-          hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
-          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
-          suffixIcon: controller.searchQuery.value.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear_rounded, color: AppColors.textMuted, size: 20),
-                  onPressed: controller.clearSearch,
-                )
-              : null,
+      child: TextField(
+        // ربط التغيير مباشرة بدالة البحث في المتحكم
+        onChanged: (v) => controller.setSearch(v),
+        decoration: const InputDecoration(
+          hintText: "بحث برقم الكرت أو الباقة...",
+          hintStyle: TextStyle(fontSize: 13, color: Colors.blueGrey),
+          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF1E3A8A)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          contentPadding: EdgeInsets.symmetric(vertical: 15),
         ),
-      )),
-    );
-  }
-
-  Widget _refreshButton() {
-    return InkWell(
-      onTap: controller.refreshCards,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 55,
-        width: 50,
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Icon(Icons.sync_rounded, color: AppColors.primary, size: 24),
       ),
     );
   }
 
-  Widget _addButton() { 
+Widget _addButton() { 
     return InkWell( 
       onTap: controller.goToAddSingleCard, 
-      borderRadius: BorderRadius.circular(18),
       child: Container( 
         height: 55, 
         width: 55, 
         decoration: BoxDecoration( 
-          gradient: const LinearGradient(colors: [AppColors.info, AppColors.sky]), 
+          gradient: const LinearGradient(colors: [Color(0xFF38BDF8), Color(0xFF0EA5E9)]), 
           borderRadius: BorderRadius.circular(18), 
           boxShadow: [ 
             BoxShadow( 
-              color: AppColors.sky.withValues(alpha: 0.3), 
+              color: const Color(0xFF0EA5E9).withOpacity(0.3), 
               blurRadius: 10, 
               offset: const Offset(0, 4), 
             ) 
@@ -178,41 +140,37 @@ class CardsListPage extends GetView<CardsListController> {
       ), 
     ); 
   }
-
   Widget _buildFilterChips() {
     final items = ["الكل", "جديدة", "نشطة", "منتهية"];
     
     return Obx(() => Row(
+      // مسحنا mainAxisAlignment لأن Expanded سيتكفل بتعبئة الصف بالكامل
       children: items.map((f) {
         final active = controller.filter.value == f;
-        final count = controller.cardCounts[f]?.value ?? 0;
         
-        return Expanded(
+        return Expanded( // 👈 تم التغليف بـ Expanded هنا
           child: GestureDetector(
             onTap: () => controller.setFilter(f),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              alignment: Alignment.center,
+              margin: const EdgeInsets.symmetric(horizontal: 4), // مسافة خفيفة بين الأزرار
+              padding: const EdgeInsets.symmetric(vertical: 6), // حشوة من الأعلى والأسفل فقط
+              alignment: Alignment.center, // 👈 مهم جداً لتوسيط النص داخل المساحة الممتدة
               decoration: BoxDecoration(
-                color: active ? AppColors.primary : AppColors.card,
+                color: active ? const Color(0xFF1E3A8A) : Colors.white,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: active ? AppColors.infoSoft : AppColors.border),
-                boxShadow: active
-                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))]
-                    : null,
+                border: Border.all(color: active ? Colors.transparent : Colors.blueGrey.shade50),
               ),
               child: Text(
-                "$f\n($count)",
+                "$f\n${controller.cardCounts[f]?.value}",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: active ? Colors.white : AppColors.textMuted, 
+                  color: active ? Colors.white : Colors.blueGrey, 
                   fontWeight: FontWeight.w900, 
-                  fontSize: 12,
+                  fontSize: 12 // يمكنك تكبير الخط إلى 13 إذا أردت
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 2, // لمنع النص من النزول لسطر جديد في الشاشات الصغيرة جداً
+                overflow: TextOverflow.ellipsis, // وضع نقاط إذا كان النص أكبر من الشاشة (نادر الحدوث هنا)
               ),
             ),
           ),
@@ -221,104 +179,33 @@ class CardsListPage extends GetView<CardsListController> {
     ));
   }
 
-  /* ================= شريط الإجراءات الجماعية (مثل ABOTALAL) ================= */
-  Widget _buildBulkActionBar() {
-    return Obx(() {
-      if (!controller.selectionMode) return const SizedBox.shrink();
-      final count = controller.selectedUsernames.length;
-      final running = controller.isBulkActionRunning.value;
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        child: Row(
-          children: [
-            _bulkBtn("تفعيل ($count)", Colors.green, Icons.check_circle_rounded,
-                running ? () {} : controller.bulkActivate),
-            const SizedBox(width: 8),
-            _bulkBtn("حذف", Colors.redAccent, Icons.delete_rounded,
-                running ? () {} : () async {
-                  final confirm = await showConfirmDialog(
-                      message: "حذف $count كرت من الراوتر نهائياً؟",
-                      onConfirm: () {});
-                  if (confirm) controller.bulkDelete();
-                }),
-            const SizedBox(width: 8),
-            _bulkBtn("الكل", AppColors.sky, Icons.select_all_rounded,
-                controller.selectAllVisible),
-            const SizedBox(width: 8),
-            _bulkBtn("إلغاء", AppColors.textMuted, Icons.close_rounded,
-                controller.clearSelection),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _bulkBtn(String text, Color color, IconData icon, VoidCallback onTap) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 2),
-              Text(text,
-                  style: TextStyle(
-                      color: color, fontSize: 10, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   /* ================= عرض قائمة الكروت ================= */
   Widget _buildCardsList() {
     return Obx(() {
-      // 1. حالة التحميل
+      // 1. حالة التحميل من المتحكم
       if (controller.isLoading.value) {
-        return const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: AppColors.primary),
-              SizedBox(height: 14),
-              Text("جاري مزامنة الكروت مع الراوتر...", style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
-            ],
-          ),
-        );
+        return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
       }
 
-      // 2. حالة القائمة فارغة
+      // 2. حالة القائمة فارغة (سواء كانت فارغة أصلاً أو بسبب البحث)
       if (controller.filteredCards.isEmpty) {
         return _emptyState();
       }
 
       // 3. بناء القائمة المفلترة
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
+        physics: const BouncingScrollPhysics(),
         itemCount: controller.filteredCards.length,
         itemBuilder: (context, i) {
           final card = controller.filteredCards[i];
 
           return CardItemTile(
             username: card.username,
-            package: card.profile,
+            package: card.profile, // يستخدم الـ extension الموجود في ملف المتحكم
             status: card.status,
-            selectionMode: controller.selectionMode,
-            selected: controller.selectedUsernames.contains(card.username),
-            onTap: () => controller.selectionMode
-                ? controller.toggleSelect(card)
-                : controller.goToCardDetails(card),
-            onLongPress: () => controller.toggleSelect(card),
+            // التنقل عبر المتحكم مباشرة
+            onTap: () => controller.goToCardDetails(card),
             onAnalyticsTap: () => controller.goToCardSessions(card),
           );
         },
@@ -327,57 +214,17 @@ class CardsListPage extends GetView<CardsListController> {
   }
 
   Widget _emptyState() {
-    final hasSearch = controller.searchQuery.value.isNotEmpty;
-    final isTotalEmpty = controller.allCards.isEmpty;
-
-    return Center(
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                hasSearch ? Icons.search_off_rounded : Icons.credit_card_off_rounded,
-                size: 64,
-                color: const Color(0xFF334155),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                hasSearch
-                    ? "لم يتم العثور على نتائج مطابقة لـ \"${controller.searchQuery.value}\""
-                    : (isTotalEmpty ? "لا توجد كروت مسجلة في الراوتر حالياً" : "لا توجد كروت في هذا التصنيف"),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              if (hasSearch)
-                ElevatedButton.icon(
-                  onPressed: controller.clearSearch,
-                  icon: const Icon(Icons.clear_all_rounded, size: 18),
-                  label: const Text("مسح البحث"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surface,
-                    foregroundColor: AppColors.infoSoft,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                )
-              else if (isTotalEmpty)
-                ElevatedButton.icon(
-                  onPressed: controller.goToAddSingleCard,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text("إضافة كرت الآن"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-            ],
-          ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.search_off_rounded, size: 60, color: Colors.blueGrey.shade100),
+        const SizedBox(height: 10),
+        const Text(
+          "لم يتم العثور على نتائج", 
+          style: TextStyle(color: Colors.blueGrey, fontSize: 13)
         ),
-      ),
+      ],
     );
   }
+
 }
