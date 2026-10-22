@@ -269,20 +269,6 @@ class AddBatchView extends StatelessWidget {
     );
   }
 
-  Widget _inputShell(Widget child) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.overlay,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.center,
-      child: child,
-    );
-  }
-
   Widget _textInput(TextEditingController ctrl, String hint) {
     return TextField(
       controller: ctrl,
