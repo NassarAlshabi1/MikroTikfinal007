@@ -20,6 +20,7 @@ class DistributorsListController extends GetxController {
   Future<void> load() async {
     isLoading.value = true;
 
+    await DistributorsApi.syncAssignedStockForCurrentRouter();
     final summariesResponse = await DistributorsApi.getSummaries();
     final totalsResponse = await DistributorsApi.getTotals();
 
@@ -38,12 +39,14 @@ class DistributorsListController extends GetxController {
   void goToEdit(DistributorModel distributor) =>
       Get.toNamed(AppRoutes.distributorForm, arguments: distributor);
 
-  void goToStatement(DistributorModel distributor) =>
-      Get.toNamed(AppRoutes.distributorStatement, arguments: distributor);
+  Future<void> goToStatement(DistributorModel distributor) async {
+    await Get.toNamed(AppRoutes.distributorStatement, arguments: distributor);
+    await load();
+  }
 
   Future<void> deleteDistributor(DistributorModel distributor) async {
     final confirmed = await confirmAction(
-      "حذف الموزع «${distributor.name}» وكل حركاته المالية؟",
+      "حذف الموزع «${distributor.name}» وحركاته المالية؟ لا يمكن الحذف إذا كان لديه سجل مخزون محوّل.",
     );
     if (!confirmed) return;
 
@@ -58,4 +61,7 @@ class DistributorsListController extends GetxController {
   double get totalSales => totals["sales"] ?? 0;
   double get totalProfit => totals["profit"] ?? 0;
   double get totalBalance => totals["balance"] ?? 0;
+  int get deliveredCards => (totals["deliveredCards"] ?? 0).toInt();
+  int get soldCards => (totals["soldCards"] ?? 0).toInt();
+  int get remainingCards => (totals["remainingCards"] ?? 0).toInt();
 }

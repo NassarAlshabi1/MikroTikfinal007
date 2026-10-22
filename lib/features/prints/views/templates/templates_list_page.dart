@@ -138,7 +138,14 @@ class TemplatesListPage extends GetView<TemplatesListController> {
                       _infoBadge("$total كرت", AppColors.blue),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
+                  Text(
+                    t.linkedProfileName.isEmpty
+                        ? "الربط: قالب عام — يظهر مع جميع الباقات"
+                        : "الباقة المرتبطة: ${t.linkedProfileName}",
+                    style: const TextStyle(fontSize: 11, color: AppColors.info, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       _gridDetail(Icons.table_rows_rounded, "صفوف: $rows"),

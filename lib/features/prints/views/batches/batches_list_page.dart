@@ -4,19 +4,24 @@ import 'package:get/get.dart';
 import 'package:mikronet/core/ui/widgets/sub_page_header.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:mikronet/features/prints/controllers/batches/batches_list_controller.dart';
+import 'package:mikronet/app/routes/app_routes.dart';
 
 class BatchesView extends GetView<BatchesListController> {
   const BatchesView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<BatchesListController>()) {
-    }
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.page,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => Get.toNamed(AppRoutes.addBatch),
+          backgroundColor: AppColors.info,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.add_card_rounded),
+          label: const Text("إنشاء دفعة"),
+        ),
         body: SafeArea(
           child: Column(
             children: [
@@ -105,7 +110,7 @@ class BatchesView extends GetView<BatchesListController> {
             // الدفعات
             Expanded(
               child: _overviewCard(
-                title: "الدفوعات",
+                title: "الدفعات",
                 value: "${ctrl.batchesCount}",
                 icon: Icons.history_rounded,
               ),
@@ -167,33 +172,17 @@ class BatchesView extends GetView<BatchesListController> {
 
   /* ================= 3. قسم آخر الدفعات مع الجدول والصفحات ================= */
   Widget _buildRecentBatchesSection(BatchesListController ctrl) {
-    // قائمة تجريبية متطابقة مع الصورة في حال كانت القائمة فارغة
-    final List<Map<String, dynamic>> mockBatches = [
-      {'id': 40, 'count': 51, 'date': '00:00 2026-07-16', 'profile': '100c', 'status': 'استكمال آمن', 'statusColor': AppColors.danger},
-      {'id': 39, 'count': 51, 'date': '23:59 2026-07-15', 'profile': '100c', 'status': 'مؤجلة', 'statusColor': AppColors.warning},
-      {'id': 38, 'count': 1, 'date': '17:57 2026-07-15', 'profile': '3000', 'status': 'مكتملة', 'statusColor': AppColors.success},
-      {'id': 37, 'count': 1, 'date': '00:59 2026-07-15', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
-      {'id': 33, 'count': 510, 'date': '22:36 2026-07-13', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
-      {'id': 32, 'count': 51, 'date': '16:39 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
-      {'id': 31, 'count': 1, 'date': '15:54 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': AppColors.success},
-      {'id': 30, 'count': 1, 'date': '14:28 2026-07-12', 'profile': '3000', 'status': 'مكتملة', 'statusColor': AppColors.success},
-      {'id': 29, 'count': 51, 'date': '02:23 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
-      {'id': 28, 'count': 51, 'date': '02:15 2026-07-12', 'profile': '100c', 'status': 'مكتملة', 'statusColor': AppColors.success},
-    ];
-
-    final displayItems = ctrl.allBatches.isNotEmpty
-        ? ctrl.currentPageBatches.map((b) {
-            final dt = DateFormat('HH:mm yyyy-MM-dd').format(b.createdAt);
-            return {
-              'id': b.id,
-              'count': b.cards.length,
-              'date': dt,
-              'profile': b.cardsProfile.isNotEmpty ? b.cardsProfile : '100c',
-              'status': 'مكتملة',
-              'statusColor': AppColors.success,
-            };
-          }).toList()
-        : mockBatches;
+    final displayItems = ctrl.currentPageBatches.map((batch) {
+      final date = DateFormat('HH:mm yyyy-MM-dd').format(batch.createdAt);
+      return <String, dynamic>{
+        'id': batch.id,
+        'count': batch.cards.length,
+        'date': date,
+        'profile': batch.cardsProfile.isNotEmpty ? batch.cardsProfile : '—',
+        'status': 'محفوظة',
+        'statusColor': AppColors.success,
+      };
+    }).toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -289,6 +278,20 @@ class BatchesView extends GetView<BatchesListController> {
             ),
           ),
 
+          if (displayItems.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  ctrl.loadError.isNotEmpty
+                      ? "تعذّر تحميل الدفعات: ${ctrl.loadError}"
+                      : "لا توجد دفعات محفوظة لهذا الراوتر بعد. اضغط + لإنشاء دفعة.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                ),
+              ),
+            )
+          else ...[
           // صفوف جدول الدفعات
           ...displayItems.map((item) {
             return InkWell(
@@ -371,6 +374,7 @@ class BatchesView extends GetView<BatchesListController> {
               ),
             );
           }),
+          ],
 
           // شريط أزرار التنقل بين الصفحات (Pagination)
           Padding(
@@ -492,6 +496,15 @@ class BatchesView extends GetView<BatchesListController> {
             ),
           ),
 
+          if (ctrl.profilesSummary.isEmpty)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 4, 12, 16),
+              child: Text(
+                "ستظهر الباقات هنا بعد إنشاء دفعات مرتبطة بها.",
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
+            )
+          else ...[
           // عناصر الباقات
           ...ctrl.profilesSummary.map((prof) {
             return Container(
@@ -551,6 +564,7 @@ class BatchesView extends GetView<BatchesListController> {
               ),
             );
           }),
+          ],
           const SizedBox(height: 6),
         ],
       ),

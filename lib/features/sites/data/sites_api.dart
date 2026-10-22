@@ -6,6 +6,13 @@ import 'package:mikronet/core/mikrotik/mikrotik_client.dart';
  import 'package:mikronet/features/sites/models/sites_model.dart'; 
 
 class SitesApi {
+  /// RouterOS accepts one or more comma-separated DNS servers. Keep the
+  /// secondary server optional and avoid malformed trailing commas.
+  static String formatDnsServers({required String main, String secondary = ""}) {
+    final primary = main.trim();
+    final fallback = secondary.trim();
+    return fallback.isEmpty ? primary : '$primary,$fallback';
+  }
 
   static Future<AppResponse> getDnsData() async {
     try {
@@ -18,7 +25,7 @@ class SitesApi {
 
   static Future<AppResponse> setDns({String main = "8.8.8.8", String secondary = "8.8.4.4", bool allowRemoteRequests = true}) async {
     try {
-      String dns = '$main,$secondary';
+      final dns = formatDnsServers(main: main, secondary: secondary);
       await MikrotikClient.addData(
         command: "/ip/dns/set", 
         data: {'servers': dns, 'allow-remote-requests': allowRemoteRequests ? 'yes' : 'no'}

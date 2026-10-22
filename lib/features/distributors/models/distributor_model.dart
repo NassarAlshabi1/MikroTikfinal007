@@ -118,6 +118,20 @@ class DistributorTransactionModel {
 }
 
 /// ملخص حساب موزع: المبيعات، الدفعات، الربح، والرصيد.
+class DistributorStockSummary {
+  final int deliveredCards;
+  final int soldCards;
+  final double salesAmount;
+
+  const DistributorStockSummary({
+    this.deliveredCards = 0,
+    this.soldCards = 0,
+    this.salesAmount = 0,
+  });
+
+  int get remainingCards => deliveredCards - soldCards;
+}
+
 class DistributorSummary {
   final DistributorModel distributor;
   final int salesCount;
@@ -126,6 +140,10 @@ class DistributorSummary {
   final double totalCost;
   final double totalPayments;
   final double totalRefunds;
+  final double automaticSales;
+  final int deliveredCards;
+  final int soldCards;
+  final int remainingCards;
 
   DistributorSummary({
     required this.distributor,
@@ -135,9 +153,15 @@ class DistributorSummary {
     required this.totalCost,
     required this.totalPayments,
     required this.totalRefunds,
+    required this.automaticSales,
+    required this.deliveredCards,
+    required this.soldCards,
+    required this.remainingCards,
   });
 
-  double get profit => totalSales - totalCost;
+  /// Profit is only calculated for manually costed legacy sales; automatic stock
+  /// sales have no distributor purchase-cost input and are excluded, not guessed.
+  double get profit => totalSales - automaticSales - totalCost;
 
   /// موجب = الموزع مدين لنا، سالب = له رصيد عندنا.
   double get balance => totalSales - totalPayments - totalRefunds;

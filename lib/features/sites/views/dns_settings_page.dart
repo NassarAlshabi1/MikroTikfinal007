@@ -65,7 +65,7 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
 
                     _dnsField(
                       textCtrl: controller.secondaryCtrl,
-                      label: "DNS الاحتياطي",
+                      label: "DNS الاحتياطي (اختياري)",
                       hint: "1.1.1.1",
                       icon: Icons.alt_route_rounded,
                     ),
@@ -141,7 +141,12 @@ class DnsSettingsPage extends GetView<DnsSettingsController> {
       ),
       child: TextField(
         controller: textCtrl,
-        keyboardType: TextInputType.number,
+        // DNS can be IPv4 (dots), IPv6 (colons), or a hostname.
+        keyboardType: TextInputType.text,
+        textDirection: TextDirection.ltr,
+        textAlign: TextAlign.left,
+        autocorrect: false,
+        enableSuggestions: false,
         style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2),
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: AppColors.primary),

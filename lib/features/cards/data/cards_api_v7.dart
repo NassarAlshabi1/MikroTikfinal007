@@ -129,7 +129,9 @@ class CardsApi7 {
         "name": username,
         "group": group,
         "password": password,
-        "shared-users": '',
+        // RouterOS User Manager requires a positive integer (default is 1).
+        // Sending an empty string can reject every generated user.
+        "shared-users": '1',
       });
 
       await MikrotikClient.addData(

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mikronet/features/cards/data/expired_users_api.dart';
 import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/core/ui/dialogs/confirm_dialog.dart';
+import 'package:mikronet/features/distributors/data/distributors_api.dart';
 
 /// متحكم "المستخدمون المنتهون": فحص ذكي (uptime ضد limit-uptime) وحذف المؤهلين فقط.
 class ExpiredUsersController extends GetxController {
@@ -105,6 +106,15 @@ class ExpiredUsersController extends GetxController {
     isDeleting.value = true;
     showLoadingDialog();
 
+    final deletionReady = await DistributorsApi.prepareCardDeletion(
+      users.map((user) => user.username),
+    );
+    if (!deletionReady.status || deletionReady.data != true) {
+      hideDialog();
+      isDeleting.value = false;
+      await showMsgDialog(message: deletionReady.message, type: MsgType.warning);
+      return;
+    }
     final response = await ExpiredUsersApi.deleteUsers(users);
 
     hideDialog();

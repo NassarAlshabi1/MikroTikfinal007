@@ -8,11 +8,16 @@ import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:pdf/pdf.dart';
 import 'package:mikronet/features/prints/views/templates/pdf_view.dart';
 import 'package:mikronet/features/prints/models/print_model.dart';
+import 'package:mikronet/features/cards/data/profiles_api.dart';
+import 'package:mikronet/features/cards/models/profiles_model.dart';
+import 'package:mikronet/core/models/app_response.dart';
 
 abstract class BaseTemplateController extends GetxController {
   TextEditingController profileName = TextEditingController();
   TextEditingController usernameText = TextEditingController();
   TextEditingController passwordText = TextEditingController();
+  String linkedProfileName = '';
+  List<ProfilesModel> availableProfiles = [];
   
   RxInt numrows = 18.obs;
   RxInt numcolumns = 4.obs;
@@ -44,6 +49,28 @@ abstract class BaseTemplateController extends GetxController {
     super.onInit();
     usernameText.text = "username_text";
     passwordText.text = "password_text";
+    loadProfiles();
+  }
+
+  Future<void> loadProfiles() async {
+    try {
+      final AppResponse<List<ProfilesModel>> response = await ProfilesApi.getProfiles();
+      if (response.status && response.data != null) {
+        availableProfiles = response.data!;
+      }
+    } catch (_) {
+      // Keep the generic-template option available when the router is offline.
+    } finally {
+      update();
+    }
+  }
+
+  List<String> get linkedProfileOptions {
+    final names = availableProfiles.map((profile) => profile.name).toSet().toList();
+    if (linkedProfileName.isNotEmpty && !names.contains(linkedProfileName)) {
+      names.add(linkedProfileName);
+    }
+    return names;
   }
 
   void isWithPassword2(bool value){
@@ -89,6 +116,7 @@ abstract class BaseTemplateController extends GetxController {
     return {
       "id": id, 
       "name": profileName.text,
+      "target_profile_name": linkedProfileName,
       "password": password ? 1 : 0,
       "rows": numrows.value,
       "columns": numcolumns.value,

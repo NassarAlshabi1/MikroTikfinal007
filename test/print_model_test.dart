@@ -97,6 +97,17 @@ void main() {
       expect(model.passwordFontSize, 12.5);
       expect(model.usernameLocation.x, 120.5);
       expect(model.passwordLocation.y, 81.0);
+      expect(model.linkedProfileName, '');
+    });
+
+    test('يربط القالب باسم باقة User Manager المحفوظة', () {
+      final model = PrintTemplatesModel.fromDatabase({
+        'id': 9,
+        'name': 'قالب الباقة الأسبوعية',
+        'target_profile_name': 'Weekly',
+      });
+
+      expect(model.linkedProfileName, 'Weekly');
     });
 
     test('صف كامل بصورة تالفة ← يُقرأ بنجاح بصورة فارغة (لا استثناء)', () {
@@ -165,17 +176,20 @@ void main() {
         passwordFontSize: 13,
         usernameLocation: LocationData(x: 10, y: 20),
         passwordLocation: LocationData(x: 11, y: 21),
+        linkedProfileName: 'Weekly',
       );
 
       final row = model.toDatabase();
       expect(row['name'], 'قالب دورة');
       expect(row['password'], 1);
+      expect(row['target_profile_name'], 'Weekly');
       expect(row['image'], isA<String>());
 
       final restored = PrintTemplatesModel.fromDatabase({'id': 5, ...row});
       expect(restored.image, equals(model.image));
       expect(restored.withPassword, isTrue);
       expect(restored.numOfRows, 10);
+      expect(restored.linkedProfileName, 'Weekly');
     });
   });
 }

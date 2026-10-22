@@ -21,9 +21,9 @@ class DnsSettingsController extends GetxController {
     // جلب البيانات عند فتح الصفحة
     fetchDnsData();
   }
-  bool _isEmptyFields(){
-    if(primaryCtrl.text.isEmpty || secondaryCtrl.text.isEmpty){
-      showMsgDialog(message: "يرجى تعبئة الحقول الفارغة",type: MsgType.warning);
+  bool _isEmptyFields() {
+    if (primaryCtrl.text.trim().isEmpty) {
+      showMsgDialog(message: "يرجى إدخال خادم DNS الأساسي", type: MsgType.warning);
       return true;
     }
     return false;
@@ -39,27 +39,40 @@ class DnsSettingsController extends GetxController {
   // الدالة الأولى: جلب بيانات الـ DNS من المايكروتك
   Future<void> fetchDnsData() async {
     isLoading.value = true;
-    var response = await SitesApi.getDnsData();
-    
-    if (response.status && response.data != null && response.data.isNotEmpty) {
-      // مايكروتك غالباً يُرجع البيانات كقائمة من الـ Maps
-      var data = response.data[0];
-      
-      // ضبط السويتش
-      if (data['allow-remote-requests'] != null) {
-        allowRemoteRequest.value = data['allow-remote-requests'] == 'yes' || data['allow-remote-requests'] == 'true';
+    try {
+      final response = await SitesApi.getDnsData();
+      final rows = response.data;
+      if (!response.status || rows is! List || rows.isEmpty || rows.first is! Map) {
+        showMsgDialog(
+          message: response.status
+              ? "لم يُرجع الراوتر إعدادات DNS صالحة"
+              : "فشل في جلب إعدادات DNS الحالية: ${response.message}",
+          type: MsgType.error,
+        );
+        return;
       }
-      
-      // فصل السيرفرات (لأن مايكروتك يرسلها مفصولة بفاصلة "8.8.8.8,1.1.1.1")
-      if (data['servers'] != null) {
-        List<String> servers = data['servers'].toString().split(',');
-        if (servers.isNotEmpty) primaryCtrl.text = servers[0].trim();
-        if (servers.length > 1) secondaryCtrl.text = servers[1].trim();
-      }
-    } else {
-      showMsgDialog(message: "فشل في جلب إعدادات DNS الحالية",type: MsgType.error);
+
+      final data = rows.first as Map;
+      allowRemoteRequest.value =
+          data['allow-remote-requests']?.toString().toLowerCase() == 'yes' ||
+          data['allow-remote-requests']?.toString().toLowerCase() == 'true';
+
+      final servers = (data['servers']?.toString() ?? '')
+          .split(',')
+          .map((server) => server.trim())
+          .where((server) => server.isNotEmpty)
+          .toList();
+      // امسح الحقول أولاً حتى لا تبقى قيمة DNS ثانوية قديمة عند وجود خادم واحد.
+      primaryCtrl.text = servers.isNotEmpty ? servers.first : '';
+      secondaryCtrl.text = servers.length > 1 ? servers[1] : '';
+    } catch (error) {
+      showMsgDialog(
+        message: "تعذّر تحميل إعدادات DNS: $error",
+        type: MsgType.error,
+      );
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 
   // الدالة الثانية: حفظ البيانات الجديدة
@@ -67,8 +80,8 @@ class DnsSettingsController extends GetxController {
     if(_isEmptyFields()) return;
     isLoading.value = true;
     var response = await SitesApi.setDns(
-      main: primaryCtrl.text,
-      secondary: secondaryCtrl.text,
+      main: primaryCtrl.text.trim(),
+      secondary: secondaryCtrl.text.trim(),
       allowRemoteRequests: allowRemoteRequest.value,
     );
 

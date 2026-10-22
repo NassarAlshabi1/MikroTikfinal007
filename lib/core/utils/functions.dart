@@ -11,17 +11,43 @@ const Map<String, String> kCardCharPools = {
   "letters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
 };
 
+/// Character categories exposed by the RouterOS User Manager batch generator.
+/// These use the complete ASCII categories, not the legacy ambiguity-reduced pools.
+const Map<String, String> kUserManagerCharacterSets = {
+  "numbers": "0123456789",
+  "lowercase": "abcdefghijklmnopqrstuvwxyz",
+  "uppercase": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+};
+
 // String type is "numbers" or "letters" or "mixed" or "lower" or "upper"
 List<String> generateUniqueRandomStrings({
   required int count,
   int length = 7,
   String prefix = "",
   String suffix = "",
-  String type = "numbers", // "numbers", "mixed", "lower", "upper", "letters"
+  String type = "numbers", // Legacy single-pool option.
+  Set<String>? characterSets,
+  String? characterPool,
   Set<String> excludedChars = const {},
-  List<String> users=const []
+  List<String> users = const [],
 }) {
-  String characters = kCardCharPools[type] ?? kCardCharPools["numbers"]!;
+  late String characters;
+  if (characterPool != null) {
+    characters = characterPool.split("").toSet().join();
+  } else if (characterSets == null) {
+    characters = kCardCharPools[type] ?? kCardCharPools["numbers"]!;
+  } else {
+    final selectedPools = characterSets
+        .map((set) => kUserManagerCharacterSets[set])
+        .whereType<String>()
+        .join()
+        .split("")
+        .toSet();
+    if (selectedPools.isEmpty) {
+      throw ArgumentError("اختر مجموعة محارف واحدة على الأقل");
+    }
+    characters = selectedPools.join();
+  }
   // استبعاد أحرف يدوياً (مثل ABOTALAL) — إن استُبعدت التجمع كلها نرجع للأصل.
   if (excludedChars.isNotEmpty) {
     final filtered = characters

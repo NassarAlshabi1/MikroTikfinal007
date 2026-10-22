@@ -1,4 +1,5 @@
 import 'package:mikronet/core/storage/sql_db.dart';
+import 'package:sqflite/sqflite.dart';
 
 String implode(List<String> list, String delimiter) {
   return list.join(delimiter);
@@ -27,6 +28,31 @@ class DBApi{
   /// تنفيذ أمر SQL مباشر (CREATE TABLE / PRAGMA / معاملات...).
   static Future<void> execute(String sql) async {
     await _db.executeData(sql);
+  }
+
+  /// Transfer a complete batch into one distributor atomically. The unique
+  /// router/username key prevents assigning a card to multiple outlets.
+  static Future<int> insertDistributorStockTransfer({
+    required Map<String, dynamic> transfer,
+    required List<String> usernames,
+  }) async {
+    return _db.transactionData((txn) async {
+      final transferId = await txn.insert('distributor_stock_transfers', transfer);
+      final batch = txn.batch();
+      for (final username in usernames) {
+        batch.insert(
+          'distributor_stock_items',
+          {
+            'transfer_id': transferId,
+            'router_serial': transfer['router_serial'],
+            'username': username,
+          },
+          conflictAlgorithm: ConflictAlgorithm.abort,
+        );
+      }
+      await batch.commit(noResult: true);
+      return transferId;
+    });
   }
 
   // @protected

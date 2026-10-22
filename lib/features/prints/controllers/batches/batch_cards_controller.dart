@@ -9,9 +9,11 @@ import 'package:mikronet/features/cards/models/cards_model.dart'; // ضروري 
 import 'package:mikronet/core/models/app_response.dart';
 
 class GeneratedCardsController extends GetxController {
-  GeneratedCardsController(this.generatedCards);
-  
+  GeneratedCardsController(this.generatedCards, {this.customerName = ""});
+
   List<GeneratedCardsModel> generatedCards;
+  /// RouterOS 6 customer or RouterOS 7 User Manager group saved with the batch.
+  final String customerName;
   List<CustomerModel> customers = [];
   bool isUploading = false; 
   bool isLoading = true; // متغير لمتابعة حالة المزامنة الأولية
@@ -72,13 +74,21 @@ class GeneratedCardsController extends GetxController {
     update(); // تحديث الواجهة بعد انتهاء المزامنة
   }
 
-  /// اسم العميل الذي تُضاف الكروت تحته — أول عميل متاح أو admin.
-  String get _customerName => customers.isNotEmpty ? customers[0].name : "admin";
-  
+  /// اسم العميل/المجموعة الأصلية للدفعة. للدفعات القديمة فقط نستخدم أول قيمة
+  /// متاحة، ولا نخترع قيمة admin عند فشل تحميل القائمة.
+  String? get _customerName => customerName.isNotEmpty
+      ? customerName
+      : (customers.isNotEmpty ? customers.first.name : null);
+
   Future<bool> createCard(GeneratedCardsModel card) async {
+    final customer = _customerName;
+    if (customer == null || customer.isEmpty) {
+      debugPrint("تعذر رفع ${card.username}: لا يوجد عميل/مجموعة User Manager");
+      return false;
+    }
     try {
       AppResponse response = await CardsApi.addOneCard(
-        customer: _customerName, 
+        customer: customer,
         username: card.username, 
         password: card.password, 
         profile: card.profileName

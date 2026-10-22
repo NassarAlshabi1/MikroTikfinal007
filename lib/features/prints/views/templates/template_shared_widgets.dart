@@ -39,6 +39,35 @@ Widget buildFieldPosition(
 
 
 // ----------------- Canvas Builder ----------------- //
+Widget buildTemplateProfileSelector(BaseTemplateController controller) {
+  final options = controller.linkedProfileOptions;
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: DropdownButtonFormField<String>(
+      value: controller.linkedProfileName,
+      decoration: const InputDecoration(
+        labelText: 'ربط القالب بباقة User Manager',
+        helperText: 'اختر باقة محددة، أو اتركه عامًا ليظهر مع جميع الباقات.',
+        border: OutlineInputBorder(),
+      ),
+      items: [
+        const DropdownMenuItem<String>(
+          value: '',
+          child: Text('قالب عام — جميع الباقات'),
+        ),
+        ...options.map((name) => DropdownMenuItem<String>(
+              value: name,
+              child: Text(name, overflow: TextOverflow.ellipsis),
+            )),
+      ],
+      onChanged: (value) {
+        controller.linkedProfileName = value ?? '';
+        controller.update();
+      },
+    ),
+  );
+}
+
 Widget buildCanvasArea(BaseTemplateController controller) {
   return Container(
     padding: const EdgeInsets.all(12),
