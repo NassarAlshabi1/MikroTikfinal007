@@ -6,7 +6,8 @@ import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/features/cards/data/cards_api.dart';
 import 'package:mikronet/features/cards/models/cards_model.dart';
 import 'package:mikronet/core/models/app_response.dart';
-import 'package:mikronet/features/cards/controllers/cards/cards_list_controller.dart'; 
+import 'package:mikronet/features/cards/controllers/cards/cards_list_controller.dart';
+import 'package:mikronet/features/distributors/data/distributors_api.dart';
 
 class CardInfoController extends GetxController {
   CardModel card;
@@ -129,6 +130,12 @@ class CardInfoController extends GetxController {
     showLoadingDialog();
     
     try {
+      final deletionReady = await DistributorsApi.prepareCardDeletion([card.username]);
+      if (!deletionReady.status || deletionReady.data != true) {
+        hideDialog();
+        await showMsgDialog(message: deletionReady.message, type: MsgType.warning);
+        return;
+      }
       AppResponse<void> response = await CardsApi.deleteCard(card.username);
       hideDialog();
 

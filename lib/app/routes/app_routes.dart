@@ -42,6 +42,7 @@ class AppRoutes {
   static const String distributors = '/distributors';
   static const String distributorForm = '/distributors/form';
   static const String distributorStatement = '/distributors/statement';
+  static const String distributorStockTransfer = '/distributors/stock-transfer';
 
   // مراقبة الشبكة
   static const String monitor = '/reports/monitor';

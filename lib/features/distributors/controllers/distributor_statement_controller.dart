@@ -3,6 +3,7 @@ import 'package:mikronet/app/theme/app_theme.dart';
 import 'package:get/get.dart';
 
 import 'package:mikronet/features/distributors/data/distributors_api.dart';
+import 'package:mikronet/app/routes/app_routes.dart';
 import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/features/distributors/models/distributor_model.dart';
 import 'package:mikronet/features/distributors/services/distributor_pdf.dart';
@@ -26,6 +27,7 @@ class DistributorStatementController extends GetxController {
   Future<void> load() async {
     isLoading.value = true;
 
+    await DistributorsApi.syncAssignedStockForCurrentRouter();
     final summaryResponse = await DistributorsApi.getSummary(distributor.id);
     final transactionsResponse = await DistributorsApi.getTransactions(distributor.id);
 
@@ -115,6 +117,11 @@ class DistributorStatementController extends GetxController {
     );
 
     if (response.status) load();
+  }
+
+  Future<void> openStockTransfer() async {
+    await Get.toNamed(AppRoutes.distributorStockTransfer, arguments: distributor);
+    await load();
   }
 
   Future<void> deleteTransaction(DistributorTransactionModel transaction) async {

@@ -1,6 +1,8 @@
 // String props="""
 // username,password,
 // actual-profile,
+import 'package:mikronet/core/mikrotik/mikrotik_duration.dart';
+
 // uptime-used,download-used,
 // upload-used,last-seen""";
 enum CardStatus{
@@ -24,6 +26,8 @@ class CardModel {
   final String profile;
   final String status;
   final String customer;
+  final String uptimeUsed;
+  final String lastSeen;
 
   CardModel({
     required this.id,
@@ -32,7 +36,17 @@ class CardModel {
     required this.profile,
     required this.status,
     required this.customer,
+    this.uptimeUsed = '',
+    this.lastSeen = '',
   });
+
+  /// User Manager v6 retains these fields after the first successful use.
+  bool get hasBeenUsed {
+    final used = MikrotikDuration.parse(uptimeUsed);
+    if (used != null && used > Duration.zero) return true;
+    final seen = lastSeen.trim().toLowerCase();
+    return seen.isNotEmpty && seen != 'never' && seen != 'none' && seen != 'unknown';
+  }
 
   static CardModel fromMikrotik(Map card){
     String tempStatus="normal";
@@ -56,6 +70,8 @@ class CardModel {
       profile: card["actual-profile"]??"unknown", 
       status: tempStatus, 
       customer: card["customer"],
+      uptimeUsed: (card["uptime-used"] ?? '').toString(),
+      lastSeen: (card["last-seen"] ?? '').toString(),
     );
   }
 
@@ -68,6 +84,8 @@ class CardModel {
       "profile":profile,
       "status":status,
       "customer":customer,
+      "uptime-used":uptimeUsed,
+      "last-seen":lastSeen,
     };
   }
 }

@@ -33,21 +33,20 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
                   physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                   children: [
                     Obx(() => _summaryCard()),
-                    const SectionTitle(title: "تسجيل حركة جديدة"),
+                    GradientButton(
+                      label: "تحويل دفعة كاملة إلى مخزون البقالة",
+                      icon: Icons.move_to_inbox_rounded,
+                      height: 48,
+                      colors: const [AppColors.blue, AppColors.headerBottom],
+                      onPressed: controller.openStockTransfer,
+                    ),
+                    const SizedBox(height: 10),
+                    const SectionTitle(title: "الدفعات والمرتجعات النقدية"),
                     Row(
                       children: [
                         Expanded(
                           child: _typeButton(
-                            "بيع كروت",
-                            Icons.point_of_sale_rounded,
-                            AppColors.blue,
-                            () => controller.openAddTransactionDialog(DistributorTxType.sale),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _typeButton(
-                            "دفعة",
+                            "تسجيل دفعة",
                             Icons.payments_rounded,
                             AppColors.green,
                             () => controller.openAddTransactionDialog(DistributorTxType.payment),
@@ -56,7 +55,7 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: _typeButton(
-                            "مرتجع",
+                            "مرتجع نقدي",
                             Icons.assignment_return_rounded,
                             AppColors.warning,
                             () => controller.openAddTransactionDialog(DistributorTxType.refund),
@@ -165,9 +164,17 @@ class DistributorStatementPage extends GetView<DistributorStatementController> {
           Row(
             children: [
               _stat("المبيعات", summary.totalSales),
-              _stat("الأرباح", summary.profit),
+              _stat("الربح المسجل", summary.profit),
               _stat("الدفعات", summary.totalPayments),
-              _stat("الكروت", summary.cardsCount.toDouble()),
+              _stat("الكروت المباعة", summary.cardsCount.toDouble()),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _stat("المستلم", summary.deliveredCards.toDouble()),
+              _stat("المباع تلقائيًا", summary.soldCards.toDouble()),
+              _stat("المتبقي", summary.remainingCards.toDouble()),
             ],
           ),
         ],

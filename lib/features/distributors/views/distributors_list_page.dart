@@ -93,8 +93,16 @@ class DistributorsListPage extends GetView<DistributorsListController> {
           Row(
             children: [
               _stat("إجمالي المبيعات", controller.totalSales),
-              _stat("إجمالي الأرباح", controller.totalProfit),
+              _stat("الربح المسجل", controller.totalProfit),
               _stat("صافي الأرصدة", controller.totalBalance),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _stat("الكروت المستلمة", controller.deliveredCards.toDouble()),
+              _stat("المباعة", controller.soldCards.toDouble()),
+              _stat("المتبقية", controller.remainingCards.toDouble()),
             ],
           ),
         ],
@@ -230,6 +238,15 @@ class DistributorsListPage extends GetView<DistributorsListController> {
                     _miniStat("الأرباح", summary.profit),
                     _miniStat("الدفعات", summary.totalPayments),
                     _miniStat("الكروت", summary.cardsCount.toDouble()),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                Row(
+                  children: [
+                    _miniStat("المستلم", summary.deliveredCards.toDouble()),
+                    _miniStat("المباع", summary.soldCards.toDouble()),
+                    _miniStat("المتبقي", summary.remainingCards.toDouble()),
+                    const Expanded(child: SizedBox.shrink()),
                   ],
                 ),
                 const SizedBox(height: 6),

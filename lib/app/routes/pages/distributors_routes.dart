@@ -3,10 +3,12 @@ import 'package:mikronet/app/routes/app_routes.dart';
 import 'package:mikronet/features/distributors/controllers/distributor_form_controller.dart';
 import 'package:mikronet/features/distributors/controllers/distributor_statement_controller.dart';
 import 'package:mikronet/features/distributors/controllers/distributors_list_controller.dart';
+import 'package:mikronet/features/distributors/controllers/distributor_stock_transfer_controller.dart';
 import 'package:mikronet/features/distributors/models/distributor_model.dart';
 import 'package:mikronet/features/distributors/views/distributor_form_page.dart';
 import 'package:mikronet/features/distributors/views/distributor_statement_page.dart';
 import 'package:mikronet/features/distributors/views/distributors_list_page.dart';
+import 'package:mikronet/features/distributors/views/distributor_stock_transfer_page.dart';
 
 class DistributorsRoutes {
   static final List<GetPage> routes = [
@@ -29,6 +31,13 @@ class DistributorsRoutes {
       page: () => const DistributorStatementPage(),
       binding: BindingsBuilder(() => Get.lazyPut(
         () => DistributorStatementController(Get.arguments as DistributorModel),
+      )),
+    ),
+    GetPage(
+      name: AppRoutes.distributorStockTransfer,
+      page: () => const DistributorStockTransferPage(),
+      binding: BindingsBuilder(() => Get.lazyPut(
+        () => DistributorStockTransferController(Get.arguments as DistributorModel),
       )),
     ),
   ];

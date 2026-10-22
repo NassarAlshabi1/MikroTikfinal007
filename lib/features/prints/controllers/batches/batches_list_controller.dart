@@ -4,6 +4,7 @@ import 'package:mikronet/features/prints/views/templates/pdf_view.dart';
 import 'package:mikronet/core/mikrotik/router_api.dart';
 import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/features/prints/data/print_api.dart';
+import 'package:mikronet/features/distributors/data/distributors_api.dart';
 import 'package:mikronet/features/prints/models/print_model.dart';
 
 class BatchesListController extends GetxController {
@@ -77,10 +78,20 @@ class BatchesListController extends GetxController {
     try {
       String response = "";
       if (deleteOption == 1) {
+        final deletionReady = await DistributorsApi.prepareBatchDeletion(batch.id);
+        if (!deletionReady.status || deletionReady.data != true) {
+          showErrorDialog(content: deletionReady.message);
+          return;
+        }
         response = (await PrintBatchesApi.deleteFromServer(batch.id)) == "done" ? "1" : "0";
       } else if (deleteOption == 2) {
         response = (await PrintBatchesApi.deleteFromLocal(batch.id)) > 0 ? "2" : "0";
       } else if (deleteOption == 3) {
+        final deletionReady = await DistributorsApi.prepareBatchDeletion(batch.id);
+        if (!deletionReady.status || deletionReady.data != true) {
+          showErrorDialog(content: deletionReady.message);
+          return;
+        }
         response = (await PrintBatchesApi.deleteBatch(batch.id)) == "done" ? "3" : "0";
       }
       if (response == "1") {

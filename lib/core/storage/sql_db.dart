@@ -143,6 +143,53 @@ class SqlDb {
   List<String> get versionThreeTables =>
       [salesRecords, salesIndexTimestamp, salesIndexProfile];
 
+  /// مخزون نقاط البيع: دفعات محوّلة وكروت مرصودة في إصدار 5.
+  String distributorStockTransfers = """
+    CREATE TABLE IF NOT EXISTS distributor_stock_transfers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      distributor_id INTEGER NOT NULL,
+      batch_id INTEGER NOT NULL,
+      batch_name TEXT NOT NULL,
+      profile_name TEXT NOT NULL,
+      customer TEXT NOT NULL DEFAULT '',
+      router_serial TEXT NOT NULL,
+      unit_price REAL NOT NULL,
+      cards_count INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      UNIQUE(batch_id, router_serial),
+      FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+    );
+  """;
+
+  String distributorStockItems = """
+    CREATE TABLE IF NOT EXISTS distributor_stock_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      transfer_id INTEGER NOT NULL,
+      router_serial TEXT NOT NULL,
+      username TEXT NOT NULL,
+      sold_at INTEGER,
+      FOREIGN KEY (transfer_id) REFERENCES distributor_stock_transfers(id) ON DELETE CASCADE,
+      UNIQUE(router_serial, username)
+    );
+  """;
+
+  String distributorStockItemsIndex = """
+    CREATE INDEX IF NOT EXISTS idx_distributor_stock_transfer
+      ON distributor_stock_items(transfer_id, sold_at);
+  """;
+
+  String distributorStockRouterIndex = """
+    CREATE INDEX IF NOT EXISTS idx_distributor_stock_router_pending
+      ON distributor_stock_items(router_serial, sold_at);
+  """;
+
+  List<String> get versionFiveTables => [
+        distributorStockTransfers,
+        distributorStockItems,
+        distributorStockItemsIndex,
+        distributorStockRouterIndex,
+      ];
+
   
 
   Future<Database?> get db async {
@@ -159,7 +206,7 @@ class SqlDb {
     String path = join(databasePath, "mikrotik.db");
     Database database = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -185,6 +232,11 @@ class SqlDb {
         "ALTER TABLE templates ADD COLUMN target_profile_name TEXT NOT NULL DEFAULT ''",
       );
     }
+    if (oldVersion < 5) {
+      for (final statement in versionFiveTables) {
+        await db.execute(statement);
+      }
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -196,6 +248,10 @@ class SqlDb {
     mybatch.execute(savedLogins);
     mybatch.execute(distributors);
     mybatch.execute(distributorTransactions);
+    mybatch.execute(distributorStockTransfers);
+    mybatch.execute(distributorStockItems);
+    mybatch.execute(distributorStockItemsIndex);
+    mybatch.execute(distributorStockRouterIndex);
     mybatch.execute(appSettings);
     mybatch.execute(salesRecords);
     mybatch.execute(salesIndexTimestamp);
