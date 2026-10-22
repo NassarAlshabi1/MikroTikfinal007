@@ -34,7 +34,7 @@ class EditTemplatePage extends GetView<EditTemplateController> {
                     return Column(
                       children: [
                         ModernInput(label: 'ادخل اسم مميز', icon: Icons.text_fields_rounded, controller: controller.profileName,),
-                        
+                        buildTemplateProfileSelector(controller),
                         buildCanvasArea(controller),
                         const SizedBox(height: 5),
                         buildSettingsArea(controller, screenWidth),

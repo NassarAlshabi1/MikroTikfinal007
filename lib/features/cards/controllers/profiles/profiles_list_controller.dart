@@ -39,10 +39,11 @@ class ProfilesListController extends GetxController {
 
   Future<void> getCustomers()async{
     var response=await CardsApi.getCustomers();
-    if (response.status) {
-      customers=response.data!;
+    if (response.status && response.data != null) {
+      customers = response.data!;
+    } else {
+      showMsgDialog(message: response.message);
     }
-    else{ showMsgDialog(message: response.message); }
   }
 
   // دالة تجهيز الحقول عند الإضافة أو التعديل
@@ -79,8 +80,16 @@ class ProfilesListController extends GetxController {
   }
 
   Future<void> executeSave({int? index}) async {
-    if (nameCtrl.text.isEmpty) {
+    if (nameCtrl.text.trim().isEmpty) {
       showMsgDialog(message: "اسم الباقة مطلوب");
+      return;
+    }
+    if (customers.isEmpty) {
+      showMsgDialog(message: "لا يوجد عملاء على الراوتر لإسناد الباقة إليهم");
+      return;
+    }
+    if (index != null && (index < 0 || index >= packages.length)) {
+      showMsgDialog(message: "تعذر العثور على الباقة المحددة؛ حدّث القائمة وحاول مجددًا");
       return;
     }
 

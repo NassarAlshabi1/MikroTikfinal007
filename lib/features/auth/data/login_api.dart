@@ -128,12 +128,21 @@ class LoginApi {
       port: port,
       useSsl: secure,
     );
-    // راوتر جديد = إصدار قد يختلف (v6/v7) ← نُصفّر المسارات المخزّنة
+    // إعادة ضبط مسارات User Manager المخزّنة قبل الاتصال بالراوتر.
     ExpiredUsersApi.resetPaths();
 
     try {
       var result = await MikrotikClient.login();
-      return AppResponse(status: result, message: "");
+      if (!result) {
+        return AppResponse(status: false, message: "تعذّر الاتصال بالراوتر.");
+      }
+      if (MikrotikClient.version != MikrotikClient.supportedMajorVersion) {
+        return AppResponse(
+          status: false,
+          message: "هذا التطبيق يدعم RouterOS v6 فقط. إصدار الراوتر المكتشف: ${MikrotikClient.version == 0 ? 'غير معروف' : 'v${MikrotikClient.version}' }.",
+        );
+      }
+      return AppResponse(status: true, message: "");
     } catch (e) {
       // رسالة عربية واضحة بدل نص الخطأ التقني
       return AppResponse(

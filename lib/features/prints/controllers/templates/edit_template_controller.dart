@@ -20,6 +20,7 @@ class EditTemplateController extends BaseTemplateController {
 
   void _loadData() {
     profileName.text = editedTemplate.name;
+    linkedProfileName = editedTemplate.linkedProfileName;
     imageBytes = editedTemplate.image;
     templateImage = MemoryImage(editedTemplate.image);
     numcolumns.value = editedTemplate.numOfColumns;

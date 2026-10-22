@@ -4,33 +4,42 @@ import 'package:mikronet/features/prints/data/print_api.dart';
 import 'package:mikronet/features/cards/data/profiles_api.dart';
 import 'package:mikronet/features/cards/data/cards_api.dart';
 import 'package:mikronet/core/mikrotik/router_api.dart';
+import 'package:mikronet/core/mikrotik/mikrotik_client.dart';
 import 'package:mikronet/core/ui/dialogs/dialog_helper.dart';
 import 'package:mikronet/core/utils/functions.dart';
 import 'package:mikronet/features/prints/models/print_model.dart';
+import 'package:mikronet/features/prints/models/batch_generation_rules.dart';
 import 'package:mikronet/features/cards/models/profiles_model.dart';
 import 'package:mikronet/features/cards/models/cards_model.dart'; // تم إضافة هذا الاستيراد لجلب CustomerModel
 import 'package:mikronet/core/models/app_response.dart';
 // import 'package:mikronet/views/helpers/dialogs.dart';
 // import 'package:mikronet/views/prints/batches/generated_cards.dart';
 import 'package:mikronet/features/prints/views/templates/pdf_view.dart';
+import 'package:mikronet/features/prints/controllers/batches/batches_list_controller.dart';
 
 class BatchesFormController extends GetxController {
-  List<Map<String, dynamic>> passwordTypes = [
-    {"id": "none", "label": "بدون \n", "icon": Icons.minimize_outlined},
-    {"id": "diff", "label": "ارقام مختلفة \n", "icon": Icons.pin_outlined},
-    {"id": "mixed", "label": "ارقام وحروف\nمدمجة", "icon": Icons.shuffle_rounded},
-    {"id": "same", "label": "مطابقة اسم المستخدم", "icon": Icons.abc_rounded},
-  ];
-
-  /// أنماط اسم المستخدم — مثل تطبيق ABOTALAL.
-  List<Map<String, dynamic>> usernamePatterns = [
-    {"id": "numbers", "label": "ارقام فقط"},
-    {"id": "mixed", "label": "احرف وارقام"},
-    {"id": "lower", "label": "احرف صغيرة فقط"},
-    {"id": "upper", "label": "احرف كبيرة فقط"},
-  ];
+  /// أنماط كروت شائعة في تطبيقات MikroTik، مع اختيار نمط واحد لكل حقل.
+  static const Map<String, String> characterPatternLabels = {
+    "lowercase": "أحرف صغيرة (abcd)",
+    "uppercase": "أحرف كبيرة (ABCD)",
+    "mixedLetters": "مزيج أحجام (aBcD)",
+    "lowercaseNumbers": "صغيرة وأرقام (abcd1234)",
+    "uppercaseNumbers": "كبيرة وأرقام (ABCD1234)",
+    "mixedNumbers": "مزيج أحجام وأرقام (aBcD1234)",
+    "numbers": "أرقام فقط (1234)",
+  };
+  static const Map<String, String> characterPatternPools = {
+    "lowercase": "abcdefghijklmnopqrstuvwxyz",
+    "uppercase": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "mixedLetters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "lowercaseNumbers": "abcdefghijklmnopqrstuvwxyz0123456789",
+    "uppercaseNumbers": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    "mixedNumbers": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    "numbers": "0123456789",
+  };
   String selectedUsernamePattern = "numbers";
-  Map dataInsert = {};
+  String selectedPasswordPattern = "numbers";
+  bool passwordMatchesUsername = false;
   List<PrintTemplatesModel> allTemplates = [];
   List<ProfilesModel> allProfiles = [];
   List<CustomerModel> allCustomers = []; // قائمة العملاء
@@ -52,7 +61,6 @@ class BatchesFormController extends GetxController {
   RxInt selectedTemplate = 0.obs;
   RxString selectedProfile = "".obs;
   RxString selectedCustomer = "".obs; // العميل المختار
-  String selectedPasswordType = "none";
   DateTime dateTime = DateTime.now();
 
   // Progress Variables للـ Dialog
@@ -93,11 +101,8 @@ class BatchesFormController extends GetxController {
       allTemplates = temp;
       templatesLoadError = "";
 
-      // اختيار أول قالب تلقائيًا حتى يظهر القالب المطلوب مباشرة في الخانة
-      if (allTemplates.isNotEmpty &&
-          !allTemplates.any((t) => t.id == selectedTemplate.value)) {
-        selectedTemplate.value = allTemplates.first.id;
-      }
+      _selectCompatibleTemplate();
+      syncCardsFromPages();
 
       update();
     } catch (e) {
@@ -120,9 +125,12 @@ class BatchesFormController extends GetxController {
     try {
       AppResponse<List<ProfilesModel>> result = await ProfilesApi.getProfiles();
       allProfiles = result.data ?? [];
-      if (allProfiles.isNotEmpty && selectedProfile.value.isEmpty) {
-        selectedProfile.value = allProfiles.first.id.toString();
+      final choices = availableProfiles;
+      if (choices.isNotEmpty &&
+          !choices.any((profile) => profile.id == selectedProfile.value)) {
+        selectedProfile.value = choices.first.id;
       }
+      _selectCompatibleTemplate();
       update();
     } catch (e) {
       showMsgDialog(message: "Get Profiles Error : ${e.toString()}",type: MsgType.error);
@@ -134,47 +142,107 @@ class BatchesFormController extends GetxController {
     try {
       AppResponse<List<CustomerModel>> result = await CardsApi.getCustomers();
       allCustomers = result.data ?? [];
-      selectedCustomer.value = allCustomers.isNotEmpty ? allCustomers[0].name : "admin";
+      selectedCustomer.value = allCustomers.isNotEmpty ? allCustomers.first.name : "";
       update();
     } catch (e) {
       showMsgDialog(message: "Get Customers Error : ${e.toString()}",type: MsgType.error);
     }
   }
   Future<void> getRouterSerial() async {
-    var res =await RouterApi.getRouterSerial();
-    if(!res.status){
-      await showMsgDialog(message: res.message,type: MsgType.error);
-      Get.back();
+    try {
+      final response = await RouterApi.getRouterSerial();
+      routerSerial = response.status ? response.data?.toString() ?? "" : "";
+    } catch (_) {
+      routerSerial = "";
     }
-    routerSerial = res.data.toString();
+  }
+
+  /// يختلف الاسم بحسب إصدار User Manager: عميل في RouterOS 6 ومجموعة في 7.
+  String get customerFieldLabel => "عميل User Manager";
+
+  String get customerFieldHint => "اختر العميل";
+
+  /// RouterOS 6 profiles are owned by a User Manager customer. Keep the
+  /// selected package list scoped to that same customer; v7 uses groups and
+  /// has no equivalent profile owner field in this model.
+  List<ProfilesModel> get availableProfiles => allProfiles
+      .where((profile) => profile.customer == selectedCustomer.value)
+      .toList();
+
+  void selectCustomer(String customer) {
+    selectedCustomer.value = customer;
+    final choices = availableProfiles;
+    selectedProfile.value = choices.isNotEmpty ? choices.first.id : "";
+    _selectCompatibleTemplate();
+    syncCardsFromPages();
+    update();
+  }
+
+  ProfilesModel? get selectedProfileModel =>
+      allProfiles.firstWhereOrNull((profile) => profile.id == selectedProfile.value);
+
+  List<PrintTemplatesModel> get compatibleTemplates {
+    final profileName = selectedProfileModel?.name;
+    return allTemplates.where((template) =>
+      template.linkedProfileName.isEmpty || template.linkedProfileName == profileName
+    ).toList();
+  }
+
+  void _selectCompatibleTemplate() {
+    final choices = compatibleTemplates;
+    final selectedName = selectedProfileModel?.name;
+    final specific = choices.firstWhereOrNull(
+      (template) => template.linkedProfileName == selectedName && selectedName != null,
+    );
+    final current = choices.firstWhereOrNull(
+      (template) => template.id == selectedTemplate.value,
+    );
+    final fallback = current != null && (specific == null || current.linkedProfileName.isNotEmpty)
+        ? current
+        : (specific ?? current ?? (choices.isEmpty ? null : choices.first));
+    selectedTemplate.value = fallback?.id ?? 0;
+  }
+
+  void selectProfile(String id) {
+    selectedProfile.value = id;
+    _selectCompatibleTemplate();
+    syncCardsFromPages();
+    update();
+  }
+
+  PrintTemplatesModel? get selectedPrintTemplate =>
+      compatibleTemplates.firstWhereOrNull((x) => x.id == selectedTemplate.value);
+
+  void selectTemplate(int id) {
+    selectedTemplate.value = id;
+    syncCardsFromPages();
+    update();
   }
 
   /// عدد الكروت في الصفحة الواحدة حسب القالب المختار (صفوف × أعمدة).
   int get cardsPerPage {
-    final t = allTemplates.firstWhereOrNull((x) => x.id == selectedTemplate.value);
+    final t = selectedPrintTemplate;
     final perPage = (t?.numOfRows ?? 0) * (t?.numOfColumns ?? 0);
     return perPage > 0 ? perPage : 51;
   }
 
   /// ربط عدد الصفحات بعدد الكروت مثل ABOTALAL — كتابة أحدهما تحسب الآخر.
   void syncPagesFromCards() {
-    final c = int.tryParse(numOfCards.text.trim()) ?? 0;
-    if (c > 0) {
-      numOfPages.text = ((c + cardsPerPage - 1) ~/ cardsPerPage).toString();
-    }
+    final count = int.tryParse(numOfCards.text.trim()) ?? 0;
+    numOfPages.text = count > 0
+        ? ((count + cardsPerPage - 1) ~/ cardsPerPage).toString()
+        : "";
   }
 
   void syncCardsFromPages() {
-    final p = int.tryParse(numOfPages.text.trim()) ?? 0;
-    if (p > 0) {
-      numOfCards.text = (p * cardsPerPage).toString();
-    }
+    final pages = int.tryParse(numOfPages.text.trim()) ?? 0;
+    numOfCards.text = pages > 0 ? (pages * cardsPerPage).toString() : "";
   }
 
   void prepareCardsData(ProfilesModel profile, {List<String> existingUsers = const []}) {
-    int count = int.parse(numOfCards.text.trim());
-    int uLen = int.parse(usernameLength.text.trim());
-    int pLen = int.tryParse(passwordLength.text.trim()) ?? 5;
+    final count = int.parse(numOfCards.text.trim());
+    final uLen = int.parse(usernameLength.text.trim());
+    final pLen = int.tryParse(passwordLength.text.trim()) ?? 5;
 
     // أحرف يدوية مستبعدة (خيار استبعاد حرف/رقم — مثل ABOTALAL)
     final excluded = excludeCharEnabled
@@ -186,23 +254,23 @@ class BatchesFormController extends GetxController {
       length: uLen,
       prefix: prefix.text.trim(),
       suffix: suffix.text.trim(),
-      type: selectedUsernamePattern,
+      characterPool: characterPatternPools[selectedUsernamePattern],
       excludedChars: excluded,
       users: existingUsers, 
     );
 
-    if (dataInsert["password_type"] == "diff" ||
-        dataInsert["password_type"] == "mixed") {
+    final templateHasPassword = selectedPrintTemplate?.withPassword ?? false;
+    if (!templateHasPassword) {
+      generatedPasswords = List.generate(count, (_) => "");
+    } else if (passwordMatchesUsername) {
+      generatedPasswords = List<String>.from(generatedUsernames);
+    } else {
       generatedPasswords = generateUniqueRandomStrings(
         count: count,
         length: pLen,
-        type: dataInsert["password_type"] == "mixed" ? "mixed" : "numbers",
+        characterPool: characterPatternPools[selectedPasswordPattern],
         excludedChars: excluded,
       );
-    } else if (dataInsert["password_type"] == "same") {
-      generatedPasswords = List.from(generatedUsernames);
-    } else {
-      generatedPasswords = List.generate(count, (i) => "");
     }
 
     generatedCards = List.generate(
@@ -286,32 +354,25 @@ class BatchesFormController extends GetxController {
       return;
     }
 
-    PrintTemplatesModel? template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
+    final PrintTemplatesModel? template = selectedPrintTemplate;
     if (template == null) {
-      if (allTemplates.isNotEmpty) {
-        template = allTemplates.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة", type: MsgType.error);
-        return;
-      }
+      showMsgDialog(
+        message: allTemplates.isEmpty
+            ? "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة"
+            : "لا يوجد قالب مرتبط بهذه الباقة أو قالب عام؛ اربط قالبًا بها من إعدادات القوالب.",
+        type: MsgType.error,
+      );
+      return;
     }
 
-    var profile = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString());
+    var profile = availableProfiles.firstWhereOrNull((p) => p.id == selectedProfile.value);
     if (profile == null) {
-      if (allProfiles.isNotEmpty) {
-        profile = allProfiles.first;
+      if (availableProfiles.isNotEmpty) {
+        profile = availableProfiles.first;
       } else {
         showMsgDialog(message: "يرجى إنشاء باقة أولاً من قسم الباقات", type: MsgType.error);
         return;
       }
-    }
-
-    if (!template.withPassword && selectedPasswordType == "same") {
-      bool confirm = await showConfirmDialog(
-        message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
-        onConfirm: (){}
-      );
-      if (!confirm) return;
     }
 
     generationProgress.value = 0.0;
@@ -356,8 +417,11 @@ class BatchesFormController extends GetxController {
         generationProgress.value = (i + 1) / totalCards;
       }
 
-      Get.back(); 
-      Get.back(); 
+      Get.back();
+      Get.back();
+      if (Get.isRegistered<BatchesListController>()) {
+        Get.find<BatchesListController>().getAllBatches2();
+      }
       showSuccessDialog();
 
     } catch (e) {
@@ -374,36 +438,34 @@ class BatchesFormController extends GetxController {
       return;
     }
 
-    PrintTemplatesModel? template = allTemplates.firstWhereOrNull((t) => t.id == selectedTemplate.value);
+    final PrintTemplatesModel? template = selectedPrintTemplate;
     if (template == null) {
-      if (allTemplates.isNotEmpty) {
-        template = allTemplates.first;
-      } else {
-        showMsgDialog(message: "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة", type: MsgType.error);
-        return;
-      }
+      showMsgDialog(
+        message: allTemplates.isEmpty
+            ? "يرجى إنشاء قالب طباعة أولاً من قسم الطباعة"
+            : "لا يوجد قالب مرتبط بهذه الباقة أو قالب عام؛ اربط قالبًا بها من إعدادات القوالب.",
+        type: MsgType.error,
+      );
+      return;
     }
 
-    if (!template.withPassword && selectedPasswordType == "same") {
-      bool confirm = await showConfirmDialog(
-        message: "القالب بدون كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم هل انت متاكد ",
-        onConfirm: (){}
-      );
-      if (!confirm) return;
-    }
-    
-    var profile = allProfiles.firstWhereOrNull((p) => p.id.toString() == selectedProfile.value.toString());
+    var profile = availableProfiles.firstWhereOrNull((p) => p.id == selectedProfile.value);
     if (profile == null) {
-      if (allProfiles.isNotEmpty) {
-        profile = allProfiles.first;
+      if (availableProfiles.isNotEmpty) {
+        profile = availableProfiles.first;
       } else {
         showMsgDialog(message: "يرجى إنشاء باقة أولاً من قسم الباقات", type: MsgType.error);
         return;
       }
     }
 
-    prepareCardsData(profile);
-    
+    try {
+      prepareCardsData(profile);
+    } catch (error) {
+      showMsgDialog(message: error.toString(), type: MsgType.error);
+      return;
+    }
+
     Get.to(
       PdfView(
         usernames: generatedUsernames,
@@ -415,47 +477,66 @@ class BatchesFormController extends GetxController {
   }
 
   void validation() {
-    // تحقق من اختيار العميل أولاً
-    if (selectedCustomer.value == "") {
-      throw "يرجى اختيار العميل";
+    if (routerSerial.trim().isEmpty) {
+      throw "تعذّر تحديد الراوتر؛ تحقق من الاتصال ثم أعد فتح شاشة إنشاء الدفعة";
     }
-    if (selectedProfile.value == "") {
-      throw "يرجى اختيار الباقة";
+    if (selectedCustomer.value.trim().isEmpty ||
+        !allCustomers.any((customer) => customer.name == selectedCustomer.value)) {
+      throw "لا توجد ${customerFieldLabel} صالحة على الراوتر؛ أنشئها أو تحقق من صلاحيات User Manager";
     }
-    if (selectedTemplate.value == 0) {
-      throw "يرجى اختيار القالب";
+    if (selectedProfile.value.trim().isEmpty ||
+        !availableProfiles.any((p) => p.id == selectedProfile.value)) {
+      throw "اختر باقة User Manager مملوكة للعميل المحدد";
     }
-    if (batchName.text.trim().isEmpty ||
-        numOfCards.text.trim().isEmpty ||
-        usernameLength.text.trim().isEmpty) {
-      throw "يرجى تعبئة جميع الحقول";
+    final template = selectedPrintTemplate;
+    if (template == null) {
+      throw "يرجى اختيار قالب طباعة صالح";
     }
-    var template = allTemplates.firstWhere((t) => t.id == selectedTemplate.value);
-    if (template.withPassword) {
-      switch (selectedPasswordType) {
-        case "none":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور بلا ";
-        case "same":
-          throw "القالب مع كلمة مرور ونمط توليد كلمة المرور مشابه لاسم المستخدم ";
-        default:
-          if (passwordLength.text.trim().isEmpty) {
-            throw "ادخل طول كلمة المرور ";
-          }
-      }
-    } else {
-      switch (selectedPasswordType) {
-        case "diff":
-        case "mixed":
-          throw "لايمكن ان يكون نمط كلمة المرور مختلف بينما القالب بدون كلمة مرور";
-        default:
-      }
+    if (batchName.text.trim().isEmpty) {
+      throw "يرجى إدخال اسم الدفعة";
     }
+
+    final count = int.tryParse(numOfCards.text.trim());
+    if (count == null || count < 1 || count > 10000) {
+      throw "عدد الكروت يجب أن يكون بين 1 و10000";
+    }
+    final usernameSize = int.tryParse(usernameLength.text.trim());
+    if (usernameSize == null || usernameSize < 1 || usernameSize > 32) {
+      throw "طول الجزء العشوائي لاسم المستخدم يجب أن يكون بين 1 و32";
+    }
+    if (prefix.text.length + usernameSize + suffix.text.length > 255) {
+      throw "اسم المستخدم أطول من الحد المسموح به بعد إضافة البداية والنهاية";
+    }
+
+    final credentialError = BatchGenerationRules.credentialConfigurationError(
+      usernamePattern: selectedUsernamePattern,
+      templateHasPassword: template.withPassword,
+      passwordPattern: selectedPasswordPattern,
+      passwordMatchesUsername: passwordMatchesUsername,
+      passwordLength: passwordLength.text,
+    );
+    if (credentialError != null) throw credentialError;
   }
 
   void init() {
     usernameLength.text = "7";
     passwordLength.text = "5";
+    numOfPages.text = "1";
+    syncCardsFromPages();
     update();
+  }
+
+  @override
+  void onClose() {
+    batchName.dispose();
+    numOfCards.dispose();
+    numOfPages.dispose();
+    prefix.dispose();
+    suffix.dispose();
+    usernameLength.dispose();
+    passwordLength.dispose();
+    excludedCharsCtrl.dispose();
+    super.onClose();
   }
 
   @override
@@ -467,28 +548,11 @@ class BatchesFormController extends GetxController {
   void _getDataFromMikrotik()async{
     await getRouterSerial();
     await getAllCustomers(); // استدعاء دالة جلب العملاء
-    await getAllTemplates();
     await getallProfiles();
+    await getAllTemplates();
   }
 
-  @override
-  void update([List<Object>? ids, bool condition = true]) {
-    dataInsert = {
-      "name": batchName.text,
-      "total": numOfCards.text,
-      "customer": selectedCustomer.value,
-      "profile": selectedProfile.value,
-      "template_id": selectedTemplate.value,
-      "password_type": selectedPasswordType,
-      "username_pattern": selectedUsernamePattern,
-      "card_prefix": prefix.text,
-      "card_suffix": suffix.text,
-      "username_length": usernameLength.text,
-      "password_length": passwordLength.text,
-    };
-    super.update(ids, condition);
-  }
-  
+
   void showSuccessDialog() {
     Get.dialog(
       AlertDialog(
@@ -522,7 +586,7 @@ class BatchesFormController extends GetxController {
                         Get.to(PdfView(
                           usernames: generatedCards.map((g)=>g.username).toList(), 
                           passwords: generatedCards.map((g)=>g.password).toList(), 
-                          template: allTemplates.where((t)=>t.id==selectedTemplate.value).first,
+                          template: selectedPrintTemplate!,
                         ));
                       },
                       child: const Text("طباعة PDF"))),

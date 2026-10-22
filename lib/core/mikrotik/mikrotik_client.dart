@@ -8,6 +8,7 @@ import 'package:mikronet/core/mikrotik/router_os_client.dart';
 class MikrotikClient {
   static RouterOSClient? _client; // القناة الأساسية السريعة (للباقات والإضافات)
   // static RouterOSClient? _heavyClient; // القناة الثقيلة (لجلب الكروت والجلسات فقط)
+  static const int supportedMajorVersion = 6;
   static int version=0;
 
   // حفظ الإعدادات لإعادة الاتصال التلقائي الصامت في حال فصل الراوتر إحدى القنوات
@@ -251,9 +252,9 @@ class MikrotikClient {
           return int.parse(match.group(1)!);
         }
       }
-      return 6; // الافتراضي RouterOS v6
+      return 0; // Unknown: fail closed; app supports RouterOS v6 only.
     } catch (e) {
-      return 6; // الافتراضي RouterOS v6
+      return 0; // Unknown: fail closed; app supports RouterOS v6 only.
     }
   }
 

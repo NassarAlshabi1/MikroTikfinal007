@@ -42,6 +42,8 @@ class PrintTemplatesModel {
   double passwordFontSize;
   LocationData usernameLocation;
   LocationData passwordLocation;
+  /// User Manager profile this template is associated with; empty means generic.
+  String linkedProfileName;
 
   PrintTemplatesModel({
     required this.id,
@@ -54,6 +56,7 @@ class PrintTemplatesModel {
     required this.passwordFontSize,
     required this.usernameLocation,
     required this.passwordLocation,
+    this.linkedProfileName = '',
   });
 
   static PrintTemplatesModel fromDataForm(Map data){
@@ -79,6 +82,7 @@ class PrintTemplatesModel {
         x: data["password_location_x"], 
         y: data["password_location_y"]
       ),
+      linkedProfileName: (data["target_profile_name"] ?? '').toString(),
       // {
       //   "x":data["passwordlocationx"],
       //   "y":data["passwordlocationy"],
@@ -148,6 +152,7 @@ class PrintTemplatesModel {
         x: _toDouble(data["password_location_x"], fallback: 101),
         y: _toDouble(data["password_location_y"], fallback: 101),
       ),
+      linkedProfileName: (data["target_profile_name"] ?? '').toString(),
     );
   }
 
@@ -166,6 +171,7 @@ class PrintTemplatesModel {
       "username_location_y":usernameLocation.y,
       "password_location_x":passwordLocation.x,
       "password_location_y":passwordLocation.y,
+      "target_profile_name": linkedProfileName,
     };
   }
 

@@ -83,36 +83,53 @@ class CardsApi {
     required String profile,
   }) async {
     try {
-      if(MikrotikClient.version==7){
-        return await CardsApi7.addOneCard(
-          group: customer, 
-          username: username, 
-          password: password,
-          profile: profile
-        );
-      }
-      await MikrotikClient.addData(command: "/tool/user-manager/user/add", data: {
-        "customer": customer,
-        "username": username,
-        "password": password,
-      });
+      // RouterOS 6 User Manager uses a customer-owned user, then activates
+      // the selected package on that user as a separate command.
+      var userCreated = false;
+      try {
+        await MikrotikClient.addData(command: "/tool/user-manager/user/add", data: {
+          "customer": customer,
+          "username": username,
+          "password": password,
+        });
+        userCreated = true;
 
-      await MikrotikClient.addData(
-          command: "/tool/user-manager/user/create-and-activate-profile",
-          data: {
-            "customer": customer,
-            "numbers": username,
-            "profile": profile,
-          });
-      return AppResponse<void>(
-        status: true,
-        message: "done",
-      );
+        await MikrotikClient.addData(
+            command: "/tool/user-manager/user/create-and-activate-profile",
+            data: {
+              "customer": customer,
+              "numbers": username,
+              "profile": profile,
+            });
+        return AppResponse<void>(status: true, message: "done");
+      } catch (e) {
+        // Avoid leaving an unassigned orphan user if package activation fails.
+        // Only remove it if this call successfully created it; never delete a
+        // pre-existing duplicate username after an add failure.
+        if (userCreated) {
+          try {
+            final matches = await MikrotikClient.printData(
+              commands: ["/tool/user-manager/user/print"],
+              conditions: ["?customer=$customer", "?username=$username"],
+              fields: ".id",
+            );
+            if (matches.isNotEmpty && matches.first[".id"] != null) {
+              await MikrotikClient.removeById(
+                command: "/tool/user-manager/user/remove",
+                id: matches.first[".id"].toString(),
+              );
+            }
+          } catch (_) {
+            return AppResponse<void>(
+              status: false,
+              message: "تعذّر إسناد الباقة '$profile' للمستخدم '$username'، كما تعذّر تنظيف الحساب اليتيم: $e",
+            );
+          }
+        }
+        return AppResponse<void>(status: false, message: e.toString());
+      }
     } on Exception catch (e) {
-      return AppResponse<void>(
-        status: false,
-        message: e.toString(),
-      );
+      return AppResponse<void>(status: false, message: e.toString());
     }
   }
 

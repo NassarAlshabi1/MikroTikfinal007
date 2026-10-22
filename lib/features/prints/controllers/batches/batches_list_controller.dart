@@ -10,13 +10,14 @@ class BatchesListController extends GetxController {
   List<PrintBatchesModel> allBatches = [];
   bool isLoading = false;
   bool isDeleteLoading = false;
+  String loadError = "";
   var routerSerial = "";
 
-  // إحصائيات علوية (2x2 Grid)
-  int routersCount = 1;
-  int profilesCount = 12;
-  int batchesCount = 37;
-  int generatedCardsCount = 16141;
+  // تُعرض إحصائيات حقيقية فقط؛ لا تُستخدم أرقام نموذجية عند غياب البيانات.
+  int routersCount = 0;
+  int profilesCount = 0;
+  int batchesCount = 0;
+  int generatedCardsCount = 0;
 
   // الباقات وملخصها
   List<Map<String, dynamic>> profilesSummary = [];
@@ -127,7 +128,7 @@ class BatchesListController extends GetxController {
       var cards = List.generate(r.cards.length, (i) {
         return GeneratedCardsModel.fromDatabase(r.cards[i]);
       });
-      Get.to(GeneratedCardsView(cards));
+      Get.to(GeneratedCardsView(cards, customerName: r.customer));
     } catch (e) {
       showErrorDialog(content: e.toString());
     }
@@ -157,10 +158,14 @@ class BatchesListController extends GetxController {
 
   Future<void> getAllBatches2() async {
     isLoading = true;
+    loadError = "";
     update();
     try {
-      var serial = await RouterApi.getRouterSerial();
-      List result = await PrintBatchesApi.getAllBatchesByRouter(serial.data.toString());
+      final serial = await RouterApi.getRouterSerial();
+      if (!serial.status || serial.data == null || serial.data.toString().isEmpty) {
+        throw StateError("تعذّر قراءة الرقم التسلسلي للراوتر");
+      }
+      final result = await PrintBatchesApi.getAllBatchesByRouter(serial.data.toString());
       List<PrintBatchesModel> temp = [];
       if (result.isNotEmpty) {
         for (var i in result) {
@@ -172,7 +177,7 @@ class BatchesListController extends GetxController {
       // حساب الإحصائيات
       _computeStats();
     } catch (e) {
-      // في حالة وجود خطأ نستخدم الإحصائيات الافتراضية
+      loadError = e.toString();
       _computeStats();
     } finally {
       isLoading = false;
@@ -188,7 +193,7 @@ class BatchesListController extends GetxController {
 
       for (var b in allBatches) {
         tCards += b.cards.length;
-        final prof = b.cardsProfile.isNotEmpty ? b.cardsProfile : "100c";
+        final prof = b.cardsProfile.isNotEmpty ? b.cardsProfile : "—";
         if (!profMap.containsKey(prof)) {
           profMap[prof] = {'name': prof, 'batches': 0, 'cards': 0};
         }
@@ -196,7 +201,7 @@ class BatchesListController extends GetxController {
         profMap[prof]!['cards'] = (profMap[prof]!['cards'] as int) + b.cards.length;
       }
 
-      generatedCardsCount = tCards > 0 ? tCards : 16141;
+      generatedCardsCount = tCards;
       profilesCount = profMap.isNotEmpty ? profMap.length : 12;
       routersCount = 1;
 
@@ -204,18 +209,13 @@ class BatchesListController extends GetxController {
       totalPages = (allBatches.length / itemsPerPage).ceil();
       if (totalPages < 1) totalPages = 1;
     } else {
-      // القيم الافتراضية المتطابقة مع الصورة
-      routersCount = 1;
-      profilesCount = 12;
-      batchesCount = 37;
-      generatedCardsCount = 16141;
-      totalPages = 4;
-
-      profilesSummary = [
-        {'name': '100c', 'batches': 19, 'cards': 11024},
-        {'name': '200', 'batches': 1, 'cards': 2550},
-        {'name': '250', 'batches': 1, 'cards': 2550},
-      ];
+      routersCount = 0;
+      profilesCount = 0;
+      batchesCount = 0;
+      generatedCardsCount = 0;
+      totalPages = 1;
+      currentPage = 1;
+      profilesSummary = [];
     }
   }
 }

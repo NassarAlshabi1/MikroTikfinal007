@@ -105,6 +105,9 @@ class HotspotVoucherPdf {
 
   /// خلية قسيمة واحدة (بحدود قطع + بيانات الدخول).
   static pw.Widget _cell(VoucherPrintItem item, pw.Font? font, String title) {
+    final qrPayload = item.password.isEmpty
+        ? 'MikroNet Hotspot\nالمستخدم: ${item.username}'
+        : 'MikroNet Hotspot\nالمستخدم: ${item.username}\nكلمة المرور: ${item.password}';
     return pw.Container(
       margin: const pw.EdgeInsets.all(4),
       padding: const pw.EdgeInsets.all(8),
@@ -132,7 +135,17 @@ class HotspotVoucherPdf {
           _field("المستخدم", item.username, font, big: true),
           pw.SizedBox(height: 4),
           _field("كلمة المرور", item.password, font, big: true),
-          pw.SizedBox(height: 6),
+          pw.SizedBox(height: 4),
+          pw.Center(
+            child: pw.BarcodeWidget(
+              barcode: pw.Barcode.qrCode(),
+              data: qrPayload,
+              width: 48,
+              height: 48,
+              drawText: false,
+            ),
+          ),
+          pw.SizedBox(height: 4),
           if (item.profile.isNotEmpty) _line("الباقة: ${item.profile}", font),
           if (item.validity.isNotEmpty) _line("الصلاحية: ${item.validity}", font),
           if (item.dataLimit.isNotEmpty) _line("حجم البيانات: ${item.dataLimit}", font),

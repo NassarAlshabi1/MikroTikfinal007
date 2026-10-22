@@ -34,7 +34,8 @@ class SqlDb {
       username_location_x REAL,
       username_location_y REAL,
       password_location_x REAL,
-      password_location_y REAL
+      password_location_y REAL,
+      target_profile_name TEXT NOT NULL DEFAULT ''
     );
   """;
 
@@ -158,7 +159,7 @@ class SqlDb {
     String path = join(databasePath, "mikrotik.db");
     Database database = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -178,6 +179,11 @@ class SqlDb {
       for (final statement in versionThreeTables) {
         await db.execute(statement);
       }
+    }
+    if (oldVersion < 4) {
+      await db.execute(
+        "ALTER TABLE templates ADD COLUMN target_profile_name TEXT NOT NULL DEFAULT ''",
+      );
     }
   }
 

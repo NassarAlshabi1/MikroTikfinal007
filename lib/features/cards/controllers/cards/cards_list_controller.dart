@@ -48,13 +48,7 @@ class CardsListController extends GetxController {
     // await MikrotikClient.cancel();
     if(isLoading.value){
       MikrotikClient.cancelCommand('users_profiles');
-      print('\n \n \n \n \n \n \n \n \n \n');
-      print('users_profiles');
-      print('\n \n \n \n \n \n \n \n \n \n');
       MikrotikClient.cancelCommand('users');
-      print('\n \n \n \n \n \n \n \n \n \n');
-      print('users');
-      print('\n \n \n \n \n \n \n \n \n \n');
     }
   }
 
@@ -104,12 +98,17 @@ class CardsListController extends GetxController {
    
     var res = await Get.toNamed(AppRoutes.cardDetails, arguments: card);
     if(res != null && res is AppResponse && res.status){
-      var updatedCard = res.data as CardModel;
-      var i = allCards.indexWhere((c)=> c.id == card.id);
-      if(res.message == "delete") {
-        allCards.removeAt(i);
+      final index = allCards.indexWhere((c) => c.id == card.id);
+      // قد تكون القائمة حُمّلت من جديد أثناء بقاء صفحة التفاصيل مفتوحة.
+      // لا نحاول الحذف/التحديث بمؤشر -1 في هذه الحالة.
+      if (index < 0) return;
+
+      if (res.message == "delete") {
+        allCards.removeAt(index);
+      } else if (res.data is CardModel) {
+        allCards[index] = res.data as CardModel;
       } else {
-        allCards[i]= updatedCard;
+        return;
       }
       _applyFilters();
         

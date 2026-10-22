@@ -6,6 +6,8 @@ import 'package:mikronet/features/prints/controllers/templates/add_template_cont
 import 'package:mikronet/features/prints/controllers/templates/edit_template_controller.dart';
 import 'package:mikronet/features/prints/controllers/templates/templates_list_controller.dart';
 import 'package:mikronet/features/prints/views/batches/batches_list_page.dart';
+import 'package:mikronet/features/prints/controllers/batches/add_batch_controller.dart';
+import 'package:mikronet/features/prints/views/batches/add_batch_page.dart';
 import 'package:mikronet/features/prints/views/prints_unit.dart';
 import 'package:mikronet/features/prints/views/templates/add_template_page.dart';
 import 'package:mikronet/features/prints/views/templates/edit_template_page.dart';
@@ -22,6 +24,11 @@ class PrintsRoutes {
       name: AppRoutes.batches, 
       page: () => const BatchesView(),
       binding: BindingsBuilder(() => Get.lazyPut(() => BatchesListController())),
+    ),
+    GetPage(
+      name: AppRoutes.addBatch,
+      page: () => AddBatchView(controller: Get.find<BatchesFormController>()),
+      binding: BindingsBuilder(() => Get.lazyPut(() => BatchesFormController())),
     ),
     GetPage(
       name: AppRoutes.templates, 

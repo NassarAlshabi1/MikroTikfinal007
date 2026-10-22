@@ -14,7 +14,12 @@ import 'package:mikronet/core/ui/widgets/section_title.dart';
 
 class GeneratedCardsView extends StatelessWidget {
   final List<GeneratedCardsModel> generatedCards;
-  const GeneratedCardsView(this.generatedCards,{super.key,});
+  final String customerName;
+  const GeneratedCardsView(
+    this.generatedCards, {
+    super.key,
+    this.customerName = "",
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +28,10 @@ class GeneratedCardsView extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.page,
         body: GetBuilder<GeneratedCardsController>(
-          init: GeneratedCardsController(generatedCards),
+          init: GeneratedCardsController(
+            generatedCards,
+            customerName: customerName,
+          ),
           builder: (controller) {
             return Column(
               children: [

@@ -32,7 +32,7 @@ class AddTemplatePage extends GetView<AddTemplateController> {
                     return Column(
                       children: [
                         ModernInput(label: "أضف اسماً مميزاً", icon: Icons.text_fields_rounded, controller: controller.profileName),
-                        
+                        buildTemplateProfileSelector(controller),
                         buildCanvasArea(controller),
                         const SizedBox(height: 5),
                         // إعدادات القالب
