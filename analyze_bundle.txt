@@ -1,0 +1,165 @@
+run_id=40132130408
+commit=5790c42fd3976eab7ddc3a9389167d5e177b204f
+ref=refs/heads/arena/1e8ad561-mikrotikfinal007
+analyze_step_outcome=success
+unit_tests_outcome=success
+===== UNIT TESTS OUTPUT (last 120 lines) =====
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: buildProfileLimits — أشكال v6 ربط الباقة بالقيد عبر جدول profile-limitation
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: buildProfileLimits — أشكال v6 باقة بلا قيد ← يُستخدم validity كبديل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — استهلاك المدة كرت استهلك مدته كاملة ← مؤهل للحذف
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — استهلاك المدة كرت تخطّى المدة (1w2d3h4m5s ضد 1w) ← مؤهل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — استهلاك المدة كرت لم يكمل مدته بفارق ثانية ← غير مؤهل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — استهلاك المدة مقارنة الباقة عبر القيد: 30d ضد 1w2d (v6)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — إشارة الباقة المُزالة (!actual-profile) مستخدم بلا actual-profile مع استهلاك ← منتهٍ (سلوك v6 الأصلي)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — إشارة الباقة المُزالة (!actual-profile) حقل actual-profile فارغ نصًّا + استهلاك ← منتهٍ
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — إشارة الباقة المُزالة (!actual-profile) كرت جديد بلا باقة وبلا استهلاك ← لا يُحذف
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — إشارة الباقة المُزالة (!actual-profile) كرت له باقة ولم يستهلك ← لا يُحذف
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — قواعد الأمان مدة غير مفهومة ← يُستبعد ولا يُحذف
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — قواعد الأمان حد مذكور لكن غير مفهوم ← يُستبعد
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v6 — قواعد الأمان 0s كحد مطلق ← لا يُحذف أبدًا
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v7 — لا يُستخدم معيار الباقة المُزالة مستخدم v7 بلا باقة وباستهلاك ← لا يُعتبر منتهيًا تلقائيًا
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: تصنيف v7 — لا يُستخدم معيار الباقة المُزالة v7: حالة الباقة used ← منتهٍ (سكربت MikroTik المعتمد)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/expired_users_classifier_test.dart: parseBytes — صيغ RouterOS قيم صحيحة ووحدات
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/screens_preview_test.dart: profiles list preview
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/screens_preview_test.dart: maintenance hub preview
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_card_generation_test.dart: اختبارات توليد دفعات الكروت واختيار الباقة والقالب توليد أسماء مستخدمين فريدة مع بادئة ولاحقة واستبعاد الكروت الموجودة مسبقاً
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_card_generation_test.dart: اختبارات توليد دفعات الكروت واختيار الباقة والقالب أنماط توليد كلمات المرور (diff, same, none)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_card_generation_test.dart: اختبارات توليد دفعات الكروت واختيار الباقة والقالب ربط بطاقات الدفعة بالباقة والقالب وقواعد التحقق
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_card_generation_test.dart: اختبارات توليد دفعات الكروت واختيار الباقة والقالب أداء توليد 1,000 كرت مع فحص التكرار في زمن فائق السرعة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) نص Base64 صحيح ← يُفكّ لبايتات مطابقة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) بايتات خام (Uint8List) ← تُعاد كما هي (قوالب قديمة كـBLOB)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) قائمة أرقام (List<int>) ← تُحوَّل إلى Uint8List
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) null ← صورة فارغة (لا انهيار)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) نص فارغ ← صورة فارغة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) نص غير Base64 ← صورة فارغة بدل الاستثناء
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) Future (خطأ الحفظ القديم) ← صورة فارغة لا انهيار
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: فك ترميز صورة القالب (PrintTemplatesModel.decodeImage) كائن نصي غريب ← صورة فارغة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: مسار يصلح كقالب (isUsableRow) اسم غير فارغ ← صالح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: مسار يصلح كقالب (isUsableRow) اسم فارغ أو مسافات أو null ← غير صالح (يُستبعد)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) صف كامل بقيم صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) يربط القالب باسم باقة User Manager المحفوظة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) صف كامل بصورة تالفة ← يُقرأ بنجاح بصورة فارغة (لا استثناء)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) قيم ناقصة ← قيم افتراضية معقولة بلا انهيار
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) أرقام مخزّنة كنصوص (SQLite TEXT) تُقرأ صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: القراءة من قاعدة البيانات (fromDatabase) صورة بصيغة BLOB قديمة تُقرأ كما هي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/print_model_test.dart: الحفظ (toDatabase) الصورة تُشفَّر Base64 وتعود كما هي عند القراءة (دورة كاملة)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/user_manager_character_sets_test.dart: RouterOS User Manager character categories numbers only generates ASCII digits
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/user_manager_character_sets_test.dart: RouterOS User Manager character categories lowercase and uppercase can be selected together
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/user_manager_character_sets_test.dart: RouterOS User Manager character categories all three official categories can be mixed
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/user_manager_character_sets_test.dart: RouterOS User Manager character categories unsupported or empty categories fail instead of silently using digits
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/user_manager_character_sets_test.dart: RouterOS User Manager character categories selected pattern pool generates only lowercase letters and digits
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/user_manager_character_sets_test.dart: RouterOS User Manager character categories uppercase-only pattern generates uppercase characters
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/card_generation_patterns_test.dart: أنماط توليد أسماء الكروت (طريقة ABOTALAL) ارقام فقط: كل الرموز أرقام
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/card_generation_patterns_test.dart: أنماط توليد أسماء الكروت (طريقة ABOTALAL) احرف وارقام: أحرف كبيرة وأرقام بلا أحرف مشبهة (0/O/1/I)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/card_generation_patterns_test.dart: أنماط توليد أسماء الكروت (طريقة ABOTALAL) احرف صغيرة فقط و احرف كبيرة فقط
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/card_generation_patterns_test.dart: أنماط توليد أسماء الكروت (طريقة ABOTALAL) البادئة واللاحقة تلحقان بالرمز
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/card_generation_patterns_test.dart: أنماط توليد أسماء الكروت (طريقة ABOTALAL) استبعاد حرف/رقم يزيله من الرموز المولدة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/card_generation_patterns_test.dart: أنماط توليد أسماء الكروت (طريقة ABOTALAL) سقف المحاولات يرمي خطأً بدل التعليق عند استنفاد التركيبات
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الرموز 1w2d3h4m5s
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الرموز قيم مفردة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الرموز ترتيب مقلوب وفراغات
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الرموز صفر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الرموز ثوانٍ صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الساعة ساعة:دقيقة:ثانية
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الساعة مع بادئة أسابيع/أيام
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الساعة يوم:ساعة:دقيقة:ثانية
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - صيغة الساعة الجزءان مُلتبسان ← يُرفض بأمان
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.parse - مدخلات غير صالحة فراغ أو نص غير مفهوم
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.format تنسيق مختصر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: MikrotikDuration.format ذهاب وإياب (parse ↔ format)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: UptimeUsage - المعيار الذكي للحذف استهلك مدته كاملة ← مؤهل للحذف
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: UptimeUsage - المعيار الذكي للحذف تجاوز المدة ← مؤهل للحذف
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: UptimeUsage - المعيار الذكي للحذف لم يكمل مدته ← غير مؤهل (فارق ثانية واحدة)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: UptimeUsage - المعيار الذكي للحذف بدون حد (0 أو فارغ) ← لا يُحذف أبدًا
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/mikrotik_duration_test.dart: UptimeUsage - المعيار الذكي للحذف مستخدمون بلا استهلاك
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/dns_settings_test.dart: SitesApi.formatDnsServers trims both server values and joins them with a comma
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/dns_settings_test.dart: SitesApi.formatDnsServers supports a single DNS server without a trailing comma
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/dns_settings_test.dart: SitesApi.formatDnsServers ignores a blank secondary server
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات مستخدم كامل الحدود: الحسابات والنِسب صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات كرت استهلك مدته كاملة ← منتهي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات كرت تجاوز المدة (1w2d3h4m5s ضد 1w) ← منتهي والنسبة > 100
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات قارب على الانتهاء (استهلك 85% وحد التنبيه 20%)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات استهلك رصيد البيانات فقط ← منتهي بالبيانات
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات مستخدم معطّل ← الحالة معطّل مهما كانت الحدود
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات بلا حدود إطلاقًا: لا يُحسب منتهيًا والنِسب صفر
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات أحجام بوحدات RouterOS تُقرأ صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotUser.parse — الحقول والحالات مدة غير مفهومة لا تُخمَّن ← لا حدود
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotActiveSession.parse جلسة كاملة: المدة والاستهلاك ونوع الدخول بالعربية
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotActiveSession.parse أنواع دخول مختلفة تُترجم
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: HotspotActiveSession.parse لا خمول ← «لا خمول»
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم باقة كاملة الحقول
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم باقة بلا تحديد سرعة ← «بلا تحديد سرعة»
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم خادم: مجلد صفحة الدخول الافتراضي hotspot
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: الباقات والخوادم مجلد مخصّص يُحترم
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم العدد والأطوال ونوع الأحرف صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم الأسماء فريدة دائمًا
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم الأحرف الملتبسة مُستثناة (0/O و 1/I/l)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم البادئة تُضاف لكل الأسماء
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: توليد القسائم نفس البذرة ← نفس النتيجة (قابلية التكرار)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) مواصفات صحيحة ← بلا مشاكل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) عدد غير صالح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) أطوال غير صالحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) بادئة بأحرف غير مسموحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) صيغة مدة أو بيانات غير مفهومة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تحقق مواصفات القسائم (VoucherSpec.validate) سعر الكرت: يقبل الصحيح ويرفض السالب والمبالغ فيه
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تصدير القسائم CSV بعناوين وأسطر صحيحة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تصدير القسائم تهريب الفواصل وعلامات الاقتباس
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: تصدير القسائم أوامر RouterOS جاهزة للاستخدام اليدوي
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول صفحة صالحة كاملة ← بلا أخطاء
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول login.html مفقود ← خطأ مُفشِل
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول بدون $(link-login-only) ← خطأ
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول بدون viewport ← تحذير (وليس خطأ)
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول ملفات موصى بها ناقصة ← ملاحظة
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول ملف كبير جدًا ← تحذير
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/hotspot_logic_test.dart: التحقق من صفحة الدخول لا ملفات ← خطأ واضح
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/dashboard_preview_test.dart: dashboard preview golden
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/sales_reports_accounting_test.dart: ReportsApi Date Parser Tests parses RouterOS v6 format: jul/16/2025 11:32:32
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/sales_reports_accounting_test.dart: ReportsApi Date Parser Tests parses ISO format: 2026-10-07 14:05:00
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/sales_reports_accounting_test.dart: ReportsApi Date Parser Tests parses slashed date format: 2026/03/15 08:30:00
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/sales_reports_accounting_test.dart: ReportsApi Date Parser Tests handles invalid date strings gracefully
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/sales_reports_accounting_test.dart: SellesReportModel Database Mapping & Deduplication converts correctly between SQLite map and Model
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_generation_rules_test.dart: BatchGenerationRules.credentialConfigurationError requires a supported username pattern
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_generation_rules_test.dart: BatchGenerationRules.credentialConfigurationError validates password pattern and length independently
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_generation_rules_test.dart: BatchGenerationRules.credentialConfigurationError matching username password needs no separate pattern or length
+✅ /home/runner/work/MikroTikfinal007/MikroTikfinal007/test/batch_generation_rules_test.dart: BatchGenerationRules.credentialConfigurationError templates without password fields do not require password settings
+
+🎉 240 tests passed.
+===== TOTALS =====
+errors=0
+0
+warnings=2
+infos=25
+===== ERRORS ONLY =====
+(no errors)
+===== FULL OUTPUT (last 400 lines) =====
+Analyzing MikroTikfinal007...                                   
+
+   info • Don't invoke 'print' in production code • lib/features/cards/controllers/cards/add_single_card_controller.dart:75:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/cards/controllers/cards/add_single_card_controller.dart:78:7 • avoid_print
+warning • The declaration '_addNewCard' isn't referenced • lib/features/cards/controllers/cards/cards_list_controller.dart:154:16 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/add_single_card_page.dart:38:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/add_single_card_page.dart:190:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/card_info_page.dart:98:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/card_info_page.dart:199:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/card_info_page.dart:215:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/card_info_page.dart:239:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/cards_list_page.dart:102:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/cards/cards_list_page.dart:133:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/profiles/add_profile_page.dart:38:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/profiles/add_profile_page.dart:181:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/profiles/edit_profile_page.dart:38:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/profiles/edit_profile_page.dart:181:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/profiles/profiles_list_page.dart:64:51 • deprecated_member_use
+warning • The declaration '_openUpsertSheet' isn't referenced • lib/features/cards/views/profiles/profiles_list_page.dart:93:8 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/widgets/card_item_tile.dart:44:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/widgets/card_item_tile.dart:62:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/widgets/session_info_card.dart:29:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/widgets/session_info_card.dart:38:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/widgets/session_info_card.dart:94:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/cards/views/widgets/status_badge.dart:15:55 • deprecated_member_use
+   info • Use 'const' with the constructor to improve performance • lib/features/distributors/views/distributor_stock_transfer_page.dart:39:25 • prefer_const_constructors
+   info • Unnecessary braces in a string interpolation • lib/features/prints/controllers/batches/add_batch_controller.dart:484:22 • unnecessary_brace_in_string_interps
+   info • Use 'const' with the constructor to improve performance • lib/features/prints/views/batches/add_batch_page.dart:33:17 • prefer_const_constructors
+   info • Use 'const' with the constructor to improve performance • lib/features/prints/views/batches/batches_list_page.dart:290:26 • prefer_const_constructors
+
+27 issues found. (ran in 13.8s)
